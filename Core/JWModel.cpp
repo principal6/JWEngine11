@@ -214,7 +214,7 @@ PRIVATE void JWModel::CreateIndexBuffer() noexcept
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 }
 
-void JWModel::SetWorldMatrixIdentity() noexcept
+void JWModel::SetWorldMatrixToIdentity() noexcept
 {
 	m_MatrixWorld = XMMatrixIdentity();
 }

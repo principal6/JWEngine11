@@ -19,7 +19,7 @@ namespace JWEngine
 
 		void LoadModelObj(STRING Directory, STRING FileName) noexcept;
 		
-		void SetWorldMatrixIdentity() noexcept;
+		void SetWorldMatrixToIdentity() noexcept;
 		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&;
 
 		auto SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&;
