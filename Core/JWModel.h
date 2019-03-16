@@ -17,11 +17,17 @@ namespace JWEngine
 		// Called in JWGame class
 		void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
-		void LoadModelObj(STRING FileName) noexcept;
+		void LoadModelObj(STRING Directory, STRING FileName) noexcept;
+		
+		void SetWorldMatrixIdentity() noexcept;
+		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&;
 
 		auto SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&;
 		auto SetRotation(XMFLOAT4 RotationAxis, float Angle) noexcept->JWModel&;
 		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;
+
+		auto GetWorldPosition() noexcept->XMVECTOR;
+		auto GetDistanceFromCamera() noexcept->float;
 
 		void Draw() noexcept;
 
@@ -39,8 +45,7 @@ namespace JWEngine
 		auto AddIndex(const SIndex& Index) noexcept->JWModel&;
 		void AddEnd() noexcept;
 
-		void InitializeMatrix() noexcept;
-
+		void UpdateWorldMatrix() noexcept;
 		void Update() noexcept;
 
 	private:
@@ -65,6 +70,8 @@ namespace JWEngine
 		XMMATRIX m_MatrixRotation{};
 		XMMATRIX m_MatrixScale{};
 
-		bool m_IsMatrixInitialized{ false };
+		XMVECTOR m_WorldPosition{};
+
+		EWorldMatrixCalculationOrder m_CalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 	};
 };

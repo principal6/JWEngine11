@@ -19,6 +19,7 @@ namespace JWEngine
 		void SetPosition(XMFLOAT4 Position) noexcept;
 		void SetLookAt(XMFLOAT4 LookAt) noexcept;
 
+		auto GetPosition() noexcept->XMVECTOR;
 		auto GetViewProjectionMatrix() const noexcept->XMMATRIX;
 
 	private:

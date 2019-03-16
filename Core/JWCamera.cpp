@@ -22,6 +22,11 @@ void JWCamera::SetLookAt(XMFLOAT4 LookAt) noexcept
 	m_CameraLookAt = XMVectorSet(LookAt.x, LookAt.y, LookAt.z, LookAt.w);
 }
 
+auto JWCamera::GetPosition() noexcept->XMVECTOR
+{
+	return m_CameraPosition;
+}
+
 auto JWCamera::GetViewProjectionMatrix() const noexcept->XMMATRIX
 {
 	// Update view matrix

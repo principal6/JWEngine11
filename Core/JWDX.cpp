@@ -35,8 +35,10 @@ JWDX::~JWDX()
 	m_SwapChain->Release();
 }
 
-void JWDX::Create(const JWWin32Window& Window) noexcept
+void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 {
+	m_BaseDirectory = Directory;
+
 	// Set window size
 	m_WindowSize.Width = Window.GetWidth();
 	m_WindowSize.Height = Window.GetHeight();
@@ -100,8 +102,12 @@ PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 PRIVATE void JWDX::CreateShaders() noexcept
 {
 	// Compile Shaders from shader file
-	D3DCompileFromFile(L"..\\Shaders\\BasicVertexShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VS", "vs_4_0", 0, 0, &m_VertexShaderBuffer, nullptr);
-	D3DCompileFromFile(L"..\\Shaders\\BasicPixelShader.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PS", "ps_4_0", 0, 0, &m_PixelShaderBuffer, nullptr);
+	WSTRING shader_file_name;
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\BasicVertexShader.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VS", "vs_4_0", 0, 0, &m_VertexShaderBuffer, nullptr);
+
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\BasicPixelShader.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PS", "ps_4_0", 0, 0, &m_PixelShaderBuffer, nullptr);
 
 	// Create the Shader Objects
 	m_Device11->CreateVertexShader(m_VertexShaderBuffer->GetBufferPointer(), m_VertexShaderBuffer->GetBufferSize(), NULL, &m_VertexShader11);

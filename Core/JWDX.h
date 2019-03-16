@@ -27,7 +27,7 @@ namespace JWEngine
 		JWDX() = default;
 		~JWDX();
 
-		void Create(const JWWin32Window& Window) noexcept;
+		void Create(const JWWin32Window& Window, STRING Directory) noexcept;
 
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
@@ -69,6 +69,8 @@ namespace JWEngine
 		void CreateConstantBuffer() noexcept;
 
 	private:
+		STRING m_BaseDirectory;
+
 		SSizeInt m_WindowSize{};
 
 		IDXGISwapChain* m_SwapChain{};

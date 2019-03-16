@@ -7,6 +7,7 @@
 #include <map>
 #include <cassert>
 #include <crtdbg.h>
+
 #include <d3d11.h>
 #include <DirectXMath.h> // @IMPORTANT not <xnamath.h> prefix:XM
 #include <DirectXPackedVector.h>
@@ -56,6 +57,18 @@
 namespace JWEngine
 {
 	using namespace DirectX;
+
+	static constexpr int MAX_FILE_LENGTH = 255;
+
+	enum class EWorldMatrixCalculationOrder
+	{
+		TransRotScale,
+		TransScaleRot,
+		RotTransScale,
+		RotScaleTrans,
+		ScaleTransRot,
+		ScaleRotTrans,
+	};
 
 	struct SSizeInt
 	{
@@ -155,5 +168,39 @@ namespace JWEngine
 		std::cout << "[ERROR] " << Content << std::endl << std::endl;
 
 		assert(false);
+	}
+
+	static auto WstringToString(WSTRING Source)->STRING
+	{
+		STRING Result;
+
+		char* temp = nullptr;
+		size_t len = static_cast<size_t>(WideCharToMultiByte(CP_ACP, 0, Source.c_str(), -1, temp, 0, nullptr, nullptr));
+
+		temp = new char[len + 1];
+		WideCharToMultiByte(CP_ACP, 0, Source.c_str(), -1, temp, static_cast<int>(len), nullptr, nullptr);
+
+		Result = temp;
+
+		delete[] temp;
+		temp = nullptr;
+		return Result;
+	}
+
+	static auto StringToWstring(STRING Source)->WSTRING
+	{
+		WSTRING Result;
+
+		wchar_t* temp = nullptr;
+		size_t len = static_cast<size_t>(MultiByteToWideChar(CP_ACP, 0, Source.c_str(), -1, temp, 0));
+
+		temp = new wchar_t[len + 1];
+		MultiByteToWideChar(CP_ACP, 0, Source.c_str(), -1, temp, static_cast<int>(len));
+
+		Result = temp;
+
+		delete[] temp;
+		temp = nullptr;
+		return Result;
 	}
 };

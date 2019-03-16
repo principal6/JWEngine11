@@ -247,6 +247,27 @@
     <ClInclude Include="..\Core\JWDX.h" />
     <ClInclude Include="..\Core\JWModel.h" />
     <ClInclude Include="..\Core\JWWin32Window.h" />
+    <ClInclude Include="..\DirectXTK\Inc\Audio.h" />
+    <ClInclude Include="..\DirectXTK\Inc\CommonStates.h" />
+    <ClInclude Include="..\DirectXTK\Inc\DDSTextureLoader.h" />
+    <ClInclude Include="..\DirectXTK\Inc\DirectXHelpers.h" />
+    <ClInclude Include="..\DirectXTK\Inc\Effects.h" />
+    <ClInclude Include="..\DirectXTK\Inc\GamePad.h" />
+    <ClInclude Include="..\DirectXTK\Inc\GeometricPrimitive.h" />
+    <ClInclude Include="..\DirectXTK\Inc\GraphicsMemory.h" />
+    <ClInclude Include="..\DirectXTK\Inc\Keyboard.h" />
+    <ClInclude Include="..\DirectXTK\Inc\Model.h" />
+    <ClInclude Include="..\DirectXTK\Inc\Mouse.h" />
+    <ClInclude Include="..\DirectXTK\Inc\pch.h" />
+    <ClInclude Include="..\DirectXTK\Inc\PostProcess.h" />
+    <ClInclude Include="..\DirectXTK\Inc\PrimitiveBatch.h" />
+    <ClInclude Include="..\DirectXTK\Inc\ScreenGrab.h" />
+    <ClInclude Include="..\DirectXTK\Inc\SimpleMath.h" />
+    <ClInclude Include="..\DirectXTK\Inc\SpriteBatch.h" />
+    <ClInclude Include="..\DirectXTK\Inc\SpriteFont.h" />
+    <ClInclude Include="..\DirectXTK\Inc\VertexTypes.h" />
+    <ClInclude Include="..\DirectXTK\Inc\WICTextureLoader.h" />
+    <ClInclude Include="..\DirectXTK\Inc\XboxDDSTextureLoader.h" />
     <ClInclude Include="..\Shaders\ShaderHeader.hlsl" />
     <ClInclude Include="JWGame.h" />
   </ItemGroup>
@@ -271,6 +292,9 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\DirectXTK\Inc\SimpleMath.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -16,11 +16,20 @@ int main()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-	myGame.Create(800, 600, "JWGame");
+	myGame.Create(800, 600, "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\");
 
 	myGame.GetCameraObject().SetPosition(XMFLOAT4(0.0f, 4.0f, -8.0f, 0.0f));
 
-	myGame.GetModelObject().LoadModelObj("..\\Asset\\TestBox.obj");
+	myGame.AddTransparentModel("Asset\\", "TestBox.obj");
+	myGame.GetTransparentModel(0)
+		.SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+		.SetScale(XMFLOAT3(0.08f, 0.08f, 0.08f));
+
+	myGame.AddTransparentModel("Asset\\", "TestBox.obj");
+	myGame.GetTransparentModel(1)
+		.SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleTransRot)
+		.SetScale(XMFLOAT3(0.08f, 0.08f, 0.08f))
+		.SetTranslation(XMFLOAT3(4, 0, 0));
 
 	myGame.SetRenderFunction(Render);
 
@@ -41,16 +50,8 @@ void Render()
 		rotation_angle = 0;
 	}
 
-	myGame.SetBlendState(EBlendState::Transprent);
+	myGame.GetTransparentModel(0).SetRotation(XMFLOAT4(0, 1, 0, 0), rotation_angle);
+	myGame.GetTransparentModel(1).SetRotation(XMFLOAT4(0, 1, 0, 0), -rotation_angle);
 
-	myGame.GetModelObject()
-		.SetScale(XMFLOAT3(0.08f, 0.08f, 0.08f))
-		.SetRotation(XMFLOAT4(0, 1, 0, 0), rotation_angle)
-		.Draw();
-
-	myGame.GetModelObject()
-		.SetScale(XMFLOAT3(0.08f, 0.08f, 0.08f))
-		.SetTranslation(XMFLOAT3(4, 0, 0))
-		.SetRotation(XMFLOAT4(0, 1, 0, 0), -rotation_angle)
-		.Draw();
+	myGame.DrawAllModels();
 }
