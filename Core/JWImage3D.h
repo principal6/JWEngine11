@@ -8,26 +8,17 @@ namespace JWEngine
 	class JWDX;
 	class JWCamera;
 
-	class JWModel
+	class JWImage3D
 	{
 	public:
-		JWModel() = default;
-		~JWModel();
+		JWImage3D() = default;
+		~JWImage3D();
 
 		// Called in JWGame class
 		void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
-		void LoadModelObj(STRING Directory, STRING FileName) noexcept;
-		
-		void SetWorldMatrixToIdentity() noexcept;
-		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&;
-
-		auto SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&;
-		auto SetRotation(XMFLOAT4 RotationAxis, float Angle) noexcept->JWModel&;
-		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;
-
-		auto GetWorldPosition() noexcept->XMVECTOR;
-		auto GetDistanceFromCamera() noexcept->float;
+		// Called in JWGame class
+		void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
 		// Called in JWGame class
 		void Draw() noexcept;
@@ -35,18 +26,17 @@ namespace JWEngine
 	private:
 		void CheckValidity() const noexcept;
 
+		// Buffer creation
+		inline void AddVertex(const SVertex& Vertex) noexcept;
+		inline void AddIndex(const SIndex& Index) noexcept;
+		void AddEnd() noexcept;
 		void CreateVertexBuffer() noexcept;
 		void CreateIndexBuffer() noexcept;
 
+		// Texture creation
+		void CreateTexture(WSTRING TextureFileName) noexcept;
 		void CreateSamplerState() noexcept;
 
-		void CreateTexture(WSTRING TextureFileName) noexcept;
-
-		auto AddVertex(const SVertex& Vertex) noexcept->JWModel&;
-		auto AddIndex(const SIndex& Index) noexcept->JWModel&;
-		void AddEnd() noexcept;
-
-		void UpdateWorldMatrix() noexcept;
 		void Update() noexcept;
 
 	private:
@@ -70,9 +60,5 @@ namespace JWEngine
 		XMMATRIX m_MatrixTranslation{};
 		XMMATRIX m_MatrixRotation{};
 		XMMATRIX m_MatrixScale{};
-
-		XMVECTOR m_WorldPosition{};
-
-		EWorldMatrixCalculationOrder m_CalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 	};
 };

@@ -21,6 +21,12 @@ namespace JWEngine
 		Opaque,
 	};
 
+	enum class EDepthStencilState
+	{
+		ZEnabled,
+		ZDisabled,
+	};
+
 	class JWDX
 	{
 	public:
@@ -31,6 +37,7 @@ namespace JWEngine
 
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
+		void SetDepthStencilState(EDepthStencilState State) noexcept;
 		void SetConstantBufferData(SConstantBufferDataPerObject Data) noexcept;
 
 		void BeginDrawing(const SClearColor& ClearColor) noexcept;
@@ -54,10 +61,13 @@ namespace JWEngine
 		void CreateInputLayout() noexcept;
 
 		// Called in Create()
-		void CreateDepthStencil() noexcept;
+		void CreateDepthStencilView() noexcept;
 
 		// Called in Create()
-		void CreateRenderTarget() noexcept;
+		void CreateDepthStencilStates() noexcept;
+
+		// Called in Create()
+		void CreateRenderTargetView() noexcept;
 
 		// Called in Create()
 		void CreateRasterizerStates() noexcept;
@@ -87,6 +97,8 @@ namespace JWEngine
 		ID3D11InputLayout* m_InputLayout11{};
 
 		ID3D11DepthStencilView* m_DepthStencilView11{};
+		ID3D11DepthStencilState* m_DepthStencilStateZEnabled11{};
+		ID3D11DepthStencilState* m_DepthStencilStateZDisabled11{};
 
 		ID3D11RenderTargetView* m_RenderTargetView11{};
 

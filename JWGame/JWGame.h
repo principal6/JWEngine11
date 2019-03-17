@@ -1,8 +1,10 @@
 #pragma once
 
-#include "../Core/JWModel.h"
+#include "../Core/JWWin32Window.h"
 #include "../Core/JWDX.h"
 #include "../Core/JWCamera.h"
+#include "../Core/JWModel.h"
+#include "../Core/JWImage2D.h"
 
 namespace JWEngine
 {
@@ -14,7 +16,7 @@ namespace JWEngine
 		JWGame() = default;
 		~JWGame() = default;
 
-		void Create(int Width, int Height, STRING Title, STRING Directory) noexcept;
+		void Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING Directory) noexcept;
 
 		void SetRenderFunction(FP_RENDER Render) noexcept;
 		void SetRasterizerState(ERasterizerState State) noexcept;
@@ -25,11 +27,14 @@ namespace JWEngine
 		void AddTransparentModel(STRING Directory, STRING TransparentModelFileName) noexcept;
 		auto GetTransparentModel(size_t TransparentModelIndex) const noexcept->JWModel&;
 
+		void AddImage2D(STRING Directory, STRING ImageFileName) noexcept;
+		auto GetImage2D(size_t Image2DIndex) const noexcept->JWImage2D&;
+
 		auto GetCameraObject() noexcept->JWCamera&;
 
 		void Run() noexcept;
 
-		void DrawAllModels() noexcept;
+		void DrawAll() noexcept;
 
 	private:
 		inline auto GetFileNameWithBaseDirectory(STRING& FileName) noexcept->STRING;
@@ -37,9 +42,11 @@ namespace JWEngine
 		void CheckValidity() const noexcept;
 
 		void SetBlendState(EBlendState State) noexcept;
+		void SetDepthStencilState(EDepthStencilState State) noexcept;
 
 		void DrawAllOpaqueModels() const noexcept;
 		void DrawAllTransparentModels() const noexcept;
+		void DrawAll2DImages() const noexcept;
 
 	private:
 		bool m_IsWindowCreated{ false };
@@ -57,5 +64,6 @@ namespace JWEngine
 
 		VECTOR<UNIQUE_PTR<JWModel>> m_pOpaqueModels;
 		VECTOR<UNIQUE_PTR<JWModel>> m_pTransparentModels;
+		VECTOR<UNIQUE_PTR<JWImage2D>> m_p2DImages;
 	};
 };

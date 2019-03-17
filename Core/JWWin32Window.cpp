@@ -24,12 +24,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-void JWWin32Window::Create(int Width, int Height, const STRING& Title) noexcept
+void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& Title) noexcept
 {
 	m_hInstance = GetModuleHandleA(nullptr);
 
-	m_WindowSize.Width = Width;
-	m_WindowSize.Height = Height;
+	m_WindowSize.Width = Size.Width;
+	m_WindowSize.Height = Size.Height;
 
 	WNDCLASSEXA wc{};
 	wc.cbSize = sizeof(WNDCLASSEXA);
@@ -49,9 +49,12 @@ void JWWin32Window::Create(int Width, int Height, const STRING& Title) noexcept
 	{
 		JWAbort("RegisterClassExA() failed.");
 	}
+	
+	RECT rect = { Position.X, Position.Y, Position.X + Size.Width, Position.Y + Size.Height };
+	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
-	m_hWnd = CreateWindowExA(NULL, wc.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-			Width, Height, nullptr, nullptr, m_hInstance, nullptr);
+	m_hWnd = CreateWindowExA(NULL, wc.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, Position.X, Position.Y,
+		Size.Width, Size.Height, nullptr, nullptr, m_hInstance, nullptr);
 
 	if (!m_hWnd)
 	{

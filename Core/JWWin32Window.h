@@ -10,7 +10,7 @@ namespace JWEngine
 		JWWin32Window() = default;
 		~JWWin32Window() = default;
 
-		void Create(int Width, int Height, const STRING& Title) noexcept;
+		void Create(SPositionInt Position, SSizeInt Size, const STRING& Title) noexcept;
 
 		auto GetWidth() const noexcept->int;
 		auto GetHeight() const noexcept->int;

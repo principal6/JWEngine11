@@ -21,12 +21,17 @@ namespace JWEngine
 
 		auto GetPosition() noexcept->XMVECTOR;
 		auto GetViewProjectionMatrix() const noexcept->XMMATRIX;
+		auto GetOrthographicMatrix() const noexcept->XMMATRIX;
 
 	private:
 		JWDX* m_pDX{};
 
+		static constexpr float NEAR_Z = 1.0f;
+		static constexpr float FAR_Z = 1000.0f;
+
 		mutable XMMATRIX m_MatrixView{};
 		mutable XMMATRIX m_MatrixProjection{};
+		mutable XMMATRIX m_MatrixOrthographic{};
 
 		XMVECTOR m_CameraUp{};
 		XMVECTOR m_CameraPosition{};

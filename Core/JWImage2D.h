@@ -8,26 +8,20 @@ namespace JWEngine
 	class JWDX;
 	class JWCamera;
 
-	class JWModel
+	class JWImage2D
 	{
 	public:
-		JWModel() = default;
-		~JWModel();
+		JWImage2D() = default;
+		~JWImage2D();
 
 		// Called in JWGame class
 		void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
-		void LoadModelObj(STRING Directory, STRING FileName) noexcept;
-		
-		void SetWorldMatrixToIdentity() noexcept;
-		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&;
+		// Called in JWGame class
+		void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
-		auto SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&;
-		auto SetRotation(XMFLOAT4 RotationAxis, float Angle) noexcept->JWModel&;
-		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;
-
-		auto GetWorldPosition() noexcept->XMVECTOR;
-		auto GetDistanceFromCamera() noexcept->float;
+		auto SetPosition(XMFLOAT2 Position) noexcept->JWImage2D&;
+		auto SetSize(XMFLOAT2 Size) noexcept->JWImage2D&;
 
 		// Called in JWGame class
 		void Draw() noexcept;
@@ -35,22 +29,31 @@ namespace JWEngine
 	private:
 		void CheckValidity() const noexcept;
 
+		// Buffer creation
+		inline void AddVertex(const SVertex& Vertex) noexcept;
+		inline void AddIndex(const SIndex& Index) noexcept;
+		void AddEnd() noexcept;
 		void CreateVertexBuffer() noexcept;
 		void CreateIndexBuffer() noexcept;
 
-		void CreateSamplerState() noexcept;
-
+		// Texture creation
 		void CreateTexture(WSTRING TextureFileName) noexcept;
+		void CreateSamplerState() noexcept;
+		
+		// Called by SetPosition() or SetSize()
+		void UpdateVertices() noexcept;
 
-		auto AddVertex(const SVertex& Vertex) noexcept->JWModel&;
-		auto AddIndex(const SIndex& Index) noexcept->JWModel&;
-		void AddEnd() noexcept;
+		// Called by UpdateVertices()
+		void UpdateVertexBuffer() noexcept;
 
-		void UpdateWorldMatrix() noexcept;
 		void Update() noexcept;
 
 	private:
+		static constexpr float DEFAULT_WIDTH = 50.0f;
+		static constexpr float DEFAULT_HEIGHT = 50.0f;
+
 		bool m_IsValid{ false };
+		bool m_IsTextureCreated{ false };
 
 		JWDX* m_pDX{};
 		JWCamera* m_pCamera{};
@@ -64,15 +67,14 @@ namespace JWEngine
 		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
 		ID3D11SamplerState* m_TextureSamplerState{};
 
+		XMFLOAT2 m_Position{};
+		XMFLOAT2 m_Size{ DEFAULT_WIDTH, DEFAULT_HEIGHT };
+
 		XMMATRIX m_WVP{};
 		XMMATRIX m_MatrixWorld{};
 
 		XMMATRIX m_MatrixTranslation{};
 		XMMATRIX m_MatrixRotation{};
 		XMMATRIX m_MatrixScale{};
-
-		XMVECTOR m_WorldPosition{};
-
-		EWorldMatrixCalculationOrder m_CalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 	};
 };

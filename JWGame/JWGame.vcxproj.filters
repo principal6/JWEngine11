@@ -17,6 +17,9 @@
     <Filter Include="DirectXTK">
       <UniqueIdentifier>{7cab12bf-e290-4023-b323-826d30329d0c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="TinyXml2">
+      <UniqueIdentifier>{b66aac87-fa41-4d28-be97-797f026f8148}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Core\JWWin32Window.cpp">
@@ -31,6 +34,15 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="JWGame.cpp" />
     <ClCompile Include="..\Core\JWModel.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TinyXml2\tinyxml2.cpp">
+      <Filter>TinyXml2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\JWImage2D.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\JWImage3D.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -267,6 +279,12 @@
     <ClInclude Include="..\Core\JWModel.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\TinyXml2\tinyxml2.h">
+      <Filter>TinyXml2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\JWImage2D.h">
+      <Filter>Core</Filter>
+    </ClInclude>
     <ClInclude Include="..\DirectXTK\Inc\Audio.h">
       <Filter>DirectXTK</Filter>
     </ClInclude>
@@ -330,6 +348,9 @@
     <ClInclude Include="..\DirectXTK\Inc\XboxDDSTextureLoader.h">
       <Filter>DirectXTK</Filter>
     </ClInclude>
+    <ClInclude Include="..\Core\JWImage3D.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Shaders\BasicPixelShader.hlsl">
@@ -338,10 +359,5 @@
     <FxCompile Include="..\Shaders\BasicVertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\DirectXTK\Inc\SimpleMath.inl">
-      <Filter>DirectXTK</Filter>
-    </None>
   </ItemGroup>
 </Project>

@@ -165,8 +165,11 @@
   <ItemGroup>
     <ClCompile Include="..\Core\JWCamera.cpp" />
     <ClCompile Include="..\Core\JWDX.cpp" />
+    <ClCompile Include="..\Core\JWImage2D.cpp" />
+    <ClCompile Include="..\Core\JWImage3D.cpp" />
     <ClCompile Include="..\Core\JWModel.cpp" />
     <ClCompile Include="..\Core\JWWin32Window.cpp" />
+    <ClCompile Include="..\TinyXml2\tinyxml2.cpp" />
     <ClCompile Include="JWGame.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -245,6 +248,8 @@
     <ClInclude Include="..\Core\JWCamera.h" />
     <ClInclude Include="..\Core\JWCommon.h" />
     <ClInclude Include="..\Core\JWDX.h" />
+    <ClInclude Include="..\Core\JWImage2D.h" />
+    <ClInclude Include="..\Core\JWImage3D.h" />
     <ClInclude Include="..\Core\JWModel.h" />
     <ClInclude Include="..\Core\JWWin32Window.h" />
     <ClInclude Include="..\DirectXTK\Inc\Audio.h" />
@@ -269,6 +274,7 @@
     <ClInclude Include="..\DirectXTK\Inc\WICTextureLoader.h" />
     <ClInclude Include="..\DirectXTK\Inc\XboxDDSTextureLoader.h" />
     <ClInclude Include="..\Shaders\ShaderHeader.hlsl" />
+    <ClInclude Include="..\TinyXml2\tinyxml2.h" />
     <ClInclude Include="JWGame.h" />
   </ItemGroup>
   <ItemGroup>
@@ -292,9 +298,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\DirectXTK\Inc\SimpleMath.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

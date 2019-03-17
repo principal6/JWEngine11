@@ -188,11 +188,6 @@ PRIVATE void JWModel::CreateVertexBuffer() noexcept
 
 	// Create vertex buffer
 	m_pDX->GetDevice()->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, &m_VertexBuffer);
-
-	// Set vertex buffer
-	UINT vertex_stride{ sizeof(SVertex) };
-	UINT vertex_offset{};
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, &vertex_stride, &vertex_offset);
 }
 
 PRIVATE void JWModel::CreateIndexBuffer() noexcept
@@ -209,9 +204,6 @@ PRIVATE void JWModel::CreateIndexBuffer() noexcept
 
 	// Create index buffer
 	m_pDX->GetDevice()->CreateBuffer(&index_buffer_description, &index_buffer_data, &m_IndexBuffer);
-
-	// Set index buffer
-	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 }
 
 void JWModel::SetWorldMatrixToIdentity() noexcept
@@ -275,7 +267,6 @@ PRIVATE void JWModel::UpdateWorldMatrix() noexcept
 
 	// Update world position of the model
 	m_WorldPosition = XMVector3TransformCoord(XMVectorZero(), m_MatrixWorld);
-	
 }
 
 auto JWModel::SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&
@@ -315,6 +306,14 @@ PRIVATE void JWModel::Update() noexcept
 void JWModel::Draw() noexcept
 {
 	Update();
+
+	// Set vertex buffer
+	UINT vertex_stride{ sizeof(SVertex) };
+	UINT vertex_offset{};
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, &vertex_stride, &vertex_offset);
+
+	// Set index buffer
+	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.Count, 0, 0);
 }

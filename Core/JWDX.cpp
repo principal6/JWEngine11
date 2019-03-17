@@ -19,6 +19,8 @@ JWDX::~JWDX()
 
 	m_RenderTargetView11->Release();
 
+	m_DepthStencilStateZDisabled11->Release();
+	m_DepthStencilStateZEnabled11->Release();
 	m_DepthStencilView11->Release();
 
 	m_InputLayout11->Release();
@@ -56,10 +58,13 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 	CreateInputLayout();
 
 	// Create depth-stencil view
-	CreateDepthStencil();
+	CreateDepthStencilView();
+
+	// Create depth-stencil states
+	CreateDepthStencilStates();
 
 	// Create render target view
-	CreateRenderTarget();
+	CreateRenderTargetView();
 
 	// Create rasterizer states
 	CreateRasterizerStates();
@@ -141,7 +146,7 @@ PRIVATE void JWDX::CreateInputLayout() noexcept
 	m_DeviceContext11->IASetInputLayout(m_InputLayout11);
 }
 
-PRIVATE void JWDX::CreateDepthStencil() noexcept
+PRIVATE void JWDX::CreateDepthStencilView() noexcept
 {
 	// Describe depth-stencil buffer
 	D3D11_TEXTURE2D_DESC depth_stencil_texture_descrption{};
@@ -167,7 +172,35 @@ PRIVATE void JWDX::CreateDepthStencil() noexcept
 	depth_stencil_buffer->Release();
 }
 
-PRIVATE void JWDX::CreateRenderTarget() noexcept
+PRIVATE void JWDX::CreateDepthStencilStates() noexcept
+{
+	D3D11_DEPTH_STENCIL_DESC depth_stencil_description{};
+
+	depth_stencil_description.DepthEnable = TRUE;
+	depth_stencil_description.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depth_stencil_description.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+	depth_stencil_description.StencilEnable = FALSE;
+	depth_stencil_description.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+	depth_stencil_description.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+
+	depth_stencil_description.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	depth_stencil_description.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depth_stencil_description.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depth_stencil_description.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+
+	depth_stencil_description.BackFace = depth_stencil_description.FrontFace;
+
+	m_Device11->CreateDepthStencilState(&depth_stencil_description, &m_DepthStencilStateZEnabled11);
+
+
+	depth_stencil_description.DepthEnable = FALSE;
+	depth_stencil_description.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // Read-only
+
+	m_Device11->CreateDepthStencilState(&depth_stencil_description, &m_DepthStencilStateZDisabled11);
+}
+
+PRIVATE void JWDX::CreateRenderTargetView() noexcept
 {
 	// Create buffer for render target view
 	ID3D11Texture2D* back_buffer{};
@@ -266,6 +299,21 @@ void JWDX::SetBlendState(EBlendState State) noexcept
 		break;
 	case JWEngine::EBlendState::Opaque:
 		m_DeviceContext11->OMSetBlendState(m_BlendStateOpaque, 0, 0xFFFFFFFF);
+		break;
+	default:
+		break;
+	}
+}
+
+void JWDX::SetDepthStencilState(EDepthStencilState State) noexcept
+{
+	switch (State)
+	{
+	case JWEngine::EDepthStencilState::ZEnabled:
+		m_DeviceContext11->OMSetDepthStencilState(m_DepthStencilStateZEnabled11, 0);
+		break;
+	case JWEngine::EDepthStencilState::ZDisabled:
+		m_DeviceContext11->OMSetDepthStencilState(m_DepthStencilStateZDisabled11, 0);
 		break;
 	default:
 		break;

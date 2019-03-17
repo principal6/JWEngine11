@@ -7,13 +7,13 @@ PRIVATE inline auto JWGame::GetFileNameWithBaseDirectory(STRING& FileName) noexc
 	return m_BaseDirectory + FileName;
 }
 
-void JWGame::Create(int Width, int Height, STRING Title, STRING Directory) noexcept
+void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING Directory) noexcept
 {
 	m_BaseDirectory = Directory;
 
 	m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
 
-	m_Window.Create(800, 600, Title);
+	m_Window.Create(WindowPosition, WindowSize, Title);
 	m_IsWindowCreated = true;
 
 	m_DX.Create(m_Window, Directory);
@@ -42,6 +42,11 @@ PRIVATE void JWGame::SetBlendState(EBlendState State) noexcept
 	m_DX.SetBlendState(State);
 }
 
+PRIVATE void JWGame::SetDepthStencilState(EDepthStencilState State) noexcept
+{
+	m_DX.SetDepthStencilState(State);
+}
+
 void JWGame::AddOpaqueModel(STRING Directory, STRING ModelFileName) noexcept
 {
 	m_pOpaqueModels.push_back(MAKE_UNIQUE_AND_MOVE(JWModel)());
@@ -66,6 +71,19 @@ void JWGame::AddTransparentModel(STRING Directory, STRING TransparentModelFileNa
 auto JWGame::GetTransparentModel(size_t TransparentModelIndex) const noexcept->JWModel&
 {
 	return *m_pTransparentModels[TransparentModelIndex].get();
+}
+
+void JWGame::AddImage2D(STRING Directory, STRING ImageFileName) noexcept
+{
+	m_p2DImages.push_back(MAKE_UNIQUE_AND_MOVE(JWImage2D)());
+
+	m_p2DImages[m_p2DImages.size() - 1]->Create(m_DX, m_Camera);
+	m_p2DImages[m_p2DImages.size() - 1]->LoadImageFromFile(GetFileNameWithBaseDirectory(Directory), ImageFileName);
+}
+
+auto JWGame::GetImage2D(size_t Image2DIndex) const noexcept->JWImage2D&
+{
+	return *m_p2DImages[Image2DIndex].get();
 }
 
 auto JWGame::GetCameraObject() noexcept->JWCamera&
@@ -119,13 +137,21 @@ void JWGame::Run() noexcept
 	}
 }
 
-void JWGame::DrawAllModels() noexcept
+void JWGame::DrawAll() noexcept
 {
+	// Draw 3D models
+	SetDepthStencilState(EDepthStencilState::ZEnabled);
 	SetBlendState(EBlendState::Opaque);
 	DrawAllOpaqueModels();
 
 	SetBlendState(EBlendState::Transprent);
 	DrawAllTransparentModels();
+
+	// Draw 2d images
+	// with z-buffer disabled, in order to draw them on top of everything else
+	SetBlendState(EBlendState::Opaque);
+	SetDepthStencilState(EDepthStencilState::ZDisabled);
+	DrawAll2DImages();
 }
 
 PRIVATE void JWGame::DrawAllOpaqueModels() const noexcept
@@ -145,10 +171,21 @@ PRIVATE void JWGame::DrawAllTransparentModels() const noexcept
 	{
 		//VECTOR<size_t> draw_oreder;
 
-		for (size_t iterator_model{}; iterator_model < m_pTransparentModels.size(); ++iterator_model)
+		for (size_t iterator_index{}; iterator_index < m_pTransparentModels.size(); ++iterator_index)
 		{
 			//m_pTransparentModels[iterator_model]->GetDistanceFromCamera();
-			m_pTransparentModels[iterator_model]->Draw();
+			m_pTransparentModels[iterator_index]->Draw();
+		}
+	}
+}
+
+PRIVATE void JWGame::DrawAll2DImages() const noexcept
+{
+	if (m_p2DImages.size())
+	{
+		for (auto& iterator_2d_image : m_p2DImages)
+		{
+			iterator_2d_image->Draw();
 		}
 	}
 }

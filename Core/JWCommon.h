@@ -47,6 +47,43 @@
 	#define MAKE_UNIQUE_AND_MOVE(T) MOVE(MAKE_UNIQUE(T))
 #endif
 
+#ifndef STRING_CONVERTERS
+#define STRING_CONVERTERS
+	static auto WstringToString(WSTRING Source)->STRING
+	{
+		STRING Result;
+
+		char* temp = nullptr;
+		size_t len = static_cast<size_t>(WideCharToMultiByte(CP_ACP, 0, Source.c_str(), -1, temp, 0, nullptr, nullptr));
+
+		temp = new char[len + 1];
+		WideCharToMultiByte(CP_ACP, 0, Source.c_str(), -1, temp, static_cast<int>(len), nullptr, nullptr);
+
+		Result = temp;
+
+		delete[] temp;
+		temp = nullptr;
+		return Result;
+	}
+
+	static auto StringToWstring(STRING Source)->WSTRING
+	{
+		WSTRING Result;
+
+		wchar_t* temp = nullptr;
+		size_t len = static_cast<size_t>(MultiByteToWideChar(CP_ACP, 0, Source.c_str(), -1, temp, 0));
+
+		temp = new wchar_t[len + 1];
+		MultiByteToWideChar(CP_ACP, 0, Source.c_str(), -1, temp, static_cast<int>(len));
+
+		Result = temp;
+
+		delete[] temp;
+		temp = nullptr;
+		return Result;
+	}
+#endif
+
 // Static function prefix
 #define STATIC
 // Protected method prefix
@@ -70,20 +107,32 @@ namespace JWEngine
 		ScaleRotTrans,
 	};
 
+	struct SPositionInt
+	{
+		SPositionInt() {};
+		SPositionInt(int _X, int _Y) : X(_X), Y(_Y) {};
+
+		int X{};
+		int Y{};
+	};
+
 	struct SSizeInt
 	{
+		SSizeInt() {};
+		SSizeInt(int _Width, int _Height) : Width(_Width), Height(_Height) {};
+
 		int Width{};
 		int Height{};
 	};
 
 	struct SClearColor
 	{
+		SClearColor() {};
+		SClearColor(float _R, float _G, float _B) : R{ _R }, G{ _G }, B{ _B } {};
+
 		float R{};
 		float G{};
 		float B{};
-
-		SClearColor() {};
-		SClearColor(float _R, float _G, float _B) : R{ _R }, G{ _G }, B{ _B } {};
 	};
 	
 	struct SVertexTexture
@@ -168,39 +217,5 @@ namespace JWEngine
 		std::cout << "[ERROR] " << Content << std::endl << std::endl;
 
 		assert(false);
-	}
-
-	static auto WstringToString(WSTRING Source)->STRING
-	{
-		STRING Result;
-
-		char* temp = nullptr;
-		size_t len = static_cast<size_t>(WideCharToMultiByte(CP_ACP, 0, Source.c_str(), -1, temp, 0, nullptr, nullptr));
-
-		temp = new char[len + 1];
-		WideCharToMultiByte(CP_ACP, 0, Source.c_str(), -1, temp, static_cast<int>(len), nullptr, nullptr);
-
-		Result = temp;
-
-		delete[] temp;
-		temp = nullptr;
-		return Result;
-	}
-
-	static auto StringToWstring(STRING Source)->WSTRING
-	{
-		WSTRING Result;
-
-		wchar_t* temp = nullptr;
-		size_t len = static_cast<size_t>(MultiByteToWideChar(CP_ACP, 0, Source.c_str(), -1, temp, 0));
-
-		temp = new wchar_t[len + 1];
-		MultiByteToWideChar(CP_ACP, 0, Source.c_str(), -1, temp, static_cast<int>(len));
-
-		Result = temp;
-
-		delete[] temp;
-		temp = nullptr;
-		return Result;
 	}
 };
