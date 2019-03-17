@@ -49,9 +49,6 @@ namespace JWEngine
 		void Update() noexcept;
 
 	private:
-		static constexpr float DEFAULT_WIDTH = 50.0f;
-		static constexpr float DEFAULT_HEIGHT = 50.0f;
-
 		bool m_IsValid{ false };
 		bool m_IsTextureCreated{ false };
 
@@ -68,7 +65,7 @@ namespace JWEngine
 		ID3D11SamplerState* m_TextureSamplerState{};
 
 		XMFLOAT2 m_Position{};
-		XMFLOAT2 m_Size{ DEFAULT_WIDTH, DEFAULT_HEIGHT };
+		XMFLOAT2 m_Size{};
 		SSizeInt m_ImageOriginalSize{};
 
 		XMMATRIX m_WVP{};

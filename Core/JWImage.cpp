@@ -110,13 +110,13 @@ PRIVATE void JWImage::CreateIndexBuffer() noexcept
 
 void JWImage::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 {
-	CheckValidity();
-
 	if (m_IsTextureCreated)
 	{
 		// Avoid duplicate creation.
 		return;
 	}
+
+	CheckValidity();
 
 	STRING path_string = Directory + FileName;
 	CreateTexture(StringToWstring(path_string));
