@@ -8,11 +8,11 @@ namespace JWEngine
 	class JWDX;
 	class JWCamera;
 
-	class JWImage2D
+	class JWImage
 	{
 	public:
-		JWImage2D() = default;
-		~JWImage2D();
+		JWImage() = default;
+		~JWImage();
 
 		// Called in JWGame class
 		void Create(JWDX& DX, JWCamera& Camera) noexcept;
@@ -20,9 +20,9 @@ namespace JWEngine
 		// Called in JWGame class
 		void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
-		auto SetPosition(XMFLOAT2 Position) noexcept->JWImage2D&;
-		auto SetSize(XMFLOAT2 Size) noexcept->JWImage2D&;
-
+		auto SetPosition(XMFLOAT2 Position) noexcept->JWImage&;
+		auto SetSize(XMFLOAT2 Size) noexcept->JWImage&;
+		
 		// Called in JWGame class
 		void Draw() noexcept;
 
@@ -39,9 +39,9 @@ namespace JWEngine
 		// Texture creation
 		void CreateTexture(WSTRING TextureFileName) noexcept;
 		void CreateSamplerState() noexcept;
-		
+
 		// Called by SetPosition() or SetSize()
-		void UpdateVertices() noexcept;
+		void UpdateScreenPositionAndSize() noexcept;
 
 		// Called by UpdateVertices()
 		void UpdateVertexBuffer() noexcept;
@@ -69,12 +69,8 @@ namespace JWEngine
 
 		XMFLOAT2 m_Position{};
 		XMFLOAT2 m_Size{ DEFAULT_WIDTH, DEFAULT_HEIGHT };
+		SSizeInt m_ImageOriginalSize{};
 
 		XMMATRIX m_WVP{};
-		XMMATRIX m_MatrixWorld{};
-
-		XMMATRIX m_MatrixTranslation{};
-		XMMATRIX m_MatrixRotation{};
-		XMMATRIX m_MatrixScale{};
 	};
 };

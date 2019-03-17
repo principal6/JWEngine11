@@ -4,7 +4,7 @@
 #include "../Core/JWDX.h"
 #include "../Core/JWCamera.h"
 #include "../Core/JWModel.h"
-#include "../Core/JWImage2D.h"
+#include "../Core/JWImage.h"
 
 namespace JWEngine
 {
@@ -27,8 +27,8 @@ namespace JWEngine
 		void AddTransparentModel(STRING Directory, STRING TransparentModelFileName) noexcept;
 		auto GetTransparentModel(size_t TransparentModelIndex) const noexcept->JWModel&;
 
-		void AddImage2D(STRING Directory, STRING ImageFileName) noexcept;
-		auto GetImage2D(size_t Image2DIndex) const noexcept->JWImage2D&;
+		void AddImage(STRING Directory, STRING ImageFileName) noexcept;
+		auto GetImage(size_t Image2DIndex) const noexcept->JWImage&;
 
 		auto GetCameraObject() noexcept->JWCamera&;
 
@@ -37,7 +37,7 @@ namespace JWEngine
 		void DrawAll() noexcept;
 
 	private:
-		inline auto GetFileNameWithBaseDirectory(STRING& FileName) noexcept->STRING;
+		inline auto GetFileNameWithBaseDirectory(const STRING& FileName) const noexcept->STRING;
 
 		void CheckValidity() const noexcept;
 
@@ -64,6 +64,6 @@ namespace JWEngine
 
 		VECTOR<UNIQUE_PTR<JWModel>> m_pOpaqueModels;
 		VECTOR<UNIQUE_PTR<JWModel>> m_pTransparentModels;
-		VECTOR<UNIQUE_PTR<JWImage2D>> m_p2DImages;
+		VECTOR<UNIQUE_PTR<JWImage>> m_p2DImages;
 	};
 };

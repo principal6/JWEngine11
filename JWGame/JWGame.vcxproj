@@ -163,10 +163,11 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Core\JWBMFontParser.cpp" />
     <ClCompile Include="..\Core\JWCamera.cpp" />
     <ClCompile Include="..\Core\JWDX.cpp" />
-    <ClCompile Include="..\Core\JWImage2D.cpp" />
-    <ClCompile Include="..\Core\JWImage3D.cpp" />
+    <ClCompile Include="..\Core\JWImage.cpp" />
+    <ClCompile Include="..\Core\JWInstantText.cpp" />
     <ClCompile Include="..\Core\JWModel.cpp" />
     <ClCompile Include="..\Core\JWWin32Window.cpp" />
     <ClCompile Include="..\TinyXml2\tinyxml2.cpp" />
@@ -245,11 +246,12 @@
     <ClInclude Include="..\Assimp\version.h" />
     <ClInclude Include="..\Assimp\Vertex.h" />
     <ClInclude Include="..\Assimp\XMLTools.h" />
+    <ClInclude Include="..\Core\JWBMFontParser.h" />
     <ClInclude Include="..\Core\JWCamera.h" />
     <ClInclude Include="..\Core\JWCommon.h" />
     <ClInclude Include="..\Core\JWDX.h" />
-    <ClInclude Include="..\Core\JWImage2D.h" />
-    <ClInclude Include="..\Core\JWImage3D.h" />
+    <ClInclude Include="..\Core\JWImage.h" />
+    <ClInclude Include="..\Core\JWInstantText.h" />
     <ClInclude Include="..\Core\JWModel.h" />
     <ClInclude Include="..\Core\JWWin32Window.h" />
     <ClInclude Include="..\DirectXTK\Inc\Audio.h" />

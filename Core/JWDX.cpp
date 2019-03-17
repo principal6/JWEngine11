@@ -39,6 +39,12 @@ JWDX::~JWDX()
 
 void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 {
+	if (m_IsValid)
+	{
+		// Avoid duplciate creation
+		return;
+	}
+
 	m_BaseDirectory = Directory;
 
 	// Set window size
@@ -74,6 +80,8 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 
 	// Create constant buffers
 	CreateConstantBuffer();
+
+	m_IsValid = true;
 }
 
 PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept

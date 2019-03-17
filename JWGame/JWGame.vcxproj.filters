@@ -39,10 +39,13 @@
     <ClCompile Include="..\TinyXml2\tinyxml2.cpp">
       <Filter>TinyXml2</Filter>
     </ClCompile>
-    <ClCompile Include="..\Core\JWImage2D.cpp">
+    <ClCompile Include="..\Core\JWInstantText.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Core\JWImage3D.cpp">
+    <ClCompile Include="..\Core\JWBMFontParser.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\JWImage.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -282,9 +285,6 @@
     <ClInclude Include="..\TinyXml2\tinyxml2.h">
       <Filter>TinyXml2</Filter>
     </ClInclude>
-    <ClInclude Include="..\Core\JWImage2D.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="..\DirectXTK\Inc\Audio.h">
       <Filter>DirectXTK</Filter>
     </ClInclude>
@@ -348,7 +348,13 @@
     <ClInclude Include="..\DirectXTK\Inc\XboxDDSTextureLoader.h">
       <Filter>DirectXTK</Filter>
     </ClInclude>
-    <ClInclude Include="..\Core\JWImage3D.h">
+    <ClInclude Include="..\Core\JWInstantText.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\JWBMFontParser.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\JWImage.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

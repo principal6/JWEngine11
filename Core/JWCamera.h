@@ -16,14 +16,18 @@ namespace JWEngine
 		// Called in JWGame class
 		void Create(JWDX& DX) noexcept;
 
-		void SetPosition(XMFLOAT4 Position) noexcept;
-		void SetLookAt(XMFLOAT4 LookAt) noexcept;
+		auto SetPosition(XMFLOAT4 Position) noexcept->JWCamera&;
+		auto SetLookAt(XMFLOAT4 LookAt) noexcept->JWCamera&;
 
-		auto GetPosition() noexcept->XMVECTOR;
+		auto GetPosition() const noexcept->XMVECTOR;
+		auto GetProjectionMatrix() const noexcept->XMMATRIX;
 		auto GetViewProjectionMatrix() const noexcept->XMMATRIX;
 		auto GetOrthographicMatrix() const noexcept->XMMATRIX;
+		auto GetViewOrthographicMatrix() const noexcept->XMMATRIX;
 
 	private:
+		bool m_IsValid{ false };
+
 		JWDX* m_pDX{};
 
 		static constexpr float NEAR_Z = 1.0f;

@@ -2,7 +2,7 @@
 
 using namespace JWEngine;
 
-PRIVATE inline auto JWGame::GetFileNameWithBaseDirectory(STRING& FileName) noexcept->STRING
+PRIVATE inline auto JWGame::GetFileNameWithBaseDirectory(const STRING& FileName) const noexcept->STRING
 {
 	return m_BaseDirectory + FileName;
 }
@@ -73,15 +73,15 @@ auto JWGame::GetTransparentModel(size_t TransparentModelIndex) const noexcept->J
 	return *m_pTransparentModels[TransparentModelIndex].get();
 }
 
-void JWGame::AddImage2D(STRING Directory, STRING ImageFileName) noexcept
+void JWGame::AddImage(STRING Directory, STRING ImageFileName) noexcept
 {
-	m_p2DImages.push_back(MAKE_UNIQUE_AND_MOVE(JWImage2D)());
+	m_p2DImages.push_back(MAKE_UNIQUE_AND_MOVE(JWImage)());
 
 	m_p2DImages[m_p2DImages.size() - 1]->Create(m_DX, m_Camera);
 	m_p2DImages[m_p2DImages.size() - 1]->LoadImageFromFile(GetFileNameWithBaseDirectory(Directory), ImageFileName);
 }
 
-auto JWGame::GetImage2D(size_t Image2DIndex) const noexcept->JWImage2D&
+auto JWGame::GetImage(size_t Image2DIndex) const noexcept->JWImage&
 {
 	return *m_p2DImages[Image2DIndex].get();
 }

@@ -21,6 +21,7 @@ void JWModel::Create(JWDX& DX, JWCamera& Camera) noexcept
 	// Set JWCamera pointer.
 	m_pCamera = &Camera;
 
+	m_MatrixWorld = XMMatrixIdentity();
 	m_MatrixTranslation = XMMatrixIdentity();
 	m_MatrixRotation = XMMatrixIdentity();
 	m_MatrixScale = XMMatrixIdentity();
@@ -211,6 +212,15 @@ void JWModel::SetWorldMatrixToIdentity() noexcept
 	m_MatrixWorld = XMMatrixIdentity();
 }
 
+auto JWModel::SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&
+{
+	m_CalculationOrder = Order;
+
+	UpdateWorldMatrix();
+
+	return *this;
+}
+
 auto JWModel::SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&
 {
 	m_MatrixTranslation = XMMatrixTranslation(Offset.x, Offset.y, Offset.z);
@@ -267,15 +277,6 @@ PRIVATE void JWModel::UpdateWorldMatrix() noexcept
 
 	// Update world position of the model
 	m_WorldPosition = XMVector3TransformCoord(XMVectorZero(), m_MatrixWorld);
-}
-
-auto JWModel::SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&
-{
-	m_CalculationOrder = Order;
-
-	UpdateWorldMatrix();
-
-	return *this;
 }
 
 auto JWModel::GetWorldPosition() noexcept->XMVECTOR

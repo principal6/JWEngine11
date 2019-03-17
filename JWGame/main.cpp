@@ -31,10 +31,9 @@ int main()
 		.SetScale(XMFLOAT3(0.08f, 0.08f, 0.08f))
 		.SetTranslation(XMFLOAT3(4, 0, 0));
 
-	myGame.AddImage2D("Asset\\", "test.png");
-	myGame.GetImage2D(0)
-		.SetPosition(XMFLOAT2(50, 50))
-		.SetSize(XMFLOAT2(200, 200));
+	myGame.AddImage("Asset\\", "firefox_56x80_creek23.png");
+	myGame.GetImage(0)
+		.SetPosition(XMFLOAT2(20, 30));
 
 	myGame.SetRenderFunction(Render);
 
@@ -49,7 +48,7 @@ int main()
 
 void Render()
 {
-	rotation_angle += 0.0002f;
+	rotation_angle += 0.0005f;
 	if (rotation_angle >= XM_PI * 2)
 	{
 		rotation_angle = 0;

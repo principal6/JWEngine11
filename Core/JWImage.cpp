@@ -1,10 +1,10 @@
-#include "JWImage2D.h"
+#include "JWImage.h"
 #include "../Core/JWDX.h"
 #include "JWCamera.h"
 
 using namespace JWEngine;
 
-JWImage2D::~JWImage2D()
+JWImage::~JWImage()
 {
 	m_TextureSamplerState->Release();
 	m_TextureShaderResourceView->Release();
@@ -13,7 +13,7 @@ JWImage2D::~JWImage2D()
 	m_IndexBuffer->Release();
 }
 
-void JWImage2D::Create(JWDX& DX, JWCamera& Camera) noexcept
+void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
 {
 	if (m_IsValid)
 	{
@@ -27,17 +27,10 @@ void JWImage2D::Create(JWDX& DX, JWCamera& Camera) noexcept
 	// Set JWCamera pointer.
 	m_pCamera = &Camera;
 
-	m_MatrixWorld = XMMatrixIdentity();
-	m_MatrixTranslation = XMMatrixIdentity();
-	m_MatrixRotation = XMMatrixIdentity();
-	m_MatrixScale = XMMatrixIdentity();
-
 	AddVertex(SVertex(0, 0, 0, 0, 0));
 	AddVertex(SVertex(1, 0, 0, 1, 0));
 	AddVertex(SVertex(0, -1, 0, 0, 1));
 	AddVertex(SVertex(1, -1, 0, 1, 1));
-
-	UpdateVertices();
 
 	AddIndex(SIndex(0, 1, 2));
 	AddIndex(SIndex(1, 3, 2));
@@ -47,7 +40,7 @@ void JWImage2D::Create(JWDX& DX, JWCamera& Camera) noexcept
 	m_IsValid = true;
 }
 
-PRIVATE void JWImage2D::CheckValidity() const noexcept
+PRIVATE void JWImage::CheckValidity() const noexcept
 {
 	if (!m_IsValid)
 	{
@@ -55,17 +48,17 @@ PRIVATE void JWImage2D::CheckValidity() const noexcept
 	}
 }
 
-PRIVATE inline void JWImage2D::AddVertex(const SVertex& Vertex) noexcept
+PRIVATE inline void JWImage::AddVertex(const SVertex& Vertex) noexcept
 {
 	m_VertexData.Vertices.push_back(Vertex);
 }
 
-PRIVATE inline void JWImage2D::AddIndex(const SIndex& Index) noexcept
+PRIVATE inline void JWImage::AddIndex(const SIndex& Index) noexcept
 {
 	m_IndexData.Indices.push_back(Index);
 }
 
-PRIVATE void JWImage2D::AddEnd() noexcept
+PRIVATE void JWImage::AddEnd() noexcept
 {
 	// Calculate the count of vertices
 	m_VertexData.Count = static_cast<UINT>(m_VertexData.Vertices.size());
@@ -83,7 +76,7 @@ PRIVATE void JWImage2D::AddEnd() noexcept
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-PRIVATE void JWImage2D::CreateVertexBuffer() noexcept
+PRIVATE void JWImage::CreateVertexBuffer() noexcept
 {
 	D3D11_BUFFER_DESC vertex_buffer_description{};
 	vertex_buffer_description.Usage = D3D11_USAGE_DYNAMIC;
@@ -99,7 +92,7 @@ PRIVATE void JWImage2D::CreateVertexBuffer() noexcept
 	m_pDX->GetDevice()->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, &m_VertexBuffer);
 }
 
-PRIVATE void JWImage2D::CreateIndexBuffer() noexcept
+PRIVATE void JWImage::CreateIndexBuffer() noexcept
 {
 	D3D11_BUFFER_DESC index_buffer_description{};
 	index_buffer_description.Usage = D3D11_USAGE_DEFAULT;
@@ -115,7 +108,7 @@ PRIVATE void JWImage2D::CreateIndexBuffer() noexcept
 	m_pDX->GetDevice()->CreateBuffer(&index_buffer_description, &index_buffer_data, &m_IndexBuffer);
 }
 
-void JWImage2D::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
+void JWImage::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 {
 	CheckValidity();
 
@@ -129,16 +122,29 @@ void JWImage2D::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 	CreateTexture(StringToWstring(path_string));
 }
 
-PRIVATE void JWImage2D::CreateTexture(WSTRING TextureFileName) noexcept
+PRIVATE void JWImage::CreateTexture(WSTRING TextureFileName) noexcept
 {
-	CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &m_TextureShaderResourceView, 0);
+	ID3D11Texture2D* p_resource{};
+
+	CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), (ID3D11Resource**)&p_resource, &m_TextureShaderResourceView, 0);
+	
+	// Get file info
+	D3D11_TEXTURE2D_DESC texture_description{};
+	p_resource->GetDesc(&texture_description);
+	m_ImageOriginalSize.Width = texture_description.Width;
+	m_ImageOriginalSize.Height = texture_description.Height;
+	SetSize(XMFLOAT2(static_cast<float>(m_ImageOriginalSize.Width), static_cast<float>(m_ImageOriginalSize.Height)));
+
+	// Release the resource
+	p_resource->Release();
+	p_resource = nullptr;
 
 	CreateSamplerState();
 
 	m_IsTextureCreated = true;
 }
 
-PRIVATE void JWImage2D::CreateSamplerState() noexcept
+PRIVATE void JWImage::CreateSamplerState() noexcept
 {
 	if (m_TextureSamplerState)
 	{
@@ -154,29 +160,29 @@ PRIVATE void JWImage2D::CreateSamplerState() noexcept
 	sampler_description.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampler_description.MinLOD = 0;
 	sampler_description.MaxLOD = D3D11_FLOAT32_MAX;
-
+	
 	m_pDX->GetDevice()->CreateSamplerState(&sampler_description, &m_TextureSamplerState);
 }
 
-auto JWImage2D::SetPosition(XMFLOAT2 Position) noexcept->JWImage2D&
+auto JWImage::SetPosition(XMFLOAT2 Position) noexcept->JWImage&
 {
 	m_Position = Position;
 
-	UpdateVertices();
+	UpdateScreenPositionAndSize();
 
 	return *this;
 }
 
-auto JWImage2D::SetSize(XMFLOAT2 Size) noexcept->JWImage2D&
+auto JWImage::SetSize(XMFLOAT2 Size) noexcept->JWImage&
 {
 	m_Size = Size;
 
-	UpdateVertices();
+	UpdateScreenPositionAndSize();
 
 	return *this;
 }
 
-PRIVATE void JWImage2D::UpdateVertices() noexcept
+PRIVATE void JWImage::UpdateScreenPositionAndSize() noexcept
 {
 	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
 	float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
@@ -199,7 +205,7 @@ PRIVATE void JWImage2D::UpdateVertices() noexcept
 	}
 }
 
-PRIVATE void JWImage2D::UpdateVertexBuffer() noexcept
+PRIVATE void JWImage::UpdateVertexBuffer() noexcept
 {
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
 	m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
@@ -209,11 +215,11 @@ PRIVATE void JWImage2D::UpdateVertexBuffer() noexcept
 	m_pDX->GetDeviceContext()->Unmap(m_VertexBuffer, 0);
 }
 
-PRIVATE void JWImage2D::Update() noexcept
+PRIVATE void JWImage::Update() noexcept
 {
 	// Set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
-	m_WVP = m_MatrixWorld * m_pCamera->GetOrthographicMatrix();
+	m_WVP = XMMatrixIdentity() * m_pCamera->GetOrthographicMatrix();
 	m_pDX->SetConstantBufferData(SConstantBufferDataPerObject(XMMatrixTranspose(m_WVP)));
 
 	// Set texture and sampler for pixel shader
@@ -221,7 +227,7 @@ PRIVATE void JWImage2D::Update() noexcept
 	m_pDX->GetDeviceContext()->PSSetSamplers(0, 1, &m_TextureSamplerState);
 }
 
-void JWImage2D::Draw() noexcept
+void JWImage::Draw() noexcept
 {
 	Update();
 

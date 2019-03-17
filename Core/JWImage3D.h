@@ -41,6 +41,7 @@ namespace JWEngine
 
 	private:
 		bool m_IsValid{ false };
+		bool m_IsTextureCreated{ false };
 
 		JWDX* m_pDX{};
 		JWCamera* m_pCamera{};

@@ -21,7 +21,6 @@ namespace JWEngine
 		
 		void SetWorldMatrixToIdentity() noexcept;
 		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&;
-
 		auto SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&;
 		auto SetRotation(XMFLOAT4 RotationAxis, float Angle) noexcept->JWModel&;
 		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;

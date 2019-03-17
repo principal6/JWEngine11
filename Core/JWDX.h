@@ -79,6 +79,8 @@ namespace JWEngine
 		void CreateConstantBuffer() noexcept;
 
 	private:
+		bool m_IsValid{ false };
+
 		STRING m_BaseDirectory;
 
 		SSizeInt m_WindowSize{};

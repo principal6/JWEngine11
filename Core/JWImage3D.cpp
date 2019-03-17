@@ -111,6 +111,12 @@ void JWImage3D::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 {
 	CheckValidity();
 
+	if (m_IsTextureCreated)
+	{
+		// Avoid duplicate creation.
+		return;
+	}
+
 	STRING path_string = Directory + FileName;
 	CreateTexture(StringToWstring(path_string));
 }
@@ -120,6 +126,8 @@ PRIVATE void JWImage3D::CreateTexture(WSTRING TextureFileName) noexcept
 	CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &m_TextureShaderResourceView, 0);
 
 	CreateSamplerState();
+
+	m_IsTextureCreated = true;
 }
 
 PRIVATE void JWImage3D::CreateSamplerState() noexcept
