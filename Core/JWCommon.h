@@ -91,6 +91,10 @@
 // Private method prefix
 #define PRIVATE
 
+#define AVOID_DUPLICATE_CREATION(BOOL) {if(BOOL){return;}}
+
+#define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
+
 namespace JWEngine
 {
 	using namespace DirectX;

@@ -32,8 +32,20 @@ auto JWBMFontParser::ParseComma(const STRING& Data, UINT ID) noexcept->UINT
 	return Result;
 }
 
+auto JWBMFontParser::IsParsed() const noexcept->bool
+{
+	return ms_FontData.bFontDataParsed;
+}
+
 auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 {
+	if (IsParsed())
+	{
+		// Avoid duplicate parsing
+		//@warning: at this point Parse() returns 'false'(== parsing failed)
+		return false;
+	}
+
 	// Clear ms_FontData
 	ms_FontData.Pages.clear();
 	ms_FontData.Chars.clear();
@@ -221,6 +233,8 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 		}
 
 		// The parsing ended successfully
+		ms_FontData.bFontDataParsed = true;
+
 		return true;
 	}
 
@@ -228,14 +242,24 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 	return false;
 }
 
-auto JWBMFontParser::GetFontData() const noexcept->const BMFont*
+auto JWBMFontParser::GetFontTextureWidth() const noexcept->float
 {
-	return &ms_FontData;
+	return static_cast<float>(ms_FontData.Common.ScaleW);
 }
 
-auto JWBMFontParser::GetCharsIDFromCharacter(wchar_t Character) const noexcept->size_t
+auto JWBMFontParser::GetFontTextureHeight() const noexcept->float
 {
-	Character = static_cast<wchar_t>(min(Character, MAX_WCHAR_INDEX));
+	return static_cast<float>(ms_FontData.Common.ScaleH);
+}
 
-	return ms_FontData.MappedCharacters[Character];
+auto JWBMFontParser::GetBMCharFromWideCharacter(wchar_t WideCharacter) const noexcept->BMFont::BMChar&
+{
+	return ms_FontData.Chars[GetCharsIDFromWideCharacter(WideCharacter)];
+}
+
+PRIVATE auto JWBMFontParser::GetCharsIDFromWideCharacter(wchar_t WideCharacter) const noexcept->size_t
+{
+	WideCharacter = static_cast<wchar_t>(min(WideCharacter, MAX_WCHAR_INDEX));
+
+	return ms_FontData.MappedCharacters[WideCharacter];
 }

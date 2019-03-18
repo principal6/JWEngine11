@@ -193,12 +193,17 @@ namespace JWEngine
 		JWBMFontParser() {};
 		virtual ~JWBMFontParser() {};
 
+		virtual auto IsParsed() const noexcept->bool;
+
 		virtual auto Parse(const WSTRING& FileName) noexcept->bool;
-		virtual auto GetFontData() const noexcept->const BMFont*;
-		virtual auto GetCharsIDFromCharacter(wchar_t Character) const noexcept->size_t;
+		
+		virtual auto GetFontTextureWidth() const noexcept->float;
+		virtual auto GetFontTextureHeight() const noexcept->float;
+		virtual auto GetBMCharFromWideCharacter(wchar_t WideCharacter) const noexcept->BMFont::BMChar&;
 
 	protected:
 		virtual auto ParseComma(const STRING& Data, UINT ID) noexcept->UINT;
+		virtual auto GetCharsIDFromWideCharacter(wchar_t WideCharacter) const noexcept->size_t;
 
 	protected:
 		static BMFont ms_FontData;

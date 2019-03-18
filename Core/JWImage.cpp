@@ -15,11 +15,7 @@ JWImage::~JWImage()
 
 void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
 {
-	if (m_IsValid)
-	{
-		// Avoid duplicate creation
-		return;
-	}
+	AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	// Set JWDX pointer.
 	m_pDX = &DX;
@@ -44,16 +40,16 @@ PRIVATE void JWImage::CheckValidity() const noexcept
 {
 	if (!m_IsValid)
 	{
-		JWAbort("JWImage2D object not valid. You must call JWImage2D::Create() first");
+		JWAbort("JWImage object not valid. You must call JWImage::Create() first");
 	}
 }
 
-PRIVATE inline void JWImage::AddVertex(const SVertex& Vertex) noexcept
+PRIVATE void JWImage::AddVertex(const SVertex& Vertex) noexcept
 {
 	m_VertexData.Vertices.push_back(Vertex);
 }
 
-PRIVATE inline void JWImage::AddIndex(const SIndex& Index) noexcept
+PRIVATE void JWImage::AddIndex(const SIndex& Index) noexcept
 {
 	m_IndexData.Indices.push_back(Index);
 }
@@ -110,11 +106,7 @@ PRIVATE void JWImage::CreateIndexBuffer() noexcept
 
 void JWImage::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 {
-	if (m_IsTextureCreated)
-	{
-		// Avoid duplicate creation.
-		return;
-	}
+	AVOID_DUPLICATE_CREATION(m_IsTextureCreated);
 
 	CheckValidity();
 
@@ -146,11 +138,7 @@ PRIVATE void JWImage::CreateTexture(WSTRING TextureFileName) noexcept
 
 PRIVATE void JWImage::CreateSamplerState() noexcept
 {
-	if (m_TextureSamplerState)
-	{
-		// To avoid duplicate creation.
-		return;
-	}
+	AVOID_DUPLICATE_CREATION(m_TextureSamplerState);
 
 	D3D11_SAMPLER_DESC sampler_description{};
 	sampler_description.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;

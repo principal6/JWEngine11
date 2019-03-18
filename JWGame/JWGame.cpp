@@ -7,19 +7,25 @@ PRIVATE inline auto JWGame::GetFileNameWithBaseDirectory(const STRING& FileName)
 	return m_BaseDirectory + FileName;
 }
 
-void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING Directory) noexcept
+void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING BaseDirectory, STRING GameFontFileName) noexcept
 {
-	m_BaseDirectory = Directory;
+	AVOID_DUPLICATE_CREATION(m_IsValid);
+
+	m_BaseDirectory = BaseDirectory;
 
 	m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
 
 	m_Window.Create(WindowPosition, WindowSize, Title);
 	m_IsWindowCreated = true;
 
-	m_DX.Create(m_Window, Directory);
+	m_DX.Create(m_Window, m_BaseDirectory);
 	m_IsDXCreated = true;
 	
 	m_Camera.Create(m_DX);
+
+	m_InstantText.Create(m_DX, m_Camera, BaseDirectory, GameFontFileName);
+
+	m_IsValid = true;
 }
 
 void JWGame::SetRenderFunction(FP_RENDER Render) noexcept
@@ -37,7 +43,7 @@ void JWGame::SetRasterizerState(ERasterizerState State) noexcept
 	m_DX.SetRasterizerState(State);
 }
 
-PRIVATE void JWGame::SetBlendState(EBlendState State) noexcept
+void JWGame::SetBlendState(EBlendState State) noexcept
 {
 	m_DX.SetBlendState(State);
 }
@@ -91,6 +97,11 @@ auto JWGame::GetCameraObject() noexcept->JWCamera&
 	return m_Camera;
 }
 
+auto JWGame::GetInstantTextObject() noexcept->JWInstantText&
+{
+	return m_InstantText;
+}
+
 PRIVATE void JWGame::CheckValidity() const noexcept
 {
 	if (!m_IsWindowCreated)
@@ -115,7 +126,7 @@ void JWGame::Run() noexcept
 
 	while (true)
 	{
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT)
 			{
@@ -137,8 +148,11 @@ void JWGame::Run() noexcept
 	}
 }
 
-void JWGame::DrawAll() noexcept
+void JWGame::DrawModelsAndImages() noexcept
 {
+	m_DX.SetDefaultVS();
+	m_DX.SetDefaultPS();
+
 	// Draw 3D models
 	SetDepthStencilState(EDepthStencilState::ZEnabled);
 	SetBlendState(EBlendState::Opaque);
@@ -152,6 +166,12 @@ void JWGame::DrawAll() noexcept
 	SetBlendState(EBlendState::Opaque);
 	SetDepthStencilState(EDepthStencilState::ZDisabled);
 	DrawAll2DImages();
+}
+
+void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
+{
+	SetBlendState(EBlendState::Transprent);
+	m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
 }
 
 PRIVATE void JWGame::DrawAllOpaqueModels() const noexcept

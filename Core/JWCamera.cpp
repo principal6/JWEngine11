@@ -5,11 +5,7 @@ using namespace JWEngine;
 
 void JWCamera::Create(JWDX& DX) noexcept
 {
-	if (m_IsValid)
-	{
-		// Avoid duplicate creation
-		return;
-	}
+	AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	m_pDX = &DX;
 

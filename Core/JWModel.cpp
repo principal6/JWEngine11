@@ -15,6 +15,8 @@ JWModel::~JWModel()
 
 void JWModel::Create(JWDX& DX, JWCamera& Camera) noexcept
 {
+	AVOID_DUPLICATE_CREATION(m_IsValid);
+
 	// Set JWDX pointer.
 	m_pDX = &DX;
 
@@ -115,11 +117,7 @@ PRIVATE void JWModel::CreateTexture(WSTRING TextureFileName) noexcept
 
 PRIVATE void JWModel::CreateSamplerState() noexcept
 {
-	if (m_TextureSamplerState)
-	{
-		// To avoid duplicate creation.
-		return;
-	}
+	AVOID_DUPLICATE_CREATION(m_TextureSamplerState);
 
 	D3D11_SAMPLER_DESC sampler_description{};
 	sampler_description.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;

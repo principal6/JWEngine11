@@ -16,7 +16,7 @@ int main()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	
-	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\");
+	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\", "Asset\\megt20all");
 
 	myGame.GetCameraObject().SetPosition(XMFLOAT4(0.0f, 4.0f, -6.0f, 0.0f));
 
@@ -57,5 +57,7 @@ void Render()
 	myGame.GetTransparentModel(0).SetRotation(XMFLOAT4(0, 1, 0, 0), rotation_angle);
 	myGame.GetTransparentModel(1).SetRotation(XMFLOAT4(0, 1, 0, 0), -rotation_angle);
 
-	myGame.DrawAll();
+	myGame.DrawModelsAndImages();
+
+	myGame.DrawInstantText("Test instant text", XMFLOAT2(10, 5), XMFLOAT3(0, 0.5f, 0.7f));
 }

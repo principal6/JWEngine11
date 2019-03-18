@@ -1,11 +1,11 @@
-#include "ShaderHeader.hlsl"
+#include "DefaultHeader.hlsl"
 
 cbuffer cbPerObject
 {
 	float4x4 WVP;
 };
 
-VS_OUTPUT VS(VS_INPUT input)
+VS_OUTPUT main(VS_INPUT input)
 {
 	VS_OUTPUT output;
 

@@ -38,12 +38,12 @@ void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& T
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
 	wc.hInstance = m_hInstance;
-	wc.hIcon = LoadIconA(NULL, IDI_APPLICATION);
+	wc.hIcon = LoadIconA(nullptr, IDI_APPLICATION);
 	wc.hCursor = nullptr; //LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = nullptr; //(HBRUSH)(COLOR_WINDOW + 2);
 	wc.lpszMenuName = nullptr;
 	wc.lpszClassName = "JWEngine";
-	wc.hIconSm = LoadIconA(NULL, IDI_APPLICATION);
+	wc.hIconSm = LoadIconA(nullptr, IDI_APPLICATION);
 
 	if (!RegisterClassExA(&wc))
 	{
@@ -53,7 +53,7 @@ void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& T
 	RECT rect = { Position.X, Position.Y, Position.X + Size.Width, Position.Y + Size.Height };
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
-	m_hWnd = CreateWindowExA(NULL, wc.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, Position.X, Position.Y,
+	m_hWnd = CreateWindowExA(0, wc.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, Position.X, Position.Y,
 		Size.Width, Size.Height, nullptr, nullptr, m_hInstance, nullptr);
 
 	if (!m_hWnd)

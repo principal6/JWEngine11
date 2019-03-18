@@ -12,43 +12,43 @@ namespace JWEngine
 	{
 	public:
 		JWImage() = default;
-		~JWImage();
+		virtual ~JWImage();
 
 		// Called in JWGame class
-		void Create(JWDX& DX, JWCamera& Camera) noexcept;
+		virtual void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
 		// Called in JWGame class
-		void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
+		virtual void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
-		auto SetPosition(XMFLOAT2 Position) noexcept->JWImage&;
-		auto SetSize(XMFLOAT2 Size) noexcept->JWImage&;
+		virtual auto SetPosition(XMFLOAT2 Position) noexcept->JWImage&;
+		virtual auto SetSize(XMFLOAT2 Size) noexcept->JWImage&;
 		
 		// Called in JWGame class
-		void Draw() noexcept;
+		virtual void Draw() noexcept;
 
-	private:
-		void CheckValidity() const noexcept;
+	protected:
+		virtual void CheckValidity() const noexcept;
 
 		// Buffer creation
-		inline void AddVertex(const SVertex& Vertex) noexcept;
-		inline void AddIndex(const SIndex& Index) noexcept;
-		void AddEnd() noexcept;
-		void CreateVertexBuffer() noexcept;
-		void CreateIndexBuffer() noexcept;
+		virtual void AddVertex(const SVertex& Vertex) noexcept;
+		virtual void AddIndex(const SIndex& Index) noexcept;
+		virtual void AddEnd() noexcept;
+		virtual void CreateVertexBuffer() noexcept;
+		virtual void CreateIndexBuffer() noexcept;
 
 		// Texture creation
-		void CreateTexture(WSTRING TextureFileName) noexcept;
-		void CreateSamplerState() noexcept;
+		virtual void CreateTexture(WSTRING TextureFileName) noexcept;
+		virtual void CreateSamplerState() noexcept;
 
 		// Called by SetPosition() or SetSize()
-		void UpdateScreenPositionAndSize() noexcept;
+		virtual void UpdateScreenPositionAndSize() noexcept;
 
 		// Called by UpdateVertices()
-		void UpdateVertexBuffer() noexcept;
+		virtual void UpdateVertexBuffer() noexcept;
 
-		void Update() noexcept;
+		virtual void Update() noexcept;
 
-	private:
+	protected:
 		bool m_IsValid{ false };
 		bool m_IsTextureCreated{ false };
 

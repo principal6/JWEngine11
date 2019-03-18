@@ -39,6 +39,9 @@ namespace JWEngine
 		void SetBlendState(EBlendState State) noexcept;
 		void SetDepthStencilState(EDepthStencilState State) noexcept;
 		void SetConstantBufferData(SConstantBufferDataPerObject Data) noexcept;
+		
+		void SetDefaultVS() noexcept;
+		void SetDefaultPS() noexcept;
 
 		void BeginDrawing(const SClearColor& ClearColor) noexcept;
 		void EndDrawing() noexcept;
@@ -52,10 +55,11 @@ namespace JWEngine
 		void CreateDeviceAndSwapChain(HWND hWnd) noexcept;
 
 		// Called in Create()
-		void CreateShaders() noexcept;
+		void CreateDefaultVS() noexcept;
+		void CreateDefaultPS() noexcept;
 
 		// Called in Create()
-		void CreateViewport() noexcept;
+		void CreateDefaultViewport() noexcept;
 		
 		// Called in Create()
 		void CreateInputLayout() noexcept;
@@ -93,8 +97,8 @@ namespace JWEngine
 		ID3D10Blob* m_VertexShaderBuffer{};
 		ID3D10Blob* m_PixelShaderBuffer{};
 		
-		ID3D11VertexShader* m_VertexShader11{};
-		ID3D11PixelShader* m_PixelShader11{};
+		ID3D11VertexShader* m_DefaultVS11{};
+		ID3D11PixelShader* m_DefaultPS11{};
 
 		ID3D11InputLayout* m_InputLayout11{};
 
@@ -114,5 +118,7 @@ namespace JWEngine
 
 		ID3D11Buffer* m_ConstantBufferPerObject{};
 		SConstantBufferDataPerObject m_ConstantBufferDataPerObject;
+
+		D3D11_VIEWPORT m_DefaultViewPort{};
 	};
 };

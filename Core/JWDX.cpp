@@ -25,8 +25,8 @@ JWDX::~JWDX()
 
 	m_InputLayout11->Release();
 
-	m_VertexShader11->Release();
-	m_PixelShader11->Release();
+	m_DefaultVS11->Release();
+	m_DefaultPS11->Release();
 
 	m_VertexShaderBuffer->Release();
 	m_PixelShaderBuffer->Release();
@@ -39,11 +39,7 @@ JWDX::~JWDX()
 
 void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 {
-	if (m_IsValid)
-	{
-		// Avoid duplciate creation
-		return;
-	}
+	AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	m_BaseDirectory = Directory;
 
@@ -54,11 +50,12 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 	// Create device and swap chain
 	CreateDeviceAndSwapChain(Window.GethWnd());
 
-	// Create shaders
-	CreateShaders();
+	// Create default shaders
+	CreateDefaultVS();
+	CreateDefaultPS();
 
 	// Create viewport
-	CreateViewport();
+	CreateDefaultViewport();
 
 	// Create input layout
 	CreateInputLayout();
@@ -108,40 +105,48 @@ PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 	swap_chain_description.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
 	// Create the Device and the SwapChain
-	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, NULL, nullptr, NULL,
+	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0,
 		D3D11_SDK_VERSION, &swap_chain_description, &m_SwapChain, &m_Device11, nullptr, &m_DeviceContext11);
 }
 
-PRIVATE void JWDX::CreateShaders() noexcept
+PRIVATE void JWDX::CreateDefaultVS() noexcept
 {
-	// Compile Shaders from shader file
+	// Compile shader from file
 	WSTRING shader_file_name;
-	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\BasicVertexShader.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VS", "vs_4_0", 0, 0, &m_VertexShaderBuffer, nullptr);
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\DefaultVS.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0", 0, 0, &m_VertexShaderBuffer, nullptr);
 
-	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\BasicPixelShader.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PS", "ps_4_0", 0, 0, &m_PixelShaderBuffer, nullptr);
-
-	// Create the Shader Objects
-	m_Device11->CreateVertexShader(m_VertexShaderBuffer->GetBufferPointer(), m_VertexShaderBuffer->GetBufferSize(), NULL, &m_VertexShader11);
-	m_Device11->CreatePixelShader(m_PixelShaderBuffer->GetBufferPointer(), m_PixelShaderBuffer->GetBufferSize(), NULL, &m_PixelShader11);
-
-	// Set Vertex and Pixel Shaders
-	m_DeviceContext11->VSSetShader(m_VertexShader11, 0, 0);
-	m_DeviceContext11->PSSetShader(m_PixelShader11, 0, 0);
+	// Create shader
+	m_Device11->CreateVertexShader(m_VertexShaderBuffer->GetBufferPointer(), m_VertexShaderBuffer->GetBufferSize(), nullptr, &m_DefaultVS11);
+	
+	SetDefaultVS();
 }
 
-PRIVATE void JWDX::CreateViewport() noexcept
+PRIVATE void JWDX::CreateDefaultPS() noexcept
 {
-	// Create the viewport
-	D3D11_VIEWPORT view_port{};
-	view_port.Width = static_cast<FLOAT>(m_WindowSize.Width);
-	view_port.Height = static_cast<FLOAT>(m_WindowSize.Height);
-	view_port.MinDepth = 0.0f; // IMPORTANT!
-	view_port.MaxDepth = 1.0f; // IMPORTANT!
+	// Compile shader from file
+	WSTRING shader_file_name;
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\DefaultPS.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &m_PixelShaderBuffer, nullptr);
+
+	// Create shader
+	m_Device11->CreatePixelShader(m_PixelShaderBuffer->GetBufferPointer(), m_PixelShaderBuffer->GetBufferSize(), nullptr, &m_DefaultPS11);
+
+	SetDefaultPS();
+}
+
+PRIVATE void JWDX::CreateDefaultViewport() noexcept
+{
+	// Setup the viewport
+	m_DefaultViewPort.TopLeftX = 0;
+	m_DefaultViewPort.TopLeftY = 0;
+	m_DefaultViewPort.Width = static_cast<FLOAT>(m_WindowSize.Width);
+	m_DefaultViewPort.Height = static_cast<FLOAT>(m_WindowSize.Height);
+	m_DefaultViewPort.MinDepth = 0.0f; // IMPORTANT!
+	m_DefaultViewPort.MaxDepth = 1.0f; // IMPORTANT!
 
 	// Set the viewport
-	m_DeviceContext11->RSSetViewports(1, &view_port);
+	m_DeviceContext11->RSSetViewports(1, &m_DefaultViewPort);
 }
 
 PRIVATE void JWDX::CreateInputLayout() noexcept
@@ -334,6 +339,18 @@ void JWDX::SetConstantBufferData(SConstantBufferDataPerObject Data) noexcept
 
 	m_DeviceContext11->UpdateSubresource(m_ConstantBufferPerObject, 0, nullptr, &m_ConstantBufferDataPerObject, 0, 0);
 	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_ConstantBufferPerObject);
+}
+
+void JWDX::SetDefaultVS() noexcept
+{
+	// Set the default VS
+	m_DeviceContext11->VSSetShader(m_DefaultVS11, nullptr, 0);
+}
+
+void JWDX::SetDefaultPS() noexcept
+{
+	// Set the default PS
+	m_DeviceContext11->PSSetShader(m_DefaultPS11, nullptr, 0);
 }
 
 void JWDX::BeginDrawing(const SClearColor& ClearColor) noexcept
