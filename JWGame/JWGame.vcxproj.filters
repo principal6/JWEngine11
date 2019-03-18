@@ -48,6 +48,9 @@
     <ClCompile Include="..\Core\JWImage.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\Core\JWTimer.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Core\JWCommon.h">
@@ -356,6 +359,9 @@
     </ClInclude>
     <ClInclude Include="..\Shaders\DefaultHeader.hlsl">
       <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\JWTimer.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

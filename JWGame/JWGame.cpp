@@ -102,6 +102,11 @@ auto JWGame::GetInstantTextObject() noexcept->JWInstantText&
 	return m_InstantText;
 }
 
+auto JWGame::GetFPS() noexcept->int
+{
+	return m_FPS;
+}
+
 PRIVATE void JWGame::CheckValidity() const noexcept
 {
 	if (!m_IsWindowCreated)
@@ -138,12 +143,27 @@ void JWGame::Run() noexcept
 		}
 		else
 		{
+			// Advance FPSCount
+			++m_FPSCount;
+
 			m_DX.BeginDrawing(m_ClearColor);
 
 			// Call the outter render function.
 			m_fpRender();
 
 			m_DX.EndDrawing();
+
+			if (m_Timer.GetElapsedTimeMilliSec() >= 1000)
+			{
+				// Save FPS
+				m_FPS = static_cast<int>(m_FPSCount);
+
+				// Reset FPSCount
+				m_FPSCount = 0;
+
+				// Reset timer
+				m_Timer.ResetTimer();
+			}
 		}
 	}
 }

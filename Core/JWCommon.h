@@ -7,6 +7,7 @@
 #include <map>
 #include <cassert>
 #include <crtdbg.h>
+#include <chrono>
 
 #include <d3d11.h>
 #include <DirectXMath.h> // @IMPORTANT not <xnamath.h> prefix:XM
@@ -82,6 +83,14 @@
 		temp = nullptr;
 		return Result;
 	}
+
+	inline auto ConvertIntToSTRING(int value)->STRING
+	{
+		char temp[255]{};
+		sprintf_s(temp, "%d", value);
+		return STRING(temp);
+	}
+
 #endif
 
 // Static function prefix

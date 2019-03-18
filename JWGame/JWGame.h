@@ -6,6 +6,7 @@
 #include "../Core/JWModel.h"
 #include "../Core/JWImage.h"
 #include "../Core/JWInstantText.h"
+#include "../Core/JWTimer.h"
 
 namespace JWEngine
 {
@@ -34,6 +35,7 @@ namespace JWEngine
 
 		auto GetCameraObject() noexcept->JWCamera&;
 		auto GetInstantTextObject() noexcept->JWInstantText&;
+		auto GetFPS() noexcept->int;
 
 		void Run() noexcept;
 
@@ -67,6 +69,10 @@ namespace JWEngine
 		JWCamera m_Camera{};
 
 		JWInstantText m_InstantText{};
+
+		JWTimer m_Timer{};
+		long long m_FPSCount{};
+		int m_FPS{};
 
 		VECTOR<UNIQUE_PTR<JWModel>> m_pOpaqueModels;
 		VECTOR<UNIQUE_PTR<JWModel>> m_pTransparentModels;

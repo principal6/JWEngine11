@@ -59,5 +59,6 @@ void Render()
 
 	myGame.DrawModelsAndImages();
 
-	myGame.DrawInstantText("Test instant text", XMFLOAT2(10, 5), XMFLOAT3(0, 0.5f, 0.7f));
+	myGame.DrawInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()), XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
+	myGame.DrawInstantText("Test instant text", XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));
 }

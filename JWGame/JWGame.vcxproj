@@ -169,6 +169,7 @@
     <ClCompile Include="..\Core\JWImage.cpp" />
     <ClCompile Include="..\Core\JWInstantText.cpp" />
     <ClCompile Include="..\Core\JWModel.cpp" />
+    <ClCompile Include="..\Core\JWTimer.cpp" />
     <ClCompile Include="..\Core\JWWin32Window.cpp" />
     <ClCompile Include="..\TinyXml2\tinyxml2.cpp" />
     <ClCompile Include="JWGame.cpp" />
@@ -253,6 +254,7 @@
     <ClInclude Include="..\Core\JWImage.h" />
     <ClInclude Include="..\Core\JWInstantText.h" />
     <ClInclude Include="..\Core\JWModel.h" />
+    <ClInclude Include="..\Core\JWTimer.h" />
     <ClInclude Include="..\Core\JWWin32Window.h" />
     <ClInclude Include="..\DirectXTK\Inc\Audio.h" />
     <ClInclude Include="..\DirectXTK\Inc\CommonStates.h" />
