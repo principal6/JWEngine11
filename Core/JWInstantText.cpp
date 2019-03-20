@@ -54,7 +54,8 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 		m_VertexData.Vertices.push_back(SVertex());
 	}
 
-	JWImage::CreateVertexBuffer();
+	// Create vertex buffer
+	m_pDX->CreateDynamicVertexBuffer(sizeof(SVertex) * m_VertexData.Count, &m_VertexData.Vertices[0], &m_VertexBuffer);
 }
 
 PRIVATE void JWInstantText::CreateInstantTextIndexBuffer() noexcept
@@ -69,7 +70,8 @@ PRIVATE void JWInstantText::CreateInstantTextIndexBuffer() noexcept
 		m_IndexData.Indices.push_back(SIndex(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));
 	}
 
-	JWImage::CreateIndexBuffer();
+	// Create index buffer
+	m_pDX->CreateIndexBuffer(sizeof(DWORD) * m_IndexData.Count, &m_IndexData.Indices[0], &m_IndexBuffer);
 }
 
 PRIVATE void JWInstantText::CreateInstantTextPS() noexcept

@@ -36,12 +36,9 @@ namespace JWEngine
 		virtual void AddVertex(const SVertex& Vertex) noexcept;
 		virtual void AddIndex(const SIndex& Index) noexcept;
 		virtual void AddEnd() noexcept;
-		virtual void CreateVertexBuffer() noexcept;
-		virtual void CreateIndexBuffer() noexcept;
 
 		// Texture creation
 		virtual void CreateTexture(WSTRING TextureFileName) noexcept;
-		virtual void CreateSamplerState() noexcept;
 
 		// Called by SetPosition() or SetSize()
 		virtual void UpdateScreenPositionAndSize() noexcept;
@@ -68,7 +65,6 @@ namespace JWEngine
 		SIndexData m_IndexData{};
 
 		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
-		ID3D11SamplerState* m_TextureSamplerState{};
 
 		XMFLOAT2 m_Position{};
 		XMFLOAT2 m_Size{};

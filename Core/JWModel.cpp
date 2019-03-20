@@ -6,7 +6,6 @@ using namespace JWEngine;
 
 JWModel::~JWModel()
 {
-	JW_RELEASE(m_TextureSamplerState);
 	JW_RELEASE(m_TextureShaderResourceView);
 	
 	JW_RELEASE(m_NormalVertexBuffer);
@@ -133,24 +132,6 @@ void JWModel::LoadModelObj(STRING Directory, STRING FileName) noexcept
 PRIVATE void JWModel::CreateTexture(WSTRING TextureFileName) noexcept
 {
 	CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &m_TextureShaderResourceView, 0);
-
-	CreateSamplerState();
-}
-
-PRIVATE void JWModel::CreateSamplerState() noexcept
-{
-	AVOID_DUPLICATE_CREATION(m_TextureSamplerState);
-
-	D3D11_SAMPLER_DESC sampler_description{};
-	sampler_description.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	sampler_description.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_description.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_description.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_description.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	sampler_description.MinLOD = 0;
-	sampler_description.MaxLOD = D3D11_FLOAT32_MAX;
-
-	m_pDX->GetDevice()->CreateSamplerState(&sampler_description, &m_TextureSamplerState);
 }
 
 PRIVATE void JWModel::CheckValidity() const noexcept
@@ -182,46 +163,14 @@ PRIVATE void JWModel::AddEnd() noexcept
 	// Calculate the count of vertices
 	m_VertexData.Count = static_cast<UINT>(m_VertexData.Vertices.size());
 
+	// Create vertex buffer
+	m_pDX->CreateStaticVertexBuffer(sizeof(SVertex) * m_VertexData.Count, &m_VertexData.Vertices[0], &m_VertexBuffer);
+
 	// Calculate the count of indices
 	m_IndexData.Count = static_cast<UINT>(m_IndexData.Indices.size() * 3);
 
-	// Create vertex buffer
-	CreateVertexBuffer();
-
 	// Create index buffer
-	CreateIndexBuffer();
-}
-
-PRIVATE void JWModel::CreateVertexBuffer() noexcept
-{
-	D3D11_BUFFER_DESC vertex_buffer_description{};
-	vertex_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	vertex_buffer_description.ByteWidth = sizeof(SVertex) * m_VertexData.Count;
-	vertex_buffer_description.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertex_buffer_description.CPUAccessFlags = 0;
-	vertex_buffer_description.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA vertex_buffer_data{};
-	vertex_buffer_data.pSysMem = &m_VertexData.Vertices[0];
-
-	// Create vertex buffer
-	m_pDX->GetDevice()->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, &m_VertexBuffer);
-}
-
-PRIVATE void JWModel::CreateIndexBuffer() noexcept
-{
-	D3D11_BUFFER_DESC index_buffer_description{};
-	index_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	index_buffer_description.ByteWidth = sizeof(DWORD) * m_IndexData.Count;
-	index_buffer_description.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	index_buffer_description.CPUAccessFlags = 0;
-	index_buffer_description.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA index_buffer_data{};
-	index_buffer_data.pSysMem = &m_IndexData.Indices[0];
-
-	// Create index buffer
-	m_pDX->GetDevice()->CreateBuffer(&index_buffer_description, &index_buffer_data, &m_IndexBuffer);
+	m_pDX->CreateIndexBuffer(sizeof(DWORD) * m_IndexData.Count, &m_IndexData.Indices[0], &m_IndexBuffer);
 }
 
 PRIVATE auto JWModel::NormalAddVertex(const SVertex& Vertex) noexcept->JWModel&
@@ -245,46 +194,14 @@ PRIVATE void JWModel::NormalAddEnd() noexcept
 	// Calculate the count of vertices
 	m_NormalVertexData.Count = static_cast<UINT>(m_NormalVertexData.Vertices.size());
 
+	// Create vertex buffer
+	m_pDX->CreateStaticVertexBuffer(sizeof(SVertex) * m_NormalVertexData.Count, &m_NormalVertexData.Vertices[0], &m_NormalVertexBuffer);
+
 	// Calculate the count of indices
 	m_NormalIndexData.Count = static_cast<UINT>(m_NormalIndexData.Indices.size() * 2);
 
-	// Create vertex buffer
-	NormalCreateVertexBuffer();
-
 	// Create index buffer
-	NormalCreateIndexBuffer();
-}
-
-PRIVATE void JWModel::NormalCreateVertexBuffer() noexcept
-{
-	D3D11_BUFFER_DESC vertex_buffer_description{};
-	vertex_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	vertex_buffer_description.ByteWidth = sizeof(SVertex) * m_NormalVertexData.Count;
-	vertex_buffer_description.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertex_buffer_description.CPUAccessFlags = 0;
-	vertex_buffer_description.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA vertex_buffer_data{};
-	vertex_buffer_data.pSysMem = &m_NormalVertexData.Vertices[0];
-
-	// Create vertex buffer
-	m_pDX->GetDevice()->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, &m_NormalVertexBuffer);
-}
-
-PRIVATE void JWModel::NormalCreateIndexBuffer() noexcept
-{
-	D3D11_BUFFER_DESC index_buffer_description{};
-	index_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	index_buffer_description.ByteWidth = sizeof(DWORD) * m_NormalIndexData.Count;
-	index_buffer_description.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	index_buffer_description.CPUAccessFlags = 0;
-	index_buffer_description.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA index_buffer_data{};
-	index_buffer_data.pSysMem = &m_NormalIndexData.Indices[0];
-
-	// Create index buffer
-	m_pDX->GetDevice()->CreateBuffer(&index_buffer_description, &index_buffer_data, &m_NormalIndexBuffer);
+	m_pDX->CreateIndexBuffer(sizeof(DWORD) * m_NormalIndexData.Count, &m_NormalIndexData.Indices[0], &m_NormalIndexBuffer);
 }
 
 void JWModel::SetWorldMatrixToIdentity() noexcept
@@ -383,16 +300,18 @@ PRIVATE void JWModel::UpdateModel() noexcept
 	// Set VS constant buffer
 	m_DefaultVSConstantBufferData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
 	m_DefaultVSConstantBufferData.World = XMMatrixTranspose(m_MatrixWorld);
+
 	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSConstantBufferData);
 
 	// Set PS constant buffer
 	m_DefaultPSConstantBufferData.HasTexture = m_HasTexture;
 	m_DefaultPSConstantBufferData.ColorRGB = DefaultColorNoTexture;
+
 	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
 
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
-	m_pDX->GetDeviceContext()->PSSetSamplers(0, 1, &m_TextureSamplerState);
+	m_pDX->SetPSSamplerState(ESamplerState::LinearWrap);
 }
 
 void JWModel::Draw() noexcept
@@ -433,7 +352,7 @@ PRIVATE void JWModel::UpdateNormals() noexcept
 
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
-	m_pDX->GetDeviceContext()->PSSetSamplers(0, 1, &m_TextureSamplerState);
+	m_pDX->SetPSSamplerState(ESamplerState::LinearWrap);
 }
 
 PRIVATE void JWModel::DrawNormals() noexcept

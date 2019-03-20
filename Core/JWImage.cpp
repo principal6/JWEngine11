@@ -6,7 +6,6 @@ using namespace JWEngine;
 
 JWImage::~JWImage()
 {
-	JW_RELEASE(m_TextureSamplerState);
 	JW_RELEASE(m_TextureShaderResourceView);
 
 	JW_RELEASE(m_VertexBuffer);
@@ -59,46 +58,14 @@ PROTECTED void JWImage::AddEnd() noexcept
 	// Calculate the count of vertices
 	m_VertexData.Count = static_cast<UINT>(m_VertexData.Vertices.size());
 
+	// Create vertex buffer
+	m_pDX->CreateDynamicVertexBuffer(sizeof(SVertex) * m_VertexData.Count, &m_VertexData.Vertices[0], &m_VertexBuffer);
+
 	// Calculate the count of indices
 	m_IndexData.Count = static_cast<UINT>(m_IndexData.Indices.size() * 3);
 
-	// Create vertex buffer
-	CreateVertexBuffer();
-
 	// Create index buffer
-	CreateIndexBuffer();
-}
-
-PROTECTED void JWImage::CreateVertexBuffer() noexcept
-{
-	D3D11_BUFFER_DESC vertex_buffer_description{};
-	vertex_buffer_description.Usage = D3D11_USAGE_DYNAMIC;
-	vertex_buffer_description.ByteWidth = sizeof(SVertex) * m_VertexData.Count;
-	vertex_buffer_description.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertex_buffer_description.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	vertex_buffer_description.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA vertex_buffer_data{};
-	vertex_buffer_data.pSysMem = &m_VertexData.Vertices[0];
-
-	// Create vertex buffer
-	m_pDX->GetDevice()->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, &m_VertexBuffer);
-}
-
-PROTECTED void JWImage::CreateIndexBuffer() noexcept
-{
-	D3D11_BUFFER_DESC index_buffer_description{};
-	index_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	index_buffer_description.ByteWidth = sizeof(DWORD) * m_IndexData.Count;
-	index_buffer_description.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	index_buffer_description.CPUAccessFlags = 0;
-	index_buffer_description.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA index_buffer_data{};
-	index_buffer_data.pSysMem = &m_IndexData.Indices[0];
-
-	// Create index buffer
-	m_pDX->GetDevice()->CreateBuffer(&index_buffer_description, &index_buffer_data, &m_IndexBuffer);
+	m_pDX->CreateIndexBuffer(sizeof(DWORD) * m_IndexData.Count, &m_IndexData.Indices[0], &m_IndexBuffer);
 }
 
 void JWImage::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
@@ -126,26 +93,8 @@ PROTECTED void JWImage::CreateTexture(WSTRING TextureFileName) noexcept
 
 	// Release the resource
 	JW_RELEASE(p_resource);
-	
-	CreateSamplerState();
 
 	m_IsTextureCreated = true;
-}
-
-PROTECTED void JWImage::CreateSamplerState() noexcept
-{
-	AVOID_DUPLICATE_CREATION(m_TextureSamplerState);
-
-	D3D11_SAMPLER_DESC sampler_description{};
-	sampler_description.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	sampler_description.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_description.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_description.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_description.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	sampler_description.MinLOD = 0;
-	sampler_description.MaxLOD = D3D11_FLOAT32_MAX;
-	
-	m_pDX->GetDevice()->CreateSamplerState(&sampler_description, &m_TextureSamplerState);
 }
 
 auto JWImage::SetPosition(XMFLOAT2 Position) noexcept->JWImage&
@@ -225,7 +174,7 @@ PROTECTED void JWImage::UpdateTexture() noexcept
 {
 	// Set texture and sampler for pixel shader
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
-	m_pDX->GetDeviceContext()->PSSetSamplers(0, 1, &m_TextureSamplerState);
+	m_pDX->SetPSSamplerState(ESamplerState::LinearWrap);
 }
 
 void JWImage::Draw() noexcept

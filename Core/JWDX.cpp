@@ -7,6 +7,8 @@ JWDX::~JWDX()
 {
 	// Release the COM objects we created.
 	
+	JW_RELEASE(m_SamplerStateLinearWrap);
+
 	JW_RELEASE(m_BlendStateOpaque);
 	JW_RELEASE(m_BlendStateTransparent);
 
@@ -31,7 +33,6 @@ JWDX::~JWDX()
 
 	JW_RELEASE(m_DefaultVS11);
 	JW_RELEASE(m_DefaultVSBuffer);
-	
 
 	JW_RELEASE(m_DeviceContext11);
 	JW_RELEASE(m_Device11);
@@ -73,6 +74,9 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 
 	// Create rasterizer states
 	CreateRasterizerStates();
+
+	// Create sampler states
+	CreateSamplerStates();
 
 	// Create blend states
 	CreateBlendStates();
@@ -271,6 +275,20 @@ PRIVATE void JWDX::CreateBlendStates() noexcept
 	m_Device11->CreateBlendState(&blend_description, &m_BlendStateOpaque);
 }
 
+PRIVATE void JWDX::CreateSamplerStates() noexcept
+{
+	D3D11_SAMPLER_DESC sampler_description{};
+	sampler_description.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampler_description.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampler_description.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampler_description.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampler_description.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampler_description.MinLOD = 0;
+	sampler_description.MaxLOD = D3D11_FLOAT32_MAX;
+
+	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateLinearWrap);
+}
+
 PRIVATE void JWDX::CreateDefaultConstantBuffers() noexcept
 {
 	// Create buffer to send to constant buffer in HLSL
@@ -286,6 +304,51 @@ PRIVATE void JWDX::CreateDefaultConstantBuffers() noexcept
 	constant_buffer_description.ByteWidth = sizeof(SDefaultPSConstantBufferData);
 
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_DefaultPSConstantBuffer);
+}
+
+void JWDX::CreateDynamicVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept
+{
+	D3D11_BUFFER_DESC vertex_buffer_description{};
+	vertex_buffer_description.Usage = D3D11_USAGE_DYNAMIC;
+	vertex_buffer_description.ByteWidth = ByteSize;
+	vertex_buffer_description.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertex_buffer_description.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	vertex_buffer_description.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vertex_buffer_data{};
+	vertex_buffer_data.pSysMem = pData;
+
+	m_Device11->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, ppBuffer);
+}
+
+void JWDX::CreateStaticVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept
+{
+	D3D11_BUFFER_DESC vertex_buffer_description{};
+	vertex_buffer_description.Usage = D3D11_USAGE_DEFAULT;
+	vertex_buffer_description.ByteWidth = ByteSize;
+	vertex_buffer_description.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertex_buffer_description.CPUAccessFlags = 0;
+	vertex_buffer_description.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vertex_buffer_data{};
+	vertex_buffer_data.pSysMem = pData;
+
+	m_Device11->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, ppBuffer);
+}
+
+void JWDX::CreateIndexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept
+{
+	D3D11_BUFFER_DESC vertex_buffer_description{};
+	vertex_buffer_description.Usage = D3D11_USAGE_DEFAULT;
+	vertex_buffer_description.ByteWidth = ByteSize;
+	vertex_buffer_description.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	vertex_buffer_description.CPUAccessFlags = 0;
+	vertex_buffer_description.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vertex_buffer_data{};
+	vertex_buffer_data.pSysMem = pData;
+
+	m_Device11->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, ppBuffer);
 }
 
 void JWDX::SetRasterizerState(ERasterizerState State) noexcept
@@ -318,6 +381,18 @@ void JWDX::SetBlendState(EBlendState State) noexcept
 		break;
 	case JWEngine::EBlendState::Opaque:
 		m_DeviceContext11->OMSetBlendState(m_BlendStateOpaque, 0, 0xFFFFFFFF);
+		break;
+	default:
+		break;
+	}
+}
+
+void JWDX::SetPSSamplerState(ESamplerState State) noexcept
+{
+	switch (State)
+	{
+	case JWEngine::ESamplerState::LinearWrap:
+		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateLinearWrap);
 		break;
 	default:
 		break;

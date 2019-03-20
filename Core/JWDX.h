@@ -21,6 +21,11 @@ namespace JWEngine
 		Opaque,
 	};
 
+	enum class ESamplerState
+	{
+		LinearWrap,
+	};
+
 	enum class EDepthStencilState
 	{
 		ZEnabled,
@@ -35,9 +40,15 @@ namespace JWEngine
 
 		void Create(const JWWin32Window& Window, STRING Directory) noexcept;
 
+		// Factory functions
+		void CreateDynamicVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
+		void CreateStaticVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
+		void CreateIndexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
+
+		void SetDepthStencilState(EDepthStencilState State) noexcept;
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
-		void SetDepthStencilState(EDepthStencilState State) noexcept;
+		void SetPSSamplerState(ESamplerState State) noexcept;
 
 		void SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData Data) noexcept;
 		void SetDefaultPSConstantBufferData(SDefaultPSConstantBufferData Data) noexcept;
@@ -81,6 +92,9 @@ namespace JWEngine
 		void CreateBlendStates() noexcept;
 
 		// Called in Create()
+		void CreateSamplerStates() noexcept;
+
+		// Called in Create()
 		void CreateDefaultViewport() noexcept;
 
 	private:
@@ -122,6 +136,8 @@ namespace JWEngine
 
 		ID3D11BlendState* m_BlendStateTransparent{};
 		ID3D11BlendState* m_BlendStateOpaque{};
+
+		ID3D11SamplerState* m_SamplerStateLinearWrap{};
 
 		D3D11_VIEWPORT m_DefaultViewPort{};
 	};

@@ -36,21 +36,15 @@ namespace JWEngine
 	private:
 		void CheckValidity() const noexcept;
 
-		void CreateSamplerState() noexcept;
-
 		void CreateTexture(WSTRING TextureFileName) noexcept;
 
 		auto AddVertex(const SVertex& Vertex) noexcept->JWModel&;
 		auto AddIndex(const SIndex& Index) noexcept->JWModel&;
 		void AddEnd() noexcept;
-		void CreateVertexBuffer() noexcept;
-		void CreateIndexBuffer() noexcept;
 
 		auto NormalAddVertex(const SVertex& Vertex) noexcept->JWModel&;
 		auto NormalAddIndex(const SIndex2& Index) noexcept->JWModel&;
 		void NormalAddEnd() noexcept;
-		void NormalCreateVertexBuffer() noexcept;
-		void NormalCreateIndexBuffer() noexcept;
 		void DrawNormals() noexcept;
 
 		void UpdateWorldMatrix() noexcept;
@@ -78,7 +72,6 @@ namespace JWEngine
 		SIndex2Data m_NormalIndexData{};
 
 		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
-		ID3D11SamplerState* m_TextureSamplerState{};
 
 		XMMATRIX m_MatrixWorld{};
 		XMMATRIX m_MatrixTranslation{};
