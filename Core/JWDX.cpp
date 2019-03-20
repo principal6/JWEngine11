@@ -184,7 +184,7 @@ PRIVATE void JWDX::CreateDepthStencilView() noexcept
 	//Create the depth-stencil View
 	m_Device11->CreateDepthStencilView(depth_stencil_buffer, nullptr, &m_DepthStencilView11);
 	
-	depth_stencil_buffer->Release();
+	JW_RELEASE(depth_stencil_buffer);
 }
 
 PRIVATE void JWDX::CreateDepthStencilStates() noexcept
@@ -227,7 +227,7 @@ PRIVATE void JWDX::CreateRenderTargetView() noexcept
 	// Set render target view & depth-stencil view
 	m_DeviceContext11->OMSetRenderTargets(1, &m_RenderTargetView11, m_DepthStencilView11);
 
-	back_buffer->Release();
+	JW_RELEASE(back_buffer);
 }
 
 PRIVATE void JWDX::CreateRasterizerStates() noexcept

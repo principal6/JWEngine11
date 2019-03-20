@@ -6,11 +6,11 @@ using namespace JWEngine;
 
 JWImage::~JWImage()
 {
-	m_TextureSamplerState->Release();
-	m_TextureShaderResourceView->Release();
+	JW_RELEASE(m_TextureSamplerState);
+	JW_RELEASE(m_TextureShaderResourceView);
 
-	m_VertexBuffer->Release();
-	m_IndexBuffer->Release();
+	JW_RELEASE(m_VertexBuffer);
+	JW_RELEASE(m_IndexBuffer);
 }
 
 void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
@@ -67,9 +67,6 @@ PROTECTED void JWImage::AddEnd() noexcept
 
 	// Create index buffer
 	CreateIndexBuffer();
-
-	// Set the primitive topology
-	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 PROTECTED void JWImage::CreateVertexBuffer() noexcept
@@ -128,9 +125,8 @@ PROTECTED void JWImage::CreateTexture(WSTRING TextureFileName) noexcept
 	SetSize(XMFLOAT2(static_cast<float>(m_ImageOriginalSize.Width), static_cast<float>(m_ImageOriginalSize.Height)));
 
 	// Release the resource
-	p_resource->Release();
-	p_resource = nullptr;
-
+	JW_RELEASE(p_resource);
+	
 	CreateSamplerState();
 
 	m_IsTextureCreated = true;
@@ -234,6 +230,9 @@ PROTECTED void JWImage::UpdateTexture() noexcept
 
 void JWImage::Draw() noexcept
 {
+	// Set primitive topology
+	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 	// Set vertex buffer
 	UINT vertex_stride{ sizeof(SVertex) };
 	UINT vertex_offset{};

@@ -25,6 +25,8 @@ namespace JWEngine
 		auto SetRotation(XMFLOAT4 RotationAxis, float Angle) noexcept->JWModel&;
 		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;
 
+		void ShouldDrawNormals(bool Value) noexcept;
+
 		auto GetWorldPosition() noexcept->XMVECTOR;
 		auto GetDistanceFromCamera() noexcept->float;
 
@@ -34,9 +36,6 @@ namespace JWEngine
 	private:
 		void CheckValidity() const noexcept;
 
-		void CreateVertexBuffer() noexcept;
-		void CreateIndexBuffer() noexcept;
-
 		void CreateSamplerState() noexcept;
 
 		void CreateTexture(WSTRING TextureFileName) noexcept;
@@ -44,13 +43,24 @@ namespace JWEngine
 		auto AddVertex(const SVertex& Vertex) noexcept->JWModel&;
 		auto AddIndex(const SIndex& Index) noexcept->JWModel&;
 		void AddEnd() noexcept;
+		void CreateVertexBuffer() noexcept;
+		void CreateIndexBuffer() noexcept;
+
+		auto NormalAddVertex(const SVertex& Vertex) noexcept->JWModel&;
+		auto NormalAddIndex(const SIndex2& Index) noexcept->JWModel&;
+		void NormalAddEnd() noexcept;
+		void NormalCreateVertexBuffer() noexcept;
+		void NormalCreateIndexBuffer() noexcept;
+		void DrawNormals() noexcept;
 
 		void UpdateWorldMatrix() noexcept;
-		void Update() noexcept;
+		void UpdateModel() noexcept;
+		void UpdateNormals() noexcept;
 
 	private:
 		bool m_IsValid{ false };
 		BOOL m_HasTexture{ FALSE };
+		bool m_ShouldDrawNormals{ false };
 
 		JWDX* m_pDX{};
 		JWCamera* m_pCamera{};
@@ -61,12 +71,16 @@ namespace JWEngine
 		SVertexData m_VertexData{};
 		SIndexData m_IndexData{};
 
+		ID3D11Buffer* m_NormalVertexBuffer{};
+		ID3D11Buffer* m_NormalIndexBuffer{};
+
+		SVertexData m_NormalVertexData{};
+		SIndex2Data m_NormalIndexData{};
+
 		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
 		ID3D11SamplerState* m_TextureSamplerState{};
 
-		XMMATRIX m_WVP{};
 		XMMATRIX m_MatrixWorld{};
-
 		XMMATRIX m_MatrixTranslation{};
 		XMMATRIX m_MatrixRotation{};
 		XMMATRIX m_MatrixScale{};

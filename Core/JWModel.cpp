@@ -9,6 +9,9 @@ JWModel::~JWModel()
 	JW_RELEASE(m_TextureSamplerState);
 	JW_RELEASE(m_TextureShaderResourceView);
 	
+	JW_RELEASE(m_NormalVertexBuffer);
+	JW_RELEASE(m_NormalIndexBuffer);
+
 	JW_RELEASE(m_VertexBuffer);
 	JW_RELEASE(m_IndexBuffer);
 }
@@ -79,7 +82,15 @@ void JWModel::LoadModelObj(STRING Directory, STRING FileName) noexcept
 					auto& normal = m_AssimpScene->mMeshes[mesh_index]->mNormals[iterator_vertices];
 
 					AddVertex(SVertex(vertex.x, vertex.y, vertex.z, texcoord.x, texcoord.y, normal.x, normal.y, normal.z));
+
+					// For normal line drawing
+					NormalAddVertex(SVertex(vertex.x, vertex.y, vertex.z));
+					NormalAddVertex(SVertex(vertex.x + normal.x, vertex.y + normal.y, vertex.z + normal.z));
+					NormalAddIndex(SIndex2(static_cast<UINT>(iterator_vertices * 2), static_cast<UINT>(iterator_vertices * 2 + 1)));
 				}
+
+				// For normal line drawing
+				NormalAddEnd();
 			}
 			else
 			{
@@ -179,9 +190,6 @@ PRIVATE void JWModel::AddEnd() noexcept
 
 	// Create index buffer
 	CreateIndexBuffer();
-
-	// Set the primitive topology
-	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 PRIVATE void JWModel::CreateVertexBuffer() noexcept
@@ -214,6 +222,69 @@ PRIVATE void JWModel::CreateIndexBuffer() noexcept
 
 	// Create index buffer
 	m_pDX->GetDevice()->CreateBuffer(&index_buffer_description, &index_buffer_data, &m_IndexBuffer);
+}
+
+PRIVATE auto JWModel::NormalAddVertex(const SVertex& Vertex) noexcept->JWModel&
+{
+	m_NormalVertexData.Vertices.push_back(Vertex);
+
+	return *this;
+}
+
+PRIVATE auto JWModel::NormalAddIndex(const SIndex2& Index) noexcept->JWModel&
+{
+	m_NormalIndexData.Indices.push_back(Index);
+
+	return *this;
+}
+
+PRIVATE void JWModel::NormalAddEnd() noexcept
+{
+	CheckValidity();
+
+	// Calculate the count of vertices
+	m_NormalVertexData.Count = static_cast<UINT>(m_NormalVertexData.Vertices.size());
+
+	// Calculate the count of indices
+	m_NormalIndexData.Count = static_cast<UINT>(m_NormalIndexData.Indices.size() * 2);
+
+	// Create vertex buffer
+	NormalCreateVertexBuffer();
+
+	// Create index buffer
+	NormalCreateIndexBuffer();
+}
+
+PRIVATE void JWModel::NormalCreateVertexBuffer() noexcept
+{
+	D3D11_BUFFER_DESC vertex_buffer_description{};
+	vertex_buffer_description.Usage = D3D11_USAGE_DEFAULT;
+	vertex_buffer_description.ByteWidth = sizeof(SVertex) * m_NormalVertexData.Count;
+	vertex_buffer_description.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertex_buffer_description.CPUAccessFlags = 0;
+	vertex_buffer_description.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vertex_buffer_data{};
+	vertex_buffer_data.pSysMem = &m_NormalVertexData.Vertices[0];
+
+	// Create vertex buffer
+	m_pDX->GetDevice()->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, &m_NormalVertexBuffer);
+}
+
+PRIVATE void JWModel::NormalCreateIndexBuffer() noexcept
+{
+	D3D11_BUFFER_DESC index_buffer_description{};
+	index_buffer_description.Usage = D3D11_USAGE_DEFAULT;
+	index_buffer_description.ByteWidth = sizeof(DWORD) * m_NormalIndexData.Count;
+	index_buffer_description.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	index_buffer_description.CPUAccessFlags = 0;
+	index_buffer_description.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA index_buffer_data{};
+	index_buffer_data.pSysMem = &m_NormalIndexData.Indices[0];
+
+	// Create index buffer
+	m_pDX->GetDevice()->CreateBuffer(&index_buffer_description, &index_buffer_data, &m_NormalIndexBuffer);
 }
 
 void JWModel::SetWorldMatrixToIdentity() noexcept
@@ -288,6 +359,11 @@ PRIVATE void JWModel::UpdateWorldMatrix() noexcept
 	m_WorldPosition = XMVector3TransformCoord(XMVectorZero(), m_MatrixWorld);
 }
 
+void JWModel::ShouldDrawNormals(bool Value) noexcept
+{
+	m_ShouldDrawNormals = Value;
+}
+
 auto JWModel::GetWorldPosition() noexcept->XMVECTOR
 {
 	return m_WorldPosition;
@@ -302,12 +378,10 @@ auto JWModel::GetDistanceFromCamera() noexcept->float
 	return (distance_x * distance_x + distance_y * distance_y + distance_z * distance_z);
 }
 
-PRIVATE void JWModel::Update() noexcept
+PRIVATE void JWModel::UpdateModel() noexcept
 {
-	// Set VS constant buffer (WVP matrix and send it to the constant buffer for vertex shader)
-	m_WVP = m_MatrixWorld * m_pCamera->GetViewProjectionMatrix();
-	
-	m_DefaultVSConstantBufferData.WVP = XMMatrixTranspose(m_WVP);
+	// Set VS constant buffer
+	m_DefaultVSConstantBufferData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
 	m_DefaultVSConstantBufferData.World = XMMatrixTranspose(m_MatrixWorld);
 	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSConstantBufferData);
 
@@ -316,22 +390,67 @@ PRIVATE void JWModel::Update() noexcept
 	m_DefaultPSConstantBufferData.ColorRGB = DefaultColorNoTexture;
 	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
 
-	// Set texture and sampler for pixel shader
+	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
 	m_pDX->GetDeviceContext()->PSSetSamplers(0, 1, &m_TextureSamplerState);
 }
 
 void JWModel::Draw() noexcept
 {
-	Update();
+	UpdateModel();
 
-	// Set vertex buffer
+	// Set IA primitive topology
+	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Set IA vertex buffer
 	UINT vertex_stride{ sizeof(SVertex) };
 	UINT vertex_offset{};
 	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, &vertex_stride, &vertex_offset);
 
-	// Set index buffer
+	// Set IA index buffer
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
+	// Draw
 	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.Count, 0, 0);
+
+	if (m_ShouldDrawNormals)
+	{
+		DrawNormals();
+	}
+}
+
+PRIVATE void JWModel::UpdateNormals() noexcept
+{
+	// Set VS constant buffer
+	m_DefaultVSConstantBufferData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
+	m_DefaultVSConstantBufferData.World = XMMatrixTranspose(m_MatrixWorld);
+	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSConstantBufferData);
+
+	// Set PS constant buffer
+	m_DefaultPSConstantBufferData.HasTexture = FALSE;
+	m_DefaultPSConstantBufferData.ColorRGB = DefaultColorNormals;
+	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
+
+	// Set PS texture and sampler
+	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
+	m_pDX->GetDeviceContext()->PSSetSamplers(0, 1, &m_TextureSamplerState);
+}
+
+PRIVATE void JWModel::DrawNormals() noexcept
+{
+	UpdateNormals();
+
+	// Set IA primitive topology
+	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+	// Set IA vertex buffer
+	UINT vertex_stride{ sizeof(SVertex) };
+	UINT vertex_offset{};
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_NormalVertexBuffer, &vertex_stride, &vertex_offset);
+
+	// Set IA index buffer
+	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	// Draw
+	m_pDX->GetDeviceContext()->DrawIndexed(m_NormalIndexData.Count, 0, 0);
 }

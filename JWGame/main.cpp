@@ -48,7 +48,9 @@ void Render()
 		rotation_angle = 0;
 	}
 
-	myGame.GetOpaqueModel(0).SetRotation(XMFLOAT4(0, 1, 0, 0), rotation_angle);
+	myGame.GetOpaqueModel(0)
+		.SetRotation(XMFLOAT4(0, 1, 0, 0), rotation_angle)
+		.ShouldDrawNormals(true);
 
 	myGame.DrawModelsAndImages();
 

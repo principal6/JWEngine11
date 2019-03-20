@@ -110,6 +110,7 @@ namespace JWEngine
 
 	static constexpr int MAX_FILE_LENGTH = 255;
 	static constexpr XMFLOAT3 DefaultColorNoTexture = XMFLOAT3(0.8f, 0.2f, 1.0f);
+	static constexpr XMFLOAT3 DefaultColorNormals = XMFLOAT3(0.4f, 1.0f, 0.0f);
 
 	enum class EWorldMatrixCalculationOrder
 	{
@@ -167,6 +168,8 @@ namespace JWEngine
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
 		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
+		SVertex(float x, float y, float z) :
+			Position{ x, y, z } {};
 		SVertex(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
 		SVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
@@ -185,17 +188,32 @@ namespace JWEngine
 
 	struct SIndex
 	{
+		SIndex() {};
+		SIndex(DWORD __0, DWORD __1, DWORD __2) : _0{ __0 }, _1{ __1 }, _2{ __2 } {};
+
 		DWORD _0{};
 		DWORD _1{};
 		DWORD _2{};
+	};
+	
+	struct SIndex2
+	{
+		SIndex2() {};
+		SIndex2(DWORD __0, DWORD __1) : _0{ __0 }, _1{ __1 } {};
 
-		SIndex() {};
-		SIndex(DWORD __0, DWORD __1, DWORD __2) : _0{ __0 }, _1{ __1 }, _2{ __2 } {};
+		DWORD _0{};
+		DWORD _1{};
 	};
 
 	struct SIndexData
 	{
 		VECTOR<SIndex> Indices;
+		UINT Count{};
+	};
+
+	struct SIndex2Data
+	{
+		VECTOR<SIndex2> Indices;
 		UINT Count{};
 	};
 
