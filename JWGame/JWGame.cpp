@@ -225,6 +225,7 @@ PRIVATE void JWGame::DrawAll2DImages() const noexcept
 	{
 		for (auto& iterator_2d_image : m_p2DImages)
 		{
+			iterator_2d_image->UpdateAll();
 			iterator_2d_image->Draw();
 		}
 	}

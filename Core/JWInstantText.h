@@ -9,10 +9,10 @@ namespace JWEngine
 	class JWDX;
 	class JWCamera;
 
-	struct SConstantBufferColor
+	struct SInstantTextPSConstantBufferData
 	{
-		SConstantBufferColor() {};
-		SConstantBufferColor(XMFLOAT4 __RGBA) : _RGBA(__RGBA) {};
+		SInstantTextPSConstantBufferData() {};
+		SInstantTextPSConstantBufferData(XMFLOAT4 __RGBA) : _RGBA(__RGBA) {};
 
 		XMFLOAT4 _RGBA{};
 	};
@@ -41,9 +41,9 @@ namespace JWEngine
 
 		JWBMFontParser m_FontParser;
 
-		ID3D11PixelShader* m_PSInstantText{};
+		ID3D11PixelShader* m_InstantTextPS{};
 
-		ID3D11Buffer* m_ConstantBufferColor{};
-		SConstantBufferColor m_TextColor{};
+		ID3D11Buffer* m_InstantTextPSConstantBuffer{};
+		SInstantTextPSConstantBufferData m_TextColor{};
 	};
 }

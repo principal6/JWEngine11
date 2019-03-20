@@ -36,7 +36,7 @@ void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
 	m_IsValid = true;
 }
 
-PRIVATE void JWImage::CheckValidity() const noexcept
+PROTECTED void JWImage::CheckValidity() const noexcept
 {
 	if (!m_IsValid)
 	{
@@ -44,17 +44,17 @@ PRIVATE void JWImage::CheckValidity() const noexcept
 	}
 }
 
-PRIVATE void JWImage::AddVertex(const SVertex& Vertex) noexcept
+PROTECTED void JWImage::AddVertex(const SVertex& Vertex) noexcept
 {
 	m_VertexData.Vertices.push_back(Vertex);
 }
 
-PRIVATE void JWImage::AddIndex(const SIndex& Index) noexcept
+PROTECTED void JWImage::AddIndex(const SIndex& Index) noexcept
 {
 	m_IndexData.Indices.push_back(Index);
 }
 
-PRIVATE void JWImage::AddEnd() noexcept
+PROTECTED void JWImage::AddEnd() noexcept
 {
 	// Calculate the count of vertices
 	m_VertexData.Count = static_cast<UINT>(m_VertexData.Vertices.size());
@@ -72,7 +72,7 @@ PRIVATE void JWImage::AddEnd() noexcept
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-PRIVATE void JWImage::CreateVertexBuffer() noexcept
+PROTECTED void JWImage::CreateVertexBuffer() noexcept
 {
 	D3D11_BUFFER_DESC vertex_buffer_description{};
 	vertex_buffer_description.Usage = D3D11_USAGE_DYNAMIC;
@@ -88,7 +88,7 @@ PRIVATE void JWImage::CreateVertexBuffer() noexcept
 	m_pDX->GetDevice()->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, &m_VertexBuffer);
 }
 
-PRIVATE void JWImage::CreateIndexBuffer() noexcept
+PROTECTED void JWImage::CreateIndexBuffer() noexcept
 {
 	D3D11_BUFFER_DESC index_buffer_description{};
 	index_buffer_description.Usage = D3D11_USAGE_DEFAULT;
@@ -114,7 +114,7 @@ void JWImage::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 	CreateTexture(StringToWstring(path_string));
 }
 
-PRIVATE void JWImage::CreateTexture(WSTRING TextureFileName) noexcept
+PROTECTED void JWImage::CreateTexture(WSTRING TextureFileName) noexcept
 {
 	ID3D11Texture2D* p_resource{};
 
@@ -136,7 +136,7 @@ PRIVATE void JWImage::CreateTexture(WSTRING TextureFileName) noexcept
 	m_IsTextureCreated = true;
 }
 
-PRIVATE void JWImage::CreateSamplerState() noexcept
+PROTECTED void JWImage::CreateSamplerState() noexcept
 {
 	AVOID_DUPLICATE_CREATION(m_TextureSamplerState);
 
@@ -170,7 +170,7 @@ auto JWImage::SetSize(XMFLOAT2 Size) noexcept->JWImage&
 	return *this;
 }
 
-PRIVATE void JWImage::UpdateScreenPositionAndSize() noexcept
+PROTECTED void JWImage::UpdateScreenPositionAndSize() noexcept
 {
 	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
 	float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
@@ -193,7 +193,7 @@ PRIVATE void JWImage::UpdateScreenPositionAndSize() noexcept
 	}
 }
 
-PRIVATE void JWImage::UpdateVertexBuffer() noexcept
+PROTECTED void JWImage::UpdateVertexBuffer() noexcept
 {
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
 	m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
@@ -203,13 +203,30 @@ PRIVATE void JWImage::UpdateVertexBuffer() noexcept
 	m_pDX->GetDeviceContext()->Unmap(m_VertexBuffer, 0);
 }
 
-PRIVATE void JWImage::Update() noexcept
+void JWImage::UpdateAll() noexcept
 {
-	// Set WVP matrix(, which in reality is WO matrix,)
+	UpdateDefaultVSConstantBuffer();
+	UpdateDefaultPSConstantBuffer();
+	UpdateTexture();
+}
+
+PROTECTED void JWImage::UpdateDefaultVSConstantBuffer() noexcept
+{
+	// Set VS constant buffer
+	// set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
 	m_WVP = XMMatrixIdentity() * m_pCamera->GetOrthographicMatrix();
-	m_pDX->SetConstantBufferData(SConstantBufferDataPerObject(XMMatrixTranspose(m_WVP)));
+	m_pDX->SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData(XMMatrixTranspose(m_WVP)));
+}
 
+PROTECTED void JWImage::UpdateDefaultPSConstantBuffer() noexcept
+{
+	// Set PS constant buffer
+	m_pDX->SetDefaultPSConstantBufferData(SDefaultPSConstantBufferData(TRUE));
+}
+
+PROTECTED void JWImage::UpdateTexture() noexcept
+{
 	// Set texture and sampler for pixel shader
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
 	m_pDX->GetDeviceContext()->PSSetSamplers(0, 1, &m_TextureSamplerState);
@@ -217,8 +234,6 @@ PRIVATE void JWImage::Update() noexcept
 
 void JWImage::Draw() noexcept
 {
-	Update();
-
 	// Set vertex buffer
 	UINT vertex_stride{ sizeof(SVertex) };
 	UINT vertex_offset{};

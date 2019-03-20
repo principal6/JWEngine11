@@ -6,35 +6,37 @@ using namespace JWEngine;
 JWDX::~JWDX()
 {
 	// Release the COM objects we created.
+	
+	JW_RELEASE(m_BlendStateOpaque);
+	JW_RELEASE(m_BlendStateTransparent);
 
-	m_ConstantBufferPerObject->Release();
+	JW_RELEASE(m_RasterizerStateSolidBackCullCW11);
+	JW_RELEASE(m_RasterizerStateSolidBackCullCCW11);
+	JW_RELEASE(m_RasterizerStateSolidNoCull11);
+	JW_RELEASE(m_RasterizerStateWireFrame11);
 
-	m_BlendStateOpaque->Release();
-	m_BlendStateTransparent->Release();
+	JW_RELEASE(m_RenderTargetView11);
 
-	m_RasterizerStateSolidBackCullCW11->Release();
-	m_RasterizerStateSolidBackCullCCW11->Release();
-	m_RasterizerStateSolidNoCull11->Release();
-	m_RasterizerStateWireFrame11->Release();
+	JW_RELEASE(m_DepthStencilStateZDisabled11);
+	JW_RELEASE(m_DepthStencilStateZEnabled11);
+	JW_RELEASE(m_DepthStencilView11);
 
-	m_RenderTargetView11->Release();
+	JW_RELEASE(m_DefaultPSConstantBuffer);
+	JW_RELEASE(m_DefaultVSConstantBuffer);
 
-	m_DepthStencilStateZDisabled11->Release();
-	m_DepthStencilStateZEnabled11->Release();
-	m_DepthStencilView11->Release();
+	JW_RELEASE(m_InputLayout11);
 
-	m_InputLayout11->Release();
+	JW_RELEASE(m_DefaultPS11);
+	JW_RELEASE(m_DefaultPSBuffer);
 
-	m_DefaultVS11->Release();
-	m_DefaultPS11->Release();
+	JW_RELEASE(m_DefaultVS11);
+	JW_RELEASE(m_DefaultVSBuffer);
+	
 
-	m_VertexShaderBuffer->Release();
-	m_PixelShaderBuffer->Release();
+	JW_RELEASE(m_DeviceContext11);
+	JW_RELEASE(m_Device11);
 
-	m_DeviceContext11->Release();
-	m_Device11->Release();
-
-	m_SwapChain->Release();
+	JW_RELEASE(m_SwapChain);
 }
 
 void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
@@ -54,11 +56,11 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 	CreateDefaultVS();
 	CreateDefaultPS();
 
-	// Create viewport
-	CreateDefaultViewport();
-
 	// Create input layout
 	CreateInputLayout();
+
+	// Create constant buffers
+	CreateDefaultConstantBuffers();
 
 	// Create depth-stencil view
 	CreateDepthStencilView();
@@ -75,8 +77,8 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 	// Create blend states
 	CreateBlendStates();
 
-	// Create constant buffers
-	CreateConstantBuffer();
+	// Create viewport
+	CreateDefaultViewport();
 
 	m_IsValid = true;
 }
@@ -114,10 +116,10 @@ PRIVATE void JWDX::CreateDefaultVS() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\DefaultVS.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0", 0, 0, &m_VertexShaderBuffer, nullptr);
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0", 0, 0, &m_DefaultVSBuffer, nullptr);
 
 	// Create shader
-	m_Device11->CreateVertexShader(m_VertexShaderBuffer->GetBufferPointer(), m_VertexShaderBuffer->GetBufferSize(), nullptr, &m_DefaultVS11);
+	m_Device11->CreateVertexShader(m_DefaultVSBuffer->GetBufferPointer(), m_DefaultVSBuffer->GetBufferSize(), nullptr, &m_DefaultVS11);
 	
 	SetDefaultVS();
 }
@@ -127,10 +129,10 @@ PRIVATE void JWDX::CreateDefaultPS() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\DefaultPS.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &m_PixelShaderBuffer, nullptr);
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &m_DefaultPSBuffer, nullptr);
 
 	// Create shader
-	m_Device11->CreatePixelShader(m_PixelShaderBuffer->GetBufferPointer(), m_PixelShaderBuffer->GetBufferSize(), nullptr, &m_DefaultPS11);
+	m_Device11->CreatePixelShader(m_DefaultPSBuffer->GetBufferPointer(), m_DefaultPSBuffer->GetBufferSize(), nullptr, &m_DefaultPS11);
 
 	SetDefaultPS();
 }
@@ -152,8 +154,8 @@ PRIVATE void JWDX::CreateDefaultViewport() noexcept
 PRIVATE void JWDX::CreateInputLayout() noexcept
 {
 	//Create the Input Layout
-	m_Device11->CreateInputLayout(INPUT_ELEMENT_DESCRIPTION, InputElementSize,
-		m_VertexShaderBuffer->GetBufferPointer(), m_VertexShaderBuffer->GetBufferSize(), &m_InputLayout11);
+	m_Device11->CreateInputLayout(InputElementDescription, InputElementSize,
+		m_DefaultVSBuffer->GetBufferPointer(), m_DefaultVSBuffer->GetBufferSize(), &m_InputLayout11);
 
 	//Set the Input Layout
 	m_DeviceContext11->IASetInputLayout(m_InputLayout11);
@@ -269,17 +271,21 @@ PRIVATE void JWDX::CreateBlendStates() noexcept
 	m_Device11->CreateBlendState(&blend_description, &m_BlendStateOpaque);
 }
 
-PRIVATE void JWDX::CreateConstantBuffer() noexcept
+PRIVATE void JWDX::CreateDefaultConstantBuffers() noexcept
 {
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
 	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SConstantBufferDataPerObject);
+	constant_buffer_description.ByteWidth = sizeof(SDefaultVSConstantBufferData);
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
 
-	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_ConstantBufferPerObject);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_DefaultVSConstantBuffer);
+
+	constant_buffer_description.ByteWidth = sizeof(SDefaultPSConstantBufferData);
+
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_DefaultPSConstantBuffer);
 }
 
 void JWDX::SetRasterizerState(ERasterizerState State) noexcept
@@ -333,12 +339,20 @@ void JWDX::SetDepthStencilState(EDepthStencilState State) noexcept
 	}
 }
 
-void JWDX::SetConstantBufferData(SConstantBufferDataPerObject Data) noexcept
+void JWDX::SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData Data) noexcept
 {
-	m_ConstantBufferDataPerObject = Data;
+	m_DefaultVSConstantBufferData = Data;
 
-	m_DeviceContext11->UpdateSubresource(m_ConstantBufferPerObject, 0, nullptr, &m_ConstantBufferDataPerObject, 0, 0);
-	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_ConstantBufferPerObject);
+	m_DeviceContext11->UpdateSubresource(m_DefaultVSConstantBuffer, 0, nullptr, &m_DefaultVSConstantBufferData, 0, 0);
+	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_DefaultVSConstantBuffer);
+}
+
+void JWDX::SetDefaultPSConstantBufferData(SDefaultPSConstantBufferData Data) noexcept
+{
+	m_DefaultPSConstantBufferData = Data;
+
+	m_DeviceContext11->UpdateSubresource(m_DefaultPSConstantBuffer, 0, nullptr, &m_DefaultPSConstantBufferData, 0, 0);
+	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_DefaultPSConstantBuffer);
 }
 
 void JWDX::SetDefaultVS() noexcept

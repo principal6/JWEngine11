@@ -50,6 +50,7 @@ namespace JWEngine
 
 	private:
 		bool m_IsValid{ false };
+		BOOL m_HasTexture{ FALSE };
 
 		JWDX* m_pDX{};
 		JWCamera* m_pCamera{};
@@ -73,5 +74,8 @@ namespace JWEngine
 		XMVECTOR m_WorldPosition{};
 
 		EWorldMatrixCalculationOrder m_CalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
+
+		SDefaultVSConstantBufferData m_DefaultVSConstantBufferData{};
+		SDefaultPSConstantBufferData m_DefaultPSConstantBufferData{};
 	};
 };

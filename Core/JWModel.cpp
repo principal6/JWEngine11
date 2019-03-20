@@ -6,11 +6,11 @@ using namespace JWEngine;
 
 JWModel::~JWModel()
 {
-	m_TextureSamplerState->Release();
-	m_TextureShaderResourceView->Release();
-
-	m_VertexBuffer->Release();
-	m_IndexBuffer->Release();
+	JW_RELEASE(m_TextureSamplerState);
+	JW_RELEASE(m_TextureShaderResourceView);
+	
+	JW_RELEASE(m_VertexBuffer);
+	JW_RELEASE(m_IndexBuffer);
 }
 
 void JWModel::Create(JWDX& DX, JWCamera& Camera) noexcept
@@ -50,7 +50,17 @@ void JWModel::LoadModelObj(STRING Directory, STRING FileName) noexcept
 			m_AssimpScene->mMaterials[material_count - 1]->GetTexture(aiTextureType::aiTextureType_AMBIENT, 0, &path);
 			STRING path_string{ Directory + path.C_Str() };
 
-			CreateTexture(StringToWstring(path_string));
+			if (path.length == 0)
+			{
+				// No texture
+				m_HasTexture = FALSE;
+			}
+			else
+			{
+				// It has texture
+				CreateTexture(StringToWstring(path_string));
+				m_HasTexture = TRUE;
+			}
 		}
 
 		if (m_AssimpScene->HasMeshes())
@@ -66,8 +76,9 @@ void JWModel::LoadModelObj(STRING Directory, STRING FileName) noexcept
 				{
 					auto& vertex = m_AssimpScene->mMeshes[mesh_index]->mVertices[iterator_vertices];
 					auto& texcoord = m_AssimpScene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices];
+					auto& normal = m_AssimpScene->mMeshes[mesh_index]->mNormals[iterator_vertices];
 
-					AddVertex(SVertex(vertex.x, vertex.y, vertex.z, texcoord.x, texcoord.y));
+					AddVertex(SVertex(vertex.x, vertex.y, vertex.z, texcoord.x, texcoord.y, normal.x, normal.y, normal.z));
 				}
 			}
 			else
@@ -293,9 +304,17 @@ auto JWModel::GetDistanceFromCamera() noexcept->float
 
 PRIVATE void JWModel::Update() noexcept
 {
-	// Set WVP matrix and send it to the constant buffer for vertex shader
+	// Set VS constant buffer (WVP matrix and send it to the constant buffer for vertex shader)
 	m_WVP = m_MatrixWorld * m_pCamera->GetViewProjectionMatrix();
-	m_pDX->SetConstantBufferData(SConstantBufferDataPerObject(XMMatrixTranspose(m_WVP)));
+	
+	m_DefaultVSConstantBufferData.WVP = XMMatrixTranspose(m_WVP);
+	m_DefaultVSConstantBufferData.World = XMMatrixTranspose(m_MatrixWorld);
+	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSConstantBufferData);
+
+	// Set PS constant buffer
+	m_DefaultPSConstantBufferData.HasTexture = m_HasTexture;
+	m_DefaultPSConstantBufferData.ColorRGB = DefaultColorNoTexture;
+	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
 
 	// Set texture and sampler for pixel shader
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);

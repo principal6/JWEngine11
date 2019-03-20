@@ -109,6 +109,7 @@ namespace JWEngine
 	using namespace DirectX;
 
 	static constexpr int MAX_FILE_LENGTH = 255;
+	static constexpr XMFLOAT3 DefaultColorNoTexture = XMFLOAT3(0.8f, 0.2f, 1.0f);
 
 	enum class EWorldMatrixCalculationOrder
 	{
@@ -119,7 +120,7 @@ namespace JWEngine
 		ScaleTransRot,
 		ScaleRotTrans,
 	};
-
+	
 	struct SPositionInt
 	{
 		SPositionInt() {};
@@ -148,50 +149,33 @@ namespace JWEngine
 		float B{};
 	};
 	
-	struct SVertexTexture
+	static constexpr D3D11_INPUT_ELEMENT_DESC InputElementDescription[] =
 	{
-		SVertexTexture() {};
-		SVertexTexture(XMFLOAT3 _Position) : Position{ _Position } {};
-		SVertexTexture(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) : Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SVertexTexture(float x, float y, float z, float u, float v) : Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+
+	static constexpr UINT InputElementSize = ARRAYSIZE(InputElementDescription);
+	
+	struct SVertex
+	{
+		SVertex() {};
+		SVertex(XMFLOAT3 _Position) :
+			Position{ _Position } {};
+		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
+		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
+		SVertex(float x, float y, float z, float u, float v) :
+			Position{ x, y, z }, TextureCoordinates{ u, v } {};
+		SVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
+
 		XMFLOAT3 Position{};
 		XMFLOAT2 TextureCoordinates{};
+		XMFLOAT3 Normal{};
 	};
-
-	struct SVertexColor
-	{
-		SVertexColor() {};
-		SVertexColor(XMFLOAT3 _Position) : Position{ _Position } {};
-		SVertexColor(XMFLOAT3 _Position, XMFLOAT4 _Color) : Position{ _Position }, Color{ _Color } {};
-		SVertexColor(float x, float y, float z, float a, float r, float g, float b) : Position{ x, y, z }, Color{ r, g, b, a } {};
-
-		XMFLOAT3 Position{};
-		XMFLOAT4 Color{};
-	};
-
-	static constexpr D3D11_INPUT_ELEMENT_DESC InputElementDescriptionColor[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-
-	static constexpr D3D11_INPUT_ELEMENT_DESC InputElementDescriptionTexture[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	
-	#define USE_TEXTURE
-	#ifdef USE_TEXTURE
-		using SVertex = SVertexTexture;
-		#define INPUT_ELEMENT_DESCRIPTION InputElementDescriptionTexture
-	#else
-		using SVertex = SVertexColor;
-		#define INPUT_ELEMENT_DESCRIPTION InputElementDescriptionColor
-	#endif
-
-	static constexpr UINT InputElementSize = ARRAYSIZE(INPUT_ELEMENT_DESCRIPTION);
 
 	struct SVertexData
 	{
@@ -215,12 +199,24 @@ namespace JWEngine
 		UINT Count{};
 	};
 
-	struct SConstantBufferDataPerObject
+	struct SDefaultVSConstantBufferData
 	{
 		XMMATRIX WVP{};
+		XMMATRIX World{};
 
-		SConstantBufferDataPerObject() {};
-		SConstantBufferDataPerObject(XMMATRIX _WVP) : WVP{ _WVP } {};
+		SDefaultVSConstantBufferData() {};
+		SDefaultVSConstantBufferData(XMMATRIX _WVP) : WVP{ _WVP } {};
+		SDefaultVSConstantBufferData(XMMATRIX _WVP, XMMATRIX _World) : WVP{ _WVP }, World{ _World } {};
+	};
+
+	struct SDefaultPSConstantBufferData
+	{
+		BOOL HasTexture{ FALSE };
+		XMFLOAT3 ColorRGB{};
+
+		SDefaultPSConstantBufferData() {};
+		SDefaultPSConstantBufferData(BOOL _HasTexture) : HasTexture(_HasTexture) {};
+		SDefaultPSConstantBufferData(BOOL _HasTexture, XMFLOAT3 _ColorRGB) : HasTexture(_HasTexture), ColorRGB(_ColorRGB) {};
 	};
 
 	inline void JWAbort(const char* Content)

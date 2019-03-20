@@ -20,17 +20,11 @@ int main()
 
 	myGame.GetCameraObject().SetPosition(XMFLOAT4(0.0f, 4.0f, -6.0f, 0.0f));
 
-	myGame.AddTransparentModel("Asset\\", "TestBox.obj");
-	myGame.GetTransparentModel(0)
+	myGame.AddOpaqueModel("Asset\\", "sphere.obj");
+	myGame.GetOpaqueModel(0)
 		.SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		.SetScale(XMFLOAT3(0.08f, 0.08f, 0.08f));
-
-	myGame.AddTransparentModel("Asset\\", "TestBox.obj");
-	myGame.GetTransparentModel(1)
-		.SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleTransRot)
-		.SetScale(XMFLOAT3(0.08f, 0.08f, 0.08f))
-		.SetTranslation(XMFLOAT3(4, 0, 0));
-
+		.SetScale(XMFLOAT3(0.2f, 0.2f, 0.2f));
+	
 	myGame.AddImage("Asset\\", "firefox_56x80_creek23.png");
 	myGame.GetImage(0)
 		.SetPosition(XMFLOAT2(20, 30));
@@ -54,8 +48,7 @@ void Render()
 		rotation_angle = 0;
 	}
 
-	myGame.GetTransparentModel(0).SetRotation(XMFLOAT4(0, 1, 0, 0), rotation_angle);
-	myGame.GetTransparentModel(1).SetRotation(XMFLOAT4(0, 1, 0, 0), -rotation_angle);
+	myGame.GetOpaqueModel(0).SetRotation(XMFLOAT4(0, 1, 0, 0), rotation_angle);
 
 	myGame.DrawModelsAndImages();
 

@@ -38,8 +38,9 @@ namespace JWEngine
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
 		void SetDepthStencilState(EDepthStencilState State) noexcept;
-		void SetConstantBufferData(SConstantBufferDataPerObject Data) noexcept;
-		
+
+		void SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData Data) noexcept;
+		void SetDefaultPSConstantBufferData(SDefaultPSConstantBufferData Data) noexcept;
 		void SetDefaultVS() noexcept;
 		void SetDefaultPS() noexcept;
 
@@ -59,10 +60,10 @@ namespace JWEngine
 		void CreateDefaultPS() noexcept;
 
 		// Called in Create()
-		void CreateDefaultViewport() noexcept;
-		
-		// Called in Create()
 		void CreateInputLayout() noexcept;
+
+		// Called in Create()
+		void CreateDefaultConstantBuffers() noexcept;
 
 		// Called in Create()
 		void CreateDepthStencilView() noexcept;
@@ -80,7 +81,7 @@ namespace JWEngine
 		void CreateBlendStates() noexcept;
 
 		// Called in Create()
-		void CreateConstantBuffer() noexcept;
+		void CreateDefaultViewport() noexcept;
 
 	private:
 		bool m_IsValid{ false };
@@ -94,13 +95,19 @@ namespace JWEngine
 		ID3D11Device* m_Device11{};
 		ID3D11DeviceContext* m_DeviceContext11{};
 
-		ID3D10Blob* m_VertexShaderBuffer{};
-		ID3D10Blob* m_PixelShaderBuffer{};
-		
+		ID3D10Blob* m_DefaultVSBuffer{};
 		ID3D11VertexShader* m_DefaultVS11{};
+		
+		ID3D10Blob* m_DefaultPSBuffer{};
 		ID3D11PixelShader* m_DefaultPS11{};
 
 		ID3D11InputLayout* m_InputLayout11{};
+
+		// Constant buffers
+		ID3D11Buffer* m_DefaultVSConstantBuffer{};
+		SDefaultVSConstantBufferData m_DefaultVSConstantBufferData;
+		ID3D11Buffer* m_DefaultPSConstantBuffer{};
+		SDefaultPSConstantBufferData m_DefaultPSConstantBufferData;
 
 		ID3D11DepthStencilView* m_DepthStencilView11{};
 		ID3D11DepthStencilState* m_DepthStencilStateZEnabled11{};
@@ -115,9 +122,6 @@ namespace JWEngine
 
 		ID3D11BlendState* m_BlendStateTransparent{};
 		ID3D11BlendState* m_BlendStateOpaque{};
-
-		ID3D11Buffer* m_ConstantBufferPerObject{};
-		SConstantBufferDataPerObject m_ConstantBufferDataPerObject;
 
 		D3D11_VIEWPORT m_DefaultViewPort{};
 	};

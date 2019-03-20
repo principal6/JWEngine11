@@ -5,8 +5,8 @@ using namespace JWEngine;
 
 JWInstantText::~JWInstantText()
 {
-	JW_RELEASE(m_PSInstantText);
-	JW_RELEASE(m_ConstantBufferColor);
+	JW_RELEASE(m_InstantTextPS);
+	JW_RELEASE(m_InstantTextPSConstantBuffer);
 }
 
 void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept
@@ -81,7 +81,7 @@ PRIVATE void JWInstantText::CreateInstantTextPS() noexcept
 	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &buffer_ps, nullptr);
 
 	// Create the shader
-	m_pDX->GetDevice()->CreatePixelShader(buffer_ps->GetBufferPointer(), buffer_ps->GetBufferSize(), nullptr, &m_PSInstantText);
+	m_pDX->GetDevice()->CreatePixelShader(buffer_ps->GetBufferPointer(), buffer_ps->GetBufferSize(), nullptr, &m_InstantTextPS);
 
 	JW_RELEASE(buffer_ps);
 }
@@ -91,28 +91,31 @@ PRIVATE void JWInstantText::CreatePSConstantBuffer() noexcept
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
 	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SConstantBufferColor);
+	constant_buffer_description.ByteWidth = sizeof(SInstantTextPSConstantBufferData);
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
 
-	m_pDX->GetDevice()->CreateBuffer(&constant_buffer_description, nullptr, &m_ConstantBufferColor);
+	m_pDX->GetDevice()->CreateBuffer(&constant_buffer_description, nullptr, &m_InstantTextPSConstantBuffer);
 }
 
 void JWInstantText::SetInstantTextPS() noexcept
 {
-	m_pDX->GetDeviceContext()->PSSetShader(m_PSInstantText, nullptr, 0);
+	m_pDX->GetDeviceContext()->PSSetShader(m_InstantTextPS, nullptr, 0);
 }
 
 void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
 {
+	JWImage::UpdateDefaultVSConstantBuffer();
+	JWImage::UpdateTexture();
+
 	// Set pixel shader
 	SetInstantTextPS();
 	
-	// Update pixel shader's constant buffer (font color)
+	// Update InstantText pixel shader's constant buffer (font color)
 	m_TextColor._RGBA = XMFLOAT4(FontColorRGB.x, FontColorRGB.y, FontColorRGB.z, 1);
-	m_pDX->GetDeviceContext()->UpdateSubresource(m_ConstantBufferColor, 0, nullptr, &m_TextColor, 0, 0);
-	m_pDX->GetDeviceContext()->PSSetConstantBuffers(0, 1, &m_ConstantBufferColor);
+	m_pDX->GetDeviceContext()->UpdateSubresource(m_InstantTextPSConstantBuffer, 0, nullptr, &m_TextColor, 0, 0);
+	m_pDX->GetDeviceContext()->PSSetConstantBuffers(0, 1, &m_InstantTextPSConstantBuffer);
 
 	WSTRING wide_text = StringToWstring(Text);
 	memset(&m_VertexData.Vertices[0], 0, sizeof(SVertex) * m_VertexData.Count);

@@ -24,6 +24,9 @@ namespace JWEngine
 		virtual auto SetSize(XMFLOAT2 Size) noexcept->JWImage&;
 		
 		// Called in JWGame class
+		virtual void UpdateAll() noexcept;
+
+		// Called in JWGame class
 		virtual void Draw() noexcept;
 
 	protected:
@@ -46,7 +49,10 @@ namespace JWEngine
 		// Called by UpdateVertices()
 		virtual void UpdateVertexBuffer() noexcept;
 
-		virtual void Update() noexcept;
+		// Called by UpdateAll()
+		virtual void UpdateDefaultVSConstantBuffer() noexcept;
+		virtual void UpdateDefaultPSConstantBuffer() noexcept;
+		virtual void UpdateTexture() noexcept;
 
 	protected:
 		bool m_IsValid{ false };
