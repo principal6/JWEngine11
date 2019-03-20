@@ -12,7 +12,7 @@ VS_OUTPUT main(VS_INPUT input)
 
 	output.Position = mul(input.Position, WVP);
 	output.TexCoord = input.TexCoord;
-	output.Normal = mul(input.Normal, World);
+	output.Normal = normalize(mul(input.Normal, (float3x3)World));
 
 	return output;
 }
