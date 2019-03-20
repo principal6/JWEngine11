@@ -39,17 +39,23 @@ namespace JWEngine
 		void CreateTexture(WSTRING TextureFileName) noexcept;
 
 		auto AddVertex(const SVertex& Vertex) noexcept->JWModel&;
-		auto AddIndex(const SIndex& Index) noexcept->JWModel&;
+		auto AddIndex(const SIndex3& Index) noexcept->JWModel&;
 		void AddEnd() noexcept;
 
 		auto NormalAddVertex(const SVertex& Vertex) noexcept->JWModel&;
 		auto NormalAddIndex(const SIndex2& Index) noexcept->JWModel&;
 		void NormalAddEnd() noexcept;
+
+		// Called by Draw()
 		void DrawNormals() noexcept;
 
-		void UpdateWorldMatrix() noexcept;
-		void UpdateModel() noexcept;
+		// Called by Draw()
+		void Update() noexcept;
+
+		// Called by DrawNormals()
 		void UpdateNormals() noexcept;
+
+		void UpdateWorldMatrix() noexcept;
 
 	private:
 		bool m_IsValid{ false };

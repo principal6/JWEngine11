@@ -34,7 +34,7 @@ namespace JWEngine
 
 		// Buffer creation
 		virtual void AddVertex(const SVertex& Vertex) noexcept;
-		virtual void AddIndex(const SIndex& Index) noexcept;
+		virtual void AddIndex(const SIndex3& Index) noexcept;
 		virtual void AddEnd() noexcept;
 
 		// Texture creation

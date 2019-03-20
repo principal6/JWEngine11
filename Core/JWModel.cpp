@@ -107,7 +107,7 @@ void JWModel::LoadModelObj(STRING Directory, STRING FileName) noexcept
 
 					if (indices_count == 3)
 					{
-						AddIndex(SIndex(indices[0], indices[1], indices[2]));
+						AddIndex(SIndex3(indices[0], indices[1], indices[2]));
 					}
 					else
 					{
@@ -149,7 +149,7 @@ PRIVATE auto JWModel::AddVertex(const SVertex& Vertex) noexcept->JWModel&
 	return *this;
 }
 
-PRIVATE auto JWModel::AddIndex(const SIndex& Index) noexcept->JWModel&
+PRIVATE auto JWModel::AddIndex(const SIndex3& Index) noexcept->JWModel&
 {
 	m_IndexData.Indices.push_back(Index);
 
@@ -158,19 +158,11 @@ PRIVATE auto JWModel::AddIndex(const SIndex& Index) noexcept->JWModel&
 
 PRIVATE void JWModel::AddEnd() noexcept
 {
-	CheckValidity();
-
-	// Calculate the count of vertices
-	m_VertexData.Count = static_cast<UINT>(m_VertexData.Vertices.size());
-
 	// Create vertex buffer
-	m_pDX->CreateStaticVertexBuffer(sizeof(SVertex) * m_VertexData.Count, &m_VertexData.Vertices[0], &m_VertexBuffer);
-
-	// Calculate the count of indices
-	m_IndexData.Count = static_cast<UINT>(m_IndexData.Indices.size() * 3);
+	m_pDX->CreateStaticVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);
 
 	// Create index buffer
-	m_pDX->CreateIndexBuffer(sizeof(DWORD) * m_IndexData.Count, &m_IndexData.Indices[0], &m_IndexBuffer);
+	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
 PRIVATE auto JWModel::NormalAddVertex(const SVertex& Vertex) noexcept->JWModel&
@@ -189,19 +181,11 @@ PRIVATE auto JWModel::NormalAddIndex(const SIndex2& Index) noexcept->JWModel&
 
 PRIVATE void JWModel::NormalAddEnd() noexcept
 {
-	CheckValidity();
-
-	// Calculate the count of vertices
-	m_NormalVertexData.Count = static_cast<UINT>(m_NormalVertexData.Vertices.size());
-
 	// Create vertex buffer
-	m_pDX->CreateStaticVertexBuffer(sizeof(SVertex) * m_NormalVertexData.Count, &m_NormalVertexData.Vertices[0], &m_NormalVertexBuffer);
-
-	// Calculate the count of indices
-	m_NormalIndexData.Count = static_cast<UINT>(m_NormalIndexData.Indices.size() * 2);
+	m_pDX->CreateStaticVertexBuffer(m_NormalVertexData.GetByteSize(), m_NormalVertexData.GetPtrData(), &m_NormalVertexBuffer);
 
 	// Create index buffer
-	m_pDX->CreateIndexBuffer(sizeof(DWORD) * m_NormalIndexData.Count, &m_NormalIndexData.Indices[0], &m_NormalIndexBuffer);
+	m_pDX->CreateIndexBuffer(m_NormalIndexData.GetByteSize(), m_NormalIndexData.GetPtrData(), &m_NormalIndexBuffer);
 }
 
 void JWModel::SetWorldMatrixToIdentity() noexcept
@@ -295,7 +279,7 @@ auto JWModel::GetDistanceFromCamera() noexcept->float
 	return (distance_x * distance_x + distance_y * distance_y + distance_z * distance_z);
 }
 
-PRIVATE void JWModel::UpdateModel() noexcept
+PRIVATE void JWModel::Update() noexcept
 {
 	// Set VS constant buffer
 	m_DefaultVSConstantBufferData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
@@ -316,21 +300,19 @@ PRIVATE void JWModel::UpdateModel() noexcept
 
 void JWModel::Draw() noexcept
 {
-	UpdateModel();
+	Update();
 
 	// Set IA primitive topology
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Set IA vertex buffer
-	UINT vertex_stride{ sizeof(SVertex) };
-	UINT vertex_offset{};
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, &vertex_stride, &vertex_offset);
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, m_VertexData.GetPtrStride(), m_VertexData.GetPtrOffset());
 
 	// Set IA index buffer
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Draw
-	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.Count, 0, 0);
+	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
 
 	if (m_ShouldDrawNormals)
 	{
@@ -363,13 +345,11 @@ PRIVATE void JWModel::DrawNormals() noexcept
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
 	// Set IA vertex buffer
-	UINT vertex_stride{ sizeof(SVertex) };
-	UINT vertex_offset{};
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_NormalVertexBuffer, &vertex_stride, &vertex_offset);
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_NormalVertexBuffer, m_NormalVertexData.GetPtrStride(), m_NormalVertexData.GetPtrOffset());
 
 	// Set IA index buffer
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Draw
-	m_pDX->GetDeviceContext()->DrawIndexed(m_NormalIndexData.Count, 0, 0);
+	m_pDX->GetDeviceContext()->DrawIndexed(m_NormalIndexData.GetCount(), 0, 0);
 }

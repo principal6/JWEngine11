@@ -165,6 +165,7 @@
   <ItemGroup>
     <ClCompile Include="..\Core\JWBMFontParser.cpp" />
     <ClCompile Include="..\Core\JWCamera.cpp" />
+    <ClCompile Include="..\Core\JWDesignerUI.cpp" />
     <ClCompile Include="..\Core\JWDX.cpp" />
     <ClCompile Include="..\Core\JWImage.cpp" />
     <ClCompile Include="..\Core\JWInstantText.cpp" />
@@ -250,6 +251,7 @@
     <ClInclude Include="..\Core\JWBMFontParser.h" />
     <ClInclude Include="..\Core\JWCamera.h" />
     <ClInclude Include="..\Core\JWCommon.h" />
+    <ClInclude Include="..\Core\JWDesignerUI.h" />
     <ClInclude Include="..\Core\JWDX.h" />
     <ClInclude Include="..\Core\JWImage.h" />
     <ClInclude Include="..\Core\JWInstantText.h" />
@@ -282,6 +284,17 @@
     <ClInclude Include="JWGame.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Shaders\ColorHeader.hlsl">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <FxCompile Include="..\Shaders\ColorPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\ColorVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
     <FxCompile Include="..\Shaders\DefaultPS.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">PS</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">PS</EntryPointName>

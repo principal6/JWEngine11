@@ -111,6 +111,7 @@ namespace JWEngine
 	static constexpr int MAX_FILE_LENGTH = 255;
 	static constexpr XMFLOAT3 DefaultColorNoTexture = XMFLOAT3(0.8f, 0.2f, 1.0f);
 	static constexpr XMFLOAT3 DefaultColorNormals = XMFLOAT3(0.4f, 1.0f, 0.0f);
+	static constexpr XMFLOAT3 DefaultColorGrid = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
 	enum class EWorldMatrixCalculationOrder
 	{
@@ -157,7 +158,14 @@ namespace JWEngine
 		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
+	static constexpr D3D11_INPUT_ELEMENT_DESC InputElementColorDescription[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT	, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+
 	static constexpr UINT InputElementSize = ARRAYSIZE(InputElementDescription);
+	static constexpr UINT InputElementColorSize = ARRAYSIZE(InputElementColorDescription);
 	
 	struct SVertex
 	{
@@ -180,16 +188,54 @@ namespace JWEngine
 		XMFLOAT3 Normal{};
 	};
 
+	struct SVertexColor
+	{
+		SVertexColor() {};
+		SVertexColor(XMFLOAT3 _Position) :
+			Position{ _Position } {};
+		SVertexColor(XMFLOAT3 _Position, XMFLOAT4 _ColorRGBA) :
+			Position{ _Position }, ColorRGBA{ _ColorRGBA } {};
+		SVertexColor(float x, float y, float z) :
+			Position{ x, y, z } {};
+		SVertexColor(float x, float y, float z, float r, float g, float b, float a) :
+			Position{ x, y, z }, ColorRGBA{ r, g, b, a } {};
+
+		XMFLOAT3 Position{};
+		XMFLOAT4 ColorRGBA{ 1.0f, 1.0f, 1.0f, 1.0f };
+	};
+
 	struct SVertexData
 	{
 		VECTOR<SVertex> Vertices;
-		UINT Count{};
+		UINT Stride{ static_cast<UINT>(sizeof(SVertex)) };
+		UINT Offset{};
+
+		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertex)); };
+		auto GetPtrData() const noexcept { return &Vertices[0]; };
+		auto GetPtrStride() const noexcept { return &Stride; };
+		auto GetPtrOffset() const noexcept { return &Offset; };
+		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
 	};
 
-	struct SIndex
+	struct SVertexColorData
 	{
-		SIndex() {};
-		SIndex(DWORD __0, DWORD __1, DWORD __2) : _0{ __0 }, _1{ __1 }, _2{ __2 } {};
+		VECTOR<SVertexColor> Vertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SVertexColor)) };
+		UINT Offset{};
+
+		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexColor)); };
+		auto GetPtrData() const noexcept { return &Vertices[0]; };
+		auto GetPtrStride() const noexcept { return &Stride; };
+		auto GetPtrOffset() const noexcept { return &Offset; };
+		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
+	};
+	
+	struct SIndex3
+	{
+		SIndex3() {};
+		SIndex3(DWORD __0, DWORD __1, DWORD __2) : _0{ __0 }, _1{ __1 }, _2{ __2 } {};
 
 		DWORD _0{};
 		DWORD _1{};
@@ -207,34 +253,48 @@ namespace JWEngine
 
 	struct SIndexData
 	{
-		VECTOR<SIndex> Indices;
-		UINT Count{};
+		VECTOR<SIndex3> Indices;
+
+		auto GetCount() const noexcept { return static_cast<UINT>(Indices.size() * 3); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(DWORD)); };
+		auto GetPtrData() const noexcept { return &Indices[0]; };
 	};
 
 	struct SIndex2Data
 	{
 		VECTOR<SIndex2> Indices;
-		UINT Count{};
+
+		auto GetCount() const noexcept { return static_cast<UINT>(Indices.size() * 2); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(DWORD)); };
+		auto GetPtrData() const noexcept { return &Indices[0]; };
+	};
+
+	struct SColorVSConstantBufferData
+	{
+		SColorVSConstantBufferData() {};
+		SColorVSConstantBufferData(XMMATRIX _WVP) : WVP{ _WVP } {};
+
+		XMMATRIX WVP{};
 	};
 
 	struct SDefaultVSConstantBufferData
 	{
-		XMMATRIX WVP{};
-		XMMATRIX World{};
-
 		SDefaultVSConstantBufferData() {};
 		SDefaultVSConstantBufferData(XMMATRIX _WVP) : WVP{ _WVP } {};
 		SDefaultVSConstantBufferData(XMMATRIX _WVP, XMMATRIX _World) : WVP{ _WVP }, World{ _World } {};
+
+		XMMATRIX WVP{};
+		XMMATRIX World{};
 	};
 
 	struct SDefaultPSConstantBufferData
 	{
-		BOOL HasTexture{ FALSE };
-		XMFLOAT3 ColorRGB{};
-
 		SDefaultPSConstantBufferData() {};
 		SDefaultPSConstantBufferData(BOOL _HasTexture) : HasTexture(_HasTexture) {};
 		SDefaultPSConstantBufferData(BOOL _HasTexture, XMFLOAT3 _ColorRGB) : HasTexture(_HasTexture), ColorRGB(_ColorRGB) {};
+
+		BOOL HasTexture{ FALSE };
+		XMFLOAT3 ColorRGB{};
 	};
 
 	inline void JWAbort(const char* Content)

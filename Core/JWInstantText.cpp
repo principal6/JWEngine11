@@ -47,7 +47,6 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 {
 	m_VertexData.Vertices.clear();
 	m_VertexData.Vertices.reserve(MAX_INSTANT_TEXT_LENGTH * 4);
-	m_VertexData.Count = MAX_INSTANT_TEXT_LENGTH * 4;
 
 	for (int iterator_count = 0; iterator_count < MAX_INSTANT_TEXT_LENGTH * 4; ++iterator_count)
 	{
@@ -55,23 +54,22 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 	}
 
 	// Create vertex buffer
-	m_pDX->CreateDynamicVertexBuffer(sizeof(SVertex) * m_VertexData.Count, &m_VertexData.Vertices[0], &m_VertexBuffer);
+	m_pDX->CreateDynamicVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);
 }
 
 PRIVATE void JWInstantText::CreateInstantTextIndexBuffer() noexcept
 {
 	m_IndexData.Indices.clear();
 	m_IndexData.Indices.reserve(MAX_INSTANT_TEXT_LENGTH * 2);
-	m_IndexData.Count = MAX_INSTANT_TEXT_LENGTH * 2;
 
 	for (int iterator_count = 0; iterator_count < MAX_INSTANT_TEXT_LENGTH; ++iterator_count)
 	{
-		m_IndexData.Indices.push_back(SIndex(iterator_count * 4,     iterator_count * 4 + 1, iterator_count * 4 + 2));
-		m_IndexData.Indices.push_back(SIndex(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));
+		m_IndexData.Indices.push_back(SIndex3(iterator_count * 4,     iterator_count * 4 + 1, iterator_count * 4 + 2));
+		m_IndexData.Indices.push_back(SIndex3(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));
 	}
 
 	// Create index buffer
-	m_pDX->CreateIndexBuffer(sizeof(DWORD) * m_IndexData.Count, &m_IndexData.Indices[0], &m_IndexBuffer);
+	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
 PRIVATE void JWInstantText::CreateInstantTextPS() noexcept
@@ -119,8 +117,8 @@ void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 Fon
 	m_pDX->GetDeviceContext()->UpdateSubresource(m_InstantTextPSConstantBuffer, 0, nullptr, &m_TextColor, 0, 0);
 	m_pDX->GetDeviceContext()->PSSetConstantBuffers(0, 1, &m_InstantTextPSConstantBuffer);
 
-	WSTRING wide_text = StringToWstring(Text);
-	memset(&m_VertexData.Vertices[0], 0, sizeof(SVertex) * m_VertexData.Count);
+	// Empty vertex data
+	m_VertexData.EmptyData();
 	
 	float window_width_half = static_cast<float>(m_pDX->GetWindowSize().Width) / 2;
 	float window_height_half = static_cast<float>(m_pDX->GetWindowSize().Height) / 2;
@@ -132,6 +130,7 @@ void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 Fon
 	float u1{}, u2{}, v1{}, v2{};
 	BMFont::BMChar current_bm_char{};
 
+	WSTRING wide_text = StringToWstring(Text);
 	size_t iterator_index{};
 	for (auto iterator_char : wide_text)
 	{

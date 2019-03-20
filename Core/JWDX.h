@@ -50,10 +50,14 @@ namespace JWEngine
 		void SetBlendState(EBlendState State) noexcept;
 		void SetPSSamplerState(ESamplerState State) noexcept;
 
-		void SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData Data) noexcept;
-		void SetDefaultPSConstantBufferData(SDefaultPSConstantBufferData Data) noexcept;
 		void SetDefaultVS() noexcept;
 		void SetDefaultPS() noexcept;
+		void SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData Data) noexcept;
+		void SetDefaultPSConstantBufferData(SDefaultPSConstantBufferData Data) noexcept;
+
+		void SetColorVS() noexcept;
+		void SetColorPS() noexcept;
+		void SetColorVSConstantBufferData(SColorVSConstantBufferData Data) noexcept;
 
 		void BeginDrawing(const SClearColor& ClearColor) noexcept;
 		void EndDrawing() noexcept;
@@ -66,15 +70,15 @@ namespace JWEngine
 		// Called in Create()
 		void CreateDeviceAndSwapChain(HWND hWnd) noexcept;
 
+		// Shader & input layout creation
 		// Called in Create()
 		void CreateDefaultVS() noexcept;
 		void CreateDefaultPS() noexcept;
-
-		// Called in Create()
-		void CreateInputLayout() noexcept;
-
-		// Called in Create()
-		void CreateDefaultConstantBuffers() noexcept;
+		void CreateDefaultVSConstantBuffer() noexcept;
+		void CreateDefaultPSConstantBuffer() noexcept;
+		void CreateColorVS() noexcept;
+		void CreateColorPS() noexcept;
+		void CreateColorVSConstantBuffer() noexcept;
 
 		// Called in Create()
 		void CreateDepthStencilView() noexcept;
@@ -101,27 +105,29 @@ namespace JWEngine
 		bool m_IsValid{ false };
 
 		STRING m_BaseDirectory;
-
 		SSizeInt m_WindowSize{};
 
 		IDXGISwapChain* m_SwapChain{};
-
 		ID3D11Device* m_Device11{};
 		ID3D11DeviceContext* m_DeviceContext11{};
 
 		ID3D10Blob* m_DefaultVSBuffer{};
 		ID3D11VertexShader* m_DefaultVS11{};
-		
+		ID3D11InputLayout* m_DefaultVSInputLayout11{};
 		ID3D10Blob* m_DefaultPSBuffer{};
 		ID3D11PixelShader* m_DefaultPS11{};
-
-		ID3D11InputLayout* m_InputLayout11{};
-
-		// Constant buffers
 		ID3D11Buffer* m_DefaultVSConstantBuffer{};
 		SDefaultVSConstantBufferData m_DefaultVSConstantBufferData;
 		ID3D11Buffer* m_DefaultPSConstantBuffer{};
 		SDefaultPSConstantBufferData m_DefaultPSConstantBufferData;
+
+		ID3D10Blob* m_ColorVSBuffer{};
+		ID3D11VertexShader* m_ColorVS11{};
+		ID3D11InputLayout* m_ColorVSInputLayout11{};
+		ID3D10Blob* m_ColorPSBuffer{};
+		ID3D11PixelShader* m_ColorPS11{};
+		ID3D11Buffer* m_ColorVSConstantBuffer{};
+		SColorVSConstantBufferData m_ColorVSConstantBufferData;
 
 		ID3D11DepthStencilView* m_DepthStencilView11{};
 		ID3D11DepthStencilState* m_DepthStencilStateZEnabled11{};

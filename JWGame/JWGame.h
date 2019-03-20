@@ -7,6 +7,7 @@
 #include "../Core/JWImage.h"
 #include "../Core/JWInstantText.h"
 #include "../Core/JWTimer.h"
+#include "../Core/JWDesignerUI.h"
 
 namespace JWEngine
 {
@@ -39,6 +40,7 @@ namespace JWEngine
 
 		void Run() noexcept;
 
+		void DrawDesignerUI() noexcept;
 		void DrawModelsAndImages() noexcept;
 		void DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
 
@@ -73,6 +75,8 @@ namespace JWEngine
 		JWTimer m_Timer{};
 		long long m_FPSCount{};
 		int m_FPS{};
+
+		JWDesignerUI m_DesignerUI{};
 
 		VECTOR<UNIQUE_PTR<JWModel>> m_pOpaqueModels;
 		VECTOR<UNIQUE_PTR<JWModel>> m_pTransparentModels;

@@ -25,6 +25,8 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 	m_InstantText.Create(m_DX, m_Camera, BaseDirectory, GameFontFileName);
 
+	m_DesignerUI.Create(m_DX, m_Camera);
+
 	m_IsValid = true;
 }
 
@@ -168,28 +170,53 @@ void JWGame::Run() noexcept
 	}
 }
 
+void JWGame::DrawDesignerUI() noexcept
+{
+	// Enable Z-buffer
+	SetDepthStencilState(EDepthStencilState::ZEnabled);
+
+	// Set color VS, PS
+	m_DX.SetColorVS();
+	m_DX.SetColorPS();
+
+	// Draw designer UI
+	SetBlendState(EBlendState::Opaque);
+	m_DesignerUI.Draw();
+}
+
 void JWGame::DrawModelsAndImages() noexcept
 {
+	/*
+	** 3D Drawing Part
+	*/
+	// Enable Z-buffer
+	SetDepthStencilState(EDepthStencilState::ZEnabled);
+
+	// Set default VS, PS
 	m_DX.SetDefaultVS();
 	m_DX.SetDefaultPS();
 
 	// Draw 3D models
-	SetDepthStencilState(EDepthStencilState::ZEnabled);
-	SetBlendState(EBlendState::Opaque);
 	DrawAllOpaqueModels();
-
 	SetBlendState(EBlendState::Transprent);
 	DrawAllTransparentModels();
 
-	// Draw 2d images
-	// with z-buffer disabled, in order to draw them on top of everything else
-	SetBlendState(EBlendState::Opaque);
+	/*
+	** 2D Drawing Part
+	*/
+	// Disable Z-buffer
 	SetDepthStencilState(EDepthStencilState::ZDisabled);
+
+	// Draw 2D images
+	// with Z-buffer disabled, in order to draw them on top of everything else
+	SetBlendState(EBlendState::Opaque);
 	DrawAll2DImages();
 }
 
 void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
 {
+	SetDepthStencilState(EDepthStencilState::ZDisabled);
+
 	SetBlendState(EBlendState::Transprent);
 	m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
 }

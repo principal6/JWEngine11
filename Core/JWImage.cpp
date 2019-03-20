@@ -27,8 +27,8 @@ void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
 	AddVertex(SVertex(0, -1, 0, 0, 1));
 	AddVertex(SVertex(1, -1, 0, 1, 1));
 
-	AddIndex(SIndex(0, 1, 2));
-	AddIndex(SIndex(1, 3, 2));
+	AddIndex(SIndex3(0, 1, 2));
+	AddIndex(SIndex3(1, 3, 2));
 
 	AddEnd();
 
@@ -48,24 +48,18 @@ PROTECTED void JWImage::AddVertex(const SVertex& Vertex) noexcept
 	m_VertexData.Vertices.push_back(Vertex);
 }
 
-PROTECTED void JWImage::AddIndex(const SIndex& Index) noexcept
+PROTECTED void JWImage::AddIndex(const SIndex3& Index) noexcept
 {
 	m_IndexData.Indices.push_back(Index);
 }
 
 PROTECTED void JWImage::AddEnd() noexcept
 {
-	// Calculate the count of vertices
-	m_VertexData.Count = static_cast<UINT>(m_VertexData.Vertices.size());
-
 	// Create vertex buffer
-	m_pDX->CreateDynamicVertexBuffer(sizeof(SVertex) * m_VertexData.Count, &m_VertexData.Vertices[0], &m_VertexBuffer);
-
-	// Calculate the count of indices
-	m_IndexData.Count = static_cast<UINT>(m_IndexData.Indices.size() * 3);
+	m_pDX->CreateDynamicVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);
 
 	// Create index buffer
-	m_pDX->CreateIndexBuffer(sizeof(DWORD) * m_IndexData.Count, &m_IndexData.Indices[0], &m_IndexBuffer);
+	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
 void JWImage::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
@@ -141,11 +135,12 @@ PROTECTED void JWImage::UpdateScreenPositionAndSize() noexcept
 PROTECTED void JWImage::UpdateVertexBuffer() noexcept
 {
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
-	m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource);
+	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
+	{
+		memcpy(mapped_subresource.pData, m_VertexData.GetPtrData(), m_VertexData.GetByteSize());
 
-	memcpy(mapped_subresource.pData, &m_VertexData.Vertices[0], sizeof(SVertex) * m_VertexData.Count);
-
-	m_pDX->GetDeviceContext()->Unmap(m_VertexBuffer, 0);
+		m_pDX->GetDeviceContext()->Unmap(m_VertexBuffer, 0);
+	}
 }
 
 void JWImage::UpdateAll() noexcept
@@ -183,12 +178,11 @@ void JWImage::Draw() noexcept
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Set vertex buffer
-	UINT vertex_stride{ sizeof(SVertex) };
-	UINT vertex_offset{};
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, &vertex_stride, &vertex_offset);
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, m_VertexData.GetPtrStride(), m_VertexData.GetPtrOffset());
 	
 	// Set index buffer
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.Count, 0, 0);
+	// Draw
+	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
 }

@@ -52,6 +52,7 @@ void Render()
 		.SetRotation(XMFLOAT4(0, 1, 0, 0), rotation_angle)
 		.ShouldDrawNormals(true);
 
+	myGame.DrawDesignerUI();
 	myGame.DrawModelsAndImages();
 
 	myGame.DrawInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()), XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
