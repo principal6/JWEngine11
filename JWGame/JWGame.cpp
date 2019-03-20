@@ -9,7 +9,7 @@ PRIVATE inline auto JWGame::GetFileNameWithBaseDirectory(const STRING& FileName)
 
 void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING BaseDirectory, STRING GameFontFileName) noexcept
 {
-	AVOID_DUPLICATE_CREATION(m_IsValid);
+	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	m_BaseDirectory = BaseDirectory;
 
@@ -19,8 +19,11 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 	m_IsWindowCreated = true;
 
 	m_DX.Create(m_Window, m_BaseDirectory);
+	m_DX.SetRasterizerState(ERasterizerState::SolidNoCull);
 	m_IsDXCreated = true;
 	
+	m_Input.Create(m_Window.GethWnd(), m_Window.GethInstance());
+
 	m_Camera.Create(m_DX);
 
 	m_InstantText.Create(m_DX, m_Camera, BaseDirectory, GameFontFileName);
@@ -30,14 +33,24 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 	m_IsValid = true;
 }
 
-void JWGame::SetRenderFunction(FP_RENDER Render) noexcept
+void JWGame::SetOnRenderFunction(FP_ON_RENDER OnRender) noexcept
 {
-	if (Render == nullptr)
+	if (OnRender == nullptr)
 	{
-		JWAbort("FP_MAINLOOP MainLoop is nullptr.");
+		JWAbort("FP_ON_RENDER OnRender is nullptr.");
 	}
 
-	m_fpRender = Render;
+	m_fpOnRender = OnRender;
+}
+
+void JWGame::SetOnInputFunction(FP_ON_INPUT OnInput) noexcept
+{
+	if (OnInput == nullptr)
+	{
+		JWAbort("FP_ON_INPUT OnInput is nullptr.");
+	}
+
+	m_fpOnInput = OnInput;
 }
 
 void JWGame::SetRasterizerState(ERasterizerState State) noexcept
@@ -119,7 +132,7 @@ PRIVATE void JWGame::CheckValidity() const noexcept
 	{
 		JWAbort("DirectX objects not created.\nYou must call JWGame::Create()");
 	}
-	if (!m_fpRender)
+	if (!m_fpOnRender)
 	{
 		JWAbort("m_pMainLoop is nullptr.\nYou must call JWGame::SetMainLoopFunction()");
 	}
@@ -148,10 +161,13 @@ void JWGame::Run() noexcept
 			// Advance FPSCount
 			++m_FPSCount;
 
+			// Call the outter OnInput function
+			m_fpOnInput(m_Input.GetDeviceState());
+
 			m_DX.BeginDrawing(m_ClearColor);
 
-			// Call the outter render function.
-			m_fpRender();
+			// Call the outter OnRender function.
+			m_fpOnRender();
 
 			m_DX.EndDrawing();
 
@@ -184,12 +200,9 @@ void JWGame::DrawDesignerUI() noexcept
 	m_DesignerUI.Draw();
 }
 
-void JWGame::DrawModelsAndImages() noexcept
+void JWGame::DrawModels() noexcept
 {
-	/*
-	** 3D Drawing Part
-	*/
-	// Enable Z-buffer
+	// Enable Z-buffer (3D Drawing)
 	SetDepthStencilState(EDepthStencilState::ZEnabled);
 
 	// Set default VS, PS
@@ -200,12 +213,16 @@ void JWGame::DrawModelsAndImages() noexcept
 	DrawAllOpaqueModels();
 	SetBlendState(EBlendState::Transprent);
 	DrawAllTransparentModels();
+}
 
-	/*
-	** 2D Drawing Part
-	*/
-	// Disable Z-buffer
+void JWGame::DrawImages() noexcept
+{
+	// Disable Z-buffer (2D Drawing)
 	SetDepthStencilState(EDepthStencilState::ZDisabled);
+
+	// Set default VS, PS
+	m_DX.SetDefaultVS();
+	m_DX.SetDefaultPS();
 
 	// Draw 2D images
 	// with Z-buffer disabled, in order to draw them on top of everything else
@@ -216,6 +233,10 @@ void JWGame::DrawModelsAndImages() noexcept
 void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
 {
 	SetDepthStencilState(EDepthStencilState::ZDisabled);
+
+	// Set default VS, PS
+	m_DX.SetDefaultVS();
+	m_DX.SetDefaultPS();
 
 	SetBlendState(EBlendState::Transprent);
 	m_InstantText.DrawInstantText(Text, Position, FontColorRGB);

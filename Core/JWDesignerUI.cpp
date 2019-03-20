@@ -12,7 +12,7 @@ JWDesignerUI::~JWDesignerUI()
 
 void JWDesignerUI::Create(JWDX& DX, JWCamera& Camera) noexcept
 {
-	AVOID_DUPLICATE_CREATION(m_IsValid);
+	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	// Set JWDX pointer.
 	m_pDX = &DX;

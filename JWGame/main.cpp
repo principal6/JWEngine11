@@ -8,9 +8,11 @@ using namespace JWEngine;
 
 static JWGame myGame;
 
-void Render();
+JW_FUNCTION_ON_INPUT(OnInput);
+JW_FUNCTION_ON_RENDER(OnRender);
 
-float rotation_angle{};
+bool g_ShouldDrawNormals{ false };
+float g_RotationAngle{};
 
 int main()
 {
@@ -29,31 +31,37 @@ int main()
 	myGame.GetImage(0)
 		.SetPosition(XMFLOAT2(20, 30));
 
-	myGame.SetRenderFunction(Render);
-
-	//myGame.SetRasterizerState(ERasterizerState::WireFrame);
-	//myGame.SetRasterizerState(ERasterizerState::SolidBackCullCW);
-	myGame.SetRasterizerState(ERasterizerState::SolidNoCull);
+	myGame.SetOnInputFunction(OnInput);
+	myGame.SetOnRenderFunction(OnRender);
 
 	myGame.Run();
 
 	return 0;
 }
 
-void Render()
+JW_FUNCTION_ON_INPUT(OnInput)
 {
-	rotation_angle += 0.0005f;
-	if (rotation_angle >= XM_PI * 2)
+	if (DeviceState.Keys[DIK_N])
 	{
-		rotation_angle = 0;
+		g_ShouldDrawNormals = !g_ShouldDrawNormals;
+	}
+}
+
+JW_FUNCTION_ON_RENDER(OnRender)
+{
+	g_RotationAngle += 0.0005f;
+	if (g_RotationAngle >= XM_PI * 2)
+	{
+		g_RotationAngle = 0;
 	}
 
 	myGame.GetOpaqueModel(0)
-		.SetRotation(XMFLOAT4(0, 1, 0, 0), rotation_angle)
-		.ShouldDrawNormals(true);
+		.SetRotation(XMFLOAT4(0, 1, 0, 0), g_RotationAngle)
+		.ShouldDrawNormals(g_ShouldDrawNormals);
 
 	myGame.DrawDesignerUI();
-	myGame.DrawModelsAndImages();
+	myGame.DrawModels();
+	myGame.DrawImages();
 
 	myGame.DrawInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()), XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
 	myGame.DrawInstantText("Test instant text", XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));

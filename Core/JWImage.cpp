@@ -14,7 +14,7 @@ JWImage::~JWImage()
 
 void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
 {
-	AVOID_DUPLICATE_CREATION(m_IsValid);
+	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	// Set JWDX pointer.
 	m_pDX = &DX;
@@ -64,7 +64,7 @@ PROTECTED void JWImage::AddEnd() noexcept
 
 void JWImage::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 {
-	AVOID_DUPLICATE_CREATION(m_IsTextureCreated);
+	JW_AVOID_DUPLICATE_CREATION(m_IsTextureCreated);
 
 	CheckValidity();
 

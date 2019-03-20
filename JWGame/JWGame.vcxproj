@@ -168,6 +168,7 @@
     <ClCompile Include="..\Core\JWDesignerUI.cpp" />
     <ClCompile Include="..\Core\JWDX.cpp" />
     <ClCompile Include="..\Core\JWImage.cpp" />
+    <ClCompile Include="..\Core\JWInput.cpp" />
     <ClCompile Include="..\Core\JWInstantText.cpp" />
     <ClCompile Include="..\Core\JWModel.cpp" />
     <ClCompile Include="..\Core\JWTimer.cpp" />
@@ -254,6 +255,7 @@
     <ClInclude Include="..\Core\JWDesignerUI.h" />
     <ClInclude Include="..\Core\JWDX.h" />
     <ClInclude Include="..\Core\JWImage.h" />
+    <ClInclude Include="..\Core\JWInput.h" />
     <ClInclude Include="..\Core\JWInstantText.h" />
     <ClInclude Include="..\Core\JWModel.h" />
     <ClInclude Include="..\Core\JWTimer.h" />

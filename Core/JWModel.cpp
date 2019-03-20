@@ -17,7 +17,7 @@ JWModel::~JWModel()
 
 void JWModel::Create(JWDX& DX, JWCamera& Camera) noexcept
 {
-	AVOID_DUPLICATE_CREATION(m_IsValid);
+	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	// Set JWDX pointer.
 	m_pDX = &DX;
@@ -289,7 +289,7 @@ PRIVATE void JWModel::Update() noexcept
 
 	// Set PS constant buffer
 	m_DefaultPSConstantBufferData.HasTexture = m_HasTexture;
-	m_DefaultPSConstantBufferData.ColorRGB = DefaultColorNoTexture;
+	m_DefaultPSConstantBufferData.ColorRGB = KDefaultColorNoTexture;
 
 	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
 
@@ -329,7 +329,7 @@ PRIVATE void JWModel::UpdateNormals() noexcept
 
 	// Set PS constant buffer
 	m_DefaultPSConstantBufferData.HasTexture = FALSE;
-	m_DefaultPSConstantBufferData.ColorRGB = DefaultColorNormals;
+	m_DefaultPSConstantBufferData.ColorRGB = KDefaultColorNormals;
 	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
 
 	// Set PS texture and sampler

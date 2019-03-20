@@ -100,18 +100,26 @@
 // Private method prefix
 #define PRIVATE
 
-#define AVOID_DUPLICATE_CREATION(BOOL) {if(BOOL){return;}}
-
-#define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
-
 namespace JWEngine
 {
+	// Forward declaration
+	struct SDirectInputDeviceState;
+
+#define JW_AVOID_DUPLICATE_CREATION(Bool) {if (Bool) { return; }}
+#define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
+
+	using FP_ON_INPUT = void(*)(SDirectInputDeviceState&);
+	using FP_ON_RENDER = void(*)(void);
+#define JW_FUNCTION_ON_INPUT(FunctionName) void FunctionName(SDirectInputDeviceState& DeviceState)
+#define JW_FUNCTION_ON_RENDER(FunctionName) void FunctionName()
+	
 	using namespace DirectX;
 
-	static constexpr int MAX_FILE_LENGTH = 255;
-	static constexpr XMFLOAT3 DefaultColorNoTexture = XMFLOAT3(0.8f, 0.2f, 1.0f);
-	static constexpr XMFLOAT3 DefaultColorNormals = XMFLOAT3(0.4f, 1.0f, 0.0f);
-	static constexpr XMFLOAT3 DefaultColorGrid = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	static constexpr int KMaxFileLength = 255;
+	static constexpr int KInputKeyCount = 256;
+	static constexpr XMFLOAT3 KDefaultColorNoTexture = XMFLOAT3(0.8f, 0.2f, 1.0f);
+	static constexpr XMFLOAT3 KDefaultColorNormals = XMFLOAT3(0.4f, 1.0f, 0.0f);
+	static constexpr XMFLOAT3 KDefaultColorGrid = XMFLOAT3(1.0f, 1.0f, 1.0f);
 
 	enum class EWorldMatrixCalculationOrder
 	{
@@ -150,22 +158,22 @@ namespace JWEngine
 		float G{};
 		float B{};
 	};
-	
-	static constexpr D3D11_INPUT_ELEMENT_DESC InputElementDescription[] =
+
+	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescription[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
-	static constexpr D3D11_INPUT_ELEMENT_DESC InputElementColorDescription[] =
+	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementColorDescription[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT	, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
-	static constexpr UINT InputElementSize = ARRAYSIZE(InputElementDescription);
-	static constexpr UINT InputElementColorSize = ARRAYSIZE(InputElementColorDescription);
+	static constexpr UINT KInputElementSize = ARRAYSIZE(KInputElementDescription);
+	static constexpr UINT KInputElementColorSize = ARRAYSIZE(KInputElementColorDescription);
 	
 	struct SVertex
 	{
@@ -296,7 +304,7 @@ namespace JWEngine
 		BOOL HasTexture{ FALSE };
 		XMFLOAT3 ColorRGB{};
 	};
-
+	
 	inline void JWAbort(const char* Content)
 	{
 		MessageBoxA(nullptr, Content, "Error", MB_OK);

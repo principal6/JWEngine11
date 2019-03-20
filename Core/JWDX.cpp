@@ -45,7 +45,7 @@ JWDX::~JWDX()
 
 void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 {
-	AVOID_DUPLICATE_CREATION(m_IsValid);
+	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	m_BaseDirectory = Directory;
 
@@ -134,7 +134,7 @@ PRIVATE void JWDX::CreateDefaultVS() noexcept
 	m_Device11->CreateVertexShader(m_DefaultVSBuffer->GetBufferPointer(), m_DefaultVSBuffer->GetBufferSize(), nullptr, &m_DefaultVS11);
 
 	// Create default input layout
-	m_Device11->CreateInputLayout(InputElementDescription, InputElementSize,
+	m_Device11->CreateInputLayout(KInputElementDescription, KInputElementSize,
 		m_DefaultVSBuffer->GetBufferPointer(), m_DefaultVSBuffer->GetBufferSize(), &m_DefaultVSInputLayout11);
 }
 
@@ -186,7 +186,7 @@ PRIVATE void JWDX::CreateColorVS() noexcept
 	m_Device11->CreateVertexShader(m_ColorVSBuffer->GetBufferPointer(), m_ColorVSBuffer->GetBufferSize(), nullptr, &m_ColorVS11);
 
 	// Create color input layout
-	m_Device11->CreateInputLayout(InputElementColorDescription, InputElementColorSize,
+	m_Device11->CreateInputLayout(KInputElementColorDescription, KInputElementColorSize,
 		m_ColorVSBuffer->GetBufferPointer(), m_ColorVSBuffer->GetBufferSize(), &m_ColorVSInputLayout11);
 }
 

@@ -11,7 +11,7 @@ JWInstantText::~JWInstantText()
 
 void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept
 {
-	AVOID_DUPLICATE_CREATION(m_IsValid);
+	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	m_BaseDirectory = BaseDirectory;
 

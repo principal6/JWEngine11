@@ -8,11 +8,10 @@
 #include "../Core/JWInstantText.h"
 #include "../Core/JWTimer.h"
 #include "../Core/JWDesignerUI.h"
+#include "../Core/JWInput.h"
 
 namespace JWEngine
 {
-	using FP_RENDER = void(*)(void);
-
 	class JWGame
 	{
 	public:
@@ -21,7 +20,9 @@ namespace JWEngine
 
 		void Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING BaseDirectory, STRING GameFontFileName) noexcept;
 
-		void SetRenderFunction(FP_RENDER Render) noexcept;
+		void SetOnInputFunction(FP_ON_INPUT OnInput) noexcept;
+		void SetOnRenderFunction(FP_ON_RENDER OnRender) noexcept;
+
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
 
@@ -41,7 +42,8 @@ namespace JWEngine
 		void Run() noexcept;
 
 		void DrawDesignerUI() noexcept;
-		void DrawModelsAndImages() noexcept;
+		void DrawModels() noexcept;
+		void DrawImages() noexcept;
 		void DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
 
 	private:
@@ -65,18 +67,20 @@ namespace JWEngine
 
 		JWWin32Window m_Window{};
 		JWDX m_DX{};
+		JWInput m_Input{};
 
-		FP_RENDER m_fpRender{};
+		FP_ON_INPUT m_fpOnInput{};
+		FP_ON_RENDER m_fpOnRender{};
 
 		JWCamera m_Camera{};
 
 		JWInstantText m_InstantText{};
 
+		JWDesignerUI m_DesignerUI{};
+
 		JWTimer m_Timer{};
 		long long m_FPSCount{};
 		int m_FPS{};
-
-		JWDesignerUI m_DesignerUI{};
 
 		VECTOR<UNIQUE_PTR<JWModel>> m_pOpaqueModels;
 		VECTOR<UNIQUE_PTR<JWModel>> m_pTransparentModels;
