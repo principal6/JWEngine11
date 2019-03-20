@@ -44,6 +44,11 @@ auto JWCamera::GetPosition() const noexcept->XMVECTOR
 	return m_CameraPosition;
 }
 
+auto JWCamera::GetViewMatrix() const noexcept->XMMATRIX
+{
+	return m_MatrixView;
+}
+
 auto JWCamera::GetProjectionMatrix() const noexcept->XMMATRIX
 {
 	return m_MatrixProjection;
