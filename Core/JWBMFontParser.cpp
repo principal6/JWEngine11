@@ -52,7 +52,7 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 	ms_FontData.Kernings.clear();
 	ms_FontData.CharMap.clear();
 	ms_FontData.KerningMap.clear();
-	memset(ms_FontData.MappedCharacters, 0, MAX_WCHAR_INDEX);
+	memset(ms_FontData.MappedCharacters, 0, KMaxWcharIndex);
 
 	//@warning: Without "tinyxml2::" here, XMLDocument can be ambiguous because of <msxml.h> in Windows Kits
 	tinyxml2::XMLDocument tempXMLDoc;
@@ -210,10 +210,10 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 			}
 		}
 
-		// Map all possible characters from 0 to MAX_WCHAR_INDEX
+		// Map all possible characters from 0 to KMaxWcharIndex
 		wchar_t wchar_t_value = 0;
 		size_t Chars_ID = 0;
-		for (size_t iterator_wchar_t = 0; iterator_wchar_t < MAX_WCHAR_INDEX; iterator_wchar_t++)
+		for (size_t iterator_wchar_t = 0; iterator_wchar_t < KMaxWcharIndex; iterator_wchar_t++)
 		{
 			wchar_t_value = static_cast<wchar_t>(iterator_wchar_t);
 
@@ -259,7 +259,7 @@ auto JWBMFontParser::GetBMCharFromWideCharacter(wchar_t WideCharacter) const noe
 
 PRIVATE auto JWBMFontParser::GetCharsIDFromWideCharacter(wchar_t WideCharacter) const noexcept->size_t
 {
-	WideCharacter = static_cast<wchar_t>(min(WideCharacter, MAX_WCHAR_INDEX));
+	WideCharacter = static_cast<wchar_t>(min(WideCharacter, KMaxWcharIndex));
 
 	return ms_FontData.MappedCharacters[WideCharacter];
 }

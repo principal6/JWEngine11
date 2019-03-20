@@ -218,6 +218,7 @@ namespace JWEngine
 		UINT Stride{ static_cast<UINT>(sizeof(SVertex)) };
 		UINT Offset{};
 
+		void Clear() noexcept { Vertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertex)); };
 		auto GetPtrData() const noexcept { return &Vertices[0]; };
@@ -232,6 +233,7 @@ namespace JWEngine
 		UINT Stride{ static_cast<UINT>(sizeof(SVertexColor)) };
 		UINT Offset{};
 
+		void Clear() noexcept { Vertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexColor)); };
 		auto GetPtrData() const noexcept { return &Vertices[0]; };
@@ -263,6 +265,7 @@ namespace JWEngine
 	{
 		VECTOR<SIndex3> Indices;
 
+		void Clear() noexcept { Indices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(Indices.size() * 3); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(DWORD)); };
 		auto GetPtrData() const noexcept { return &Indices[0]; };
@@ -272,6 +275,7 @@ namespace JWEngine
 	{
 		VECTOR<SIndex2> Indices;
 
+		void Clear() noexcept { Indices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(Indices.size() * 2); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(DWORD)); };
 		auto GetPtrData() const noexcept { return &Indices[0]; };

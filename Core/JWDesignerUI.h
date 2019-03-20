@@ -30,10 +30,10 @@ namespace JWEngine
 		void Update() noexcept;
 
 	private:
-		static constexpr float AxisLength = 1000.0f;
-		static constexpr XMFLOAT4 XAxisColor = XMFLOAT4(1, 0, 0, 1); // X = Red
-		static constexpr XMFLOAT4 YAxisColor = XMFLOAT4(0, 1, 0, 1); // Y = Green
-		static constexpr XMFLOAT4 ZAxisColor = XMFLOAT4(0, 0, 1, 1); // Z = Blue
+		static constexpr float KAxisLength = 1000.0f;
+		static constexpr XMFLOAT4 KXAxisColor = XMFLOAT4(1, 0, 0, 1); // X = R
+		static constexpr XMFLOAT4 KYAxisColor = XMFLOAT4(0, 1, 0, 1); // Y = G
+		static constexpr XMFLOAT4 KZAxisColor = XMFLOAT4(0, 0, 1, 1); // Z = B
 		bool m_IsValid{ false };
 
 		JWDX* m_pDX{};

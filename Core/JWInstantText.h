@@ -35,7 +35,7 @@ namespace JWEngine
 		void CreatePSConstantBuffer() noexcept;
 
 	private:
-		static constexpr int MAX_INSTANT_TEXT_LENGTH = 256;
+		static constexpr int KMaxInsantTextLength = 256;
 
 		STRING m_BaseDirectory;
 

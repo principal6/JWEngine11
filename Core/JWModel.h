@@ -17,15 +17,15 @@ namespace JWEngine
 		// Called in JWGame class
 		void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
+		// Called in JWGame class
 		void LoadModelObj(STRING Directory, STRING FileName) noexcept;
 		
-		void SetWorldMatrixToIdentity() noexcept;
+		auto SetWorldMatrixToIdentity() noexcept->JWModel&;
 		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&;
 		auto SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&;
 		auto SetRotation(XMFLOAT4 RotationAxis, float Angle) noexcept->JWModel&;
 		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;
-
-		void ShouldDrawNormals(bool Value) noexcept;
+		auto ShouldDrawNormals(bool Value) noexcept->JWModel&;
 
 		auto GetWorldPosition() noexcept->XMVECTOR;
 		auto GetDistanceFromCamera() noexcept->float;
@@ -59,6 +59,7 @@ namespace JWEngine
 
 	private:
 		bool m_IsValid{ false };
+		bool m_IsModelLoaded{ false };
 		BOOL m_HasTexture{ FALSE };
 		bool m_ShouldDrawNormals{ false };
 

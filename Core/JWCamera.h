@@ -31,8 +31,8 @@ namespace JWEngine
 
 		JWDX* m_pDX{};
 
-		static constexpr float NEAR_Z = 1.0f;
-		static constexpr float FAR_Z = 1000.0f;
+		static constexpr float KNearZ = 1.0f;
+		static constexpr float KFarZ = 1000.0f;
 
 		mutable XMMATRIX m_MatrixView{};
 		mutable XMMATRIX m_MatrixProjection{};

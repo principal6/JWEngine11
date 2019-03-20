@@ -46,9 +46,9 @@ void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STR
 PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 {
 	m_VertexData.Vertices.clear();
-	m_VertexData.Vertices.reserve(MAX_INSTANT_TEXT_LENGTH * 4);
+	m_VertexData.Vertices.reserve(KMaxInsantTextLength * 4);
 
-	for (int iterator_count = 0; iterator_count < MAX_INSTANT_TEXT_LENGTH * 4; ++iterator_count)
+	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength * 4; ++iterator_count)
 	{
 		m_VertexData.Vertices.push_back(SVertex());
 	}
@@ -60,9 +60,9 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 PRIVATE void JWInstantText::CreateInstantTextIndexBuffer() noexcept
 {
 	m_IndexData.Indices.clear();
-	m_IndexData.Indices.reserve(MAX_INSTANT_TEXT_LENGTH * 2);
+	m_IndexData.Indices.reserve(KMaxInsantTextLength * 2);
 
-	for (int iterator_count = 0; iterator_count < MAX_INSTANT_TEXT_LENGTH; ++iterator_count)
+	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength; ++iterator_count)
 	{
 		m_IndexData.Indices.push_back(SIndex3(iterator_count * 4,     iterator_count * 4 + 1, iterator_count * 4 + 2));
 		m_IndexData.Indices.push_back(SIndex3(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));

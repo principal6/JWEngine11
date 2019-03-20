@@ -93,6 +93,8 @@ PROTECTED void JWImage::CreateTexture(WSTRING TextureFileName) noexcept
 
 auto JWImage::SetPosition(XMFLOAT2 Position) noexcept->JWImage&
 {
+	CheckValidity();
+
 	m_Position = Position;
 
 	UpdateScreenPositionAndSize();
@@ -102,6 +104,8 @@ auto JWImage::SetPosition(XMFLOAT2 Position) noexcept->JWImage&
 
 auto JWImage::SetSize(XMFLOAT2 Size) noexcept->JWImage&
 {
+	CheckValidity();
+
 	m_Size = Size;
 
 	UpdateScreenPositionAndSize();
@@ -126,10 +130,7 @@ PROTECTED void JWImage::UpdateScreenPositionAndSize() noexcept
 	m_VertexData.Vertices[3].Position.x = m_VertexData.Vertices[0].Position.x + m_Size.x;
 	m_VertexData.Vertices[3].Position.y = m_VertexData.Vertices[0].Position.y - m_Size.y;
 
-	if (m_IsValid)
-	{
-		UpdateVertexBuffer();
-	}
+	UpdateVertexBuffer();
 }
 
 PROTECTED void JWImage::UpdateVertexBuffer() noexcept

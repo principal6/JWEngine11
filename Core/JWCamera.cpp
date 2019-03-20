@@ -19,10 +19,10 @@ void JWCamera::Create(JWDX& DX) noexcept
 	float height = static_cast<float>(m_pDX->GetWindowSize().Height);
 
 	// Get projection matrix
-	m_MatrixProjection = XMMatrixPerspectiveFovLH(0.4f * XM_PI, width / height, NEAR_Z, FAR_Z);
+	m_MatrixProjection = XMMatrixPerspectiveFovLH(0.4f * XM_PI, width / height, KNearZ, KFarZ);
 
 	// Get orthographic matrix
-	m_MatrixOrthographic = XMMatrixOrthographicLH(width, height, NEAR_Z, FAR_Z);
+	m_MatrixOrthographic = XMMatrixOrthographicLH(width, height, KNearZ, KFarZ);
 
 	m_IsValid = true;
 }

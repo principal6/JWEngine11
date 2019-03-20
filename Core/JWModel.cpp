@@ -35,10 +35,14 @@ void JWModel::Create(JWDX& DX, JWCamera& Camera) noexcept
 
 void JWModel::LoadModelObj(STRING Directory, STRING FileName) noexcept
 {
+	JW_AVOID_DUPLICATE_CREATION(m_IsModelLoaded);
+
 	CheckValidity();
 
-	Assimp::Importer m_AssimpImporter{};
+	m_VertexData.Clear();
+	m_IndexData.Clear();
 
+	Assimp::Importer m_AssimpImporter{};
 	const aiScene* m_AssimpScene{ m_AssimpImporter.ReadFile(Directory + FileName, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded) };
 
 	if (m_AssimpScene)
@@ -127,6 +131,8 @@ void JWModel::LoadModelObj(STRING Directory, STRING FileName) noexcept
 	}
 
 	AddEnd();
+
+	m_IsModelLoaded = true;
 }
 
 PRIVATE void JWModel::CreateTexture(WSTRING TextureFileName) noexcept
@@ -188,9 +194,11 @@ PRIVATE void JWModel::NormalAddEnd() noexcept
 	m_pDX->CreateIndexBuffer(m_NormalIndexData.GetByteSize(), m_NormalIndexData.GetPtrData(), &m_NormalIndexBuffer);
 }
 
-void JWModel::SetWorldMatrixToIdentity() noexcept
+auto JWModel::SetWorldMatrixToIdentity() noexcept->JWModel&
 {
 	m_MatrixWorld = XMMatrixIdentity();
+
+	return *this;
 }
 
 auto JWModel::SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&
@@ -260,9 +268,11 @@ PRIVATE void JWModel::UpdateWorldMatrix() noexcept
 	m_WorldPosition = XMVector3TransformCoord(XMVectorZero(), m_MatrixWorld);
 }
 
-void JWModel::ShouldDrawNormals(bool Value) noexcept
+auto JWModel::ShouldDrawNormals(bool Value) noexcept->JWModel&
 {
 	m_ShouldDrawNormals = Value;
+
+	return *this;
 }
 
 auto JWModel::GetWorldPosition() noexcept->XMVECTOR
