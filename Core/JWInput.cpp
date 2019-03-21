@@ -29,6 +29,8 @@ void JWInput::Create(const HWND hWnd, const HINSTANCE hInstance)
 		JWAbort("JWInput not created. DirectInput8Create() failed");
 	}
 
+	
+	//CreateMouseDevice(DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
 	CreateMouseDevice(DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
 	CreateKeyboardDevice(DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
 
@@ -40,7 +42,7 @@ PRIVATE void JWInput::CreateMouseDevice(DWORD dwFlags)
 	if (FAILED(m_pDirectInput->CreateDevice(GUID_SysMouse, &m_pMouseDevice, nullptr)))
 		JWAbort("CreateMouseDevice() failed.");
 	
-	if (FAILED(m_pMouseDevice->SetDataFormat(&c_dfDIMouse2)))
+	if (FAILED(m_pMouseDevice->SetDataFormat(&c_dfDIMouse)))
 		JWAbort("CreateMouseDevice() failed.");
 
 	if (FAILED(m_pMouseDevice->SetCooperativeLevel(m_hWnd, dwFlags)))

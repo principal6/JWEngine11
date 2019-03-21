@@ -20,7 +20,9 @@ int main()
 	
 	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\", "Asset\\megt20all");
 
-	myGame.GetCameraObject().SetPosition(XMFLOAT4(0.0f, 4.0f, -6.0f, 0.0f));
+	myGame.GetCameraObject()
+		.SetCameraType(ECameraType::FreeLook)
+		.SetPosition(XMFLOAT3(0.0f, 4.0f, -6.0f));
 
 	myGame.AddOpaqueModel("Asset\\", "sphere.obj");
 	myGame.GetOpaqueModel(0)
@@ -44,6 +46,36 @@ JW_FUNCTION_ON_INPUT(OnInput)
 	if (DeviceState.Keys[DIK_N])
 	{
 		g_ShouldDrawNormals = !g_ShouldDrawNormals;
+	}
+
+	if (DeviceState.Keys[DIK_W])
+	{
+		myGame.GetCameraObject().MoveCamera(ECameraMoveDirection::Forward, 1.0f);
+	}
+
+	if (DeviceState.Keys[DIK_S])
+	{
+		myGame.GetCameraObject().MoveCamera(ECameraMoveDirection::Backward, 1.0f);
+	}
+
+	if (DeviceState.Keys[DIK_A])
+	{
+		myGame.GetCameraObject().MoveCamera(ECameraMoveDirection::Left, 1.0f);
+	}
+
+	if (DeviceState.Keys[DIK_D])
+	{
+		myGame.GetCameraObject().MoveCamera(ECameraMoveDirection::Right, 1.0f);
+	}
+
+	if ((DeviceState.CurrentMouse.lX != DeviceState.PreviousMouse.lX) || (DeviceState.CurrentMouse.lY != DeviceState.PreviousMouse.lY))
+	{
+		myGame.GetCameraObject().RotateCamera(static_cast<float>(DeviceState.CurrentMouse.lY), static_cast<float>(DeviceState.CurrentMouse.lX), 0);
+	}
+
+	if ((DeviceState.CurrentMouse.lZ))
+	{
+		myGame.GetCameraObject().ZoomCamera(static_cast<float>(DeviceState.CurrentMouse.lZ));
 	}
 }
 
