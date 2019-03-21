@@ -20,6 +20,7 @@ namespace JWEngine
 		~JWGame() = default;
 
 		void Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING BaseDirectory, STRING GameFontFileName) noexcept;
+		void LoadCursorImage(STRING FileName) noexcept;
 
 		void SetOnInputFunction(FP_ON_INPUT OnInput) noexcept;
 		void SetOnRenderFunction(FP_ON_RENDER OnRender) noexcept;
@@ -87,5 +88,10 @@ namespace JWEngine
 		VECTOR<UNIQUE_PTR<JWModel>> m_pOpaqueModels;
 		VECTOR<UNIQUE_PTR<JWModel>> m_pTransparentModels;
 		VECTOR<UNIQUE_PTR<JWImage>> m_p2DImages;
+
+		JWImage m_MouseCursorImage{};
+		XMFLOAT2 m_MouseCursorPosition{};
+
+		SDirectInputDeviceState m_InputDeviceState{};
 	};
 };

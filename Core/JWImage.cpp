@@ -91,6 +91,15 @@ PROTECTED void JWImage::CreateTexture(WSTRING TextureFileName) noexcept
 	m_IsTextureCreated = true;
 }
 
+auto JWImage::IsImageLoaded() const noexcept->bool
+{
+	if ((m_IsValid) && (m_IsTextureCreated))
+	{
+		return true;
+	}
+	return false;
+}
+
 auto JWImage::SetPosition(XMFLOAT2 Position) noexcept->JWImage&
 {
 	CheckValidity();

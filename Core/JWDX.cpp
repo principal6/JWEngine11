@@ -171,7 +171,7 @@ PRIVATE void JWDX::CreateDefaultPSConstantBuffer() noexcept
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
-
+	
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_DefaultPSConstantBuffer);
 }
 

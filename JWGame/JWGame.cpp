@@ -25,7 +25,14 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 	m_DesignerUI.Create(m_DX, m_Camera, BaseDirectory);
 
+	m_MouseCursorImage.Create(m_DX, m_Camera);
+
 	m_IsValid = true;
+}
+
+void JWGame::LoadCursorImage(STRING FileName) noexcept
+{
+	m_MouseCursorImage.LoadImageFromFile(m_BaseDirectory + KAssetDirectory, FileName);
 }
 
 void JWGame::SetOnRenderFunction(FP_ON_RENDER OnRender) noexcept
@@ -164,13 +171,34 @@ void JWGame::Run() noexcept
 			// Advance FPSCount
 			++m_FPSCount;
 
+			// Update input device state
+			m_InputDeviceState = m_Input.GetDeviceState();
+
+			// Update mouse cursor position
+			m_MouseCursorPosition.x += static_cast<float>(m_InputDeviceState.CurrentMouse.lX);
+			m_MouseCursorPosition.y += static_cast<float>(m_InputDeviceState.CurrentMouse.lY);
+
+			// Limit mouse cursor position to window size
+			m_MouseCursorPosition.x = max(m_MouseCursorPosition.x, 0);
+			m_MouseCursorPosition.x = min(m_MouseCursorPosition.x, static_cast<float>(m_Window.GetWidth()));
+			m_MouseCursorPosition.y = max(m_MouseCursorPosition.y, 0);
+			m_MouseCursorPosition.y = min(m_MouseCursorPosition.y, static_cast<float>(m_Window.GetHeight()));
+
 			// Call the outter OnInput function
-			m_fpOnInput(m_Input.GetDeviceState());
+			m_fpOnInput(m_InputDeviceState);
 
 			m_DX.BeginDrawing(m_ClearColor);
 
 			// Call the outter OnRender function.
 			m_fpOnRender();
+
+			// Draw mouse cursor if it exists
+			if (m_MouseCursorImage.IsImageLoaded())
+			{
+				m_MouseCursorImage.SetPosition(m_MouseCursorPosition);
+				m_MouseCursorImage.UpdateAll();
+				m_MouseCursorImage.Draw();
+			}
 
 			m_DX.EndDrawing();
 

@@ -19,6 +19,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	
 	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\", "megt20all");
+	//myGame.LoadCursorImage("cursor_default.png");
 
 	myGame.GetCameraObject()
 		.SetCameraType(ECameraType::FreeLook)
@@ -73,9 +74,10 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 	if ((DeviceState.CurrentMouse.lX != DeviceState.PreviousMouse.lX) || (DeviceState.CurrentMouse.lY != DeviceState.PreviousMouse.lY))
 	{
+		//if ((DeviceState.CurrentMouse.rgbButtons[1]))
 		myGame.GetCameraObject().RotateCamera(static_cast<float>(DeviceState.CurrentMouse.lY), static_cast<float>(DeviceState.CurrentMouse.lX), 0);
 	}
-
+	
 	if ((DeviceState.CurrentMouse.lZ))
 	{
 		myGame.GetCameraObject().ZoomCamera(static_cast<float>(DeviceState.CurrentMouse.lZ));

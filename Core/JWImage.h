@@ -20,6 +20,7 @@ namespace JWEngine
 		// Called in JWGame class
 		virtual void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
+		virtual auto IsImageLoaded() const noexcept->bool;
 		virtual auto SetPosition(XMFLOAT2 Position) noexcept->JWImage&;
 		virtual auto SetSize(XMFLOAT2 Size) noexcept->JWImage&;
 		
