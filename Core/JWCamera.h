@@ -42,6 +42,10 @@ namespace JWEngine
 		auto SetLookAt(XMFLOAT3 LookAt) noexcept->JWCamera&;
 
 		auto GetPosition() const noexcept->XMVECTOR;
+		auto GetLookAt() const noexcept->XMVECTOR;
+		auto GetForward() const noexcept->XMVECTOR;
+		auto GetRight() const noexcept->XMVECTOR;
+
 		auto GetViewMatrix() const noexcept->XMMATRIX;
 		auto GetProjectionMatrix() const noexcept->XMMATRIX;
 		auto GetViewProjectionMatrix() const noexcept->XMMATRIX;

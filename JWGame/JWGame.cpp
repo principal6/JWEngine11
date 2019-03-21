@@ -65,11 +65,6 @@ void JWGame::SetBlendState(EBlendState State) noexcept
 	m_DX.SetBlendState(State);
 }
 
-PRIVATE void JWGame::SetDepthStencilState(EDepthStencilState State) noexcept
-{
-	m_DX.SetDepthStencilState(State);
-}
-
 void JWGame::AddOpaqueModel(STRING ModelFileName) noexcept
 {
 	m_pOpaqueModels.push_back(MAKE_UNIQUE_AND_MOVE(JWModel)());
@@ -192,6 +187,12 @@ void JWGame::Run() noexcept
 			// Call the outter OnRender function.
 			m_fpOnRender();
 
+			if (m_ShouldDrawMiniAxis)
+			{
+				m_DesignerUI.DrawMiniAxis();
+				m_ShouldDrawMiniAxis = false;
+			}
+
 			// Draw mouse cursor if it exists
 			if (m_MouseCursorImage.IsImageLoaded())
 			{
@@ -219,19 +220,15 @@ void JWGame::Run() noexcept
 
 void JWGame::DrawDesignerUI() noexcept
 {
-	// Enable Z-buffer
-	SetDepthStencilState(EDepthStencilState::ZEnabled);
-
 	// Draw designer UI
 	SetBlendState(EBlendState::Opaque);
 	m_DesignerUI.Draw();
+
+	m_ShouldDrawMiniAxis = true;
 }
 
 void JWGame::DrawModels() noexcept
 {
-	// Enable Z-buffer (3D Drawing)
-	SetDepthStencilState(EDepthStencilState::ZEnabled);
-
 	// Draw 3D models
 	DrawAllOpaqueModels();
 	SetBlendState(EBlendState::Transprent);
@@ -240,9 +237,6 @@ void JWGame::DrawModels() noexcept
 
 void JWGame::DrawImages() noexcept
 {
-	// Disable Z-buffer (2D Drawing)
-	SetDepthStencilState(EDepthStencilState::ZDisabled);
-
 	// Draw 2D images
 	// with Z-buffer disabled, in order to draw them on top of everything else
 	SetBlendState(EBlendState::Opaque);
@@ -251,8 +245,6 @@ void JWGame::DrawImages() noexcept
 
 void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
 {
-	SetDepthStencilState(EDepthStencilState::ZDisabled);
-
 	SetBlendState(EBlendState::Transprent);
 	m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
 }

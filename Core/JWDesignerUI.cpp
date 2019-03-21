@@ -28,6 +28,10 @@ void JWDesignerUI::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noex
 	m_LightsModel.Create(DX, Camera);
 	LoadLightModel();
 
+	// Mini axis
+	m_MiniAxis.Create(DX, Camera);
+	MakeMiniAxis();
+
 	m_IsValid = true;
 }
 
@@ -114,6 +118,16 @@ PRIVATE void JWDesignerUI::AddEnd() noexcept
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
+PRIVATE void JWDesignerUI::MakeMiniAxis() noexcept
+{
+	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
+
+	m_MiniAxis.AddLine(SLineData(XMFLOAT2(window_width - 60.0f, 60.0f), XMFLOAT2(20, 0), KXAxisColor));
+	m_MiniAxis.AddLine(SLineData(XMFLOAT2(window_width - 60.0f, 60.0f), XMFLOAT2(0, 20), KYAxisColor));
+	m_MiniAxis.AddLine(SLineData(XMFLOAT2(window_width - 60.0f, 60.0f), XMFLOAT2(14, 14), KZAxisColor));
+	m_MiniAxis.AddEnd();
+}
+
 PRIVATE void JWDesignerUI::LoadLightModel() noexcept
 {
 	JWAssimpLoader assimp_loader;
@@ -123,6 +137,9 @@ PRIVATE void JWDesignerUI::LoadLightModel() noexcept
 
 PRIVATE void JWDesignerUI::Update() noexcept
 {
+	// Enable Z-buffer for 3D drawing
+	m_pDX->SetDepthStencilState(EDepthStencilState::ZEnabled);
+
 	// Set color VS, PS
 	m_pDX->SetColorVS();
 	m_pDX->SetColorPS();
@@ -167,4 +184,10 @@ PRIVATE void JWDesignerUI::DrawLightModels() noexcept
 			m_LightsModel.Draw();
 		}
 	}
+}
+
+void JWDesignerUI::DrawMiniAxis() noexcept
+{
+	m_MiniAxis.UpdateLines();
+	m_MiniAxis.Draw();
 }

@@ -218,7 +218,7 @@ namespace JWEngine
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
 		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals
+		SVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
 		SVertex(float x, float y, float z) :
 			Position{ x, y, z } {};
@@ -326,6 +326,22 @@ namespace JWEngine
 		SIndex3Data IndexData{};
 		bool HasTexture{ false };
 		WSTRING TextureFileNameW{};
+	};
+
+	struct SModel2Data
+	{
+		SVertexData VertexData{};
+		SIndex2Data IndexData{};
+	};
+
+	struct SLineData
+	{
+		XMFLOAT2 StartPosition{};
+		XMFLOAT2 Length{};
+		XMFLOAT4 Color{};
+
+		SLineData() {};
+		SLineData(XMFLOAT2 _StartPosition, XMFLOAT2 _Length, XMFLOAT4 _Color) : StartPosition{ _StartPosition }, Length{ _Length }, Color{ _Color } {};
 	};
 
 	struct SColorVSConstantBufferData

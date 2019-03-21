@@ -53,8 +53,6 @@ namespace JWEngine
 	private:
 		void CheckValidity() const noexcept;
 
-		void SetDepthStencilState(EDepthStencilState State) noexcept;
-
 		void DrawAllOpaqueModels() const noexcept;
 		void DrawAllTransparentModels() const noexcept;
 		void DrawAll2DImages() const noexcept;
@@ -79,6 +77,7 @@ namespace JWEngine
 		JWInstantText m_InstantText{};
 
 		JWDesignerUI m_DesignerUI{};
+		bool m_ShouldDrawMiniAxis{ false };
 
 		JWTimer m_Timer{};
 		long long m_FPSCount{};

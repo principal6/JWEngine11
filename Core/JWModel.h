@@ -19,6 +19,8 @@ namespace JWEngine
 
 		// Called in JWGame class
 		void SetModelData(SModelData ModelData) noexcept;
+
+		void SetModel2Data(SModel2Data Model2Data) noexcept;
 		
 		auto SetWorldMatrixToIdentity() noexcept->JWModel&;
 		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&;
@@ -60,6 +62,7 @@ namespace JWEngine
 	private:
 		bool m_IsValid{ false };
 		bool m_IsModelLoaded{ false };
+		bool m_IsMode2lLoaded{ false };
 		BOOL m_HasTexture{ FALSE };
 		bool m_ShouldDrawNormals{ false };
 

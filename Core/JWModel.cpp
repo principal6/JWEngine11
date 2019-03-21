@@ -39,9 +39,6 @@ void JWModel::SetModelData(SModelData ModelData) noexcept
 
 	CheckValidity();
 
-	m_VertexData.Clear();
-	m_IndexData.Clear();
-
 	m_VertexData = ModelData.VertexData;
 	m_IndexData = ModelData.IndexData;
 	AddEnd();
@@ -70,6 +67,19 @@ void JWModel::SetModelData(SModelData ModelData) noexcept
 	NormalAddEnd();
 
 	m_IsModelLoaded = true;
+}
+
+void JWModel::SetModel2Data(SModel2Data Model2Data) noexcept
+{
+	JW_AVOID_DUPLICATE_CREATION(m_IsMode2lLoaded);
+
+	CheckValidity();
+
+	m_NormalVertexData = Model2Data.VertexData;
+	m_NormalIndexData = Model2Data.IndexData;
+	NormalAddEnd();
+
+	m_IsMode2lLoaded = true;
 }
 
 PRIVATE void JWModel::CreateTexture(WSTRING TextureFileName) noexcept
@@ -228,6 +238,9 @@ auto JWModel::GetDistanceFromCamera() noexcept->float
 
 PRIVATE void JWModel::Update() noexcept
 {
+	// Enable Z-buffer for 3D drawing
+	m_pDX->SetDepthStencilState(EDepthStencilState::ZEnabled);
+
 	// Set default VS & PS
 	m_pDX->SetDefaultVS();
 	m_pDX->SetDefaultPS();
@@ -263,7 +276,7 @@ void JWModel::Draw() noexcept
 	// Draw
 	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
 
-	if (m_ShouldDrawNormals)
+	if ((m_ShouldDrawNormals) || (m_IsMode2lLoaded))
 	{
 		DrawNormals();
 	}

@@ -155,6 +155,9 @@ PROTECTED void JWImage::UpdateVertexBuffer() noexcept
 
 void JWImage::UpdateAll() noexcept
 {
+	// Disable Z-buffer for 2D drawing
+	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
+
 	// Set default VS & PS
 	m_pDX->SetDefaultVS();
 	m_pDX->SetDefaultPS();

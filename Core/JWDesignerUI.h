@@ -3,6 +3,7 @@
 #include "JWCommon.h"
 #include "JWAssimpLoader.h"
 #include "JWModel.h"
+#include "JWLine.h"
 
 namespace JWEngine
 {
@@ -25,8 +26,13 @@ namespace JWEngine
 		// Called in JWGame class
 		void Draw() noexcept;
 
+		// Called in JWGame class
+		void DrawMiniAxis() noexcept;
+
 	private:
 		void MakeGrid(float XSize, float ZSize, float GridInterval = 1.0f) noexcept;
+
+		void MakeMiniAxis() noexcept;
 
 		auto AddVertex(const SVertexColor& Vertex) noexcept->JWDesignerUI&;
 		auto AddIndex(const SIndex2& Index) noexcept->JWDesignerUI&;
@@ -55,10 +61,12 @@ namespace JWEngine
 		ID3D11Buffer* m_IndexBuffer{};
 		SVertexColorData m_VertexData{};
 		SIndex2Data m_IndexData{};
-
+		
 		SColorVSConstantBufferData m_ColorVSConstantBufferData{};
 
 		VECTOR<SLightData> m_LightsData;
 		JWModel m_LightsModel;
+
+		JWLine m_MiniAxis;
 	};
 };

@@ -182,6 +182,21 @@ auto JWCamera::GetPosition() const noexcept->XMVECTOR
 	return m_CameraPosition;
 }
 
+auto JWCamera::GetLookAt() const noexcept->XMVECTOR
+{
+	return m_CameraLookAt;
+}
+
+auto JWCamera::GetForward() const noexcept->XMVECTOR
+{
+	return m_CameraForward;
+}
+
+auto JWCamera::GetRight() const noexcept->XMVECTOR
+{
+	return m_CameraRight;
+}
+
 auto JWCamera::GetViewMatrix() const noexcept->XMMATRIX
 {
 	// Update view matrix
