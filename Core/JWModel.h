@@ -18,7 +18,7 @@ namespace JWEngine
 		void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
 		// Called in JWGame class
-		void LoadModelObj(STRING Directory, STRING FileName) noexcept;
+		void SetModelData(SModelData ModelData) noexcept;
 		
 		auto SetWorldMatrixToIdentity() noexcept->JWModel&;
 		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&;
@@ -70,7 +70,7 @@ namespace JWEngine
 		ID3D11Buffer* m_IndexBuffer{};
 
 		SVertexData m_VertexData{};
-		SIndexData m_IndexData{};
+		SIndex3Data m_IndexData{};
 
 		ID3D11Buffer* m_NormalVertexBuffer{};
 		ID3D11Buffer* m_NormalIndexBuffer{};

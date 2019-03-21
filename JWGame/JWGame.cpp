@@ -2,11 +2,6 @@
 
 using namespace JWEngine;
 
-PRIVATE inline auto JWGame::GetFileNameWithBaseDirectory(const STRING& FileName) const noexcept->STRING
-{
-	return m_BaseDirectory + FileName;
-}
-
 void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING BaseDirectory, STRING GameFontFileName) noexcept
 {
 	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
@@ -26,9 +21,9 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 	m_Camera.Create(m_DX);
 
-	m_InstantText.Create(m_DX, m_Camera, BaseDirectory, GameFontFileName);
+	m_InstantText.Create(m_DX, m_Camera, BaseDirectory, KAssetDirectory + GameFontFileName);
 
-	m_DesignerUI.Create(m_DX, m_Camera);
+	m_DesignerUI.Create(m_DX, m_Camera, BaseDirectory);
 
 	m_IsValid = true;
 }
@@ -68,25 +63,25 @@ PRIVATE void JWGame::SetDepthStencilState(EDepthStencilState State) noexcept
 	m_DX.SetDepthStencilState(State);
 }
 
-void JWGame::AddOpaqueModel(STRING Directory, STRING ModelFileName) noexcept
+void JWGame::AddOpaqueModel(STRING ModelFileName) noexcept
 {
 	m_pOpaqueModels.push_back(MAKE_UNIQUE_AND_MOVE(JWModel)());
 
 	m_pOpaqueModels[m_pOpaqueModels.size() - 1]->Create(m_DX, m_Camera);
-	m_pOpaqueModels[m_pOpaqueModels.size() - 1]->LoadModelObj(GetFileNameWithBaseDirectory(Directory), ModelFileName);
+	m_pOpaqueModels[m_pOpaqueModels.size() - 1]->SetModelData(m_AssimpLoader.LoadObj(m_BaseDirectory + KAssetDirectory, ModelFileName));
 }
 
-auto JWGame::GetOpaqueModel(size_t ModelIndex) const noexcept->JWModel&
+auto JWGame::GetOpaqueModel(size_t OpaqueModelIndex) const noexcept->JWModel&
 {
-	return *m_pOpaqueModels[ModelIndex].get();
+	return *m_pOpaqueModels[OpaqueModelIndex].get();
 }
 
-void JWGame::AddTransparentModel(STRING Directory, STRING TransparentModelFileName) noexcept
+void JWGame::AddTransparentModel(STRING ModelFileName) noexcept
 {
 	m_pTransparentModels.push_back(MAKE_UNIQUE_AND_MOVE(JWModel)());
 
 	m_pTransparentModels[m_pTransparentModels.size() - 1]->Create(m_DX, m_Camera);
-	m_pTransparentModels[m_pTransparentModels.size() - 1]->LoadModelObj(GetFileNameWithBaseDirectory(Directory), TransparentModelFileName);
+	m_pTransparentModels[m_pTransparentModels.size() - 1]->SetModelData(m_AssimpLoader.LoadObj(m_BaseDirectory + KAssetDirectory, ModelFileName));
 }
 
 auto JWGame::GetTransparentModel(size_t TransparentModelIndex) const noexcept->JWModel&
@@ -94,17 +89,25 @@ auto JWGame::GetTransparentModel(size_t TransparentModelIndex) const noexcept->J
 	return *m_pTransparentModels[TransparentModelIndex].get();
 }
 
-void JWGame::AddImage(STRING Directory, STRING ImageFileName) noexcept
+void JWGame::AddImage(STRING ImageFileName) noexcept
 {
 	m_p2DImages.push_back(MAKE_UNIQUE_AND_MOVE(JWImage)());
 
 	m_p2DImages[m_p2DImages.size() - 1]->Create(m_DX, m_Camera);
-	m_p2DImages[m_p2DImages.size() - 1]->LoadImageFromFile(GetFileNameWithBaseDirectory(Directory), ImageFileName);
+	m_p2DImages[m_p2DImages.size() - 1]->LoadImageFromFile(m_BaseDirectory + KAssetDirectory, ImageFileName);
 }
 
 auto JWGame::GetImage(size_t Image2DIndex) const noexcept->JWImage&
 {
 	return *m_p2DImages[Image2DIndex].get();
+}
+
+void JWGame::AddLight(SLightData LightData) noexcept
+{
+	if (LightData.LightType != ELightType::Invalid)
+	{
+		m_DesignerUI.AddLightData(LightData);
+	}
 }
 
 auto JWGame::GetCameraObject() noexcept->JWCamera&
@@ -191,10 +194,6 @@ void JWGame::DrawDesignerUI() noexcept
 	// Enable Z-buffer
 	SetDepthStencilState(EDepthStencilState::ZEnabled);
 
-	// Set color VS, PS
-	m_DX.SetColorVS();
-	m_DX.SetColorPS();
-
 	// Draw designer UI
 	SetBlendState(EBlendState::Opaque);
 	m_DesignerUI.Draw();
@@ -204,10 +203,6 @@ void JWGame::DrawModels() noexcept
 {
 	// Enable Z-buffer (3D Drawing)
 	SetDepthStencilState(EDepthStencilState::ZEnabled);
-
-	// Set default VS, PS
-	m_DX.SetDefaultVS();
-	m_DX.SetDefaultPS();
 
 	// Draw 3D models
 	DrawAllOpaqueModels();
@@ -220,10 +215,6 @@ void JWGame::DrawImages() noexcept
 	// Disable Z-buffer (2D Drawing)
 	SetDepthStencilState(EDepthStencilState::ZDisabled);
 
-	// Set default VS, PS
-	m_DX.SetDefaultVS();
-	m_DX.SetDefaultPS();
-
 	// Draw 2D images
 	// with Z-buffer disabled, in order to draw them on top of everything else
 	SetBlendState(EBlendState::Opaque);
@@ -233,10 +224,6 @@ void JWGame::DrawImages() noexcept
 void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
 {
 	SetDepthStencilState(EDepthStencilState::ZDisabled);
-
-	// Set default VS, PS
-	m_DX.SetDefaultVS();
-	m_DX.SetDefaultPS();
 
 	SetBlendState(EBlendState::Transprent);
 	m_InstantText.DrawInstantText(Text, Position, FontColorRGB);

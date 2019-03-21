@@ -3,6 +3,7 @@
 #include "../Core/JWWin32Window.h"
 #include "../Core/JWDX.h"
 #include "../Core/JWCamera.h"
+#include "../Core/JWAssimpLoader.h"
 #include "../Core/JWModel.h"
 #include "../Core/JWImage.h"
 #include "../Core/JWInstantText.h"
@@ -26,14 +27,16 @@ namespace JWEngine
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
 
-		void AddOpaqueModel(STRING Directory, STRING ModelFileName) noexcept;
-		auto GetOpaqueModel(size_t ModelIndex) const noexcept->JWModel&;
+		void AddOpaqueModel(STRING ModelFileName) noexcept;
+		auto GetOpaqueModel(size_t OpaqueModelIndex) const noexcept->JWModel&;
 
-		void AddTransparentModel(STRING Directory, STRING TransparentModelFileName) noexcept;
+		void AddTransparentModel(STRING ModelFileName) noexcept;
 		auto GetTransparentModel(size_t TransparentModelIndex) const noexcept->JWModel&;
 
-		void AddImage(STRING Directory, STRING ImageFileName) noexcept;
+		void AddImage(STRING ImageFileName) noexcept;
 		auto GetImage(size_t Image2DIndex) const noexcept->JWImage&;
+
+		void AddLight(SLightData LightData) noexcept;
 
 		auto GetCameraObject() noexcept->JWCamera&;
 		auto GetInstantTextObject() noexcept->JWInstantText&;
@@ -47,8 +50,6 @@ namespace JWEngine
 		void DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
 
 	private:
-		inline auto GetFileNameWithBaseDirectory(const STRING& FileName) const noexcept->STRING;
-
 		void CheckValidity() const noexcept;
 
 		void SetDepthStencilState(EDepthStencilState State) noexcept;
@@ -82,6 +83,7 @@ namespace JWEngine
 		long long m_FPSCount{};
 		int m_FPS{};
 
+		JWAssimpLoader m_AssimpLoader{};
 		VECTOR<UNIQUE_PTR<JWModel>> m_pOpaqueModels;
 		VECTOR<UNIQUE_PTR<JWModel>> m_pTransparentModels;
 		VECTOR<UNIQUE_PTR<JWImage>> m_p2DImages;

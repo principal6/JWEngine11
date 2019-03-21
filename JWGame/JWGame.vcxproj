@@ -163,6 +163,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Core\JWAssimpLoader.cpp" />
     <ClCompile Include="..\Core\JWBMFontParser.cpp" />
     <ClCompile Include="..\Core\JWCamera.cpp" />
     <ClCompile Include="..\Core\JWDesignerUI.cpp" />
@@ -249,6 +250,7 @@
     <ClInclude Include="..\Assimp\version.h" />
     <ClInclude Include="..\Assimp\Vertex.h" />
     <ClInclude Include="..\Assimp\XMLTools.h" />
+    <ClInclude Include="..\Core\JWAssimpLoader.h" />
     <ClInclude Include="..\Core\JWBMFontParser.h" />
     <ClInclude Include="..\Core\JWCamera.h" />
     <ClInclude Include="..\Core\JWCommon.h" />

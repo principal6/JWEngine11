@@ -10,7 +10,7 @@ JWDesignerUI::~JWDesignerUI()
 	JW_RELEASE(m_IndexBuffer);
 }
 
-void JWDesignerUI::Create(JWDX& DX, JWCamera& Camera) noexcept
+void JWDesignerUI::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
 {
 	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
 
@@ -20,9 +20,13 @@ void JWDesignerUI::Create(JWDX& DX, JWCamera& Camera) noexcept
 	// Set JWCamera pointer.
 	m_pCamera = &Camera;
 
-	m_MatrixWorld = XMMatrixIdentity();
+	m_BaseDirectory = BaseDirectory;
 
 	MakeGrid(50.0f, 50.0f);
+
+	// Light model
+	m_LightsModel.Create(DX, Camera);
+	LoadLightModel();
 
 	m_IsValid = true;
 }
@@ -110,11 +114,27 @@ PRIVATE void JWDesignerUI::AddEnd() noexcept
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
+PRIVATE void JWDesignerUI::LoadLightModel() noexcept
+{
+	JWAssimpLoader assimp_loader;
+	m_LightsModel.SetModelData(assimp_loader.LoadObj(m_BaseDirectory + KAssetDirectory, KLightModelFileName));
+	m_LightsModel.SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
+}
+
 PRIVATE void JWDesignerUI::Update() noexcept
 {
+	// Set color VS, PS
+	m_pDX->SetColorVS();
+	m_pDX->SetColorPS();
+
 	// Set VS constant buffer
-	m_ColorVSConstantBufferData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
+	m_ColorVSConstantBufferData.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetViewProjectionMatrix());
 	m_pDX->SetColorVSConstantBufferData(m_ColorVSConstantBufferData);
+}
+
+void JWDesignerUI::AddLightData(SLightData LightData) noexcept
+{
+	m_LightsData.push_back(LightData);
 }
 
 void JWDesignerUI::Draw() noexcept
@@ -132,4 +152,19 @@ void JWDesignerUI::Draw() noexcept
 
 	// Draw
 	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
+
+	// Draw light models
+	DrawLightModels();
+}
+
+PRIVATE void JWDesignerUI::DrawLightModels() noexcept
+{
+	if (m_LightsData.size())
+	{
+		for (const auto& light : m_LightsData)
+		{
+			m_LightsModel.SetTranslation(light.Position);
+			m_LightsModel.Draw();
+		}
+	}
 }

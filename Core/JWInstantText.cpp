@@ -106,6 +106,10 @@ void JWInstantText::SetInstantTextPS() noexcept
 
 void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
 {
+	// Set default VS & PS
+	m_pDX->SetDefaultVS();
+	m_pDX->SetDefaultPS();
+
 	JWImage::UpdateDefaultVSConstantBuffer();
 	JWImage::UpdateTexture();
 

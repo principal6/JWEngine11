@@ -62,7 +62,7 @@ namespace JWEngine
 		ID3D11Buffer* m_IndexBuffer{};
 
 		SVertexData m_VertexData{};
-		SIndexData m_IndexData{};
+		SIndex3Data m_IndexData{};
 
 		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
 

@@ -57,6 +57,9 @@
     <ClCompile Include="..\Core\JWInput.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\Core\JWAssimpLoader.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Core\JWCommon.h">
@@ -376,6 +379,9 @@
       <Filter>Shaders</Filter>
     </ClInclude>
     <ClInclude Include="..\Core\JWInput.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\JWAssimpLoader.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

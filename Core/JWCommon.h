@@ -114,12 +114,13 @@ namespace JWEngine
 #define JW_FUNCTION_ON_RENDER(FunctionName) void FunctionName()
 	
 	using namespace DirectX;
-
-	static constexpr int KMaxFileLength = 255;
-	static constexpr int KInputKeyCount = 256;
-	static constexpr XMFLOAT3 KDefaultColorNoTexture = XMFLOAT3(0.8f, 0.2f, 1.0f);
-	static constexpr XMFLOAT3 KDefaultColorNormals = XMFLOAT3(0.4f, 1.0f, 0.0f);
-	static constexpr XMFLOAT3 KDefaultColorGrid = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	
+	static constexpr int KMaxFileLength{ 255 };
+	static constexpr int KInputKeyCount{ 256 };
+	static constexpr const char* KAssetDirectory{ "Asset\\" };
+	static constexpr XMFLOAT3 KDefaultColorNoTexture{ XMFLOAT3(0.8f, 0.2f, 1.0f) };
+	static constexpr XMFLOAT3 KDefaultColorNormals{ XMFLOAT3(0.4f, 1.0f, 0.0f) };
+	static constexpr XMFLOAT3 KDefaultColorGrid{ XMFLOAT3(1.0f, 1.0f, 1.0f) };
 
 	enum class EWorldMatrixCalculationOrder
 	{
@@ -129,6 +130,36 @@ namespace JWEngine
 		RotScaleTrans,
 		ScaleTransRot,
 		ScaleRotTrans,
+	};
+
+	enum class ELightType
+	{
+		Invalid,
+
+		Ambient, // Entire scene's base light
+		Directional, // Sunlight
+		Pointlight, // Bulb
+		Spotlight, // Flashlight
+	};
+
+	struct SLightData
+	{
+		ELightType LightType{ ELightType::Invalid };
+		XMFLOAT4 LightColor{}; // Ambient | Directional | Pointlight | Spotlight
+		XMFLOAT3 Position{}; // ( Ambient | Directional ) | Pointlight | Spotlight
+		XMFLOAT3 Direction{}; // Directional | Spotlight
+		float Range{}; // Pointlight | Spotlight
+		float Cone{}; // Spotlight
+		float AttenuationA{}; // Spotlight
+		float AttenuationB{}; // Spotlight
+		
+		// Make ambient light
+		SLightData(XMFLOAT4 _Color, XMFLOAT3 _Position)
+			: LightType{ ELightType::Ambient }, LightColor{ _Color }, Position{ _Position }{};
+		
+		// Make directional light
+		SLightData(XMFLOAT4 _Color, XMFLOAT3 _Position, XMFLOAT3 _Direction)
+			: LightType{ ELightType::Directional }, LightColor{ _Color }, Position{ _Position }, Direction{ _Direction }{};
 	};
 	
 	struct SPositionInt
@@ -166,13 +197,14 @@ namespace JWEngine
 		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
+	static constexpr UINT KInputElementSize = ARRAYSIZE(KInputElementDescription);
+
 	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementColorDescription[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT	, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
-
-	static constexpr UINT KInputElementSize = ARRAYSIZE(KInputElementDescription);
+	
 	static constexpr UINT KInputElementColorSize = ARRAYSIZE(KInputElementColorDescription);
 	
 	struct SVertex
@@ -211,7 +243,7 @@ namespace JWEngine
 		XMFLOAT3 Position{};
 		XMFLOAT4 ColorRGBA{ 1.0f, 1.0f, 1.0f, 1.0f };
 	};
-
+	
 	struct SVertexData
 	{
 		VECTOR<SVertex> Vertices;
@@ -261,7 +293,7 @@ namespace JWEngine
 		DWORD _1{};
 	};
 
-	struct SIndexData
+	struct SIndex3Data
 	{
 		VECTOR<SIndex3> Indices;
 
@@ -279,6 +311,14 @@ namespace JWEngine
 		auto GetCount() const noexcept { return static_cast<UINT>(Indices.size() * 2); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(DWORD)); };
 		auto GetPtrData() const noexcept { return &Indices[0]; };
+	};
+
+	struct SModelData
+	{
+		SVertexData VertexData{};
+		SIndex3Data IndexData{};
+		bool HasTexture{ false };
+		WSTRING TextureFileNameW{};
 	};
 
 	struct SColorVSConstantBufferData

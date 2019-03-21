@@ -18,20 +18,23 @@ int main()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	
-	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\", "Asset\\megt20all");
+	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\", "megt20all");
 
 	myGame.GetCameraObject()
 		.SetCameraType(ECameraType::FreeLook)
 		.SetPosition(XMFLOAT3(0.0f, 4.0f, -6.0f));
 
-	myGame.AddOpaqueModel("Asset\\", "sphere.obj");
+	myGame.AddOpaqueModel("sphere.obj");
 	myGame.GetOpaqueModel(0)
 		.SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		.SetScale(XMFLOAT3(0.2f, 0.2f, 0.2f));
 	
-	myGame.AddImage("Asset\\", "firefox_56x80_creek23.png");
+	myGame.AddImage("firefox_56x80_creek23.png");
 	myGame.GetImage(0)
 		.SetPosition(XMFLOAT2(20, 30));
+
+	myGame.AddLight(SLightData(XMFLOAT4(1, 0, 0, 1), XMFLOAT3(10, 0, 0)));
+	myGame.AddLight(SLightData(XMFLOAT4(0, 1, 0, 1), XMFLOAT3(-5, 5, -5)));
 
 	myGame.SetOnInputFunction(OnInput);
 	myGame.SetOnRenderFunction(OnRender);

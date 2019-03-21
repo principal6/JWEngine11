@@ -146,6 +146,10 @@ PROTECTED void JWImage::UpdateVertexBuffer() noexcept
 
 void JWImage::UpdateAll() noexcept
 {
+	// Set default VS & PS
+	m_pDX->SetDefaultVS();
+	m_pDX->SetDefaultPS();
+
 	UpdateDefaultVSConstantBuffer();
 	UpdateDefaultPSConstantBuffer();
 	UpdateTexture();

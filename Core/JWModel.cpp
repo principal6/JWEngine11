@@ -33,7 +33,7 @@ void JWModel::Create(JWDX& DX, JWCamera& Camera) noexcept
 	m_IsValid = true;
 }
 
-void JWModel::LoadModelObj(STRING Directory, STRING FileName) noexcept
+void JWModel::SetModelData(SModelData ModelData) noexcept
 {
 	JW_AVOID_DUPLICATE_CREATION(m_IsModelLoaded);
 
@@ -42,95 +42,28 @@ void JWModel::LoadModelObj(STRING Directory, STRING FileName) noexcept
 	m_VertexData.Clear();
 	m_IndexData.Clear();
 
-	Assimp::Importer m_AssimpImporter{};
-	const aiScene* m_AssimpScene{ m_AssimpImporter.ReadFile(Directory + FileName, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded) };
-
-	if (m_AssimpScene)
-	{
-		if (m_AssimpScene->HasMaterials())
-		{
-			auto material_count{ m_AssimpScene->mNumMaterials };
-			auto properties_count{ m_AssimpScene->mMaterials[0]->mNumProperties };
-			
-			aiString path{};
-			m_AssimpScene->mMaterials[material_count - 1]->GetTexture(aiTextureType::aiTextureType_AMBIENT, 0, &path);
-			STRING path_string{ Directory + path.C_Str() };
-
-			if (path.length == 0)
-			{
-				// No texture
-				m_HasTexture = FALSE;
-			}
-			else
-			{
-				// It has texture
-				CreateTexture(StringToWstring(path_string));
-				m_HasTexture = TRUE;
-			}
-		}
-
-		if (m_AssimpScene->HasMeshes())
-		{
-			auto mesh_count{ m_AssimpScene->mNumMeshes };
-			size_t mesh_index{};
-
-			if (m_AssimpScene->mMeshes[mesh_index]->HasPositions())
-			{
-				size_t vertices_count{ m_AssimpScene->mMeshes[mesh_index]->mNumVertices };
-
-				for (size_t iterator_vertices{}; iterator_vertices < vertices_count; ++iterator_vertices)
-				{
-					auto& vertex = m_AssimpScene->mMeshes[mesh_index]->mVertices[iterator_vertices];
-					auto& texcoord = m_AssimpScene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices];
-					auto& normal = m_AssimpScene->mMeshes[mesh_index]->mNormals[iterator_vertices];
-
-					AddVertex(SVertex(vertex.x, vertex.y, vertex.z, texcoord.x, texcoord.y, normal.x, normal.y, normal.z));
-
-					// For normal line drawing
-					NormalAddVertex(SVertex(vertex.x, vertex.y, vertex.z));
-					NormalAddVertex(SVertex(vertex.x + normal.x, vertex.y + normal.y, vertex.z + normal.z));
-					NormalAddIndex(SIndex2(static_cast<UINT>(iterator_vertices * 2), static_cast<UINT>(iterator_vertices * 2 + 1)));
-				}
-
-				// For normal line drawing
-				NormalAddEnd();
-			}
-			else
-			{
-				JWAbort("Loaded model doesn't have positions");
-			}
-
-			if (m_AssimpScene->mMeshes[mesh_index]->HasFaces())
-			{
-				size_t faces_count{ m_AssimpScene->mMeshes[mesh_index]->mNumFaces };
-
-				for (size_t iterator_faces{}; iterator_faces < faces_count; ++iterator_faces)
-				{
-					auto& indices_count = m_AssimpScene->mMeshes[mesh_index]->mFaces[iterator_faces].mNumIndices;
-					auto& indices = m_AssimpScene->mMeshes[mesh_index]->mFaces[iterator_faces].mIndices;
-
-					if (indices_count == 3)
-					{
-						AddIndex(SIndex3(indices[0], indices[1], indices[2]));
-					}
-					else
-					{
-						JWAbort("Index count is not 3");
-					}
-				}
-			}
-			else
-			{
-				JWAbort("Loaded model doesn't have faces");
-			}
-		}
-	}
-	else
-	{
-		JWAbort("Model file not loaded.");
-	}
-
+	m_VertexData = ModelData.VertexData;
+	m_IndexData = ModelData.IndexData;
 	AddEnd();
+
+	// Create texture if there is
+	if (ModelData.HasTexture)
+	{
+		m_HasTexture = TRUE;
+		CreateTexture(ModelData.TextureFileNameW);
+	}
+
+	// For normal line drawing
+	size_t iterator_vertex{};
+	for (const auto& vertex : ModelData.VertexData.Vertices)
+	{
+
+		NormalAddVertex(SVertex(vertex.Position.x, vertex.Position.y, vertex.Position.z));
+		NormalAddVertex(SVertex(vertex.Position.x + vertex.Normal.x, vertex.Position.y + vertex.Normal.y, vertex.Position.z + vertex.Normal.z));
+		NormalAddIndex(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+		++iterator_vertex;
+	}
+	NormalAddEnd();
 
 	m_IsModelLoaded = true;
 }
@@ -291,6 +224,10 @@ auto JWModel::GetDistanceFromCamera() noexcept->float
 
 PRIVATE void JWModel::Update() noexcept
 {
+	// Set default VS & PS
+	m_pDX->SetDefaultVS();
+	m_pDX->SetDefaultPS();
+
 	// Set VS constant buffer
 	m_DefaultVSConstantBufferData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
 	m_DefaultVSConstantBufferData.World = XMMatrixTranspose(m_MatrixWorld);
