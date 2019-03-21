@@ -118,8 +118,7 @@ namespace JWEngine
 	static constexpr int KMaxFileLength{ 255 };
 	static constexpr int KInputKeyCount{ 256 };
 	static constexpr const char* KAssetDirectory{ "Asset\\" };
-	static constexpr XMFLOAT3 KDefaultColorNoTexture{ XMFLOAT3(0.8f, 0.2f, 1.0f) };
-	static constexpr XMFLOAT3 KDefaultColorNormals{ XMFLOAT3(0.4f, 1.0f, 0.0f) };
+	static constexpr XMFLOAT4 KDefaultColorNormals{ XMFLOAT4(0.4f, 0.8f, 0.0f, 1.0f) };
 	static constexpr XMFLOAT3 KDefaultColorGrid{ XMFLOAT3(1.0f, 1.0f, 1.0f) };
 
 	enum class EWorldMatrixCalculationOrder
@@ -195,6 +194,7 @@ namespace JWEngine
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	static constexpr UINT KInputElementSize = ARRAYSIZE(KInputElementDescription);
@@ -216,16 +216,23 @@ namespace JWEngine
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
 		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
+		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
+		SVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals
+			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
 		SVertex(float x, float y, float z) :
 			Position{ x, y, z } {};
 		SVertex(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
 		SVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
+		SVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
 		XMFLOAT2 TextureCoordinates{};
 		XMFLOAT3 Normal{};
+		XMFLOAT4 ColorDiffuse{};
 	};
 
 	struct SVertexColor
@@ -343,10 +350,9 @@ namespace JWEngine
 	{
 		SDefaultPSConstantBufferData() {};
 		SDefaultPSConstantBufferData(BOOL _HasTexture) : HasTexture(_HasTexture) {};
-		SDefaultPSConstantBufferData(BOOL _HasTexture, XMFLOAT3 _ColorRGB) : HasTexture(_HasTexture), ColorRGB(_ColorRGB) {};
 
 		BOOL HasTexture{ FALSE };
-		XMFLOAT3 ColorRGB{};
+		XMFLOAT3 pad{};
 	};
 	
 	inline void JWAbort(const char* Content)

@@ -13,6 +13,7 @@ VS_OUTPUT main(VS_INPUT input)
 	output.Position = mul(input.Position, WVP);
 	output.TexCoord = input.TexCoord;
 	output.Normal = normalize(mul(input.Normal, (float3x3)World));
+	output.Diffuse = input.Diffuse;
 
 	return output;
 }

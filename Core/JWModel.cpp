@@ -55,11 +55,15 @@ void JWModel::SetModelData(SModelData ModelData) noexcept
 
 	// For normal line drawing
 	size_t iterator_vertex{};
+	XMFLOAT3 second_vertex_position{};
 	for (const auto& vertex : ModelData.VertexData.Vertices)
 	{
+		second_vertex_position.x = vertex.Position.x + vertex.Normal.x;
+		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
+		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
 
-		NormalAddVertex(SVertex(vertex.Position.x, vertex.Position.y, vertex.Position.z));
-		NormalAddVertex(SVertex(vertex.Position.x + vertex.Normal.x, vertex.Position.y + vertex.Normal.y, vertex.Position.z + vertex.Normal.z));
+		NormalAddVertex(SVertex(vertex.Position, KDefaultColorNormals));
+		NormalAddVertex(SVertex(second_vertex_position, KDefaultColorNormals));
 		NormalAddIndex(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
 		++iterator_vertex;
 	}
@@ -236,8 +240,6 @@ PRIVATE void JWModel::Update() noexcept
 
 	// Set PS constant buffer
 	m_DefaultPSConstantBufferData.HasTexture = m_HasTexture;
-	m_DefaultPSConstantBufferData.ColorRGB = KDefaultColorNoTexture;
-
 	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
 
 	// Set PS texture and sampler
@@ -276,7 +278,6 @@ PRIVATE void JWModel::UpdateNormals() noexcept
 
 	// Set PS constant buffer
 	m_DefaultPSConstantBufferData.HasTexture = FALSE;
-	m_DefaultPSConstantBufferData.ColorRGB = KDefaultColorNormals;
 	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
 
 	// Set PS texture and sampler

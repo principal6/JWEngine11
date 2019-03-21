@@ -117,9 +117,9 @@ namespace JWEngine
 		ID3D10Blob* m_DefaultPSBuffer{};
 		ID3D11PixelShader* m_DefaultPS11{};
 		ID3D11Buffer* m_DefaultVSConstantBuffer{};
-		SDefaultVSConstantBufferData m_DefaultVSConstantBufferData;
+		SDefaultVSConstantBufferData m_DefaultVSConstantBufferData{};
 		ID3D11Buffer* m_DefaultPSConstantBuffer{};
-		SDefaultPSConstantBufferData m_DefaultPSConstantBufferData;
+		SDefaultPSConstantBufferData m_DefaultPSConstantBufferData{};
 
 		ID3D10Blob* m_ColorVSBuffer{};
 		ID3D11VertexShader* m_ColorVS11{};

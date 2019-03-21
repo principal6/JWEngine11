@@ -3,7 +3,7 @@
 cbuffer cbPS
 {
 	bool HasTexture;
-	float3 Color;
+	float3 pad;
 };
 
 Texture2D CurrentTexture;
@@ -11,7 +11,7 @@ SamplerState CurrentSamplerState;
 
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
-	float4 model_diffuse = float4(Color.r, Color.g, Color.b, 1);
+	float4 model_diffuse = input.Diffuse;
 
 	if (HasTexture == true)
 	{
