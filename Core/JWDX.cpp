@@ -154,7 +154,7 @@ PRIVATE void JWDX::CreateDefaultVSConstantBuffer() noexcept
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
 	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SDefaultVSConstantBufferData);
+	constant_buffer_description.ByteWidth = sizeof(SDefaultVSCBDefault);
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
@@ -167,7 +167,7 @@ PRIVATE void JWDX::CreateDefaultPSConstantBuffer() noexcept
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
 	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SDefaultPSConstantBufferData);
+	constant_buffer_description.ByteWidth = sizeof(SDefaultPSCBDefault);
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
@@ -475,7 +475,7 @@ void JWDX::SetDefaultPS() noexcept
 	m_DeviceContext11->PSSetShader(m_DefaultPS11, nullptr, 0);
 }
 
-void JWDX::SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData Data) noexcept
+void JWDX::SetDefaultVSConstantBufferData(SDefaultVSCBDefault Data) noexcept
 {
 	m_DefaultVSConstantBufferData = Data;
 
@@ -483,11 +483,35 @@ void JWDX::SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData Data) noe
 	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_DefaultVSConstantBuffer);
 }
 
-void JWDX::SetDefaultPSConstantBufferData(SDefaultPSConstantBufferData Data) noexcept
+void JWDX::SetDefaultPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcept
 {
-	m_DefaultPSConstantBufferData = Data;
+	if (HasTexture)
+	{
+		m_DefaultPSCBDefaultData.HasTexture = TRUE;
+	}
+	else
+	{
+		m_DefaultPSCBDefaultData.HasTexture = FALSE;
+	}
 
-	m_DeviceContext11->UpdateSubresource(m_DefaultPSConstantBuffer, 0, nullptr, &m_DefaultPSConstantBufferData, 0, 0);
+	if (UseLighting)
+	{
+		m_DefaultPSCBDefaultData.UseLighting = TRUE;
+	}
+	else
+	{
+		m_DefaultPSCBDefaultData.UseLighting = FALSE;
+	}
+
+	m_DeviceContext11->UpdateSubresource(m_DefaultPSConstantBuffer, 0, nullptr, &m_DefaultPSCBDefaultData, 0, 0);
+	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_DefaultPSConstantBuffer);
+}
+
+void JWDX::SetDefaultPSCBDefaultAmbientLight(XMFLOAT4 AmbientLight) noexcept
+{
+	m_DefaultPSCBDefaultData.AmbientLight = AmbientLight;
+
+	m_DeviceContext11->UpdateSubresource(m_DefaultPSConstantBuffer, 0, nullptr, &m_DefaultPSCBDefaultData, 0, 0);
 	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_DefaultPSConstantBuffer);
 }
 

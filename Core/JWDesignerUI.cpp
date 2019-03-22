@@ -25,7 +25,7 @@ void JWDesignerUI::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noex
 	MakeGrid(50.0f, 50.0f);
 
 	// Light model
-	m_LightsModel.Create(DX, Camera);
+	m_LightModel.Create(DX, Camera);
 	LoadLightModel();
 
 	// Mini axis
@@ -131,8 +131,8 @@ PRIVATE void JWDesignerUI::MakeMiniAxis() noexcept
 PRIVATE void JWDesignerUI::LoadLightModel() noexcept
 {
 	JWAssimpLoader assimp_loader;
-	m_LightsModel.SetModelData(assimp_loader.LoadObj(m_BaseDirectory + KAssetDirectory, KLightModelFileName));
-	m_LightsModel.SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
+	m_LightModel.SetModelData(assimp_loader.LoadObj(m_BaseDirectory + KAssetDirectory, KLightModelFileName));
+	m_LightModel.SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
 }
 
 PRIVATE void JWDesignerUI::Update() noexcept
@@ -149,9 +149,10 @@ PRIVATE void JWDesignerUI::Update() noexcept
 	m_pDX->SetColorVSConstantBufferData(m_ColorVSConstantBufferData);
 }
 
-void JWDesignerUI::AddLightData(SLightData LightData) noexcept
+void JWDesignerUI::UpdateLightData(SLightData& Ambient, VECTOR<SLightData>& LightsList) noexcept
 {
-	m_LightsData.push_back(LightData);
+	m_pAmbientLightData = &Ambient;
+	m_pLightsData = &LightsList;
 }
 
 void JWDesignerUI::Draw() noexcept
@@ -171,17 +172,22 @@ void JWDesignerUI::Draw() noexcept
 	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
 
 	// Draw light models
-	DrawLightModels();
+	DrawLightModel();
 }
 
-PRIVATE void JWDesignerUI::DrawLightModels() noexcept
+PRIVATE void JWDesignerUI::DrawLightModel() noexcept
 {
-	if (m_LightsData.size())
+	if (m_pAmbientLightData->LightType != ELightType::Invalid)
 	{
-		for (const auto& light : m_LightsData)
+		m_LightModel.SetTranslation(m_pAmbientLightData->Position);
+		m_LightModel.Draw();
+	}
+	if (m_pLightsData->size())
+	{
+		for (const auto& light : *m_pLightsData)
 		{
-			m_LightsModel.SetTranslation(light.Position);
-			m_LightsModel.Draw();
+			m_LightModel.SetTranslation(light.Position);
+			m_LightModel.Draw();
 		}
 	}
 }

@@ -52,8 +52,9 @@ namespace JWEngine
 
 		void SetDefaultVS() noexcept;
 		void SetDefaultPS() noexcept;
-		void SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData Data) noexcept;
-		void SetDefaultPSConstantBufferData(SDefaultPSConstantBufferData Data) noexcept;
+		void SetDefaultVSConstantBufferData(SDefaultVSCBDefault Data) noexcept;
+		void SetDefaultPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcept;
+		void SetDefaultPSCBDefaultAmbientLight(XMFLOAT4 AmbientLight) noexcept;
 
 		void SetColorVS() noexcept;
 		void SetColorPS() noexcept;
@@ -117,9 +118,9 @@ namespace JWEngine
 		ID3D10Blob* m_DefaultPSBuffer{};
 		ID3D11PixelShader* m_DefaultPS11{};
 		ID3D11Buffer* m_DefaultVSConstantBuffer{};
-		SDefaultVSConstantBufferData m_DefaultVSConstantBufferData{};
+		SDefaultVSCBDefault m_DefaultVSConstantBufferData{};
 		ID3D11Buffer* m_DefaultPSConstantBuffer{};
-		SDefaultPSConstantBufferData m_DefaultPSConstantBufferData{};
+		SDefaultPSCBDefault m_DefaultPSCBDefaultData{};
 
 		ID3D10Blob* m_ColorVSBuffer{};
 		ID3D11VertexShader* m_ColorVS11{};

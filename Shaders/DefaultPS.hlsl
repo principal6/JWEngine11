@@ -1,9 +1,16 @@
 #include "DefaultHeader.hlsl"
 
-cbuffer cbPS
+cbuffer cbDefault
 {
 	bool HasTexture;
-	float3 pad;
+	bool UseLighting;
+		float2 pad;
+	float4 Ambient;
+};
+
+cbuffer cbPointlight
+{
+	SPointlight Pointlight;
 };
 
 Texture2D CurrentTexture;
@@ -19,6 +26,11 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 		// clip if alpha is less than 0.1
 		clip(model_diffuse.a - 0.1);
+	}
+
+	if (UseLighting == true)
+	{
+		model_diffuse.rgb = model_diffuse.rgb * Ambient.rgb * Ambient.a;
 	}
 	
 	return model_diffuse;

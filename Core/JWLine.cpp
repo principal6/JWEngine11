@@ -106,10 +106,10 @@ PRIVATE void JWLine::Update() noexcept
 	// set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
 	m_WVP = XMMatrixIdentity() * m_pCamera->GetOrthographicMatrix();
-	m_pDX->SetDefaultVSConstantBufferData(SDefaultVSConstantBufferData(XMMatrixTranspose(m_WVP)));
+	m_pDX->SetDefaultVSConstantBufferData(SDefaultVSCBDefault(XMMatrixTranspose(m_WVP)));
 
 	// Set PS constant buffer
-	m_pDX->SetDefaultPSConstantBufferData(SDefaultPSConstantBufferData(FALSE));
+	m_pDX->SetDefaultPSCBDefaultFlags(false, false);
 }
 
 void JWLine::Draw() noexcept

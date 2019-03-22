@@ -106,10 +106,21 @@ auto JWGame::GetImage(size_t Image2DIndex) const noexcept->JWImage&
 
 void JWGame::AddLight(SLightData LightData) noexcept
 {
-	if (LightData.LightType != ELightType::Invalid)
+	if (LightData.LightType == ELightType::Ambient)
 	{
-		m_DesignerUI.AddLightData(LightData);
+		m_AmbientLightData = LightData;
+
+		// Set ambient light of the game
+		m_DX.SetDefaultPSCBDefaultAmbientLight(
+			XMFLOAT4(m_AmbientLightData.LightColor.x, m_AmbientLightData.LightColor.y, m_AmbientLightData.LightColor.z, m_AmbientLightData.Intensity)
+		);
 	}
+	else
+	{
+		m_LightsData.push_back(LightData);
+	}
+
+	m_DesignerUI.UpdateLightData(m_AmbientLightData, m_LightsData);
 }
 
 auto JWGame::GetCameraObject() noexcept->JWCamera&

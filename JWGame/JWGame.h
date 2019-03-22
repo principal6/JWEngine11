@@ -39,6 +39,7 @@ namespace JWEngine
 
 		void AddLight(SLightData LightData) noexcept;
 
+
 		auto GetCameraObject() noexcept->JWCamera&;
 		auto GetInstantTextObject() noexcept->JWInstantText&;
 		auto GetFPS() noexcept->int;
@@ -92,5 +93,8 @@ namespace JWEngine
 		XMFLOAT2 m_MouseCursorPosition{};
 
 		SDirectInputDeviceState m_InputDeviceState{};
+
+		SLightData m_AmbientLightData{};
+		VECTOR<SLightData> m_LightsData;
 	};
 };

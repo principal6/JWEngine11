@@ -21,7 +21,7 @@ namespace JWEngine
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
 
 		// Called in JWGame class
-		void AddLightData(SLightData LightData) noexcept;
+		void UpdateLightData(SLightData& Ambient, VECTOR<SLightData>& LightsList) noexcept;
 
 		// Called in JWGame class
 		void Draw() noexcept;
@@ -42,7 +42,7 @@ namespace JWEngine
 		
 		void Update() noexcept;
 
-		void DrawLightModels() noexcept;
+		void DrawLightModel() noexcept;
 
 	private:
 		static constexpr float KAxisLength = 1000.0f;
@@ -64,8 +64,9 @@ namespace JWEngine
 		
 		SColorVSConstantBufferData m_ColorVSConstantBufferData{};
 
-		VECTOR<SLightData> m_LightsData;
-		JWModel m_LightsModel;
+		const SLightData* m_pAmbientLightData{};
+		const VECTOR<SLightData>* m_pLightsData{};
+		JWModel m_LightModel;
 
 		JWLine m_MiniAxis;
 	};

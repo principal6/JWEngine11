@@ -63,7 +63,7 @@ namespace JWEngine
 		bool m_IsValid{ false };
 		bool m_IsModelLoaded{ false };
 		bool m_IsMode2lLoaded{ false };
-		BOOL m_HasTexture{ FALSE };
+		bool m_HasTexture{ false };
 		bool m_ShouldDrawNormals{ false };
 
 		JWDX* m_pDX{};
@@ -92,7 +92,6 @@ namespace JWEngine
 
 		EWorldMatrixCalculationOrder m_CalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 
-		SDefaultVSConstantBufferData m_DefaultVSConstantBufferData{};
-		SDefaultPSConstantBufferData m_DefaultPSConstantBufferData{};
+		SDefaultVSCBDefault m_DefaultVSCBData{};
 	};
 };

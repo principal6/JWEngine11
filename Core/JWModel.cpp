@@ -46,7 +46,7 @@ void JWModel::SetModelData(SModelData ModelData) noexcept
 	// Create texture if there is
 	if (ModelData.HasTexture)
 	{
-		m_HasTexture = TRUE;
+		m_HasTexture = true;
 		CreateTexture(ModelData.TextureFileNameW);
 	}
 
@@ -246,14 +246,13 @@ PRIVATE void JWModel::Update() noexcept
 	m_pDX->SetDefaultPS();
 
 	// Set VS constant buffer
-	m_DefaultVSConstantBufferData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
-	m_DefaultVSConstantBufferData.World = XMMatrixTranspose(m_MatrixWorld);
+	m_DefaultVSCBData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
+	m_DefaultVSCBData.World = XMMatrixTranspose(m_MatrixWorld);
 
-	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSConstantBufferData);
+	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSCBData);
 
 	// Set PS constant buffer
-	m_DefaultPSConstantBufferData.HasTexture = m_HasTexture;
-	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
+	m_pDX->SetDefaultPSCBDefaultFlags(m_HasTexture, true);
 
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
@@ -285,13 +284,12 @@ void JWModel::Draw() noexcept
 PRIVATE void JWModel::UpdateNormals() noexcept
 {
 	// Set VS constant buffer
-	m_DefaultVSConstantBufferData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
-	m_DefaultVSConstantBufferData.World = XMMatrixTranspose(m_MatrixWorld);
-	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSConstantBufferData);
+	m_DefaultVSCBData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
+	m_DefaultVSCBData.World = XMMatrixTranspose(m_MatrixWorld);
+	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSCBData);
 
 	// Set PS constant buffer
-	m_DefaultPSConstantBufferData.HasTexture = FALSE;
-	m_pDX->SetDefaultPSConstantBufferData(m_DefaultPSConstantBufferData);
+	m_pDX->SetDefaultPSCBDefaultFlags(false, false);
 
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
