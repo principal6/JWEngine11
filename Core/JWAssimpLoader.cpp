@@ -32,8 +32,10 @@ auto JWAssimpLoader::LoadObj(STRING Directory, STRING ModelFileName) noexcept->S
 		for (unsigned int mesh_index{}; mesh_index < mesh_count; ++mesh_index)
 		{
 			auto material = m_AssimpScene->mMaterials[m_AssimpScene->mMeshes[mesh_index]->mMaterialIndex];
-			aiColor4D diffuse{};
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse);
+			aiColor4D ai_diffuse{};
+			aiColor4D ai_specular{};
+			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
+			aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &ai_specular);
 
 			if (!temporary_model_data.HasTexture)
 			{
@@ -54,7 +56,8 @@ auto JWAssimpLoader::LoadObj(STRING Directory, STRING ModelFileName) noexcept->S
 				XMFLOAT3 position{};
 				XMFLOAT2 texcoord{};
 				XMFLOAT3 normal{};
-				XMFLOAT4 color_diffuse{ ConvertAiColor4DToXMFLOAT4(diffuse) };
+				XMFLOAT4 color_diffuse{ ConvertAiColor4DToXMFLOAT4(ai_diffuse) };
+				XMFLOAT4 specular{ ConvertAiColor4DToXMFLOAT4(ai_specular) };
 
 				for (size_t iterator_vertices{}; iterator_vertices < mesh_vertices_count; ++iterator_vertices)
 				{
@@ -62,7 +65,7 @@ auto JWAssimpLoader::LoadObj(STRING Directory, STRING ModelFileName) noexcept->S
 					texcoord = ConvertAiVector3DToXMFLOAT2(m_AssimpScene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
 					normal = ConvertAiVector3DToXMFLOAT3(m_AssimpScene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
 
-					temporary_model_data.VertexData.Vertices.emplace_back(position, texcoord, normal, color_diffuse);
+					temporary_model_data.VertexData.Vertices.emplace_back(position, texcoord, normal, color_diffuse, specular);
 				}
 			}
 			else

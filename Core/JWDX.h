@@ -52,13 +52,20 @@ namespace JWEngine
 
 		void SetDefaultVS() noexcept;
 		void SetDefaultPS() noexcept;
-		void SetDefaultVSConstantBufferData(SDefaultVSCBDefault Data) noexcept;
+		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
+		void SetDefaultVSCB(SDefaultVSCBDefault Data) noexcept;
+		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
 		void SetDefaultPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcept;
-		void SetDefaultPSCBDefaultAmbientLight(XMFLOAT4 AmbientLight) noexcept;
+		// Called when Ambient Light is set by JWGame::AddLight()
+		void SetDefaultPSCBDefaultAmbientLight(XMFLOAT4 AmbientColor) noexcept;
+		// Called when Directional Light is set by JWGame::AddLight()
+		void SetDefaultPSCBDefaultDirectionalLight(XMFLOAT4 DirectionalColor, XMFLOAT3 DirectionalDirection) noexcept;
+		// Called once per game loop, which is when the camera's position would probably be changed.
+		void SetDefaultPSCBDefaultCameraPosition(XMFLOAT4 CameraPosition) noexcept;
 
 		void SetColorVS() noexcept;
 		void SetColorPS() noexcept;
-		void SetColorVSConstantBufferData(SColorVSConstantBufferData Data) noexcept;
+		void SetColorVSConstantBufferData(SColorVSCBData Data) noexcept;
 
 		void BeginDrawing(const SClearColor& ClearColor) noexcept;
 		void EndDrawing() noexcept;
@@ -128,7 +135,7 @@ namespace JWEngine
 		ID3D10Blob* m_ColorPSBuffer{};
 		ID3D11PixelShader* m_ColorPS11{};
 		ID3D11Buffer* m_ColorVSConstantBuffer{};
-		SColorVSConstantBufferData m_ColorVSConstantBufferData;
+		SColorVSCBData m_ColorVSConstantBufferData;
 
 		ID3D11DepthStencilView* m_DepthStencilView11{};
 		ID3D11DepthStencilState* m_DepthStencilStateZEnabled11{};

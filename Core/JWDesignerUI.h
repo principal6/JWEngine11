@@ -21,7 +21,7 @@ namespace JWEngine
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
 
 		// Called in JWGame class
-		void UpdateLightData(SLightData& Ambient, VECTOR<SLightData>& LightsList) noexcept;
+		void UpdateLightData(const SLightData& Ambient, const SLightData& Directional, const VECTOR<SLightData>& LightsList) noexcept;
 
 		// Called in JWGame class
 		void Draw() noexcept;
@@ -51,6 +51,7 @@ namespace JWEngine
 		static constexpr XMFLOAT4 KYAxisColor = XMFLOAT4(0, 1, 0, 1); // Y = G
 		static constexpr XMFLOAT4 KZAxisColor = XMFLOAT4(0, 0, 1, 1); // Z = B
 		bool m_IsValid{ false };
+		bool m_IsLightDataUpdated{ false };
 
 		JWDX* m_pDX{};
 		JWCamera* m_pCamera{};
@@ -62,9 +63,10 @@ namespace JWEngine
 		SVertexColorData m_VertexData{};
 		SIndex2Data m_IndexData{};
 		
-		SColorVSConstantBufferData m_ColorVSConstantBufferData{};
+		SColorVSCBData m_ColorVSConstantBufferData{};
 
 		const SLightData* m_pAmbientLightData{};
+		const SLightData* m_pDirectionalLightData{};
 		const VECTOR<SLightData>* m_pLightsData{};
 		JWModel m_LightModel;
 

@@ -133,6 +133,7 @@ PRIVATE void JWDesignerUI::LoadLightModel() noexcept
 	JWAssimpLoader assimp_loader;
 	m_LightModel.SetModelData(assimp_loader.LoadObj(m_BaseDirectory + KAssetDirectory, KLightModelFileName));
 	m_LightModel.SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
+	m_LightModel.ShouldBeLit(false);
 }
 
 PRIVATE void JWDesignerUI::Update() noexcept
@@ -149,10 +150,13 @@ PRIVATE void JWDesignerUI::Update() noexcept
 	m_pDX->SetColorVSConstantBufferData(m_ColorVSConstantBufferData);
 }
 
-void JWDesignerUI::UpdateLightData(SLightData& Ambient, VECTOR<SLightData>& LightsList) noexcept
+void JWDesignerUI::UpdateLightData(const SLightData& Ambient, const SLightData& Directional, const VECTOR<SLightData>& LightsList) noexcept
 {
 	m_pAmbientLightData = &Ambient;
+	m_pDirectionalLightData = &Directional;
 	m_pLightsData = &LightsList;
+
+	m_IsLightDataUpdated = true;
 }
 
 void JWDesignerUI::Draw() noexcept
@@ -177,17 +181,25 @@ void JWDesignerUI::Draw() noexcept
 
 PRIVATE void JWDesignerUI::DrawLightModel() noexcept
 {
-	if (m_pAmbientLightData->LightType != ELightType::Invalid)
+	if (m_IsLightDataUpdated)
 	{
-		m_LightModel.SetTranslation(m_pAmbientLightData->Position);
-		m_LightModel.Draw();
-	}
-	if (m_pLightsData->size())
-	{
-		for (const auto& light : *m_pLightsData)
+		if (m_pAmbientLightData->LightType != ELightType::Invalid)
 		{
-			m_LightModel.SetTranslation(light.Position);
+			m_LightModel.SetTranslation(m_pAmbientLightData->Position);
 			m_LightModel.Draw();
+		}
+		if (m_pDirectionalLightData->LightType != ELightType::Invalid)
+		{
+			m_LightModel.SetTranslation(m_pDirectionalLightData->Position);
+			m_LightModel.Draw();
+		}
+		if (m_pLightsData->size())
+		{
+			for (const auto& light : *m_pLightsData)
+			{
+				m_LightModel.SetTranslation(light.Position);
+				m_LightModel.Draw();
+			}
 		}
 	}
 }

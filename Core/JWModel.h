@@ -27,7 +27,9 @@ namespace JWEngine
 		auto SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&;
 		auto SetRotation(XMFLOAT4 RotationAxis, float Angle) noexcept->JWModel&;
 		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;
+		
 		auto ShouldDrawNormals(bool Value) noexcept->JWModel&;
+		auto ShouldBeLit(bool Value) noexcept->JWModel&;
 
 		auto GetWorldPosition() noexcept->XMVECTOR;
 		auto GetDistanceFromCamera() noexcept->float;
@@ -54,9 +56,6 @@ namespace JWEngine
 		// Called by Draw()
 		void Update() noexcept;
 
-		// Called by DrawNormals()
-		void UpdateNormals() noexcept;
-
 		void UpdateWorldMatrix() noexcept;
 
 	private:
@@ -65,6 +64,7 @@ namespace JWEngine
 		bool m_IsMode2lLoaded{ false };
 		bool m_HasTexture{ false };
 		bool m_ShouldDrawNormals{ false };
+		bool m_ShouldBeLit{ true };
 
 		JWDX* m_pDX{};
 		JWCamera* m_pCamera{};

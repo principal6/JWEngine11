@@ -115,12 +115,27 @@ void JWGame::AddLight(SLightData LightData) noexcept
 			XMFLOAT4(m_AmbientLightData.LightColor.x, m_AmbientLightData.LightColor.y, m_AmbientLightData.LightColor.z, m_AmbientLightData.Intensity)
 		);
 	}
+	else if (LightData.LightType == ELightType::Directional)
+	{
+		m_DirectionalLightData = LightData;
+
+		// Calculate direction of Directional Light
+		XMVECTOR direction = XMVectorSet(m_DirectionalLightData.Position.x, m_DirectionalLightData.Position.y, m_DirectionalLightData.Position.z, 0);
+		direction = -XMVector3Normalize(direction);
+		XMStoreFloat3(&m_DirectionalLightData.Direction, direction);
+
+		// Set directional light of the game
+		m_DX.SetDefaultPSCBDefaultDirectionalLight(
+			XMFLOAT4(m_DirectionalLightData.LightColor.x, m_DirectionalLightData.LightColor.y, m_DirectionalLightData.LightColor.z,
+				m_DirectionalLightData.Intensity), m_DirectionalLightData.Direction
+		);
+	}
 	else
 	{
 		m_LightsData.push_back(LightData);
 	}
 
-	m_DesignerUI.UpdateLightData(m_AmbientLightData, m_LightsData);
+	m_DesignerUI.UpdateLightData(m_AmbientLightData, m_DirectionalLightData, m_LightsData);
 }
 
 auto JWGame::GetCameraObject() noexcept->JWCamera&
@@ -193,6 +208,10 @@ void JWGame::Run() noexcept
 			// Call the outter OnInput function
 			m_fpOnInput(m_InputDeviceState);
 
+			// Update camera position into DefaultPSCBDefault
+			m_DX.SetDefaultPSCBDefaultCameraPosition(m_Camera.GetPositionFloat4());
+
+			// Begin the drawing process
 			m_DX.BeginDrawing(m_ClearColor);
 
 			// Call the outter OnRender function.
@@ -212,6 +231,7 @@ void JWGame::Run() noexcept
 				m_MouseCursorImage.Draw();
 			}
 
+			// End the drawing process
 			m_DX.EndDrawing();
 
 			if (m_Timer.GetElapsedTimeMilliSec() >= 1000)

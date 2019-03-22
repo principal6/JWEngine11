@@ -141,37 +141,6 @@ namespace JWEngine
 		Spotlight, // Flashlight
 	};
 	
-	struct SLightData
-	{
-		ELightType LightType{ ELightType::Invalid };
-		XMFLOAT3 LightColor{}; // Ambient | Directional | Pointlight | Spotlight
-		float Intensity{}; // Ambient | Directional | Pointlight | Spotlight
-		XMFLOAT3 Position{}; // ( Ambient | Directional ) | Pointlight | Spotlight
-		float Range{}; // Pointlight | Spotlight ?? Radius??
-		XMFLOAT3 Direction{}; // Directional | Spotlight
-		XMFLOAT3 Attenuation{}; // Pointlight | Spotlight
-		float Cone{}; // Spotlight
-		
-		SLightData() = default;
-
-		// Make ambient light
-		// @warning: '_Position' data will only used for light model's representation
-		// it has nothing to do with ambient light's intensity.
-		SLightData(XMFLOAT3 _Color, XMFLOAT3 _Position, float _Intensity)
-			: LightType{ ELightType::Ambient }, LightColor{ _Color }, Position{ _Position },
-			Intensity{ _Intensity } {};
-		
-		// Make directional light
-		SLightData(XMFLOAT3 _Color, XMFLOAT3 _Position, float _Intensity, XMFLOAT3 _Direction)
-			: LightType{ ELightType::Directional }, LightColor{ _Color }, Position{ _Position },
-			Intensity{ _Intensity }, Direction{ _Direction } {};
-
-		// Make point light
-		SLightData(XMFLOAT3 _Color, XMFLOAT3 _Position, float _Intensity, float _Range, XMFLOAT3 _Attenuation)
-			: LightType{ ELightType::Directional }, LightColor{ _Color }, Position{ _Position },
-			Intensity{ _Intensity }, Range{ _Range }, Attenuation{ _Attenuation } {};
-	};
-	
 	struct SPositionInt
 	{
 		SPositionInt() {};
@@ -206,6 +175,7 @@ namespace JWEngine
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR"	, 1, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	static constexpr UINT KInputElementSize = ARRAYSIZE(KInputElementDescription);
@@ -229,6 +199,8 @@ namespace JWEngine
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
 		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
+		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
 		SVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
 		SVertex(float x, float y, float z) :
@@ -244,6 +216,7 @@ namespace JWEngine
 		XMFLOAT2 TextureCoordinates{};
 		XMFLOAT3 Normal{};
 		XMFLOAT4 ColorDiffuse{};
+		XMFLOAT4 Specular{};
 	};
 
 	struct SVertexColor
@@ -355,14 +328,14 @@ namespace JWEngine
 		SLineData(XMFLOAT2 _StartPosition, XMFLOAT2 _Length, XMFLOAT4 _Color) : StartPosition{ _StartPosition }, Length{ _Length }, Color{ _Color } {};
 	};
 
-	struct SColorVSConstantBufferData
+	struct SColorVSCBData
 	{
-		SColorVSConstantBufferData() {};
-		SColorVSConstantBufferData(XMMATRIX _WVP) : WVP{ _WVP } {};
+		SColorVSCBData() {};
+		SColorVSCBData(XMMATRIX _WVP) : WVP{ _WVP } {};
 
 		XMMATRIX WVP{};
 	};
-
+	
 	struct SDefaultVSCBDefault
 	{
 		SDefaultVSCBDefault() {};
@@ -372,21 +345,62 @@ namespace JWEngine
 		XMMATRIX WVP{};
 		XMMATRIX World{};
 	};
+	
+	struct SLightData
+	{
+		ELightType LightType{ ELightType::Invalid };
+		XMFLOAT3 LightColor{}; // Ambient | Directional | Pointlight | Spotlight
+		float Intensity{}; // Ambient | Directional | Pointlight | Spotlight
+		XMFLOAT3 Position{}; // ( Ambient | Directional ) | Pointlight | Spotlight
+		float Range{}; // Pointlight | Spotlight ?? Radius??
+		XMFLOAT3 Direction{}; // Directional | Spotlight
+		XMFLOAT3 Attenuation{}; // Pointlight | Spotlight
+		float Cone{}; // Spotlight
 
+		SLightData() = default;
+
+		// Make AMBIENT light
+		// @warning: '_Position' data will only be used for light model's 3D representation,
+		// and it has NOTHING to do with ambient light's INTENSITY.
+		SLightData(XMFLOAT3 _Color, float _Intensity, XMFLOAT3 _Position)
+			: LightType{ ELightType::Ambient }, LightColor{ _Color }, Intensity{ _Intensity }, Position{ _Position } {};
+
+		// Make DIRECTIONAL light
+		// @warning: '_Position' data WILL be used to calculate the DIRECTION of directional light.
+		SLightData(XMFLOAT3 _Color, XMFLOAT3 _Position, float _Intensity)
+			: LightType{ ELightType::Directional }, LightColor{ _Color }, Intensity{ _Intensity }, Position{ _Position } {};
+
+		// Make POINT light
+		SLightData(XMFLOAT3 _Color, XMFLOAT3 _Position, float _Intensity, float _Range, XMFLOAT3 _Attenuation)
+			: LightType{ ELightType::Directional }, LightColor{ _Color }, Position{ _Position },
+			Intensity{ _Intensity }, Range{ _Range }, Attenuation{ _Attenuation } {};
+	};
+	
 	struct SDefaultPSCBDefault
 	{
-		SDefaultPSCBDefault() {};
+		SDefaultPSCBDefault() = default;
 		SDefaultPSCBDefault(BOOL _HasTexture)
 			: HasTexture{ _HasTexture } {};
 		SDefaultPSCBDefault(BOOL _HasTexture, BOOL _UseLighting)
 			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting } {};
 		SDefaultPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight)
-			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientLight{ _AmbientLight } {};
+			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientColor{ _AmbientLight } {};
+		SDefaultPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight,
+			XMFLOAT4 _DirectionalColor, XMFLOAT4 _DirectionalDirection)
+			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientColor{ _AmbientLight },
+			DirectionalColor{ _DirectionalColor }, DirectionalDirection{ _DirectionalDirection } {};
+		SDefaultPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight,
+			XMFLOAT4 _DirectionalColor, XMFLOAT4 _DirectionalDirection, XMFLOAT4 _CameraPosition)
+			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientColor{ _AmbientLight },
+			DirectionalColor{ _DirectionalColor }, DirectionalDirection{ _DirectionalDirection }, CameraPosition{ _CameraPosition } {};
 
 		BOOL HasTexture{ FALSE };
 		BOOL UseLighting{ FALSE };
 		float pad[2]{};
-		XMFLOAT4 AmbientLight{};
+		XMFLOAT4 AmbientColor{};
+		XMFLOAT4 DirectionalColor{};
+		XMFLOAT4 DirectionalDirection{};
+		XMFLOAT4 CameraPosition{};
 	};
 	
 	inline void JWAbort(const char* Content)

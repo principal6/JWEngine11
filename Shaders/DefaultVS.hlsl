@@ -14,6 +14,8 @@ VS_OUTPUT main(VS_INPUT input)
 	output.TexCoord = input.TexCoord;
 	output.Normal = normalize(mul(input.Normal, (float3x3)World));
 	output.Diffuse = input.Diffuse;
+	output.Specular = input.Specular;
+	output.WorldPosition = mul(input.Position, World).xyz;
 
 	return output;
 }

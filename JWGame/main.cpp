@@ -23,19 +23,19 @@ int main()
 
 	myGame.GetCameraObject()
 		.SetCameraType(ECameraType::FreeLook)
-		.SetPosition(XMFLOAT3(0.0f, 4.0f, -6.0f));
+		.SetPosition(XMFLOAT3(0.0f, 0.0f, -4.0f));
 
 	myGame.AddOpaqueModel("sphere.obj");
 	myGame.GetOpaqueModel(0)
 		.SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		.SetScale(XMFLOAT3(0.2f, 0.2f, 0.2f));
+		.SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
 	
-	myGame.AddImage("firefox_56x80_creek23.png");
+	myGame.AddImage("Grayscale_Interval_Ten.png");
 	myGame.GetImage(0)
 		.SetPosition(XMFLOAT2(20, 30));
 
-	myGame.AddLight(SLightData(XMFLOAT3(0, 0, 1), XMFLOAT3(10, 0, 0), 0.2f));
-	myGame.AddLight(SLightData(XMFLOAT3(0, 1, 0), XMFLOAT3(-5, 5, -5), 1.0f, XMFLOAT3(0, -1, 0)));
+	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.3f, XMFLOAT3(0, -5, 0)));
+	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5, 5, 0), 0.8f));
 
 	myGame.SetOnInputFunction(OnInput);
 	myGame.SetOnRenderFunction(OnRender);
@@ -74,8 +74,10 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 	if ((DeviceState.CurrentMouse.lX != DeviceState.PreviousMouse.lX) || (DeviceState.CurrentMouse.lY != DeviceState.PreviousMouse.lY))
 	{
-		//if ((DeviceState.CurrentMouse.rgbButtons[1]))
-		myGame.GetCameraObject().RotateCamera(static_cast<float>(DeviceState.CurrentMouse.lY), static_cast<float>(DeviceState.CurrentMouse.lX), 0);
+		if (DeviceState.CurrentMouse.rgbButtons[1])
+		{
+			myGame.GetCameraObject().RotateCamera(static_cast<float>(DeviceState.CurrentMouse.lY), static_cast<float>(DeviceState.CurrentMouse.lX), 0);
+		}
 	}
 	
 	if ((DeviceState.CurrentMouse.lZ))

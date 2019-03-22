@@ -222,6 +222,13 @@ auto JWModel::ShouldDrawNormals(bool Value) noexcept->JWModel&
 	return *this;
 }
 
+auto JWModel::ShouldBeLit(bool Value) noexcept->JWModel&
+{
+	m_ShouldBeLit = Value;
+
+	return *this;
+}
+
 auto JWModel::GetWorldPosition() noexcept->XMVECTOR
 {
 	return m_WorldPosition;
@@ -248,11 +255,10 @@ PRIVATE void JWModel::Update() noexcept
 	// Set VS constant buffer
 	m_DefaultVSCBData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
 	m_DefaultVSCBData.World = XMMatrixTranspose(m_MatrixWorld);
-
-	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSCBData);
+	m_pDX->SetDefaultVSCB(m_DefaultVSCBData);
 
 	// Set PS constant buffer
-	m_pDX->SetDefaultPSCBDefaultFlags(m_HasTexture, true);
+	m_pDX->SetDefaultPSCBDefaultFlags(m_HasTexture, m_ShouldBeLit);
 
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
@@ -275,30 +281,17 @@ void JWModel::Draw() noexcept
 	// Draw
 	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
 
+	// Draw normals
 	if ((m_ShouldDrawNormals) || (m_IsMode2lLoaded))
 	{
 		DrawNormals();
 	}
 }
 
-PRIVATE void JWModel::UpdateNormals() noexcept
-{
-	// Set VS constant buffer
-	m_DefaultVSCBData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
-	m_DefaultVSCBData.World = XMMatrixTranspose(m_MatrixWorld);
-	m_pDX->SetDefaultVSConstantBufferData(m_DefaultVSCBData);
-
-	// Set PS constant buffer
-	m_pDX->SetDefaultPSCBDefaultFlags(false, false);
-
-	// Set PS texture and sampler
-	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
-	m_pDX->SetPSSamplerState(ESamplerState::LinearWrap);
-}
-
 PRIVATE void JWModel::DrawNormals() noexcept
 {
-	UpdateNormals();
+	// Set PS constant buffer
+	m_pDX->SetDefaultPSCBDefaultFlags(false, false);
 
 	// Set IA primitive topology
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);

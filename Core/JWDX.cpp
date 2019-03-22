@@ -128,7 +128,8 @@ PRIVATE void JWDX::CreateDefaultVS() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\DefaultVS.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0", 0, 0, &m_DefaultVSBuffer, nullptr);
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_DefaultVSBuffer, nullptr);
 
 	// Create shader
 	m_Device11->CreateVertexShader(m_DefaultVSBuffer->GetBufferPointer(), m_DefaultVSBuffer->GetBufferSize(), nullptr, &m_DefaultVS11);
@@ -143,7 +144,8 @@ PRIVATE void JWDX::CreateDefaultPS() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\DefaultPS.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &m_DefaultPSBuffer, nullptr);
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_DefaultPSBuffer, nullptr);
 
 	// Create shader
 	m_Device11->CreatePixelShader(m_DefaultPSBuffer->GetBufferPointer(), m_DefaultPSBuffer->GetBufferSize(), nullptr, &m_DefaultPS11);
@@ -206,7 +208,7 @@ PRIVATE void JWDX::CreateColorVSConstantBuffer() noexcept
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
 	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SColorVSConstantBufferData);
+	constant_buffer_description.ByteWidth = sizeof(SColorVSCBData);
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
@@ -475,7 +477,7 @@ void JWDX::SetDefaultPS() noexcept
 	m_DeviceContext11->PSSetShader(m_DefaultPS11, nullptr, 0);
 }
 
-void JWDX::SetDefaultVSConstantBufferData(SDefaultVSCBDefault Data) noexcept
+void JWDX::SetDefaultVSCB(SDefaultVSCBDefault Data) noexcept
 {
 	m_DefaultVSConstantBufferData = Data;
 
@@ -507,9 +509,26 @@ void JWDX::SetDefaultPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcep
 	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_DefaultPSConstantBuffer);
 }
 
-void JWDX::SetDefaultPSCBDefaultAmbientLight(XMFLOAT4 AmbientLight) noexcept
+void JWDX::SetDefaultPSCBDefaultAmbientLight(XMFLOAT4 AmbientColor) noexcept
 {
-	m_DefaultPSCBDefaultData.AmbientLight = AmbientLight;
+	m_DefaultPSCBDefaultData.AmbientColor = AmbientColor;
+
+	m_DeviceContext11->UpdateSubresource(m_DefaultPSConstantBuffer, 0, nullptr, &m_DefaultPSCBDefaultData, 0, 0);
+	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_DefaultPSConstantBuffer);
+}
+
+void JWDX::SetDefaultPSCBDefaultDirectionalLight(XMFLOAT4 DirectionalColor, XMFLOAT3 DirectionalDirection) noexcept
+{
+	m_DefaultPSCBDefaultData.DirectionalColor = DirectionalColor;
+	m_DefaultPSCBDefaultData.DirectionalDirection = XMFLOAT4(-DirectionalDirection.x, -DirectionalDirection.y, -DirectionalDirection.z, 1.0f);
+
+	m_DeviceContext11->UpdateSubresource(m_DefaultPSConstantBuffer, 0, nullptr, &m_DefaultPSCBDefaultData, 0, 0);
+	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_DefaultPSConstantBuffer);
+}
+
+void JWDX::SetDefaultPSCBDefaultCameraPosition(XMFLOAT4 CameraPosition) noexcept
+{
+	m_DefaultPSCBDefaultData.CameraPosition = CameraPosition;
 
 	m_DeviceContext11->UpdateSubresource(m_DefaultPSConstantBuffer, 0, nullptr, &m_DefaultPSCBDefaultData, 0, 0);
 	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_DefaultPSConstantBuffer);
@@ -530,7 +549,7 @@ void JWDX::SetColorPS() noexcept
 	m_DeviceContext11->PSSetShader(m_ColorPS11, nullptr, 0);
 }
 
-void JWDX::SetColorVSConstantBufferData(SColorVSConstantBufferData Data) noexcept
+void JWDX::SetColorVSConstantBufferData(SColorVSCBData Data) noexcept
 {
 	m_ColorVSConstantBufferData = Data;
 

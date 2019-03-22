@@ -95,6 +95,7 @@ namespace JWEngine
 		SDirectInputDeviceState m_InputDeviceState{};
 
 		SLightData m_AmbientLightData{};
+		SLightData m_DirectionalLightData{};
 		VECTOR<SLightData> m_LightsData;
 	};
 };
