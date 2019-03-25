@@ -50,7 +50,7 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 
 	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength * 4; ++iterator_count)
 	{
-		m_VertexData.Vertices.push_back(SVertex());
+		m_VertexData.Vertices.push_back(SStaticVertex());
 	}
 
 	// Create vertex buffer
@@ -77,7 +77,7 @@ PRIVATE void JWInstantText::CreateInstantTextPS() noexcept
 	ID3D10Blob* buffer_ps{};
 
 	// Compile Shaders from shader file
-	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\InstantTextPS.hlsl";
+	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSInstantText.hlsl";
 	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &buffer_ps, nullptr);
 
 	// Create the shader
@@ -110,10 +110,10 @@ void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 Fon
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
 	// Set default VS & PS
-	m_pDX->SetDefaultVS();
-	m_pDX->SetDefaultPS();
+	m_pDX->SetVSBase();
+	m_pDX->SetPSBase();
 
-	JWImage::UpdateDefaultVSConstantBuffer();
+	JWImage::UpdateVSCB();
 	JWImage::UpdateTexture();
 
 	// Set pixel shader

@@ -45,12 +45,12 @@ namespace JWEngine
 		ID3D11Buffer* m_VertexBuffer{};
 		ID3D11Buffer* m_IndexBuffer{};
 
-		SVertexData m_VertexData{};
+		SStaticVertexData m_VertexData{};
 		SIndex2Data m_IndexData{};
 
 		XMFLOAT2 m_Position{};
 		XMFLOAT2 m_Size{};
 
-		XMMATRIX m_WVP{};
+		SVSCBStatic m_VSCBStatic{};
 	};
 };

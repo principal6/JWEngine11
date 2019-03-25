@@ -2,41 +2,30 @@
 
 using namespace JWEngine;
 
-inline auto ConvertAiVector3DToXMFLOAT2(aiVector3D input)->XMFLOAT2
+auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noexcept->SStaticModelData
 {
-	return XMFLOAT2(input.x, input.y);
-}
+	SStaticModelData temporary_model_data{};
 
-inline auto ConvertAiVector3DToXMFLOAT3(aiVector3D input)->XMFLOAT3
-{
-	return XMFLOAT3(input.x, input.y, input.z);
-}
+	Assimp::Importer assimp_importer{};
+	const aiScene* assimp_scene{ assimp_importer.ReadFile(Directory + ModelFileName,
+		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure |
+		aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices) };
 
-inline auto ConvertAiColor4DToXMFLOAT4(aiColor4D input)->XMFLOAT4
-{
-	return XMFLOAT4(input.r, input.g, input.b, input.a);
-}
-
-auto JWAssimpLoader::LoadObj(STRING Directory, STRING ModelFileName) noexcept->SModelData
-{
-	SModelData temporary_model_data{};
-
-	Assimp::Importer m_AssimpImporter{};
-	const aiScene* m_AssimpScene{ m_AssimpImporter.ReadFile(Directory + ModelFileName, aiProcess_Triangulate | aiProcess_ConvertToLeftHanded) };
-
-	if (m_AssimpScene && m_AssimpScene->HasMeshes())
+	if (assimp_scene && assimp_scene->HasMeshes())
 	{
-		auto mesh_count{ m_AssimpScene->mNumMeshes };
+		auto mesh_count{ assimp_scene->mNumMeshes };
 		unsigned int indices_offset{};
 
 		for (unsigned int mesh_index{}; mesh_index < mesh_count; ++mesh_index)
 		{
-			auto material = m_AssimpScene->mMaterials[m_AssimpScene->mMeshes[mesh_index]->mMaterialIndex];
+			auto material = assimp_scene->mMaterials[assimp_scene->mMeshes[mesh_index]->mMaterialIndex];
 			aiColor4D ai_diffuse{};
 			aiColor4D ai_specular{};
 			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
 			aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &ai_specular);
 
+			// Load the texture only once per model (not per mesh).
+			// i.e. multi-texture not supported.
 			if (!temporary_model_data.HasTexture)
 			{
 				aiString path{};
@@ -49,23 +38,24 @@ auto JWAssimpLoader::LoadObj(STRING Directory, STRING ModelFileName) noexcept->S
 				}
 			}
 
-			if (m_AssimpScene->mMeshes[mesh_index]->HasPositions())
+			if (assimp_scene->mMeshes[mesh_index]->HasPositions())
 			{
-				size_t mesh_vertices_count{ m_AssimpScene->mMeshes[mesh_index]->mNumVertices };
+				size_t mesh_vertices_count{ assimp_scene->mMeshes[mesh_index]->mNumVertices };
 
 				XMFLOAT3 position{};
 				XMFLOAT2 texcoord{};
 				XMFLOAT3 normal{};
-				XMFLOAT4 color_diffuse{ ConvertAiColor4DToXMFLOAT4(ai_diffuse) };
-				XMFLOAT4 specular{ ConvertAiColor4DToXMFLOAT4(ai_specular) };
+				
+				XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
+				XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
 
 				for (size_t iterator_vertices{}; iterator_vertices < mesh_vertices_count; ++iterator_vertices)
 				{
-					position = ConvertAiVector3DToXMFLOAT3(m_AssimpScene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
-					texcoord = ConvertAiVector3DToXMFLOAT2(m_AssimpScene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
-					normal = ConvertAiVector3DToXMFLOAT3(m_AssimpScene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
+					position = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
+					texcoord = ConvertaiVector3DToXMFLOAT2(assimp_scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
+					normal = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
 
-					temporary_model_data.VertexData.Vertices.emplace_back(position, texcoord, normal, color_diffuse, specular);
+					temporary_model_data.VertexData.Vertices.emplace_back(position, texcoord, normal, diffuse, specular);
 				}
 			}
 			else
@@ -73,15 +63,15 @@ auto JWAssimpLoader::LoadObj(STRING Directory, STRING ModelFileName) noexcept->S
 				JWAbort("Loaded model doesn't have positions");
 			}
 
-			if (m_AssimpScene->mMeshes[mesh_index]->HasFaces())
+			if (assimp_scene->mMeshes[mesh_index]->HasFaces())
 			{
-				size_t faces_count{ m_AssimpScene->mMeshes[mesh_index]->mNumFaces };
+				size_t faces_count{ assimp_scene->mMeshes[mesh_index]->mNumFaces };
 				unsigned int last_index{};
 
 				for (size_t iterator_faces{}; iterator_faces < faces_count; ++iterator_faces)
 				{
-					auto& indices_count = m_AssimpScene->mMeshes[mesh_index]->mFaces[iterator_faces].mNumIndices;
-					auto& indices = m_AssimpScene->mMeshes[mesh_index]->mFaces[iterator_faces].mIndices;
+					auto& indices_count = assimp_scene->mMeshes[mesh_index]->mFaces[iterator_faces].mNumIndices;
+					auto& indices = assimp_scene->mMeshes[mesh_index]->mFaces[iterator_faces].mIndices;
 
 					if (indices_count == 3)
 					{
@@ -110,8 +100,349 @@ auto JWAssimpLoader::LoadObj(STRING Directory, STRING ModelFileName) noexcept->S
 	}
 	else
 	{
-		JWAbort("Model file not loaded.");
+		JWAbort("Model file not found.");
 	}
 
 	return temporary_model_data;
+}
+
+auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SSkinnedModelData
+{
+	SSkinnedModelData result{};
+	result.BaseDirectory = Directory;
+
+	Assimp::Importer importer{};
+
+	// aiProcess_FindDegenerates (this may cause indices count to be 2, not 3)
+	const aiScene* scene{ importer.ReadFile(result.BaseDirectory + ModelFileName,
+		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph |
+		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality |
+		aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices) };
+
+	if (scene == nullptr)
+	{
+		JWAbort("Model not imported. Check out the model file.");
+	}
+	else if (scene->mRootNode == nullptr)
+	{
+		JWAbort("Model not imported. Check out the model file.");
+	}
+
+	// Extract node hierarchy from model file.
+	ExtractNodeTree(scene->mRootNode, -1, result.NodeTree);
+	
+	// Build meshes and bones from nodes in extracted node hierarchy.
+	BuildMeshesAndBonesFromNodes(scene, result);
+
+	// Match bones and vertices
+	MatchBonesAndVertices(result.BoneTree, result.VertexData);
+
+	// Match bones and nodes
+	MatchBonesAndNodes(result.BoneTree, result.NodeTree);
+
+	// Extract animations
+	ExtractAnimationSet(scene, result.NodeTree, result.AnimationSet);
+
+	return result;
+}
+
+PRIVATE void JWAssimpLoader::ExtractNodeTree(const aiNode* Node, int ParentNodeID, SModelNodeTree& OutNodeTree) noexcept
+{
+	OutNodeTree.vNodes.push_back(SModelNode());
+	int new_node_id = static_cast<int>(OutNodeTree.vNodes.size() - 1);
+	SModelNode& new_node = OutNodeTree.vNodes[new_node_id];
+	
+	// Set node's ID
+	new_node.ID = new_node_id;
+
+	// Set node's parent ID
+	new_node.ParentID = ParentNodeID;
+
+	// Set node's name
+	new_node.Name = Node->mName.C_Str();
+
+	// Set node's transformation matrix
+	new_node.Transformation = ConvertaiMatrix4x4ToXMMATRIX(Node->mTransformation);
+
+	// Set mehses' ID
+	if (Node->mNumMeshes)
+	{
+		for (unsigned int i = 0; i < Node->mNumMeshes; ++i)
+		{
+			new_node.vMeshesID.push_back(Node->mMeshes[i]);
+		}
+	}
+
+	// @warning: Node's bone ID (new_node.BoneID) will be set later by ExtractBoneHierarchy()
+
+	// Extract child nodes
+	if (Node->mNumChildren)
+	{
+		int this_node_id = new_node.ID;
+
+		for (unsigned int i = 0; i < Node->mNumChildren; ++i)
+		{
+			ExtractNodeTree(Node->mChildren[i], this_node_id, OutNodeTree);
+		}
+
+		for (const auto& iter_node : OutNodeTree.vNodes)
+		{
+			if (iter_node.ParentID == this_node_id)
+			{
+				OutNodeTree.vNodes[this_node_id].vChildrenID.push_back(iter_node.ID);
+			}
+		}
+	}
+}
+
+PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, SSkinnedModelData& OutModelData) noexcept
+{
+	int vertices_offset{};
+	int indices_offset{};
+
+	// Iterate each node in node tree
+	for (const auto& node : OutModelData.NodeTree.vNodes)
+	{
+		// Get all meshes' id in this node
+		for (const auto mesh_id : node.vMeshesID)
+		{
+			auto mesh = Scene->mMeshes[mesh_id];
+			auto material = Scene->mMaterials[mesh->mMaterialIndex];
+
+			aiColor4D ai_diffuse{};
+			aiColor4D ai_specular{};
+			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
+			aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &ai_specular);
+
+			// Load the texture only once per model (not per mesh).
+			// i.e. multi-texture not supported.
+			if (!OutModelData.HasTexture)
+			{
+				aiString path{};
+				aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &path);
+				STRING path_string{ OutModelData.BaseDirectory + path.C_Str() };
+				if (path.length)
+				{
+					OutModelData.HasTexture = true;
+					OutModelData.TextureFileNameW = StringToWstring(path_string);
+				}
+			}
+
+			if (mesh->HasPositions())
+			{
+				XMFLOAT3 position{};
+				XMFLOAT3 normal{};
+				XMFLOAT2 texcoord{};
+
+				XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
+				XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
+
+				for (unsigned int vertex_id = 0; vertex_id < mesh->mNumVertices; ++vertex_id)
+				{
+					position = ConvertaiVector3DToXMFLOAT3(mesh->mVertices[vertex_id]);
+
+
+
+					normal = ConvertaiVector3DToXMFLOAT3(mesh->mNormals[vertex_id]);
+					texcoord = ConvertaiVector3DToXMFLOAT2(mesh->mTextureCoords[0][vertex_id]);
+
+					OutModelData.VertexData.Vertices.emplace_back(position, texcoord, normal, diffuse, specular);
+				}
+			}
+			else
+			{
+				JWAbort("Loaded model doesn't have positions");
+			}
+
+			if (mesh->HasFaces())
+			{
+				unsigned int last_index{};
+				for (unsigned int iterator_faces{}; iterator_faces < mesh->mNumFaces; ++iterator_faces)
+				{
+					auto& indices_count = mesh->mFaces[iterator_faces].mNumIndices;
+					auto& indices = mesh->mFaces[iterator_faces].mIndices;
+
+					if (indices_count == 3)
+					{
+						OutModelData.IndexData.Indices.emplace_back(
+							indices_offset + indices[0],
+							indices_offset + indices[1],
+							indices_offset + indices[2]);
+					}
+					else
+					{
+						JWAbort("Index count is not 3");
+					}
+
+					last_index = max(last_index, indices[0]);
+					last_index = max(last_index, indices[1]);
+					last_index = max(last_index, indices[2]);
+				}
+
+				indices_offset += last_index + 1;
+			}
+			else
+			{
+				JWAbort("Loaded model doesn't have faces");
+			}
+
+			// If this mesh refers to bones
+			if (mesh->mNumBones)
+			{
+				// Iterate each bone
+				for (unsigned int i = 0; i < mesh->mNumBones; ++i)
+				{
+					ExtractBone(mesh->mBones[i], vertices_offset, OutModelData.BoneTree);
+				}
+			}
+
+			vertices_offset += static_cast<int>(OutModelData.VertexData.Vertices.size());
+		}
+	}
+}
+
+PRIVATE void JWAssimpLoader::ExtractBone(const aiBone* Bone, int VertexOffset, SModelBoneTree& OutBoneTree) noexcept
+{
+	OutBoneTree.vBones.push_back(SModelBone());
+	int new_bone_id = static_cast<int>(OutBoneTree.vBones.size() - 1);
+	auto& new_bone = OutBoneTree.vBones[new_bone_id];
+
+	// Set bone's id
+	new_bone.ID = new_bone_id;
+
+	// Set bone's name
+	new_bone.Name = Bone->mName.C_Str();
+
+	// Set bone's offset matrix
+	new_bone.Offset = ConvertaiMatrix4x4ToXMMATRIX(Bone->mOffsetMatrix);
+
+	// Set bone's weights array
+	if (Bone->mNumWeights)
+	{
+		for (unsigned int i = 0; i < Bone->mNumWeights; ++i)
+		{
+			new_bone.vWeights.push_back(SModelWeight());
+			int new_weight_id = static_cast<int>(new_bone.vWeights.size() - 1);
+			auto& new_weight = new_bone.vWeights[new_weight_id];
+
+			// @important
+			// VertexID needs to be offset if it's ".x" file
+			//new_weight.VertexID = Bone->mWeights[i].mVertexId;
+			new_weight.VertexID = Bone->mWeights[i].mVertexId + VertexOffset;
+
+			new_weight.Weight = Bone->mWeights[i].mWeight;
+		}
+	}
+}
+
+PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTree, SSkinnedVertexData& OutVertexData) noexcept
+{
+	for (const auto& bone : BoneTree.vBones)
+	{
+		for (const auto& weight : bone.vWeights)
+		{
+			if (weight.VertexID < OutVertexData.Vertices.size())
+			{
+				OutVertexData.Vertices[weight.VertexID].AddBone(bone.ID, weight.Weight);
+			}
+		}
+	}
+}
+
+PRIVATE void JWAssimpLoader::MatchBonesAndNodes(const SModelBoneTree& BoneTree, SModelNodeTree& OutNodeTree) noexcept
+{
+	for (auto& node : OutNodeTree.vNodes)
+	{
+		for (const auto& bone : BoneTree.vBones)
+		{
+			if (node.Name.compare(bone.Name) == 0)
+			{
+				// We found the matching bone of this node.
+				node.BoneID = bone.ID;
+				break;
+			}
+		}
+	}
+}
+
+PRIVATE void JWAssimpLoader::ExtractAnimationSet(const aiScene* Scene, const SModelNodeTree& NodeTree, SModelAnimationSet& OutAnimationSet)
+{
+	if (Scene->mNumAnimations)
+	{
+		for (unsigned int animation_id = 0; animation_id < Scene->mNumAnimations; ++animation_id)
+		{
+			OutAnimationSet.vAnimations.push_back(SModelAnimation());
+			auto& animation = OutAnimationSet.vAnimations[OutAnimationSet.vAnimations.size() - 1];
+
+			const auto& ai_animation = Scene->mAnimations[animation_id];
+			animation.Name = ai_animation->mName.C_Str();
+			animation.TicksPerSecond = static_cast<float>(ai_animation->mTicksPerSecond);
+			animation.TotalTicks = static_cast<float>(ai_animation->mDuration);
+
+			// channel = animation of a single node
+			if (ai_animation->mNumChannels)
+			{
+				for (unsigned int channel_id = 0; channel_id < ai_animation->mNumChannels; ++channel_id)
+				{
+					animation.vNodeAnimation.push_back(SModelNodeAnimation());
+					auto& node_animation = animation.vNodeAnimation[animation.vNodeAnimation.size() - 1];
+
+					const auto& ai_channel = ai_animation->mChannels[channel_id];
+
+					// Find the name-matching node
+					for (const auto& node : NodeTree.vNodes)
+					{
+						if (node.Name.compare(ai_channel->mNodeName.C_Str()) == 0)
+						{
+							// We found the matching name
+							node_animation.NodeID = node.ID;
+							break;
+						}
+					}
+
+					// Get position keys
+					if (ai_channel->mNumPositionKeys)
+					{
+						for (unsigned int key_id = 0; key_id < ai_channel->mNumPositionKeys; ++key_id)
+						{
+							node_animation.vKeyPosition.push_back(SModelAnimationKeyPosition());
+							auto& key = node_animation.vKeyPosition[node_animation.vKeyPosition.size() - 1];
+							const auto& ai_key = ai_channel->mPositionKeys[key_id];
+
+							key.TimeInTicks = static_cast<float>(ai_key.mTime);
+							key.Key = ConvertaiVector3DToXMFLOAT3(ai_key.mValue);
+						}
+					}
+
+					// Get rotation keys
+					if (ai_channel->mNumRotationKeys)
+					{
+						for (unsigned int key_id = 0; key_id < ai_channel->mNumRotationKeys; ++key_id)
+						{
+							node_animation.vKeyRotation.push_back(SModelAnimationKeyRotation());
+							auto& key = node_animation.vKeyRotation[node_animation.vKeyRotation.size() - 1];
+							const auto& ai_key = ai_channel->mRotationKeys[key_id];
+
+							key.TimeInTicks = static_cast<float>(ai_key.mTime);
+							key.Key = ConvertaiQuaternionToXMVECTOR(ai_key.mValue);
+						}
+					}
+					
+					// Get scaling keys
+					if (ai_channel->mNumScalingKeys)
+					{
+						for (unsigned int key_id = 0; key_id < ai_channel->mNumScalingKeys; ++key_id)
+						{
+							node_animation.vKeyScaling.push_back(SModelAnimationKeyScaling());
+							auto& key = node_animation.vKeyScaling[node_animation.vKeyScaling.size() - 1];
+							const auto& ai_key = ai_channel->mScalingKeys[key_id];
+
+							key.TimeInTicks = static_cast<float>(ai_key.mTime);
+							key.Key = ConvertaiVector3DToXMFLOAT3(ai_key.mValue);
+						}
+					}
+				}
+			}
+		}
+	}
 }

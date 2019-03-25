@@ -28,7 +28,7 @@ namespace JWEngine
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
 
-		void AddOpaqueModel(STRING ModelFileName) noexcept;
+		void AddOpaqueModel(STRING ModelFileName, bool IsAnimated = false) noexcept;
 		auto GetOpaqueModel(size_t OpaqueModelIndex) const noexcept->JWModel&;
 
 		void AddTransparentModel(STRING ModelFileName) noexcept;

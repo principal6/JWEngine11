@@ -50,22 +50,25 @@ namespace JWEngine
 		void SetBlendState(EBlendState State) noexcept;
 		void SetPSSamplerState(ESamplerState State) noexcept;
 
-		void SetDefaultVS() noexcept;
-		void SetDefaultPS() noexcept;
+		void SetVSBase() noexcept;
+		void SetVSAnim() noexcept;
+		void SetPSBase() noexcept;
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
-		void SetDefaultVSCB(SDefaultVSCBDefault Data) noexcept;
+		void SetVSCBStatic(SVSCBStatic& Data) noexcept;
+		// Called in each animated JWModel's Animate() function
+		void SetVSCBSkinned(SVSCBSkinned& Data) noexcept;
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
-		void SetDefaultPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcept;
+		void SetPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcept;
 		// Called when Ambient Light is set by JWGame::AddLight()
-		void SetDefaultPSCBDefaultAmbientLight(XMFLOAT4 AmbientColor) noexcept;
+		void SetPSCBDefaultAmbientLight(XMFLOAT4 AmbientColor) noexcept;
 		// Called when Directional Light is set by JWGame::AddLight()
-		void SetDefaultPSCBDefaultDirectionalLight(XMFLOAT4 DirectionalColor, XMFLOAT3 DirectionalDirection) noexcept;
+		void SetPSCBDefaultDirectionalLight(XMFLOAT4 DirectionalColor, XMFLOAT3 DirectionalDirection) noexcept;
 		// Called once per game loop, which is when the camera's position would probably be changed.
-		void SetDefaultPSCBDefaultCameraPosition(XMFLOAT4 CameraPosition) noexcept;
+		void SetPSCBDefaultCameraPosition(XMFLOAT4 CameraPosition) noexcept;
 
 		void SetColorVS() noexcept;
 		void SetColorPS() noexcept;
-		void SetColorVSConstantBufferData(SColorVSCBData Data) noexcept;
+		void SetColorVSConstantBufferData(SColorVSCBData& Data) noexcept;
 
 		void BeginDrawing(const SClearColor& ClearColor) noexcept;
 		void EndDrawing() noexcept;
@@ -80,13 +83,15 @@ namespace JWEngine
 
 		// Shader & input layout creation
 		// Called in Create()
-		void CreateDefaultVS() noexcept;
-		void CreateDefaultPS() noexcept;
-		void CreateDefaultVSConstantBuffer() noexcept;
-		void CreateDefaultPSConstantBuffer() noexcept;
+		void CreateVSBase() noexcept;
+		void CreateVSAnim() noexcept;
+		void CreatePSBase() noexcept;
+		void CreateVSCBs() noexcept;
+		void CreatePSCB() noexcept;
+
 		void CreateColorVS() noexcept;
 		void CreateColorPS() noexcept;
-		void CreateColorVSConstantBuffer() noexcept;
+		void CreateColorVSCB() noexcept;
 
 		// Called in Create()
 		void CreateDepthStencilView() noexcept;
@@ -119,23 +124,28 @@ namespace JWEngine
 		ID3D11Device* m_Device11{};
 		ID3D11DeviceContext* m_DeviceContext11{};
 
-		ID3D10Blob* m_DefaultVSBuffer{};
-		ID3D11VertexShader* m_DefaultVS11{};
-		ID3D11InputLayout* m_DefaultVSInputLayout11{};
-		ID3D10Blob* m_DefaultPSBuffer{};
-		ID3D11PixelShader* m_DefaultPS11{};
-		ID3D11Buffer* m_DefaultVSConstantBuffer{};
-		SDefaultVSCBDefault m_DefaultVSConstantBufferData{};
-		ID3D11Buffer* m_DefaultPSConstantBuffer{};
-		SDefaultPSCBDefault m_DefaultPSCBDefaultData{};
+		ID3D10Blob*			m_VSBaseBuffer{};
+		ID3D11VertexShader*	m_VSBase{};
+		ID3D11InputLayout*	m_VSBaseInputLayout{};
+		ID3D10Blob*			m_VSAnimBuffer{};
+		ID3D11VertexShader*	m_VSAnim{};
+		ID3D11InputLayout*	m_VSAnimInputLayout{};
+		ID3D10Blob*			m_PSBaseBuffer{};
+		ID3D11PixelShader*	m_PSBase{};
+		ID3D11Buffer*		m_VSCBStatic{};
+		SVSCBStatic			m_VSCBStaticData{};
+		ID3D11Buffer*		m_VSCBSkinned{};
+		SVSCBSkinned		m_VSCBSkinnedData{};
+		ID3D11Buffer*		m_PSCBDefault{};
+		SPSCBDefault		m_PSCBDefaultData{};
 
 		ID3D10Blob* m_ColorVSBuffer{};
 		ID3D11VertexShader* m_ColorVS11{};
 		ID3D11InputLayout* m_ColorVSInputLayout11{};
 		ID3D10Blob* m_ColorPSBuffer{};
 		ID3D11PixelShader* m_ColorPS11{};
-		ID3D11Buffer* m_ColorVSConstantBuffer{};
-		SColorVSCBData m_ColorVSConstantBufferData;
+		ID3D11Buffer* m_ColorVSCB{};
+		SColorVSCBData m_ColorVSCBData;
 
 		ID3D11DepthStencilView* m_DepthStencilView11{};
 		ID3D11DepthStencilState* m_DepthStencilStateZEnabled11{};

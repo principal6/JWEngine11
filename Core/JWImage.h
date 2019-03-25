@@ -34,7 +34,7 @@ namespace JWEngine
 		virtual void CheckValidity() const noexcept;
 
 		// Buffer creation
-		virtual void AddVertex(const SVertex& Vertex) noexcept;
+		virtual void AddVertex(const SStaticVertex& Vertex) noexcept;
 		virtual void AddIndex(const SIndex3& Index) noexcept;
 		virtual void AddEnd() noexcept;
 
@@ -48,8 +48,8 @@ namespace JWEngine
 		virtual void UpdateVertexBuffer() noexcept;
 
 		// Called by UpdateAll()
-		virtual void UpdateDefaultVSConstantBuffer() noexcept;
-		virtual void UpdateDefaultPSConstantBuffer() noexcept;
+		virtual void UpdateVSCB() noexcept;
+		virtual void UpdatePSCB() noexcept;
 		virtual void UpdateTexture() noexcept;
 
 	protected:
@@ -62,7 +62,7 @@ namespace JWEngine
 		ID3D11Buffer* m_VertexBuffer{};
 		ID3D11Buffer* m_IndexBuffer{};
 
-		SVertexData m_VertexData{};
+		SStaticVertexData m_VertexData{};
 		SIndex3Data m_IndexData{};
 
 		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
@@ -71,6 +71,6 @@ namespace JWEngine
 		XMFLOAT2 m_Size{};
 		SSizeInt m_ImageOriginalSize{};
 
-		XMMATRIX m_WVP{};
+		SVSCBStatic m_VSCBStatic{};
 	};
 };

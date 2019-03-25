@@ -369,17 +369,11 @@
     <ClInclude Include="..\Core\JWImage.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shaders\DefaultHeader.hlsl">
-      <Filter>Shaders</Filter>
-    </ClInclude>
     <ClInclude Include="..\Core\JWTimer.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="..\Core\JWDesignerUI.h">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Shaders\ColorHeader.hlsl">
-      <Filter>Shaders</Filter>
     </ClInclude>
     <ClInclude Include="..\Core\JWInput.h">
       <Filter>Core</Filter>
@@ -390,21 +384,30 @@
     <ClInclude Include="..\Core\JWLine.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\Shaders\BaseHeader.hlsl">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shaders\ColorHeader.hlsl">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\Shaders\InstantTextPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\Shaders\DefaultPS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\Shaders\DefaultVS.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\Shaders\ColorPS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\Shaders\ColorVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\PSBase.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\PSInstantText.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\VSAnim.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\VSBase.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

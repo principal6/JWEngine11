@@ -25,11 +25,19 @@ int main()
 		.SetCameraType(ECameraType::FreeLook)
 		.SetPosition(XMFLOAT3(0.0f, 0.0f, -4.0f));
 
-	myGame.AddOpaqueModel("sphere.obj");
+	myGame.AddOpaqueModel("Ezreal_Idle.X");
 	myGame.GetOpaqueModel(0)
 		.SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		.SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
-	
+		.SetScale(XMFLOAT3(0.05f, 0.05f, 0.05f))
+		.SetTranslation(XMFLOAT3(5.0f, 0.0f, 0.0f))
+		.ShouldBeLit(false);
+
+	myGame.AddOpaqueModel("TinyR.X", true);
+	myGame.GetOpaqueModel(1)
+		.SetScale(XMFLOAT3(0.05f, 0.05f, 0.05f))
+		.SetAnimation(0)
+		.ShouldBeLit(false);
+
 	myGame.AddImage("Grayscale_Interval_Ten.png");
 	myGame.GetImage(0)
 		.SetPosition(XMFLOAT2(20, 30));
@@ -50,6 +58,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 	if (DeviceState.Keys[DIK_N])
 	{
 		g_ShouldDrawNormals = !g_ShouldDrawNormals;
+		Sleep(50);
 	}
 
 	if (DeviceState.Keys[DIK_W])
@@ -95,8 +104,15 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	}
 
 	myGame.GetOpaqueModel(0)
-		.SetRotation(XMFLOAT4(0, 1, 0, 0), g_RotationAngle)
 		.ShouldDrawNormals(g_ShouldDrawNormals);
+		//.SetRotation(XMFLOAT4(0, 1, 0, 0), g_RotationAngle)
+
+	myGame.GetOpaqueModel(1)
+		.ShouldDrawNormals(g_ShouldDrawNormals)
+		.Animate();
+		//.SetTPose();
+		
+		
 
 	myGame.DrawDesignerUI();
 	myGame.DrawModels();

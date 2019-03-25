@@ -65,12 +65,20 @@ void JWGame::SetBlendState(EBlendState State) noexcept
 	m_DX.SetBlendState(State);
 }
 
-void JWGame::AddOpaqueModel(STRING ModelFileName) noexcept
+void JWGame::AddOpaqueModel(STRING ModelFileName, bool IsAnimated) noexcept
 {
 	m_pOpaqueModels.push_back(MAKE_UNIQUE_AND_MOVE(JWModel)());
 
 	m_pOpaqueModels[m_pOpaqueModels.size() - 1]->Create(m_DX, m_Camera);
-	m_pOpaqueModels[m_pOpaqueModels.size() - 1]->SetModelData(m_AssimpLoader.LoadObj(m_BaseDirectory + KAssetDirectory, ModelFileName));
+
+	if (IsAnimated)
+	{
+		m_pOpaqueModels[m_pOpaqueModels.size() - 1]->SetSkinnedModelData(m_AssimpLoader.LoadRiggedModel(m_BaseDirectory + KAssetDirectory, ModelFileName));
+	}
+	else
+	{
+		m_pOpaqueModels[m_pOpaqueModels.size() - 1]->SetStaticModelData(m_AssimpLoader.LoadStaticModel(m_BaseDirectory + KAssetDirectory, ModelFileName));
+	}
 }
 
 auto JWGame::GetOpaqueModel(size_t OpaqueModelIndex) const noexcept->JWModel&
@@ -83,7 +91,7 @@ void JWGame::AddTransparentModel(STRING ModelFileName) noexcept
 	m_pTransparentModels.push_back(MAKE_UNIQUE_AND_MOVE(JWModel)());
 
 	m_pTransparentModels[m_pTransparentModels.size() - 1]->Create(m_DX, m_Camera);
-	m_pTransparentModels[m_pTransparentModels.size() - 1]->SetModelData(m_AssimpLoader.LoadObj(m_BaseDirectory + KAssetDirectory, ModelFileName));
+	m_pTransparentModels[m_pTransparentModels.size() - 1]->SetStaticModelData(m_AssimpLoader.LoadStaticModel(m_BaseDirectory + KAssetDirectory, ModelFileName));
 }
 
 auto JWGame::GetTransparentModel(size_t TransparentModelIndex) const noexcept->JWModel&
@@ -111,7 +119,7 @@ void JWGame::AddLight(SLightData LightData) noexcept
 		m_AmbientLightData = LightData;
 
 		// Set ambient light of the game
-		m_DX.SetDefaultPSCBDefaultAmbientLight(
+		m_DX.SetPSCBDefaultAmbientLight(
 			XMFLOAT4(m_AmbientLightData.LightColor.x, m_AmbientLightData.LightColor.y, m_AmbientLightData.LightColor.z, m_AmbientLightData.Intensity)
 		);
 	}
@@ -125,7 +133,7 @@ void JWGame::AddLight(SLightData LightData) noexcept
 		XMStoreFloat3(&m_DirectionalLightData.Direction, direction);
 
 		// Set directional light of the game
-		m_DX.SetDefaultPSCBDefaultDirectionalLight(
+		m_DX.SetPSCBDefaultDirectionalLight(
 			XMFLOAT4(m_DirectionalLightData.LightColor.x, m_DirectionalLightData.LightColor.y, m_DirectionalLightData.LightColor.z,
 				m_DirectionalLightData.Intensity), m_DirectionalLightData.Direction
 		);
@@ -209,7 +217,7 @@ void JWGame::Run() noexcept
 			m_fpOnInput(m_InputDeviceState);
 
 			// Update camera position into DefaultPSCBDefault
-			m_DX.SetDefaultPSCBDefaultCameraPosition(m_Camera.GetPositionFloat4());
+			m_DX.SetPSCBDefaultCameraPosition(m_Camera.GetPositionFloat4());
 
 			// Begin the drawing process
 			m_DX.BeginDrawing(m_ClearColor);

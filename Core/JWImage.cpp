@@ -22,10 +22,10 @@ void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
 	// Set JWCamera pointer.
 	m_pCamera = &Camera;
 
-	AddVertex(SVertex(0, 0, 0, 0, 0));
-	AddVertex(SVertex(1, 0, 0, 1, 0));
-	AddVertex(SVertex(0, -1, 0, 0, 1));
-	AddVertex(SVertex(1, -1, 0, 1, 1));
+	AddVertex(SStaticVertex(0, 0, 0, 0, 0));
+	AddVertex(SStaticVertex(1, 0, 0, 1, 0));
+	AddVertex(SStaticVertex(0, -1, 0, 0, 1));
+	AddVertex(SStaticVertex(1, -1, 0, 1, 1));
 
 	AddIndex(SIndex3(0, 1, 2));
 	AddIndex(SIndex3(1, 3, 2));
@@ -43,7 +43,7 @@ PROTECTED void JWImage::CheckValidity() const noexcept
 	}
 }
 
-PROTECTED void JWImage::AddVertex(const SVertex& Vertex) noexcept
+PROTECTED void JWImage::AddVertex(const SStaticVertex& Vertex) noexcept
 {
 	m_VertexData.Vertices.push_back(Vertex);
 }
@@ -159,27 +159,27 @@ void JWImage::UpdateAll() noexcept
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
 	// Set default VS & PS
-	m_pDX->SetDefaultVS();
-	m_pDX->SetDefaultPS();
+	m_pDX->SetVSBase();
+	m_pDX->SetPSBase();
 
-	UpdateDefaultVSConstantBuffer();
-	UpdateDefaultPSConstantBuffer();
+	UpdateVSCB();
+	UpdatePSCB();
 	UpdateTexture();
 }
 
-PROTECTED void JWImage::UpdateDefaultVSConstantBuffer() noexcept
+PROTECTED void JWImage::UpdateVSCB() noexcept
 {
 	// Set VS constant buffer
 	// set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
-	m_WVP = XMMatrixIdentity() * m_pCamera->GetOrthographicMatrix();
-	m_pDX->SetDefaultVSCB(SDefaultVSCBDefault(XMMatrixTranspose(m_WVP)));
+	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetOrthographicMatrix();
+	m_pDX->SetVSCBStatic(m_VSCBStatic);
 }
 
-PROTECTED void JWImage::UpdateDefaultPSConstantBuffer() noexcept
+PROTECTED void JWImage::UpdatePSCB() noexcept
 {
 	// Set PS constant buffer
-	m_pDX->SetDefaultPSCBDefaultFlags(true, false);
+	m_pDX->SetPSCBDefaultFlags(true, false);
 }
 
 PROTECTED void JWImage::UpdateTexture() noexcept

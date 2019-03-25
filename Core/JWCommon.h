@@ -115,11 +115,30 @@ namespace JWEngine
 	
 	using namespace DirectX;
 	
+	static constexpr int KMaxBoneCount{ 60 };
 	static constexpr int KMaxFileLength{ 255 };
 	static constexpr int KInputKeyCount{ 256 };
 	static constexpr const char* KAssetDirectory{ "Asset\\" };
 	static constexpr XMFLOAT4 KDefaultColorNormals{ XMFLOAT4(0.4f, 0.8f, 0.0f, 1.0f) };
 	static constexpr XMFLOAT3 KDefaultColorGrid{ XMFLOAT3(1.0f, 1.0f, 1.0f) };
+	static constexpr size_t KSizeTInvalid{ MAXSIZE_T };
+
+	inline void JWAbort(const char* Content)
+	{
+		MessageBoxA(nullptr, Content, "Error", MB_OK);
+
+		std::cout << "[ERROR] " << Content << std::endl << std::endl;
+
+		assert(false);
+	}
+
+	enum class EModelType
+	{
+		Invalid,
+		StaticModel,
+		SkinnedModel,
+		LineModel,
+	};
 
 	enum class EWorldMatrixCalculationOrder
 	{
@@ -169,47 +188,57 @@ namespace JWEngine
 		float B{};
 	};
 
-	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescription[] =
+	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionBase[] =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR"	, 1, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD"	, 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL"		, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Diffuse
+		{ "COLOR"		, 1, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Specular
 	};
 
-	static constexpr UINT KInputElementSize = ARRAYSIZE(KInputElementDescription);
+	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionAnim[] =
+	{
+		{ "POSITION"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD"	, 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL"		, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Diffuse
+		{ "COLOR"		, 1, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Specular
+
+		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT	, 0, 64, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // int BoneID[4]
+		{ "BLENDWEIGHT"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 80, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // float Weight[4]
+	};
 
 	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementColorDescription[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT	, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
-	
-	static constexpr UINT KInputElementColorSize = ARRAYSIZE(KInputElementColorDescription);
-	
-	struct SVertex
+
+	static constexpr int KMaxBoneCountPerVertex = 4;
+
+	struct SStaticVertex
 	{
-		SVertex() {};
-		SVertex(XMFLOAT3 _Position) :
+		SStaticVertex() {};
+		SStaticVertex(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+		SStaticVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+		SStaticVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
-		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+		SStaticVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+		SStaticVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
+		SStaticVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
-		SVertex(float x, float y, float z) :
+		SStaticVertex(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SVertex(float x, float y, float z, float u, float v) :
+		SStaticVertex(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		SVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+		SStaticVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
-		SVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+		SStaticVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
@@ -217,6 +246,53 @@ namespace JWEngine
 		XMFLOAT3 Normal{};
 		XMFLOAT4 ColorDiffuse{};
 		XMFLOAT4 Specular{};
+	};
+	
+	struct SSkinnedVertex
+	{
+		SSkinnedVertex() {};
+		SSkinnedVertex(XMFLOAT3 _Position) :
+			Position{ _Position } {};
+		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
+		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
+		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
+		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
+		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
+			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
+		SSkinnedVertex(float x, float y, float z) :
+			Position{ x, y, z } {};
+		SSkinnedVertex(float x, float y, float z, float u, float v) :
+			Position{ x, y, z }, TextureCoordinates{ u, v } {};
+		SSkinnedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
+		SSkinnedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
+
+		XMFLOAT3 Position{};
+		XMFLOAT2 TextureCoordinates{};
+		XMFLOAT3 Normal{};
+		XMFLOAT4 ColorDiffuse{};
+		XMFLOAT4 Specular{};
+		int BoneIndex[KMaxBoneCountPerVertex]{}; // BLENDINDICES
+		float BoneWeight[KMaxBoneCountPerVertex]{}; // BLENDWEIGHT
+
+		// From here below, data will NOT be sent to Intput Merger
+		int BoneCount{}; // 
+
+		void AddBone(int _BoneIndex, float _BoneWeight)
+		{
+			if (BoneCount < KMaxBoneCountPerVertex)
+			{
+				BoneIndex[BoneCount] = _BoneIndex;
+				BoneWeight[BoneCount] = _BoneWeight;
+
+				++BoneCount;
+			}
+		}
 	};
 
 	struct SVertexColor
@@ -235,15 +311,30 @@ namespace JWEngine
 		XMFLOAT4 ColorRGBA{ 1.0f, 1.0f, 1.0f, 1.0f };
 	};
 	
-	struct SVertexData
+	struct SStaticVertexData
 	{
-		VECTOR<SVertex> Vertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SVertex)) };
+		VECTOR<SStaticVertex> Vertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SStaticVertex)) };
 		UINT Offset{};
 
 		void Clear() noexcept { Vertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertex)); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SStaticVertex)); };
+		auto GetPtrData() const noexcept { return &Vertices[0]; };
+		auto GetPtrStride() const noexcept { return &Stride; };
+		auto GetPtrOffset() const noexcept { return &Offset; };
+		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
+	};
+
+	struct SSkinnedVertexData
+	{
+		VECTOR<SSkinnedVertex> Vertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SSkinnedVertex)) };
+		UINT Offset{};
+
+		void Clear() noexcept { Vertices.clear(); };
+		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SSkinnedVertex)); };
 		auto GetPtrData() const noexcept { return &Vertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
@@ -304,20 +395,6 @@ namespace JWEngine
 		auto GetPtrData() const noexcept { return &Indices[0]; };
 	};
 
-	struct SModelData
-	{
-		SVertexData VertexData{};
-		SIndex3Data IndexData{};
-		bool HasTexture{ false };
-		WSTRING TextureFileNameW{};
-	};
-
-	struct SModel2Data
-	{
-		SVertexData VertexData{};
-		SIndex2Data IndexData{};
-	};
-
 	struct SLineData
 	{
 		XMFLOAT2 StartPosition{};
@@ -336,16 +413,164 @@ namespace JWEngine
 		XMMATRIX WVP{};
 	};
 	
-	struct SDefaultVSCBDefault
+	struct SVSCBStatic
 	{
-		SDefaultVSCBDefault() {};
-		SDefaultVSCBDefault(XMMATRIX _WVP) : WVP{ _WVP } {};
-		SDefaultVSCBDefault(XMMATRIX _WVP, XMMATRIX _World) : WVP{ _WVP }, World{ _World } {};
+		SVSCBStatic() {};
+		SVSCBStatic(XMMATRIX _WVP) : WVP{ _WVP } {};
+		SVSCBStatic(XMMATRIX _WVP, XMMATRIX _World) : WVP{ _WVP }, World{ _World } {};
 
 		XMMATRIX WVP{};
 		XMMATRIX World{};
 	};
 	
+	struct SVSCBSkinned
+	{
+		SVSCBSkinned() {};
+
+		XMMATRIX WVP{};
+		XMMATRIX World{};
+
+		XMMATRIX TransformedBoneMatrices[KMaxBoneCount]{};
+	};
+	
+	struct SModelNode
+	{
+		// Current node's index in SModelNodeTree.vNodes
+		int ID{};
+
+		// Parent node's index in SModelNodeTree.vNodes
+		int ParentID{ -1 };
+
+		// Child nodes' index in SModelNodeTree.vNodes
+		VECTOR<int> vChildrenID;
+
+		STRING Name;
+		XMMATRIX Transformation{};
+		VECTOR<int> vMeshesID;
+
+		// BoneID is '-1' when this node is not referring to any bone.
+		// If (BoneID >= 0) : this node matches the bone in model's bone tree
+		int BoneID{ -1 };
+
+		SModelNode() = default;
+	};
+
+	struct SModelNodeTree
+	{
+		// Each node will be stored in this vector.
+		// Root node is always at index 0.
+		VECTOR<SModelNode> vNodes;
+	};
+	
+	struct SModelWeight
+	{
+		int VertexID{};
+		float Weight{};
+
+		SModelWeight() = default;
+		SModelWeight(int _VertexID, float _Weight) :VertexID{ _VertexID }, Weight{ _Weight } {};
+	};
+	
+	struct SModelBone
+	{
+		// Current bone's index in SModelBoneTree.vBones
+		int ID;
+		STRING Name;
+		VECTOR<SModelWeight> vWeights;
+
+		// Loaded at model import time, and will not be altered.
+		XMMATRIX Offset{};
+
+		// Updated evrey (rendering) frame according to node's animation.
+		XMMATRIX FinalTransformation{};
+
+		SModelBone() = default;
+		SModelBone(STRING _Name) :Name{ _Name } {};
+	};
+
+	struct SModelBoneTree
+	{
+		VECTOR<SModelBone> vBones;
+	};
+
+	struct SModelAnimationKeyPosition
+	{
+		float TimeInTicks{};
+		XMFLOAT3 Key{};
+	};
+
+	struct SModelAnimationKeyRotation
+	{
+		float TimeInTicks{};
+		XMVECTOR Key{};
+	};
+
+	struct SModelAnimationKeyScaling
+	{
+		float TimeInTicks{};
+		XMFLOAT3 Key{};
+	};
+
+	struct SModelNodeAnimation
+	{
+		size_t NodeID;
+		VECTOR<SModelAnimationKeyPosition> vKeyPosition;
+		VECTOR<SModelAnimationKeyRotation> vKeyRotation;
+		VECTOR<SModelAnimationKeyScaling> vKeyScaling;
+	};
+
+	struct SModelAnimation
+	{
+		STRING Name;
+		float TotalTicks{};
+		float TicksPerSecond{};
+		VECTOR<SModelNodeAnimation> vNodeAnimation;
+
+		SModelAnimation() = default;
+	};
+
+	struct SModelAnimationSet
+	{
+		VECTOR<SModelAnimation> vAnimations;
+	};
+
+	struct SStaticModelData
+	{
+		SStaticVertexData VertexData{};
+		SIndex3Data IndexData{};
+		bool HasTexture{ false };
+		WSTRING TextureFileNameW{};
+	};
+	
+	struct SSkinnedModelData
+	{
+		SSkinnedVertexData VertexData{};
+		SIndex3Data IndexData{};
+		bool HasTexture{ false };
+		STRING BaseDirectory{};
+		WSTRING TextureFileNameW{};
+
+		bool IsRigged{ false };
+
+		// If no animation is set, CurrentAnimationID is KSizeTInvalid(-1)
+		size_t CurrentAnimationID{ KSizeTInvalid };
+
+		// If SetAnimation() is called, CurrentAnimationTick is reset to 0.
+		int CurrentAnimationTick{};
+
+		bool ShouldRepeatCurrentAnimation{ true };
+
+		SModelNodeTree NodeTree{};
+		SModelBoneTree BoneTree{};
+		SModelAnimationSet AnimationSet{};
+	};
+
+	struct SModel2Data
+	{
+		SStaticVertexData VertexData{};
+		SIndex2Data IndexData{};
+	};
+
 	struct SLightData
 	{
 		ELightType LightType{ ELightType::Invalid };
@@ -375,21 +600,21 @@ namespace JWEngine
 			: LightType{ ELightType::Directional }, LightColor{ _Color }, Position{ _Position },
 			Intensity{ _Intensity }, Range{ _Range }, Attenuation{ _Attenuation } {};
 	};
-	
-	struct SDefaultPSCBDefault
+
+	struct SPSCBDefault
 	{
-		SDefaultPSCBDefault() = default;
-		SDefaultPSCBDefault(BOOL _HasTexture)
+		SPSCBDefault() = default;
+		SPSCBDefault(BOOL _HasTexture)
 			: HasTexture{ _HasTexture } {};
-		SDefaultPSCBDefault(BOOL _HasTexture, BOOL _UseLighting)
+		SPSCBDefault(BOOL _HasTexture, BOOL _UseLighting)
 			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting } {};
-		SDefaultPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight)
+		SPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight)
 			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientColor{ _AmbientLight } {};
-		SDefaultPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight,
+		SPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight,
 			XMFLOAT4 _DirectionalColor, XMFLOAT4 _DirectionalDirection)
 			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientColor{ _AmbientLight },
 			DirectionalColor{ _DirectionalColor }, DirectionalDirection{ _DirectionalDirection } {};
-		SDefaultPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight,
+		SPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight,
 			XMFLOAT4 _DirectionalColor, XMFLOAT4 _DirectionalDirection, XMFLOAT4 _CameraPosition)
 			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientColor{ _AmbientLight },
 			DirectionalColor{ _DirectionalColor }, DirectionalDirection{ _DirectionalDirection }, CameraPosition{ _CameraPosition } {};
@@ -402,13 +627,4 @@ namespace JWEngine
 		XMFLOAT4 DirectionalDirection{};
 		XMFLOAT4 CameraPosition{};
 	};
-	
-	inline void JWAbort(const char* Content)
-	{
-		MessageBoxA(nullptr, Content, "Error", MB_OK);
-
-		std::cout << "[ERROR] " << Content << std::endl << std::endl;
-
-		assert(false);
-	}
 };

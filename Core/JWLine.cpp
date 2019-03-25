@@ -99,17 +99,17 @@ PRIVATE void JWLine::Update() noexcept
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
 	// Set default VS & PS
-	m_pDX->SetDefaultVS();
-	m_pDX->SetDefaultPS();
+	m_pDX->SetVSBase();
+	m_pDX->SetPSBase();
 
 	// Set VS constant buffer
 	// set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
-	m_WVP = XMMatrixIdentity() * m_pCamera->GetOrthographicMatrix();
-	m_pDX->SetDefaultVSCB(SDefaultVSCBDefault(XMMatrixTranspose(m_WVP)));
+	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetOrthographicMatrix();
+	m_pDX->SetVSCBStatic(m_VSCBStatic);
 
 	// Set PS constant buffer
-	m_pDX->SetDefaultPSCBDefaultFlags(false, false);
+	m_pDX->SetPSCBDefaultFlags(false, false);
 }
 
 void JWLine::Draw() noexcept

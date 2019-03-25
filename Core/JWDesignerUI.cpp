@@ -131,7 +131,7 @@ PRIVATE void JWDesignerUI::MakeMiniAxis() noexcept
 PRIVATE void JWDesignerUI::LoadLightModel() noexcept
 {
 	JWAssimpLoader assimp_loader;
-	m_LightModel.SetModelData(assimp_loader.LoadObj(m_BaseDirectory + KAssetDirectory, KLightModelFileName));
+	m_LightModel.SetStaticModelData(assimp_loader.LoadStaticModel(m_BaseDirectory + KAssetDirectory, KLightModelFileName));
 	m_LightModel.SetScale(XMFLOAT3(0.1f, 0.1f, 0.1f));
 	m_LightModel.ShouldBeLit(false);
 }

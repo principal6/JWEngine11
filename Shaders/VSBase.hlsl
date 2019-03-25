@@ -1,21 +1,22 @@
-#include "DefaultHeader.hlsl"
+#include "BaseHeader.hlsl"
 
-cbuffer cbPerObject
+cbuffer cbWorld
 {
 	float4x4 WVP;
 	float4x4 World;
 };
 
-VS_OUTPUT main(VS_INPUT input)
+VS_OUTPUT main(VS_INPUT_STATIC input)
 {
 	VS_OUTPUT output;
 
 	output.Position = mul(input.Position, WVP);
-	output.TexCoord = input.TexCoord;
+	output.WorldPosition = mul(input.Position, World).xyz;
 	output.Normal = normalize(mul(input.Normal, (float3x3)World));
+	
+	output.TexCoord = input.TexCoord;
 	output.Diffuse = input.Diffuse;
 	output.Specular = input.Specular;
-	output.WorldPosition = mul(input.Position, World).xyz;
-
+	
 	return output;
 }

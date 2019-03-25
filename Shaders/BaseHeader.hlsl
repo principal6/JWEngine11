@@ -1,10 +1,21 @@
-struct VS_INPUT
+struct VS_INPUT_STATIC
 {
 	float4 Position : POSITION;
 	float2 TexCoord : TEXCOORD;
 	float3 Normal	: NORMAL;
 	float4 Diffuse	: COLOR0;
 	float4 Specular	: COLOR1;
+};
+
+struct VS_INPUT_SKINNED
+{
+	float4 Position : POSITION;
+	float2 TexCoord : TEXCOORD;
+	float3 Normal	: NORMAL;
+	float4 Diffuse	: COLOR0;
+	float4 Specular	: COLOR1;
+	uint4  BoneID	: BLENDINDICES;
+	float4 Weight	: BLENDWEIGHT;
 };
 
 struct VS_OUTPUT

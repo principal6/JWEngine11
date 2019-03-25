@@ -1,6 +1,7 @@
 #pragma once
 
 #include "JWCommon.h"
+#include "JWAssimpLoader.h"
 
 namespace JWEngine
 {
@@ -18,7 +19,8 @@ namespace JWEngine
 		void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
 		// Called in JWGame class
-		void SetModelData(SModelData ModelData) noexcept;
+		void SetStaticModelData(SStaticModelData ModelData) noexcept;
+		void SetSkinnedModelData(SSkinnedModelData ModelData) noexcept;
 
 		void SetModel2Data(SModel2Data Model2Data) noexcept;
 		
@@ -27,6 +29,11 @@ namespace JWEngine
 		auto SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&;
 		auto SetRotation(XMFLOAT4 RotationAxis, float Angle) noexcept->JWModel&;
 		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;
+
+		// Animation
+		auto SetAnimation(size_t AnimationID, bool ShouldRepeat = true) noexcept->JWModel&;
+		auto Animate() noexcept->JWModel&;
+		auto SetTPose() noexcept->JWModel&;
 		
 		auto ShouldDrawNormals(bool Value) noexcept->JWModel&;
 		auto ShouldBeLit(bool Value) noexcept->JWModel&;
@@ -42,11 +49,9 @@ namespace JWEngine
 
 		void CreateTexture(WSTRING TextureFileName) noexcept;
 
-		auto AddVertex(const SVertex& Vertex) noexcept->JWModel&;
-		auto AddIndex(const SIndex3& Index) noexcept->JWModel&;
-		void AddEnd() noexcept;
+		void CreateModelVertexIndexBuffers() noexcept;
 
-		auto NormalAddVertex(const SVertex& Vertex) noexcept->JWModel&;
+		auto NormalAddVertex(const SStaticVertex& Vertex) noexcept->JWModel&;
 		auto NormalAddIndex(const SIndex2& Index) noexcept->JWModel&;
 		void NormalAddEnd() noexcept;
 
@@ -58,6 +63,15 @@ namespace JWEngine
 
 		void UpdateWorldMatrix() noexcept;
 
+		// Called by Animate()
+		void UpdateBonesTransformation() noexcept;
+
+		// Called by UpdateBonesTransformation() and by this function itself (recursively)
+		void UpdateNodeAnimationIntoBones(int AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept;
+
+		// Called by SetTPose()
+		void UpdateNodeTPoseIntoBones(int AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept;
+
 	private:
 		bool m_IsValid{ false };
 		bool m_IsModelLoaded{ false };
@@ -66,20 +80,23 @@ namespace JWEngine
 		bool m_ShouldDrawNormals{ false };
 		bool m_ShouldBeLit{ true };
 
+		EModelType m_ModelType{ EModelType::Invalid };
+
 		JWDX* m_pDX{};
 		JWCamera* m_pCamera{};
 
 		ID3D11Buffer* m_VertexBuffer{};
 		ID3D11Buffer* m_IndexBuffer{};
 
-		SVertexData m_VertexData{};
-		SIndex3Data m_IndexData{};
+		SStaticModelData m_StaticModelData{};
+		SSkinnedModelData m_SkinnedModelData{};
 
 		ID3D11Buffer* m_NormalVertexBuffer{};
 		ID3D11Buffer* m_NormalIndexBuffer{};
 
-		SVertexData m_NormalVertexData{};
-		SIndex2Data m_NormalIndexData{};
+		SModel2Data m_NormalData{};
+		//SVertexData m_NormalVertexData{};
+		//SIndex2Data m_NormalIndexData{};
 
 		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
 
@@ -92,6 +109,7 @@ namespace JWEngine
 
 		EWorldMatrixCalculationOrder m_CalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 
-		SDefaultVSCBDefault m_DefaultVSCBData{};
+		SVSCBStatic m_VSCBStatic{};
+		SVSCBSkinned m_VSCBSkinned{};
 	};
 };

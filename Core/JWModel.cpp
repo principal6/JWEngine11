@@ -33,15 +33,18 @@ void JWModel::Create(JWDX& DX, JWCamera& Camera) noexcept
 	m_IsValid = true;
 }
 
-void JWModel::SetModelData(SModelData ModelData) noexcept
+void JWModel::SetStaticModelData(SStaticModelData ModelData) noexcept
 {
 	JW_AVOID_DUPLICATE_CREATION(m_IsModelLoaded);
 
 	CheckValidity();
 
-	m_VertexData = ModelData.VertexData;
-	m_IndexData = ModelData.IndexData;
-	AddEnd();
+	m_ModelType = EModelType::StaticModel;
+
+	// Save the model data
+	m_StaticModelData = ModelData;
+
+	CreateModelVertexIndexBuffers();
 
 	// Create texture if there is
 	if (ModelData.HasTexture)
@@ -59,8 +62,47 @@ void JWModel::SetModelData(SModelData ModelData) noexcept
 		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
 		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
 
-		NormalAddVertex(SVertex(vertex.Position, KDefaultColorNormals));
-		NormalAddVertex(SVertex(second_vertex_position, KDefaultColorNormals));
+		NormalAddVertex(SStaticVertex(vertex.Position, KDefaultColorNormals));
+		NormalAddVertex(SStaticVertex(second_vertex_position, KDefaultColorNormals));
+		NormalAddIndex(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+		++iterator_vertex;
+	}
+	NormalAddEnd();
+
+	m_IsModelLoaded = true;
+}
+
+void JWModel::SetSkinnedModelData(SSkinnedModelData ModelData) noexcept
+{
+	JW_AVOID_DUPLICATE_CREATION(m_IsModelLoaded);
+
+	CheckValidity();
+
+	m_ModelType = EModelType::SkinnedModel;
+
+	// Save the model data
+	m_SkinnedModelData = ModelData;
+
+	CreateModelVertexIndexBuffers();
+
+	// Create texture if there is
+	if (ModelData.HasTexture)
+	{
+		m_HasTexture = true;
+		CreateTexture(ModelData.TextureFileNameW);
+	}
+
+	// For normal line drawing
+	size_t iterator_vertex{};
+	XMFLOAT3 second_vertex_position{};
+	for (const auto& vertex : ModelData.VertexData.Vertices)
+	{
+		second_vertex_position.x = vertex.Position.x + vertex.Normal.x;
+		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
+		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
+
+		NormalAddVertex(SStaticVertex(vertex.Position, KDefaultColorNormals));
+		NormalAddVertex(SStaticVertex(second_vertex_position, KDefaultColorNormals));
 		NormalAddIndex(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
 		++iterator_vertex;
 	}
@@ -75,8 +117,9 @@ void JWModel::SetModel2Data(SModel2Data Model2Data) noexcept
 
 	CheckValidity();
 
-	m_NormalVertexData = Model2Data.VertexData;
-	m_NormalIndexData = Model2Data.IndexData;
+	m_ModelType = EModelType::LineModel;
+
+	m_NormalData = Model2Data;
 	NormalAddEnd();
 
 	m_IsMode2lLoaded = true;
@@ -84,7 +127,14 @@ void JWModel::SetModel2Data(SModel2Data Model2Data) noexcept
 
 PRIVATE void JWModel::CreateTexture(WSTRING TextureFileName) noexcept
 {
-	CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &m_TextureShaderResourceView, 0);
+	if (TextureFileName.find(L".dds") != std::string::npos)
+	{
+		CreateDDSTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &m_TextureShaderResourceView, 0);
+	}
+	else
+	{
+		CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &m_TextureShaderResourceView, 0);
+	}
 }
 
 PRIVATE void JWModel::CheckValidity() const noexcept
@@ -95,39 +145,41 @@ PRIVATE void JWModel::CheckValidity() const noexcept
 	}
 }
 
-PRIVATE auto JWModel::AddVertex(const SVertex& Vertex) noexcept->JWModel&
+PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 {
-	m_VertexData.Vertices.push_back(Vertex);
+	switch (m_ModelType)
+	{
+	case JWEngine::EModelType::StaticModel:
+		// Create vertex buffer
+		m_pDX->CreateStaticVertexBuffer(m_StaticModelData.VertexData.GetByteSize(), m_StaticModelData.VertexData.GetPtrData(), &m_VertexBuffer);
 
-	return *this;
+		// Create index buffer
+		m_pDX->CreateIndexBuffer(m_StaticModelData.IndexData.GetByteSize(), m_StaticModelData.IndexData.GetPtrData(), &m_IndexBuffer);
+
+		break;
+	case JWEngine::EModelType::SkinnedModel:
+		// Create vertex buffer
+		m_pDX->CreateStaticVertexBuffer(m_SkinnedModelData.VertexData.GetByteSize(), m_SkinnedModelData.VertexData.GetPtrData(), &m_VertexBuffer);
+
+		// Create index buffer
+		m_pDX->CreateIndexBuffer(m_SkinnedModelData.IndexData.GetByteSize(), m_SkinnedModelData.IndexData.GetPtrData(), &m_IndexBuffer);
+
+		break;
+	default:
+		break;
+	}
 }
 
-PRIVATE auto JWModel::AddIndex(const SIndex3& Index) noexcept->JWModel&
+PRIVATE auto JWModel::NormalAddVertex(const SStaticVertex& Vertex) noexcept->JWModel&
 {
-	m_IndexData.Indices.push_back(Index);
-
-	return *this;
-}
-
-PRIVATE void JWModel::AddEnd() noexcept
-{
-	// Create vertex buffer
-	m_pDX->CreateStaticVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);
-
-	// Create index buffer
-	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
-}
-
-PRIVATE auto JWModel::NormalAddVertex(const SVertex& Vertex) noexcept->JWModel&
-{
-	m_NormalVertexData.Vertices.push_back(Vertex);
+	m_NormalData.VertexData.Vertices.push_back(Vertex);
 
 	return *this;
 }
 
 PRIVATE auto JWModel::NormalAddIndex(const SIndex2& Index) noexcept->JWModel&
 {
-	m_NormalIndexData.Indices.push_back(Index);
+	m_NormalData.IndexData.Indices.push_back(Index);
 
 	return *this;
 }
@@ -135,10 +187,10 @@ PRIVATE auto JWModel::NormalAddIndex(const SIndex2& Index) noexcept->JWModel&
 PRIVATE void JWModel::NormalAddEnd() noexcept
 {
 	// Create vertex buffer
-	m_pDX->CreateStaticVertexBuffer(m_NormalVertexData.GetByteSize(), m_NormalVertexData.GetPtrData(), &m_NormalVertexBuffer);
+	m_pDX->CreateStaticVertexBuffer(m_NormalData.VertexData.GetByteSize(), m_NormalData.VertexData.GetPtrData(), &m_NormalVertexBuffer);
 
 	// Create index buffer
-	m_pDX->CreateIndexBuffer(m_NormalIndexData.GetByteSize(), m_NormalIndexData.GetPtrData(), &m_NormalIndexBuffer);
+	m_pDX->CreateIndexBuffer(m_NormalData.IndexData.GetByteSize(), m_NormalData.IndexData.GetPtrData(), &m_NormalIndexBuffer);
 }
 
 auto JWModel::SetWorldMatrixToIdentity() noexcept->JWModel&
@@ -215,6 +267,173 @@ PRIVATE void JWModel::UpdateWorldMatrix() noexcept
 	m_WorldPosition = XMVector3TransformCoord(XMVectorZero(), m_MatrixWorld);
 }
 
+auto JWModel::SetAnimation(size_t AnimationID, bool ShouldRepeat) noexcept->JWModel&
+{
+	if (m_ModelType == EModelType::SkinnedModel)
+	{
+		if (m_SkinnedModelData.AnimationSet.vAnimations.size())
+		{
+			AnimationID = min(AnimationID, m_SkinnedModelData.AnimationSet.vAnimations.size() - 1);
+
+			if (m_SkinnedModelData.CurrentAnimationID != AnimationID)
+			{
+				m_SkinnedModelData.CurrentAnimationID = AnimationID;
+				m_SkinnedModelData.CurrentAnimationTick = 0;
+				m_SkinnedModelData.ShouldRepeatCurrentAnimation = ShouldRepeat;
+			}
+		}
+		else
+		{
+			// Model has no animation set
+			JWAbort("This model doesn't have any animation set.");
+		}
+	}
+
+	return *this;
+}
+
+auto JWModel::Animate() noexcept->JWModel&
+{
+	if (m_ModelType == EModelType::SkinnedModel)
+	{
+		if (m_SkinnedModelData.CurrentAnimationID != KSizeTInvalid)
+		{
+			auto& current_anim{ m_SkinnedModelData.AnimationSet.vAnimations[m_SkinnedModelData.CurrentAnimationID] };
+
+			// Reset tick if the animation is over.
+			if (m_SkinnedModelData.CurrentAnimationTick >= current_anim.TotalTicks)
+			{
+				m_SkinnedModelData.CurrentAnimationTick = 0;
+
+				if (!m_SkinnedModelData.ShouldRepeatCurrentAnimation)
+				{
+					// Non-repeating animation
+					m_SkinnedModelData.CurrentAnimationID = KSizeTInvalid;
+				}
+			}
+
+			// Update bones' transformations for the animation.
+			UpdateBonesTransformation();
+
+			// Advance animation tick
+			m_SkinnedModelData.CurrentAnimationTick++;
+		}
+		else
+		{
+			// No animation is set.
+		}
+	}
+
+	return *this;
+}
+
+auto JWModel::SetTPose() noexcept->JWModel&
+{
+	if (m_ModelType == EModelType::SkinnedModel)
+	{
+		UpdateNodeTPoseIntoBones(m_SkinnedModelData.CurrentAnimationTick, m_SkinnedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+
+		// Update bone's final transformation for shader's constant buffer
+		for (size_t iterator_bone_mat{}; iterator_bone_mat < m_SkinnedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
+		{
+			m_VSCBSkinned.TransformedBoneMatrices[iterator_bone_mat] =
+				XMMatrixTranspose(m_SkinnedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
+		}
+	}
+
+	return *this;
+}
+
+PRIVATE void JWModel::UpdateBonesTransformation() noexcept
+{
+	UpdateNodeAnimationIntoBones(m_SkinnedModelData.CurrentAnimationTick, m_SkinnedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+
+	// Update bone's final transformation for shader's constant buffer
+	for (size_t iterator_bone_mat{}; iterator_bone_mat < m_SkinnedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
+	{
+		m_VSCBSkinned.TransformedBoneMatrices[iterator_bone_mat] =
+			XMMatrixTranspose(m_SkinnedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
+	}
+}
+
+PRIVATE void JWModel::UpdateNodeAnimationIntoBones(int AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept
+{
+	XMMATRIX global_transformation = node.Transformation * Accumulated;
+
+	if (node.BoneID >= 0)
+	{
+		auto& bone = m_SkinnedModelData.BoneTree.vBones[node.BoneID];
+
+		for (const auto& node_animation : m_SkinnedModelData.AnimationSet.vAnimations[m_SkinnedModelData.CurrentAnimationID].vNodeAnimation)
+		{
+			if (node_animation.NodeID == node.ID)
+			{
+				XMMATRIX scaling{};
+				XMMATRIX rotation{}; 
+				XMMATRIX translation{};
+				
+				for (const auto& key : node_animation.vKeyScaling)
+				{
+					if (key.TimeInTicks <= AnimationTime)
+					{
+						scaling = XMMatrixScaling(key.Key.x, key.Key.y, key.Key.z);
+					}
+				}
+
+				for (const auto& key : node_animation.vKeyRotation)
+				{
+					if (key.TimeInTicks <= AnimationTime)
+					{
+						rotation = XMMatrixRotationQuaternion(key.Key);
+					}
+				}
+
+				for (const auto& key : node_animation.vKeyPosition)
+				{
+					if (key.TimeInTicks <= AnimationTime)
+					{
+						translation = XMMatrixTranslation(key.Key.x, key.Key.y, key.Key.z);
+					}
+				}
+
+				global_transformation = scaling * rotation * translation * Accumulated;
+
+				break;
+			}
+		}
+
+		bone.FinalTransformation = bone.Offset * global_transformation;
+	}
+
+	if (node.vChildrenID.size())
+	{
+		for (auto child_id : node.vChildrenID)
+		{
+			UpdateNodeAnimationIntoBones(AnimationTime, m_SkinnedModelData.NodeTree.vNodes[child_id], global_transformation);
+		}
+	}
+}
+
+PRIVATE void JWModel::UpdateNodeTPoseIntoBones(int AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept
+{
+	XMMATRIX accumulation = node.Transformation * Accumulated;
+
+	if (node.BoneID >= 0)
+	{
+		auto& bone = m_SkinnedModelData.BoneTree.vBones[node.BoneID];
+
+		bone.FinalTransformation = bone.Offset * accumulation;
+	}
+
+	if (node.vChildrenID.size())
+	{
+		for (auto child_id : node.vChildrenID)
+		{
+			UpdateNodeTPoseIntoBones(AnimationTime, m_SkinnedModelData.NodeTree.vNodes[child_id], accumulation);
+		}
+	}
+}
+
 auto JWModel::ShouldDrawNormals(bool Value) noexcept->JWModel&
 {
 	m_ShouldDrawNormals = Value;
@@ -248,17 +467,39 @@ PRIVATE void JWModel::Update() noexcept
 	// Enable Z-buffer for 3D drawing
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZEnabled);
 
-	// Set default VS & PS
-	m_pDX->SetDefaultVS();
-	m_pDX->SetDefaultPS();
+	SVSCBSkinned test;
 
-	// Set VS constant buffer
-	m_DefaultVSCBData.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
-	m_DefaultVSCBData.World = XMMatrixTranspose(m_MatrixWorld);
-	m_pDX->SetDefaultVSCB(m_DefaultVSCBData);
+	// Set VS
+	switch (m_ModelType)
+	{
+	case JWEngine::EModelType::StaticModel:
+		m_pDX->SetVSBase();
+
+		// Set VS constant buffer
+		m_VSCBStatic.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBStatic.World = XMMatrixTranspose(m_MatrixWorld);
+		m_pDX->SetVSCBStatic(m_VSCBStatic);
+
+		break;
+	case JWEngine::EModelType::SkinnedModel:
+		m_pDX->SetVSAnim();
+
+		// Set VS constant buffer
+		m_VSCBSkinned.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBSkinned.World = XMMatrixTranspose(m_MatrixWorld);
+
+		m_pDX->SetVSCBSkinned(m_VSCBSkinned);
+
+		break;
+	default:
+		break;
+	}
+
+	// Set PS
+	m_pDX->SetPSBase();
 
 	// Set PS constant buffer
-	m_pDX->SetDefaultPSCBDefaultFlags(m_HasTexture, m_ShouldBeLit);
+	m_pDX->SetPSCBDefaultFlags(m_HasTexture, m_ShouldBeLit);
 
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
@@ -273,13 +514,41 @@ void JWModel::Draw() noexcept
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Set IA vertex buffer
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, m_VertexData.GetPtrStride(), m_VertexData.GetPtrOffset());
+	switch (m_ModelType)
+	{
+	case JWEngine::EModelType::StaticModel:
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+			0, 1, &m_VertexBuffer, m_StaticModelData.VertexData.GetPtrStride(), m_StaticModelData.VertexData.GetPtrOffset());
+
+		break;
+	case JWEngine::EModelType::SkinnedModel:
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+			0, 1, &m_VertexBuffer, m_SkinnedModelData.VertexData.GetPtrStride(), m_SkinnedModelData.VertexData.GetPtrOffset());
+
+		break;
+	default:
+		break;
+	}
+	
 
 	// Set IA index buffer
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Draw
-	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
+	switch (m_ModelType)
+	{
+	case JWEngine::EModelType::StaticModel:
+		m_pDX->GetDeviceContext()->DrawIndexed(m_StaticModelData.IndexData.GetCount(), 0, 0);
+
+		break;
+	case JWEngine::EModelType::SkinnedModel:
+		m_pDX->GetDeviceContext()->DrawIndexed(m_SkinnedModelData.IndexData.GetCount(), 0, 0);
+
+		break;
+	default:
+		break;
+	}
+	
 
 	// Draw normals
 	if ((m_ShouldDrawNormals) || (m_IsMode2lLoaded))
@@ -290,18 +559,25 @@ void JWModel::Draw() noexcept
 
 PRIVATE void JWModel::DrawNormals() noexcept
 {
+	// Set VS base
+	m_pDX->SetVSBase();
+
+	// Set VS constant buffer
+	m_VSCBStatic.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
+	m_VSCBStatic.World = XMMatrixTranspose(m_MatrixWorld);
+
 	// Set PS constant buffer
-	m_pDX->SetDefaultPSCBDefaultFlags(false, false);
+	m_pDX->SetPSCBDefaultFlags(false, false);
 
 	// Set IA primitive topology
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
 	// Set IA vertex buffer
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_NormalVertexBuffer, m_NormalVertexData.GetPtrStride(), m_NormalVertexData.GetPtrOffset());
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_NormalVertexBuffer, m_NormalData.VertexData.GetPtrStride(), m_NormalData.VertexData.GetPtrOffset());
 
 	// Set IA index buffer
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Draw
-	m_pDX->GetDeviceContext()->DrawIndexed(m_NormalIndexData.GetCount(), 0, 0);
+	m_pDX->GetDeviceContext()->DrawIndexed(m_NormalData.IndexData.GetCount(), 0, 0);
 }
