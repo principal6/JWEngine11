@@ -333,7 +333,7 @@ auto JWModel::SetTPose() noexcept->JWModel&
 	{
 		UpdateNodeTPoseIntoBones(m_SkinnedModelData.CurrentAnimationTick, m_SkinnedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
 
-		// Update bone's final transformation for shader's constant buffer
+		// Update bone's T-Pose transformation for shader's constant buffer
 		for (size_t iterator_bone_mat{}; iterator_bone_mat < m_SkinnedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
 		{
 			m_VSCBSkinned.TransformedBoneMatrices[iterator_bone_mat] =
@@ -362,8 +362,6 @@ PRIVATE void JWModel::UpdateNodeAnimationIntoBones(int AnimationTime, const SMod
 
 	if (node.BoneID >= 0)
 	{
-		//std::cout << "Node with bone: " << node.Name.c_str() << "  Bone ID: " << node.BoneID << std::endl;
-
 		auto& bone = m_SkinnedModelData.BoneTree.vBones[node.BoneID];
 
 		for (const auto& node_animation : m_SkinnedModelData.AnimationSet.vAnimations[m_SkinnedModelData.CurrentAnimationID].vNodeAnimation)
@@ -405,10 +403,6 @@ PRIVATE void JWModel::UpdateNodeAnimationIntoBones(int AnimationTime, const SMod
 		}
 
 		bone.FinalTransformation = bone.Offset * global_transformation;
-	}
-	else
-	{
-		//std::cout << "Node without bone: " << node.Name.c_str() << "  Bone ID: " << node.BoneID << std::endl;
 	}
 
 	if (node.vChildrenID.size())
