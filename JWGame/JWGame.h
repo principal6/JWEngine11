@@ -45,6 +45,7 @@ namespace JWEngine
 		auto GetFPS() noexcept->int;
 
 		void Run() noexcept;
+		void Terminate() noexcept;
 
 		void DrawDesignerUI() noexcept;
 		void DrawModels() noexcept;
@@ -62,6 +63,7 @@ namespace JWEngine
 		bool m_IsValid{ false };
 		bool m_IsWindowCreated{ false };
 		bool m_IsDXCreated{ false };
+		bool m_IsRunning{ false };
 		
 		STRING m_BaseDirectory;
 		SClearColor m_ClearColor{};

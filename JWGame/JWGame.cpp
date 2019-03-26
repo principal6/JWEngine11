@@ -181,9 +181,11 @@ void JWGame::Run() noexcept
 {
 	CheckValidity();
 
+	m_IsRunning = true;
+
 	MSG msg{};
 
-	while (true)
+	while (m_IsRunning)
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
@@ -255,6 +257,13 @@ void JWGame::Run() noexcept
 			}
 		}
 	}
+
+
+}
+
+void JWGame::Terminate() noexcept
+{
+	m_IsRunning = false;
 }
 
 void JWGame::DrawDesignerUI() noexcept

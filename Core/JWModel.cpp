@@ -467,8 +467,6 @@ PRIVATE void JWModel::Update() noexcept
 	// Enable Z-buffer for 3D drawing
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZEnabled);
 
-	SVSCBSkinned test;
-
 	// Set VS
 	switch (m_ModelType)
 	{
@@ -530,7 +528,6 @@ void JWModel::Draw() noexcept
 		break;
 	}
 	
-
 	// Set IA index buffer
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
@@ -549,7 +546,6 @@ void JWModel::Draw() noexcept
 		break;
 	}
 	
-
 	// Draw normals
 	if ((m_ShouldDrawNormals) || (m_IsMode2lLoaded))
 	{

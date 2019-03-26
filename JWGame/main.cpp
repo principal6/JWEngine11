@@ -13,7 +13,6 @@ JW_FUNCTION_ON_RENDER(OnRender);
 
 bool g_ShouldDrawNormals{ false };
 bool g_ShouldDrawWireframe{ false };
-float g_RotationAngle{};
 
 int main()
 {
@@ -56,6 +55,11 @@ int main()
 
 JW_FUNCTION_ON_INPUT(OnInput)
 {
+	if (DeviceState.Keys[DIK_ESCAPE])
+	{
+		myGame.Terminate();
+	}
+
 	if (DeviceState.Keys[DIK_1])
 	{
 		g_ShouldDrawWireframe = !g_ShouldDrawWireframe;
@@ -112,15 +116,8 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 JW_FUNCTION_ON_RENDER(OnRender)
 {
-	g_RotationAngle += 0.0005f;
-	if (g_RotationAngle >= XM_PI * 2)
-	{
-		g_RotationAngle = 0;
-	}
-
 	myGame.GetOpaqueModel(0)
 		.ShouldDrawNormals(g_ShouldDrawNormals);
-		//.SetRotation(XMFLOAT4(0, 1, 0, 0), g_RotationAngle)
 
 	myGame.GetOpaqueModel(1)
 		.ShouldDrawNormals(g_ShouldDrawNormals)
