@@ -12,6 +12,7 @@ JW_FUNCTION_ON_INPUT(OnInput);
 JW_FUNCTION_ON_RENDER(OnRender);
 
 bool g_ShouldDrawNormals{ false };
+bool g_ShouldDrawWireframe{ false };
 float g_RotationAngle{};
 
 int main()
@@ -25,14 +26,14 @@ int main()
 		.SetCameraType(ECameraType::FreeLook)
 		.SetPosition(XMFLOAT3(0.0f, 0.0f, -4.0f));
 
-	myGame.AddOpaqueModel("Ezreal_Idle.X");
+	myGame.AddOpaqueModel("sphere.obj");
 	myGame.GetOpaqueModel(0)
 		.SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		.SetScale(XMFLOAT3(0.05f, 0.05f, 0.05f))
-		.SetTranslation(XMFLOAT3(5.0f, 0.0f, 0.0f))
-		.ShouldBeLit(false);
+		.SetTranslation(XMFLOAT3(10.0f, 0.0f, 0.0f))
+		.ShouldBeLit(true);
 
-	myGame.AddOpaqueModel("TinyR.X", true);
+	myGame.AddOpaqueModel("Ezreal_Idle.X", true);
 	myGame.GetOpaqueModel(1)
 		.SetScale(XMFLOAT3(0.05f, 0.05f, 0.05f))
 		.SetAnimation(0)
@@ -55,7 +56,21 @@ int main()
 
 JW_FUNCTION_ON_INPUT(OnInput)
 {
-	if (DeviceState.Keys[DIK_N])
+	if (DeviceState.Keys[DIK_1])
+	{
+		g_ShouldDrawWireframe = !g_ShouldDrawWireframe;
+		if (g_ShouldDrawWireframe)
+		{
+			myGame.SetRasterizerState(ERasterizerState::WireFrame);
+		}
+		else
+		{
+			myGame.SetRasterizerState(ERasterizerState::SolidNoCull);
+		}
+
+		Sleep(50);
+	}
+	if (DeviceState.Keys[DIK_2])
 	{
 		g_ShouldDrawNormals = !g_ShouldDrawNormals;
 		Sleep(50);
@@ -109,10 +124,8 @@ JW_FUNCTION_ON_RENDER(OnRender)
 
 	myGame.GetOpaqueModel(1)
 		.ShouldDrawNormals(g_ShouldDrawNormals)
-		.Animate();
 		//.SetTPose();
-		
-		
+		.Animate();
 
 	myGame.DrawDesignerUI();
 	myGame.DrawModels();

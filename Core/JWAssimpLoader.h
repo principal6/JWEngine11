@@ -27,13 +27,6 @@ namespace JWEngine
 			input.d1, input.d2, input.d3, input.d4));
 	}
 
-	/*
-	inline auto ConvertaiQuaternionToXMFLOAT4(aiQuaternion input)->XMFLOAT4
-	{
-		return XMFLOAT4(input.x, input.y, input.z, input.w);
-	}
-	*/
-
 	inline auto ConvertaiQuaternionToXMVECTOR(aiQuaternion input)->XMVECTOR
 	{
 		return XMVectorSet(input.x, input.y, input.z, input.w);
@@ -47,11 +40,11 @@ namespace JWEngine
 		auto LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SSkinnedModelData;
 
 	private:
-		void ExtractNodeTree(const aiNode* Node, int ParentNodeID, SModelNodeTree& OutNodeTree) noexcept;
+		void ExtractNodeTree(const aiScene* Scene, const aiNode* Node, int ParentNodeID, SModelNodeTree& OutNodeTree) noexcept;
 
 		void BuildMeshesAndBonesFromNodes(const aiScene* Scene, SSkinnedModelData& OutModelData) noexcept;
 
-		void ExtractBone(const aiBone* Bone, int VertexOffset, SModelBoneTree& OutBoneTree) noexcept;
+		void ExtractBone(const aiBone* paiBone, int VertexOffset, SModelBoneTree& OutBoneTree) noexcept;
 
 		void MatchBonesAndVertices(const SModelBoneTree& BoneTree, SSkinnedVertexData& OutVertexData) noexcept;
 

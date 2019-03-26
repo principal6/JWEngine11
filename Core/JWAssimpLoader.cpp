@@ -8,7 +8,7 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 
 	Assimp::Importer assimp_importer{};
 	const aiScene* assimp_scene{ assimp_importer.ReadFile(Directory + ModelFileName,
-		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure |
+		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes |
 		aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices) };
 
 	if (assimp_scene && assimp_scene->HasMeshes())
@@ -52,7 +52,17 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 				for (size_t iterator_vertices{}; iterator_vertices < mesh_vertices_count; ++iterator_vertices)
 				{
 					position = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
-					texcoord = ConvertaiVector3DToXMFLOAT2(assimp_scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
+					
+					if (assimp_scene->mMeshes[mesh_index]->mTextureCoords[0] == nullptr)
+					{
+						// No texture coordinates in model file
+						texcoord = XMFLOAT2(0, 0);
+					}
+					else
+					{
+						texcoord = ConvertaiVector3DToXMFLOAT2(assimp_scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
+					}
+
 					normal = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
 
 					temporary_model_data.VertexData.Vertices.emplace_back(position, texcoord, normal, diffuse, specular);
@@ -82,7 +92,7 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 					}
 					else
 					{
-						JWAbort("Index count is not 3");
+						//JWAbort("Index count is not 3");
 					}
 
 					last_index = max(last_index, indices[0]);
@@ -114,8 +124,9 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 	Assimp::Importer importer{};
 
 	// aiProcess_FindDegenerates (this may cause indices count to be 2, not 3)
+
 	const aiScene* scene{ importer.ReadFile(result.BaseDirectory + ModelFileName,
-		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph |
+		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes |
 		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality |
 		aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices) };
 
@@ -129,7 +140,7 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 	}
 
 	// Extract node hierarchy from model file.
-	ExtractNodeTree(scene->mRootNode, -1, result.NodeTree);
+	ExtractNodeTree(scene, scene->mRootNode, -1, result.NodeTree);
 	
 	// Build meshes and bones from nodes in extracted node hierarchy.
 	BuildMeshesAndBonesFromNodes(scene, result);
@@ -146,7 +157,7 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 	return result;
 }
 
-PRIVATE void JWAssimpLoader::ExtractNodeTree(const aiNode* Node, int ParentNodeID, SModelNodeTree& OutNodeTree) noexcept
+PRIVATE void JWAssimpLoader::ExtractNodeTree(const aiScene* Scene, const aiNode* Node, int ParentNodeID, SModelNodeTree& OutNodeTree) noexcept
 {
 	OutNodeTree.vNodes.push_back(SModelNode());
 	int new_node_id = static_cast<int>(OutNodeTree.vNodes.size() - 1);
@@ -170,10 +181,14 @@ PRIVATE void JWAssimpLoader::ExtractNodeTree(const aiNode* Node, int ParentNodeI
 		for (unsigned int i = 0; i < Node->mNumMeshes; ++i)
 		{
 			new_node.vMeshesID.push_back(Node->mMeshes[i]);
+
+			new_node.AccumulatedVerticesCount = OutNodeTree.TotalVerticesCount;
+
+			OutNodeTree.TotalVerticesCount += Scene->mMeshes[Node->mMeshes[i]]->mNumVertices;
 		}
 	}
 
-	// @warning: Node's bone ID (new_node.BoneID) will be set later by ExtractBoneHierarchy()
+	// @warning: Node's bone ID (new_node.BoneID) will be set later by MatchBonesAndNodes()
 
 	// Extract child nodes
 	if (Node->mNumChildren)
@@ -182,7 +197,7 @@ PRIVATE void JWAssimpLoader::ExtractNodeTree(const aiNode* Node, int ParentNodeI
 
 		for (unsigned int i = 0; i < Node->mNumChildren; ++i)
 		{
-			ExtractNodeTree(Node->mChildren[i], this_node_id, OutNodeTree);
+			ExtractNodeTree(Scene, Node->mChildren[i], this_node_id, OutNodeTree);
 		}
 
 		for (const auto& iter_node : OutNodeTree.vNodes)
@@ -197,7 +212,6 @@ PRIVATE void JWAssimpLoader::ExtractNodeTree(const aiNode* Node, int ParentNodeI
 
 PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, SSkinnedModelData& OutModelData) noexcept
 {
-	int vertices_offset{};
 	int indices_offset{};
 
 	// Iterate each node in node tree
@@ -206,20 +220,20 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, 
 		// Get all meshes' id in this node
 		for (const auto mesh_id : node.vMeshesID)
 		{
-			auto mesh = Scene->mMeshes[mesh_id];
-			auto material = Scene->mMaterials[mesh->mMaterialIndex];
+			auto ai_mesh = Scene->mMeshes[mesh_id];
+			auto ai_material = Scene->mMaterials[ai_mesh->mMaterialIndex];
 
 			aiColor4D ai_diffuse{};
 			aiColor4D ai_specular{};
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &ai_specular);
+			aiGetMaterialColor(ai_material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
+			aiGetMaterialColor(ai_material, AI_MATKEY_COLOR_SPECULAR, &ai_specular);
 
 			// Load the texture only once per model (not per mesh).
 			// i.e. multi-texture not supported.
 			if (!OutModelData.HasTexture)
 			{
 				aiString path{};
-				aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &path);
+				aiGetMaterialTexture(ai_material, aiTextureType_DIFFUSE, 0, &path);
 				STRING path_string{ OutModelData.BaseDirectory + path.C_Str() };
 				if (path.length)
 				{
@@ -228,7 +242,7 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, 
 				}
 			}
 
-			if (mesh->HasPositions())
+			if (ai_mesh->HasPositions())
 			{
 				XMFLOAT3 position{};
 				XMFLOAT3 normal{};
@@ -237,14 +251,11 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, 
 				XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
 				XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
 
-				for (unsigned int vertex_id = 0; vertex_id < mesh->mNumVertices; ++vertex_id)
+				for (unsigned int vertex_id = 0; vertex_id < ai_mesh->mNumVertices; ++vertex_id)
 				{
-					position = ConvertaiVector3DToXMFLOAT3(mesh->mVertices[vertex_id]);
-
-
-
-					normal = ConvertaiVector3DToXMFLOAT3(mesh->mNormals[vertex_id]);
-					texcoord = ConvertaiVector3DToXMFLOAT2(mesh->mTextureCoords[0][vertex_id]);
+					position = ConvertaiVector3DToXMFLOAT3(ai_mesh->mVertices[vertex_id]);
+					normal = ConvertaiVector3DToXMFLOAT3(ai_mesh->mNormals[vertex_id]);
+					texcoord = ConvertaiVector3DToXMFLOAT2(ai_mesh->mTextureCoords[0][vertex_id]);
 
 					OutModelData.VertexData.Vertices.emplace_back(position, texcoord, normal, diffuse, specular);
 				}
@@ -254,13 +265,13 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, 
 				JWAbort("Loaded model doesn't have positions");
 			}
 
-			if (mesh->HasFaces())
+			if (ai_mesh->HasFaces())
 			{
 				unsigned int last_index{};
-				for (unsigned int iterator_faces{}; iterator_faces < mesh->mNumFaces; ++iterator_faces)
+				for (unsigned int iterator_faces{}; iterator_faces < ai_mesh->mNumFaces; ++iterator_faces)
 				{
-					auto& indices_count = mesh->mFaces[iterator_faces].mNumIndices;
-					auto& indices = mesh->mFaces[iterator_faces].mIndices;
+					auto& indices_count = ai_mesh->mFaces[iterator_faces].mNumIndices;
+					auto& indices = ai_mesh->mFaces[iterator_faces].mIndices;
 
 					if (indices_count == 3)
 					{
@@ -287,50 +298,69 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, 
 			}
 
 			// If this mesh refers to bones
-			if (mesh->mNumBones)
+			if (ai_mesh->mNumBones)
 			{
 				// Iterate each bone
-				for (unsigned int i = 0; i < mesh->mNumBones; ++i)
+				for (unsigned int i = 0; i < ai_mesh->mNumBones; ++i)
 				{
-					ExtractBone(mesh->mBones[i], vertices_offset, OutModelData.BoneTree);
+					ExtractBone(ai_mesh->mBones[i], node.AccumulatedVerticesCount, OutModelData.BoneTree);
 				}
 			}
-
-			vertices_offset += static_cast<int>(OutModelData.VertexData.Vertices.size());
 		}
 	}
 }
 
-PRIVATE void JWAssimpLoader::ExtractBone(const aiBone* Bone, int VertexOffset, SModelBoneTree& OutBoneTree) noexcept
+PRIVATE void JWAssimpLoader::ExtractBone(const aiBone* paiBone, int VertexOffset, SModelBoneTree& OutBoneTree) noexcept
 {
-	OutBoneTree.vBones.push_back(SModelBone());
-	int new_bone_id = static_cast<int>(OutBoneTree.vBones.size() - 1);
-	auto& new_bone = OutBoneTree.vBones[new_bone_id];
+	bool IsNewBone{ true };
+	int bone_id{};
+
+	for (const auto& bone : OutBoneTree.vBones)
+	{
+		if (bone.Name.compare(paiBone->mName.C_Str()) == 0)
+		{
+			// @important
+			// Avoid duplicate bone creation.
+			// This bone is already in bone tree.
+
+			IsNewBone = false;
+			bone_id = bone.ID;
+
+			break;
+		}
+	}
+
+	if (IsNewBone)
+	{
+		OutBoneTree.vBones.push_back(SModelBone());
+		bone_id = static_cast<int>(OutBoneTree.vBones.size() - 1);
+	}
+
+	auto& bone = OutBoneTree.vBones[bone_id];
 
 	// Set bone's id
-	new_bone.ID = new_bone_id;
+	bone.ID = bone_id;
 
 	// Set bone's name
-	new_bone.Name = Bone->mName.C_Str();
+	bone.Name = paiBone->mName.C_Str();
 
 	// Set bone's offset matrix
-	new_bone.Offset = ConvertaiMatrix4x4ToXMMATRIX(Bone->mOffsetMatrix);
+	bone.Offset = ConvertaiMatrix4x4ToXMMATRIX(paiBone->mOffsetMatrix);
 
 	// Set bone's weights array
-	if (Bone->mNumWeights)
+	if (paiBone->mNumWeights)
 	{
-		for (unsigned int i = 0; i < Bone->mNumWeights; ++i)
+		for (unsigned int i = 0; i < paiBone->mNumWeights; ++i)
 		{
-			new_bone.vWeights.push_back(SModelWeight());
-			int new_weight_id = static_cast<int>(new_bone.vWeights.size() - 1);
-			auto& new_weight = new_bone.vWeights[new_weight_id];
+			bone.vWeights.push_back(SModelWeight());
+			int new_weight_id = static_cast<int>(bone.vWeights.size() - 1);
+			auto& new_weight = bone.vWeights[new_weight_id];
 
-			// @important
-			// VertexID needs to be offset if it's ".x" file
-			//new_weight.VertexID = Bone->mWeights[i].mVertexId;
-			new_weight.VertexID = Bone->mWeights[i].mVertexId + VertexOffset;
+			// @important!!
+			// VertexID needs to be offset.
+			new_weight.VertexID = paiBone->mWeights[i].mVertexId + VertexOffset;
 
-			new_weight.Weight = Bone->mWeights[i].mWeight;
+			new_weight.Weight = paiBone->mWeights[i].mWeight;
 		}
 	}
 }
@@ -341,10 +371,7 @@ PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTre
 	{
 		for (const auto& weight : bone.vWeights)
 		{
-			if (weight.VertexID < OutVertexData.Vertices.size())
-			{
-				OutVertexData.Vertices[weight.VertexID].AddBone(bone.ID, weight.Weight);
-			}
+			OutVertexData.Vertices[weight.VertexID].AddBone(bone.ID, weight.Weight);
 		}
 	}
 }

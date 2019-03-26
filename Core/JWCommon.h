@@ -448,6 +448,13 @@ namespace JWEngine
 		XMMATRIX Transformation{};
 		VECTOR<int> vMeshesID;
 
+		// This data will be used to match bones to each vertex!
+		// This is required, because different from nodes,
+		// bones will be stored unordered in bone tree
+		// so, if nodes don't have vertex indicator,
+		// bones can't find vertex offset properly.
+		int AccumulatedVerticesCount{};
+
 		// BoneID is '-1' when this node is not referring to any bone.
 		// If (BoneID >= 0) : this node matches the bone in model's bone tree
 		int BoneID{ -1 };
@@ -460,6 +467,7 @@ namespace JWEngine
 		// Each node will be stored in this vector.
 		// Root node is always at index 0.
 		VECTOR<SModelNode> vNodes;
+		int TotalVerticesCount{};
 	};
 	
 	struct SModelWeight

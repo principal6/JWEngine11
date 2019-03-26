@@ -30,7 +30,6 @@ VS_OUTPUT main(VS_INPUT_SKINNED input)
 	// #02 Apply bone transform to normal
 	normal_result = mul(normal_result, bone_transform);
 
-
 	output.Position = mul(position_result, WVP);
 	output.WorldPosition = mul(position_result, World).xyz;
 	output.Normal = normalize(mul(normal_result, World).xyz);
