@@ -66,7 +66,8 @@ namespace JWEngine
 
 		JWDX* m_pDX{};
 
-		static constexpr float KNearZ = 1.0f;
+		static constexpr float KFOV = 0.25f;
+		static constexpr float KNearZ = 0.1f;
 		static constexpr float KFarZ = 1000.0f;
 		static constexpr float KFactor = 0.01f;
 

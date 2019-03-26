@@ -1,6 +1,6 @@
 #include "BaseHeader.hlsl"
 
-#define MAX_BONE_COUNT 60
+#define MAX_BONE_COUNT 50
 
 cbuffer cb
 {

@@ -26,7 +26,7 @@ int main()
 		.SetCameraType(ECameraType::FreeLook)
 		.SetPosition(XMFLOAT3(0.0f, 0.0f, -4.0f));
 
-	myGame.AddOpaqueModel("sphere.obj");
+	myGame.AddOpaqueModel("Decoration_18.obj");
 	myGame.GetOpaqueModel(0)
 		.SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		.SetScale(XMFLOAT3(0.05f, 0.05f, 0.05f))

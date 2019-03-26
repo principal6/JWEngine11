@@ -114,8 +114,8 @@ namespace JWEngine
 #define JW_FUNCTION_ON_RENDER(FunctionName) void FunctionName()
 	
 	using namespace DirectX;
-	
-	static constexpr int KMaxBoneCount{ 60 };
+
+	static constexpr int KMaxBoneCount{ 50 };
 	static constexpr int KMaxFileLength{ 255 };
 	static constexpr int KInputKeyCount{ 256 };
 	static constexpr const char* KAssetDirectory{ "Asset\\" };

@@ -8,7 +8,7 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 
 	Assimp::Importer assimp_importer{};
 	const aiScene* assimp_scene{ assimp_importer.ReadFile(Directory + ModelFileName,
-		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes |
+		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes | aiProcess_FixInfacingNormals |
 		aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices) };
 
 	if (assimp_scene && assimp_scene->HasMeshes())
@@ -127,7 +127,7 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 
 	const aiScene* scene{ importer.ReadFile(result.BaseDirectory + ModelFileName,
 		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes |
-		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality |
+		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality | aiProcess_FixInfacingNormals |
 		aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices) };
 
 	if (scene == nullptr)
