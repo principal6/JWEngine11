@@ -42,8 +42,8 @@ int main()
 	myGame.GetImage(0)
 		.SetPosition(XMFLOAT2(20, 30));
 
-	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.3f, XMFLOAT3(0, -5, 0)));
-	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5, 5, 0), 0.8f));
+	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f, XMFLOAT3(0, -5, 0)));
+	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5, 5, 0), 0.6f));
 
 	myGame.SetOnInputFunction(OnInput);
 	myGame.SetOnRenderFunction(OnRender);
