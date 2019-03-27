@@ -13,7 +13,7 @@
 #include <DirectXMath.h> // @IMPORTANT not <xnamath.h> prefix:XM
 #include <DirectXPackedVector.h>
 #include <d3dcompiler.h>
-#include "../DirectXTK/Inc/pch.h"
+#include <DirectXTK/pch.h>
 
 #include <assimp\Importer.hpp>
 #include <assimp\scene.h>

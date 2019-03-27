@@ -264,27 +264,27 @@
     <ClInclude Include="..\Core\JWModel.h" />
     <ClInclude Include="..\Core\JWTimer.h" />
     <ClInclude Include="..\Core\JWWin32Window.h" />
-    <ClInclude Include="..\DirectXTK\Inc\Audio.h" />
-    <ClInclude Include="..\DirectXTK\Inc\CommonStates.h" />
-    <ClInclude Include="..\DirectXTK\Inc\DDSTextureLoader.h" />
-    <ClInclude Include="..\DirectXTK\Inc\DirectXHelpers.h" />
-    <ClInclude Include="..\DirectXTK\Inc\Effects.h" />
-    <ClInclude Include="..\DirectXTK\Inc\GamePad.h" />
-    <ClInclude Include="..\DirectXTK\Inc\GeometricPrimitive.h" />
-    <ClInclude Include="..\DirectXTK\Inc\GraphicsMemory.h" />
-    <ClInclude Include="..\DirectXTK\Inc\Keyboard.h" />
-    <ClInclude Include="..\DirectXTK\Inc\Model.h" />
-    <ClInclude Include="..\DirectXTK\Inc\Mouse.h" />
-    <ClInclude Include="..\DirectXTK\Inc\pch.h" />
-    <ClInclude Include="..\DirectXTK\Inc\PostProcess.h" />
-    <ClInclude Include="..\DirectXTK\Inc\PrimitiveBatch.h" />
-    <ClInclude Include="..\DirectXTK\Inc\ScreenGrab.h" />
-    <ClInclude Include="..\DirectXTK\Inc\SimpleMath.h" />
-    <ClInclude Include="..\DirectXTK\Inc\SpriteBatch.h" />
-    <ClInclude Include="..\DirectXTK\Inc\SpriteFont.h" />
-    <ClInclude Include="..\DirectXTK\Inc\VertexTypes.h" />
-    <ClInclude Include="..\DirectXTK\Inc\WICTextureLoader.h" />
-    <ClInclude Include="..\DirectXTK\Inc\XboxDDSTextureLoader.h" />
+    <ClInclude Include="..\DirectXTK\Audio.h" />
+    <ClInclude Include="..\DirectXTK\CommonStates.h" />
+    <ClInclude Include="..\DirectXTK\DDSTextureLoader.h" />
+    <ClInclude Include="..\DirectXTK\DirectXHelpers.h" />
+    <ClInclude Include="..\DirectXTK\Effects.h" />
+    <ClInclude Include="..\DirectXTK\GamePad.h" />
+    <ClInclude Include="..\DirectXTK\GeometricPrimitive.h" />
+    <ClInclude Include="..\DirectXTK\GraphicsMemory.h" />
+    <ClInclude Include="..\DirectXTK\Keyboard.h" />
+    <ClInclude Include="..\DirectXTK\Model.h" />
+    <ClInclude Include="..\DirectXTK\Mouse.h" />
+    <ClInclude Include="..\DirectXTK\pch.h" />
+    <ClInclude Include="..\DirectXTK\PostProcess.h" />
+    <ClInclude Include="..\DirectXTK\PrimitiveBatch.h" />
+    <ClInclude Include="..\DirectXTK\ScreenGrab.h" />
+    <ClInclude Include="..\DirectXTK\SimpleMath.h" />
+    <ClInclude Include="..\DirectXTK\SpriteBatch.h" />
+    <ClInclude Include="..\DirectXTK\SpriteFont.h" />
+    <ClInclude Include="..\DirectXTK\VertexTypes.h" />
+    <ClInclude Include="..\DirectXTK\WICTextureLoader.h" />
+    <ClInclude Include="..\DirectXTK\XboxDDSTextureLoader.h" />
     <ClInclude Include="..\TinyXml2\tinyxml2.h" />
     <ClInclude Include="JWGame.h" />
   </ItemGroup>
@@ -327,6 +327,9 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\DirectXTK\SimpleMath.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

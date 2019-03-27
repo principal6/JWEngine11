@@ -297,69 +297,6 @@
     <ClInclude Include="..\TinyXml2\tinyxml2.h">
       <Filter>TinyXml2</Filter>
     </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\Audio.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\CommonStates.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\DDSTextureLoader.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\DirectXHelpers.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\Effects.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\GamePad.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\GeometricPrimitive.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\GraphicsMemory.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\Keyboard.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\Model.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\Mouse.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\pch.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\PostProcess.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\PrimitiveBatch.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\ScreenGrab.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\SimpleMath.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\SpriteBatch.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\SpriteFont.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\VertexTypes.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\WICTextureLoader.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DirectXTK\Inc\XboxDDSTextureLoader.h">
-      <Filter>DirectXTK</Filter>
-    </ClInclude>
     <ClInclude Include="..\Core\JWInstantText.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -390,6 +327,69 @@
     <ClInclude Include="..\Shaders\ColorHeader.hlsl">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="..\DirectXTK\Audio.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\CommonStates.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\DDSTextureLoader.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\DirectXHelpers.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\Effects.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\GamePad.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\GeometricPrimitive.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\GraphicsMemory.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\Keyboard.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\Model.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\Mouse.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\pch.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\PostProcess.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\PrimitiveBatch.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\ScreenGrab.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\SimpleMath.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\SpriteBatch.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\SpriteFont.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\VertexTypes.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\WICTextureLoader.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectXTK\XboxDDSTextureLoader.h">
+      <Filter>DirectXTK</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Shaders\ColorPS.hlsl">
@@ -410,5 +410,10 @@
     <FxCompile Include="..\Shaders\VSBase.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\DirectXTK\SimpleMath.inl">
+      <Filter>DirectXTK</Filter>
+    </None>
   </ItemGroup>
 </Project>
