@@ -10,6 +10,7 @@
 #include "../Core/JWTimer.h"
 #include "../Core/JWDesignerUI.h"
 #include "../Core/JWInput.h"
+#include "../Core/JWRawPixelSetter.h"
 
 namespace JWEngine
 {
@@ -39,9 +40,9 @@ namespace JWEngine
 
 		void AddLight(SLightData LightData) noexcept;
 
-
 		auto GetCameraObject() noexcept->JWCamera&;
 		auto GetInstantTextObject() noexcept->JWInstantText&;
+		auto GetRawPixelSetterObject() noexcept->JWRawPixelSetter&;
 		auto GetFPS() noexcept->int;
 
 		void Run() noexcept;
@@ -99,5 +100,7 @@ namespace JWEngine
 		SLightData m_AmbientLightData{};
 		SLightData m_DirectionalLightData{};
 		VECTOR<SLightData> m_LightsData;
+
+		JWRawPixelSetter m_RawPixelSetter{};
 	};
 };

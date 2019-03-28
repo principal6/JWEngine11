@@ -63,6 +63,9 @@
     <ClCompile Include="..\Core\JWLine.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\Core\JWRawPixelSetter.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Core\JWCommon.h">
@@ -321,12 +324,6 @@
     <ClInclude Include="..\Core\JWLine.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shaders\BaseHeader.hlsl">
-      <Filter>Shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Shaders\ColorHeader.hlsl">
-      <Filter>Shaders</Filter>
-    </ClInclude>
     <ClInclude Include="..\DirectXTK\Audio.h">
       <Filter>DirectXTK</Filter>
     </ClInclude>
@@ -390,6 +387,20 @@
     <ClInclude Include="..\DirectXTK\XboxDDSTextureLoader.h">
       <Filter>DirectXTK</Filter>
     </ClInclude>
+    <ClInclude Include="..\Core\JWRawPixelSetter.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shaders\BaseHeader.hlsl">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shaders\ColorHeader.hlsl">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\DirectXTK\SimpleMath.inl">
+      <Filter>DirectXTK</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="..\Shaders\ColorPS.hlsl">
@@ -404,16 +415,17 @@
     <FxCompile Include="..\Shaders\PSInstantText.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\Shaders\PSRaw.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
     <FxCompile Include="..\Shaders\VSAnim.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\Shaders\VSBase.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\DirectXTK\SimpleMath.inl">
-      <Filter>DirectXTK</Filter>
-    </None>
+    <FxCompile Include="..\Shaders\VSRaw.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

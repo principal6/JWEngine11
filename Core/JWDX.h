@@ -23,7 +23,8 @@ namespace JWEngine
 
 	enum class ESamplerState
 	{
-		LinearWrap,
+		MinMagMipLinearWrap,
+		MinMagMipPointWrap,
 	};
 
 	enum class EDepthStencilState
@@ -52,7 +53,10 @@ namespace JWEngine
 
 		void SetVSBase() noexcept;
 		void SetVSAnim() noexcept;
+		void SetVSRaw() noexcept;
+
 		void SetPSBase() noexcept;
+		void SetPSRaw() noexcept;
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
 		void SetVSCBStatic(SVSCBStatic& Data) noexcept;
 		// Called in each animated JWModel's Animate() function
@@ -68,7 +72,7 @@ namespace JWEngine
 
 		void SetColorVS() noexcept;
 		void SetColorPS() noexcept;
-		void SetColorVSConstantBufferData(SColorVSCBData& Data) noexcept;
+		void SetColorVSConstantBufferData(SVSCBColor& Data) noexcept;
 
 		void BeginDrawing(const SClearColor& ClearColor) noexcept;
 		void EndDrawing() noexcept;
@@ -81,17 +85,20 @@ namespace JWEngine
 		// Called in Create()
 		void CreateDeviceAndSwapChain(HWND hWnd) noexcept;
 
-		// Shader & input layout creation
+		// VS Shader & input layout creation
 		// Called in Create()
 		void CreateVSBase() noexcept;
 		void CreateVSAnim() noexcept;
-		void CreatePSBase() noexcept;
+		void CreateVSRaw() noexcept;
 		void CreateVSCBs() noexcept;
-		void CreatePSCB() noexcept;
-
 		void CreateColorVS() noexcept;
-		void CreateColorPS() noexcept;
 		void CreateColorVSCB() noexcept;
+
+		// PS Shader cretion
+		void CreatePSBase() noexcept;
+		void CreatePSRaw() noexcept;
+		void CreatePSCB() noexcept;
+		void CreateColorPS() noexcept;
 
 		// Called in Create()
 		void CreateDepthStencilView() noexcept;
@@ -130,8 +137,12 @@ namespace JWEngine
 		ID3D10Blob*			m_VSAnimBuffer{};
 		ID3D11VertexShader*	m_VSAnim{};
 		ID3D11InputLayout*	m_VSAnimInputLayout{};
+		ID3D10Blob*			m_VSRawBuffer{};
+		ID3D11VertexShader*	m_VSRaw{};
 		ID3D10Blob*			m_PSBaseBuffer{};
 		ID3D11PixelShader*	m_PSBase{};
+		ID3D10Blob*			m_PSRawBuffer{};
+		ID3D11PixelShader*	m_PSRaw{};
 		ID3D11Buffer*		m_VSCBStatic{};
 		SVSCBStatic			m_VSCBStaticData{};
 		ID3D11Buffer*		m_VSCBSkinned{};
@@ -145,7 +156,7 @@ namespace JWEngine
 		ID3D10Blob* m_ColorPSBuffer{};
 		ID3D11PixelShader* m_ColorPS11{};
 		ID3D11Buffer* m_ColorVSCB{};
-		SColorVSCBData m_ColorVSCBData;
+		SVSCBColor m_ColorVSCBData;
 
 		ID3D11DepthStencilView* m_DepthStencilView11{};
 		ID3D11DepthStencilState* m_DepthStencilStateZEnabled11{};
@@ -160,8 +171,9 @@ namespace JWEngine
 
 		ID3D11BlendState* m_BlendStateTransparent{};
 		ID3D11BlendState* m_BlendStateOpaque{};
-
-		ID3D11SamplerState* m_SamplerStateLinearWrap{};
+		
+		ID3D11SamplerState* m_SamplerStateMinMagMipLinearWrap{};
+		ID3D11SamplerState* m_SamplerStateMinMagMipPointWrap{};
 
 		D3D11_VIEWPORT m_DefaultViewPort{};
 	};

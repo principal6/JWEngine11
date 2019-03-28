@@ -105,7 +105,7 @@ PRIVATE void JWLine::Update() noexcept
 	// Set VS constant buffer
 	// set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
-	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetOrthographicMatrix();
+	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetFixedOrthographicMatrix();
 	m_pDX->SetVSCBStatic(m_VSCBStatic);
 
 	// Set PS constant buffer

@@ -6,8 +6,8 @@ using namespace JWEngine;
 JWDX::~JWDX()
 {
 	// Release the COM objects we created.
-	
-	JW_RELEASE(m_SamplerStateLinearWrap);
+	JW_RELEASE(m_SamplerStateMinMagMipPointWrap);
+	JW_RELEASE(m_SamplerStateMinMagMipLinearWrap);
 
 	JW_RELEASE(m_BlendStateOpaque);
 	JW_RELEASE(m_BlendStateTransparent);
@@ -26,18 +26,23 @@ JWDX::~JWDX()
 	JW_RELEASE(m_ColorVSCB);
 	JW_RELEASE(m_ColorPS11);
 	JW_RELEASE(m_ColorPSBuffer);
-	JW_RELEASE(m_ColorVSInputLayout11);
-	JW_RELEASE(m_ColorVS11);
-	JW_RELEASE(m_ColorVSBuffer);
-
 	JW_RELEASE(m_PSCBDefault);
 	JW_RELEASE(m_VSCBSkinned);
 	JW_RELEASE(m_VSCBStatic);
+	JW_RELEASE(m_PSRaw);
+	JW_RELEASE(m_PSRawBuffer);
 	JW_RELEASE(m_PSBase);
 	JW_RELEASE(m_PSBaseBuffer);
-	JW_RELEASE(m_VSBaseInputLayout);
+
+	JW_RELEASE(m_ColorVSInputLayout11);
+	JW_RELEASE(m_ColorVS11);
+	JW_RELEASE(m_ColorVSBuffer);
+	JW_RELEASE(m_VSRaw);
+	JW_RELEASE(m_VSRawBuffer);
+	JW_RELEASE(m_VSAnimInputLayout);
 	JW_RELEASE(m_VSAnim);
 	JW_RELEASE(m_VSAnimBuffer);
+	JW_RELEASE(m_VSBaseInputLayout);
 	JW_RELEASE(m_VSBase);
 	JW_RELEASE(m_VSBaseBuffer);
 
@@ -59,17 +64,19 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 	// Create device and swap chain
 	CreateDeviceAndSwapChain(Window.GethWnd());
 
-	// Create default shaders, input layout and constant buffers
+	// Create VS shaders, input layout and constant buffers
 	CreateVSBase();
-	CreatePSBase();
-	CreateVSCBs();
-	CreatePSCB();
 	CreateVSAnim();
-
-	// Create color shaders, input layout and constant buffers
+	CreateVSRaw();
+	CreateVSCBs();
 	CreateColorVS();
-	CreateColorPS();
 	CreateColorVSCB();
+
+	// Create PS shaders and constant buffers
+	CreatePSBase();
+	CreatePSRaw();
+	CreateColorPS();
+	CreatePSCB();
 
 	// Set default shaders (VSBase, PSBase)
 	SetVSBase();
@@ -159,6 +166,18 @@ PRIVATE void JWDX::CreateVSAnim() noexcept
 		m_VSAnimBuffer->GetBufferPointer(), m_VSAnimBuffer->GetBufferSize(), &m_VSAnimInputLayout);
 }
 
+PRIVATE void JWDX::CreateVSRaw() noexcept
+{
+	// Compile shader from file
+	WSTRING shader_file_name;
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSRaw.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSRawBuffer, nullptr);
+
+	// Create shader
+	m_Device11->CreateVertexShader(m_VSRawBuffer->GetBufferPointer(), m_VSRawBuffer->GetBufferSize(), nullptr, &m_VSRaw);
+}
+
 PRIVATE void JWDX::CreatePSBase() noexcept
 {
 	// Compile shader from file
@@ -169,6 +188,18 @@ PRIVATE void JWDX::CreatePSBase() noexcept
 
 	// Create shader
 	m_Device11->CreatePixelShader(m_PSBaseBuffer->GetBufferPointer(), m_PSBaseBuffer->GetBufferSize(), nullptr, &m_PSBase);
+}
+
+PRIVATE void JWDX::CreatePSRaw() noexcept
+{
+	// Compile shader from file
+	WSTRING shader_file_name;
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSRaw.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSRawBuffer, nullptr);
+
+	// Create shader
+	m_Device11->CreatePixelShader(m_PSRawBuffer->GetBufferPointer(), m_PSRawBuffer->GetBufferSize(), nullptr, &m_PSRaw);
 }
 
 PRIVATE void JWDX::CreateVSCBs() noexcept
@@ -210,7 +241,7 @@ PRIVATE void JWDX::CreateColorVS() noexcept
 	m_Device11->CreateVertexShader(m_ColorVSBuffer->GetBufferPointer(), m_ColorVSBuffer->GetBufferSize(), nullptr, &m_ColorVS11);
 
 	// Create color input layout
-	m_Device11->CreateInputLayout(KInputElementColorDescription, ARRAYSIZE(KInputElementColorDescription),
+	m_Device11->CreateInputLayout(KInputElementDescriptionColor, ARRAYSIZE(KInputElementDescriptionColor),
 		m_ColorVSBuffer->GetBufferPointer(), m_ColorVSBuffer->GetBufferSize(), &m_ColorVSInputLayout11);
 }
 
@@ -230,7 +261,7 @@ PRIVATE void JWDX::CreateColorVSCB() noexcept
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
 	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SColorVSCBData);
+	constant_buffer_description.ByteWidth = sizeof(SVSCBColor);
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
@@ -359,7 +390,17 @@ PRIVATE void JWDX::CreateSamplerStates() noexcept
 	sampler_description.MinLOD = 0;
 	sampler_description.MaxLOD = D3D11_FLOAT32_MAX;
 
-	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateLinearWrap);
+	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateMinMagMipLinearWrap);
+
+	sampler_description.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	sampler_description.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampler_description.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampler_description.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampler_description.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampler_description.MinLOD = 0;
+	sampler_description.MaxLOD = D3D11_FLOAT32_MAX;
+
+	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateMinMagMipPointWrap);
 }
 
 PRIVATE void JWDX::CreateDefaultViewport() noexcept
@@ -461,8 +502,11 @@ void JWDX::SetPSSamplerState(ESamplerState State) noexcept
 {
 	switch (State)
 	{
-	case JWEngine::ESamplerState::LinearWrap:
-		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateLinearWrap);
+	case JWEngine::ESamplerState::MinMagMipLinearWrap:
+		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateMinMagMipLinearWrap);
+		break;
+	case JWEngine::ESamplerState::MinMagMipPointWrap:
+		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateMinMagMipPointWrap);
 		break;
 	default:
 		break;
@@ -502,11 +546,24 @@ void JWDX::SetVSAnim() noexcept
 	m_DeviceContext11->IASetInputLayout(m_VSAnimInputLayout);
 }
 
+void JWDX::SetVSRaw() noexcept
+{
+	// Set VSAnim
+	m_DeviceContext11->VSSetShader(m_VSRaw, nullptr, 0);
+}
+
 void JWDX::SetPSBase() noexcept
 {
 	// Set default PS
 	m_DeviceContext11->PSSetShader(m_PSBase, nullptr, 0);
 }
+
+void JWDX::SetPSRaw() noexcept
+{
+	// Set default PS
+	m_DeviceContext11->PSSetShader(m_PSRaw, nullptr, 0);
+}
+
 
 void JWDX::SetVSCBStatic(SVSCBStatic& Data) noexcept
 {
@@ -588,7 +645,7 @@ void JWDX::SetColorPS() noexcept
 	m_DeviceContext11->PSSetShader(m_ColorPS11, nullptr, 0);
 }
 
-void JWDX::SetColorVSConstantBufferData(SColorVSCBData& Data) noexcept
+void JWDX::SetColorVSConstantBufferData(SVSCBColor& Data) noexcept
 {
 	m_ColorVSCBData = Data;
 

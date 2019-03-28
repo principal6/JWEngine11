@@ -51,8 +51,8 @@ PRIVATE void JWDesignerUI::MakeGrid(float XSize, float ZSize, float GridInterval
 
 		if (position_z)
 		{
-			AddVertex(SVertexColor(-XSize / 2.0f, 0, position_z));
-			AddVertex(SVertexColor(+XSize / 2.0f, 0, position_z));
+			AddVertex(SColorVertex(-XSize / 2.0f, 0, position_z));
+			AddVertex(SColorVertex(+XSize / 2.0f, 0, position_z));
 
 			AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
 
@@ -65,8 +65,8 @@ PRIVATE void JWDesignerUI::MakeGrid(float XSize, float ZSize, float GridInterval
 		
 		if (position_x)
 		{
-			AddVertex(SVertexColor(position_x, 0, -ZSize / 2.0f));
-			AddVertex(SVertexColor(position_x, 0, +ZSize / 2.0f));
+			AddVertex(SColorVertex(position_x, 0, -ZSize / 2.0f));
+			AddVertex(SColorVertex(position_x, 0, +ZSize / 2.0f));
 
 			AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
 
@@ -75,27 +75,27 @@ PRIVATE void JWDesignerUI::MakeGrid(float XSize, float ZSize, float GridInterval
 	}
 
 	// X Axis
-	AddVertex(SVertexColor(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
-	AddVertex(SVertexColor(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
+	AddVertex(SColorVertex(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
+	AddVertex(SColorVertex(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
 	AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
 	++total_grid_count;
 
 	// Y Axis
-	AddVertex(SVertexColor(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
-	AddVertex(SVertexColor(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
+	AddVertex(SColorVertex(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
+	AddVertex(SColorVertex(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
 	AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
 	++total_grid_count;
 
 	// Z Axis
-	AddVertex(SVertexColor(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
-	AddVertex(SVertexColor(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
+	AddVertex(SColorVertex(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
+	AddVertex(SColorVertex(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
 	AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
 	++total_grid_count;
 
 	AddEnd();
 }
 
-PRIVATE auto JWDesignerUI::AddVertex(const SVertexColor& Vertex) noexcept->JWDesignerUI&
+PRIVATE auto JWDesignerUI::AddVertex(const SColorVertex& Vertex) noexcept->JWDesignerUI&
 {
 	m_VertexData.Vertices.push_back(Vertex);
 

@@ -27,6 +27,8 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 	m_MouseCursorImage.Create(m_DX, m_Camera);
 
+	m_RawPixelSetter.Create(m_DX);
+
 	m_IsValid = true;
 }
 
@@ -154,6 +156,11 @@ auto JWGame::GetCameraObject() noexcept->JWCamera&
 auto JWGame::GetInstantTextObject() noexcept->JWInstantText&
 {
 	return m_InstantText;
+}
+
+auto JWGame::GetRawPixelSetterObject() noexcept->JWRawPixelSetter&
+{
+	return m_RawPixelSetter;
 }
 
 auto JWGame::GetFPS() noexcept->int

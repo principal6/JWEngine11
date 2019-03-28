@@ -172,7 +172,7 @@ PROTECTED void JWImage::UpdateVSCB() noexcept
 	// Set VS constant buffer
 	// set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
-	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetOrthographicMatrix();
+	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
 	m_pDX->SetVSCBStatic(m_VSCBStatic);
 }
 
@@ -186,7 +186,7 @@ PROTECTED void JWImage::UpdateTexture() noexcept
 {
 	// Set texture and sampler for pixel shader
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
-	m_pDX->SetPSSamplerState(ESamplerState::LinearWrap);
+	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
 }
 
 void JWImage::Draw() noexcept

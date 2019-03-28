@@ -9,17 +9,22 @@ namespace JWEngine
 
 	enum class ECameraType
 	{
+		Invalid,
+
 		FirstPerson,
 		ThirdPerson,
 		FreeLook,
+		Camera2D,
 	};
-
+	
 	enum class ECameraMoveDirection
 	{
 		Left,
 		Right,
 		Forward,
-		Backward
+		Backward,
+		Up2D,
+		Down2D,
 	};
 
 	class JWCamera
@@ -50,16 +55,18 @@ namespace JWEngine
 		auto GetViewMatrix() const noexcept->XMMATRIX;
 		auto GetProjectionMatrix() const noexcept->XMMATRIX;
 		auto GetViewProjectionMatrix() const noexcept->XMMATRIX;
-		auto GetOrthographicMatrix() const noexcept->XMMATRIX;
-		auto GetViewOrthographicMatrix() const noexcept->XMMATRIX;
+		auto GetFixedOrthographicMatrix() const noexcept->XMMATRIX;
+		auto GetTransformedOrthographicMatrix() const noexcept->XMMATRIX;
 
 	private:
 		auto GetFirstPersonForward() noexcept->XMVECTOR;
 		auto GetFirstPersonRight() noexcept->XMVECTOR;
 
 		void UpdateCamera() noexcept;
+
 		void UpdateFirstPersonOrFreeLookCamera() noexcept;
 		void UpdateThirdPersonCamera() noexcept;
+		void Update2DCamera() noexcept;
 
 	private:
 		bool m_IsValid{ false };
@@ -70,12 +77,14 @@ namespace JWEngine
 		static constexpr float KNearZ = 0.1f;
 		static constexpr float KFarZ = 1000.0f;
 		static constexpr float KFactor = 0.01f;
+		static constexpr float KFactor2D = 0.001f;
 
 		mutable XMMATRIX m_MatrixView{};
 		mutable XMMATRIX m_MatrixProjection{};
-		mutable XMMATRIX m_MatrixOrthographic{};
+		mutable XMMATRIX m_MatrixOrthographicFixed{};
+		mutable XMMATRIX m_MatrixOrthographicTransformed{};
 
-		ECameraType m_CameraType{ ECameraType::FirstPerson };
+		ECameraType m_CameraType{ ECameraType::Invalid };
 
 		XMVECTOR m_CameraUp{};
 		XMVECTOR m_CameraPosition{};
@@ -96,5 +105,7 @@ namespace JWEngine
 		float m_Roll{};
 
 		XMMATRIX m_CameraRotationMatrix{};
+
+		XMFLOAT2 m_Camera2DPosition{};
 	};
 };

@@ -501,7 +501,7 @@ PRIVATE void JWModel::Update() noexcept
 
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
-	m_pDX->SetPSSamplerState(ESamplerState::LinearWrap);
+	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
 }
 
 void JWModel::Draw() noexcept

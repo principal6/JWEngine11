@@ -42,6 +42,8 @@ int main()
 	myGame.GetImage(0)
 		.SetPosition(XMFLOAT2(20, 30));
 
+	
+
 	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f, XMFLOAT3(0, -5, 0)));
 	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5, 5, 0), 0.6f));
 
@@ -127,6 +129,9 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	myGame.DrawDesignerUI();
 	myGame.DrawModels();
 	myGame.DrawImages();
+
+	//myGame.GetRawPixelSetterObject().GetRawPixelData().FillRect(SPositionInt(100, 150), SSizeInt(50, 80), SRawPixelColor(255, 0, 255, 255));
+	//myGame.GetRawPixelSetterObject().Draw();
 
 	myGame.DrawInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()), XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
 	myGame.DrawInstantText("Test instant text", XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));

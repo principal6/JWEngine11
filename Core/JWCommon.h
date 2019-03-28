@@ -8,6 +8,7 @@
 #include <cassert>
 #include <crtdbg.h>
 #include <chrono>
+#include <cstdint>
 
 #include <d3d11.h>
 #include <DirectXMath.h> // @IMPORTANT not <xnamath.h> prefix:XM
@@ -116,6 +117,7 @@ namespace JWEngine
 	using namespace DirectX;
 
 	static constexpr int KMaxBoneCount{ 50 };
+	static constexpr int KMaxBoneCountPerVertex{ 4 };
 	static constexpr int KMaxFileLength{ 255 };
 	static constexpr int KInputKeyCount{ 256 };
 	static constexpr const char* KAssetDirectory{ "Asset\\" };
@@ -208,14 +210,12 @@ namespace JWEngine
 		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT	, 0, 64, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // int BoneID[4]
 		{ "BLENDWEIGHT"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 80, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // float Weight[4]
 	};
-
-	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementColorDescription[] =
+	
+	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionColor[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT	, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
-
-	static constexpr int KMaxBoneCountPerVertex = 4;
 
 	struct SStaticVertex
 	{
@@ -236,6 +236,8 @@ namespace JWEngine
 			Position{ x, y, z } {};
 		SStaticVertex(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
+		SStaticVertex(float x, float y, float z, float r, float g, float b, float a) :
+			Position{ x, y, z }, ColorDiffuse{ r, g, b, a } {};
 		SStaticVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
 		SStaticVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
@@ -281,7 +283,7 @@ namespace JWEngine
 		float BoneWeight[KMaxBoneCountPerVertex]{}; // BLENDWEIGHT
 
 		// From here below, data will NOT be sent to Intput Merger
-		int BoneCount{}; // 
+		int BoneCount{};
 
 		void AddBone(int _BoneIndex, float _BoneWeight)
 		{
@@ -295,22 +297,22 @@ namespace JWEngine
 		}
 	};
 
-	struct SVertexColor
+	struct SColorVertex
 	{
-		SVertexColor() {};
-		SVertexColor(XMFLOAT3 _Position) :
+		SColorVertex() {};
+		SColorVertex(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SVertexColor(XMFLOAT3 _Position, XMFLOAT4 _ColorRGBA) :
+		SColorVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorRGBA) :
 			Position{ _Position }, ColorRGBA{ _ColorRGBA } {};
-		SVertexColor(float x, float y, float z) :
+		SColorVertex(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SVertexColor(float x, float y, float z, float r, float g, float b, float a) :
+		SColorVertex(float x, float y, float z, float r, float g, float b, float a) :
 			Position{ x, y, z }, ColorRGBA{ r, g, b, a } {};
 
 		XMFLOAT3 Position{};
 		XMFLOAT4 ColorRGBA{ 1.0f, 1.0f, 1.0f, 1.0f };
 	};
-	
+
 	struct SStaticVertexData
 	{
 		VECTOR<SStaticVertex> Vertices;
@@ -341,21 +343,21 @@ namespace JWEngine
 		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
 	};
 
-	struct SVertexColorData
+	struct SColorVertexData
 	{
-		VECTOR<SVertexColor> Vertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SVertexColor)) };
+		VECTOR<SColorVertex> Vertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SColorVertex)) };
 		UINT Offset{};
 
 		void Clear() noexcept { Vertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexColor)); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SColorVertex)); };
 		auto GetPtrData() const noexcept { return &Vertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
 		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
 	};
-	
+
 	struct SIndex3
 	{
 		SIndex3() {};
@@ -404,11 +406,11 @@ namespace JWEngine
 		SLineData() {};
 		SLineData(XMFLOAT2 _StartPosition, XMFLOAT2 _Length, XMFLOAT4 _Color) : StartPosition{ _StartPosition }, Length{ _Length }, Color{ _Color } {};
 	};
-
-	struct SColorVSCBData
+	
+	struct SVSCBColor
 	{
-		SColorVSCBData() {};
-		SColorVSCBData(XMMATRIX _WVP) : WVP{ _WVP } {};
+		SVSCBColor() {};
+		SVSCBColor(XMMATRIX _WVP) : WVP{ _WVP } {};
 
 		XMMATRIX WVP{};
 	};

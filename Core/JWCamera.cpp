@@ -12,20 +12,21 @@ void JWCamera::Create(JWDX& DX) noexcept
 	// Set default camera information
 	m_CameraUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	m_CameraPosition = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	m_CameraLookAt = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	m_CameraLookAt = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 
 	m_CameraDefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	m_CameraDefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-
+	
 	// Get window size in float
 	float width = static_cast<float>(m_pDX->GetWindowSize().Width);
 	float height = static_cast<float>(m_pDX->GetWindowSize().Height);
-
+	
 	// Get projection matrix
 	m_MatrixProjection = XMMatrixPerspectiveFovLH(KFOV * XM_PI, width / height, KNearZ, KFarZ);
 
 	// Get orthographic matrix
-	m_MatrixOrthographic = XMMatrixOrthographicLH(width, height, KNearZ, KFarZ);
+	m_MatrixOrthographicFixed = XMMatrixOrthographicLH(width, height, KNearZ, KFarZ);
+	m_MatrixOrthographicTransformed = m_MatrixOrthographicFixed;
 
 	m_IsValid = true;
 }
@@ -33,7 +34,6 @@ void JWCamera::Create(JWDX& DX) noexcept
 void JWCamera::MoveCamera(ECameraMoveDirection Direction, float Stride) noexcept
 {
 	Stride = max(Stride, 0);
-	Stride *= KFactor;
 
 	XMVECTOR camera_forward = m_CameraForward;
 	XMVECTOR camera_right = m_CameraRight;
@@ -43,33 +43,62 @@ void JWCamera::MoveCamera(ECameraMoveDirection Direction, float Stride) noexcept
 	case JWEngine::ECameraType::FirstPerson:
 		camera_forward = GetFirstPersonForward();
 		camera_right = GetFirstPersonRight();
+		Stride *= KFactor;
 		break;
 	case JWEngine::ECameraType::ThirdPerson:
 		UpdateCamera();
+		Stride *= KFactor;
 		return;
 		//break;
 	case JWEngine::ECameraType::FreeLook:
+		Stride *= KFactor;
+		break;
+	case JWEngine::ECameraType::Camera2D:
+		Stride *= KFactor2D;
 		break;
 	default:
 		break;
 	}
 
-	switch (Direction)
+	if (m_CameraType != JWEngine::ECameraType::Camera2D)
 	{
-	case JWEngine::ECameraMoveDirection::Left:
-		m_CameraPosition -= Stride * camera_right;
-		break;
-	case JWEngine::ECameraMoveDirection::Right:
-		m_CameraPosition += Stride * camera_right;
-		break;
-	case JWEngine::ECameraMoveDirection::Forward:
-		m_CameraPosition += Stride * camera_forward;
-		break;
-	case JWEngine::ECameraMoveDirection::Backward:
-		m_CameraPosition -= Stride * camera_forward;
-		break;
-	default:
-		break;
+		switch (Direction)
+		{
+		case JWEngine::ECameraMoveDirection::Left:
+			m_CameraPosition -= Stride * camera_right;
+			break;
+		case JWEngine::ECameraMoveDirection::Right:
+			m_CameraPosition += Stride * camera_right;
+			break;
+		case JWEngine::ECameraMoveDirection::Forward:
+			m_CameraPosition += Stride * camera_forward;
+			break;
+		case JWEngine::ECameraMoveDirection::Backward:
+			m_CameraPosition -= Stride * camera_forward;
+			break;
+		default:
+			break;
+		}
+	}
+	else
+	{
+		switch (Direction)
+		{
+		case JWEngine::ECameraMoveDirection::Left:
+			m_Camera2DPosition.x -= Stride;
+			break;
+		case JWEngine::ECameraMoveDirection::Right:
+			m_Camera2DPosition.x += Stride;
+			break;
+		case JWEngine::ECameraMoveDirection::Up2D:
+			m_Camera2DPosition.y -= Stride;
+			break;
+		case JWEngine::ECameraMoveDirection::Down2D:
+			m_Camera2DPosition.y += Stride;
+			break;
+		default:
+			break;
+		}
 	}
 
 	UpdateCamera();
@@ -132,6 +161,9 @@ PRIVATE void JWCamera::UpdateCamera() noexcept
 	case JWEngine::ECameraType::FreeLook:
 		UpdateFirstPersonOrFreeLookCamera();
 		break;
+	case JWEngine::ECameraType::Camera2D:
+		Update2DCamera();
+		break;
 	default:
 		break;
 	}
@@ -157,6 +189,11 @@ PRIVATE void JWCamera::UpdateThirdPersonCamera() noexcept
 
 	XMVECTOR LookDistance = XMVector3Length(m_CameraPosition - m_CameraLookAt);
 	m_CameraPosition = XMVector3Normalize(m_CameraForward) * LookDistance;
+}
+
+PRIVATE void JWCamera::Update2DCamera() noexcept
+{
+	m_MatrixOrthographicTransformed = m_MatrixOrthographicFixed * XMMatrixTranslation(m_Camera2DPosition.x, -m_Camera2DPosition.y, 0);
 }
 
 auto JWCamera::SetCameraType(ECameraType Type) noexcept->JWCamera&
@@ -222,12 +259,14 @@ auto JWCamera::GetViewProjectionMatrix() const noexcept->XMMATRIX
 	return GetViewMatrix() * m_MatrixProjection;
 }
 
-auto JWCamera::GetOrthographicMatrix() const noexcept->XMMATRIX
+auto JWCamera::GetFixedOrthographicMatrix() const noexcept->XMMATRIX
 {
-	return m_MatrixOrthographic;
+	// @important: Must transpose the matrix
+	return XMMatrixTranspose(m_MatrixOrthographicFixed);
 }
 
-auto JWCamera::GetViewOrthographicMatrix() const noexcept->XMMATRIX
+auto JWCamera::GetTransformedOrthographicMatrix() const noexcept->XMMATRIX
 {
-	return GetViewMatrix() * m_MatrixOrthographic;
+	// @important: Must transpose the matrix
+	return XMMatrixTranspose(m_MatrixOrthographicTransformed);
 }
