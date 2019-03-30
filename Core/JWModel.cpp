@@ -296,19 +296,21 @@ auto JWModel::Animate() noexcept->JWModel&
 {
 	if (m_ModelType == EModelType::SkinnedModel)
 	{
-		if (m_SkinnedModelData.CurrentAnimationID != KSizeTInvalid)
+		auto& current_animation_id = m_SkinnedModelData.CurrentAnimationID;
+
+		if (current_animation_id != KSizeTInvalid)
 		{
-			auto& current_anim{ m_SkinnedModelData.AnimationSet.vAnimations[m_SkinnedModelData.CurrentAnimationID] };
+			auto& current_anim{ m_SkinnedModelData.AnimationSet.vAnimations[current_animation_id] };
 
 			// Reset tick if the animation is over.
-			if (m_SkinnedModelData.CurrentAnimationTick >= current_anim.TotalTicks)
+			if (m_SkinnedModelData.CurrentAnimationTick >= current_anim.TotalAnimationTicks)
 			{
 				m_SkinnedModelData.CurrentAnimationTick = 0;
 
 				if (!m_SkinnedModelData.ShouldRepeatCurrentAnimation)
 				{
 					// Non-repeating animation
-					m_SkinnedModelData.CurrentAnimationID = KSizeTInvalid;
+					current_animation_id = KSizeTInvalid;
 				}
 			}
 
@@ -316,7 +318,8 @@ auto JWModel::Animate() noexcept->JWModel&
 			UpdateBonesTransformation();
 
 			// Advance animation tick
-			m_SkinnedModelData.CurrentAnimationTick++;
+			//m_SkinnedModelData.CurrentAnimationTick += m_SkinnedModelData.AnimationSet.vAnimations[current_animation_id].AnimationTicksPerGameTick;
+			m_SkinnedModelData.CurrentAnimationTick += 1.0f;
 		}
 		else
 		{
@@ -356,47 +359,91 @@ PRIVATE void JWModel::UpdateBonesTransformation() noexcept
 	}
 }
 
-PRIVATE void JWModel::UpdateNodeAnimationIntoBones(int AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept
+PRIVATE void JWModel::UpdateNodeAnimationIntoBones(float AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept
 {
 	XMMATRIX global_transformation = node.Transformation * Accumulated;
 
 	if (node.BoneID >= 0)
 	{
 		auto& bone = m_SkinnedModelData.BoneTree.vBones[node.BoneID];
+		auto& current_animation = m_SkinnedModelData.AnimationSet.vAnimations[m_SkinnedModelData.CurrentAnimationID];
 
-		for (const auto& node_animation : m_SkinnedModelData.AnimationSet.vAnimations[m_SkinnedModelData.CurrentAnimationID].vNodeAnimation)
+		// Calculate current animation time for interpolation
+		float CurrAnimationTime = AnimationTime - fmodf(AnimationTime, current_animation.AnimationTicksPerGameTick);
+
+		// Calculate next animation time for interpolation
+		float NextAnimationTime = CurrAnimationTime + current_animation.AnimationTicksPerGameTick;
+
+		// Interpolation factor Delta's range is [0.0, 1.0]
+		float Delta = (AnimationTime - CurrAnimationTime) / current_animation.AnimationTicksPerGameTick;
+
+		if (NextAnimationTime > current_animation.TotalAnimationTicks)
+		{
+			NextAnimationTime = 0;
+		}
+
+		for (const auto& node_animation : current_animation.vNodeAnimation)
 		{
 			if (node_animation.NodeID == node.ID)
 			{
-				XMMATRIX scaling{};
-				XMMATRIX rotation{}; 
-				XMMATRIX translation{};
+				XMMATRIX matrix_scaling{};
+				XMVECTOR scaling_key_a{};
+				XMVECTOR scaling_key_b{};
+				XMVECTOR scaling_interpolated{};
+
+				XMMATRIX matrix_rotation{}; 
+				XMVECTOR rotation_key_a{};
+				XMVECTOR rotation_key_b{};
+				XMVECTOR rotation_interpolated{};
+
+				XMMATRIX matrix_translation{};
+				XMVECTOR translation_key_a{};
+				XMVECTOR translation_key_b{};
+				XMVECTOR translation_interpolated{};
 				
 				for (const auto& key : node_animation.vKeyScaling)
 				{
-					if (key.TimeInTicks <= AnimationTime)
+					if (key.TimeInTicks <= CurrAnimationTime)
 					{
-						scaling = XMMatrixScaling(key.Key.x, key.Key.y, key.Key.z);
+						scaling_key_a = XMLoadFloat3(&key.Key);
+					}
+					if (key.TimeInTicks <= NextAnimationTime)
+					{
+						scaling_key_b = XMLoadFloat3(&key.Key);
 					}
 				}
+				scaling_interpolated = scaling_key_a + (Delta * (scaling_key_b - scaling_key_a));
+				matrix_scaling = XMMatrixScalingFromVector(scaling_interpolated);
 
 				for (const auto& key : node_animation.vKeyRotation)
 				{
-					if (key.TimeInTicks <= AnimationTime)
+					if (key.TimeInTicks <= CurrAnimationTime)
 					{
-						rotation = XMMatrixRotationQuaternion(key.Key);
+						rotation_key_a = key.Key;
+					}
+					if (key.TimeInTicks <= NextAnimationTime)
+					{
+						rotation_key_b = key.Key;
 					}
 				}
+				rotation_interpolated = XMQuaternionSlerp(rotation_key_a, rotation_key_b, Delta);
+				matrix_rotation = XMMatrixRotationQuaternion(rotation_interpolated);
 
 				for (const auto& key : node_animation.vKeyPosition)
 				{
-					if (key.TimeInTicks <= AnimationTime)
+					if (key.TimeInTicks <= CurrAnimationTime)
 					{
-						translation = XMMatrixTranslation(key.Key.x, key.Key.y, key.Key.z);
+						translation_key_a = XMLoadFloat3(&key.Key);
+					}
+					if (key.TimeInTicks <= NextAnimationTime)
+					{
+						translation_key_b = XMLoadFloat3(&key.Key);
 					}
 				}
+				translation_interpolated = translation_key_a + (Delta * (translation_key_b - translation_key_a));
+				matrix_translation = XMMatrixTranslationFromVector(translation_interpolated);
 
-				global_transformation = scaling * rotation * translation * Accumulated;
+				global_transformation = matrix_scaling * matrix_rotation * matrix_translation * Accumulated;
 
 				break;
 			}
@@ -414,7 +461,7 @@ PRIVATE void JWModel::UpdateNodeAnimationIntoBones(int AnimationTime, const SMod
 	}
 }
 
-PRIVATE void JWModel::UpdateNodeTPoseIntoBones(int AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept
+PRIVATE void JWModel::UpdateNodeTPoseIntoBones(float AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept
 {
 	XMMATRIX accumulation = node.Transformation * Accumulated;
 

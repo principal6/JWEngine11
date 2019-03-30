@@ -108,11 +108,6 @@ namespace JWEngine
 
 #define JW_AVOID_DUPLICATE_CREATION(Bool) {if (Bool) { return; }}
 #define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
-
-	using FP_ON_INPUT = void(*)(SDirectInputDeviceState&);
-	using FP_ON_RENDER = void(*)(void);
-#define JW_FUNCTION_ON_INPUT(FunctionName) void FunctionName(SDirectInputDeviceState& DeviceState)
-#define JW_FUNCTION_ON_RENDER(FunctionName) void FunctionName()
 	
 	using namespace DirectX;
 
@@ -121,6 +116,7 @@ namespace JWEngine
 	static constexpr int KMaxFileLength{ 255 };
 	static constexpr int KInputKeyCount{ 256 };
 	static constexpr const char* KAssetDirectory{ "Asset\\" };
+	static constexpr float KAnimationTickBase{ 30.0f };
 	static constexpr XMFLOAT4 KDefaultColorNormals{ XMFLOAT4(0.4f, 0.8f, 0.0f, 1.0f) };
 	static constexpr XMFLOAT3 KDefaultColorGrid{ XMFLOAT3(1.0f, 1.0f, 1.0f) };
 	static constexpr size_t KSizeTInvalid{ MAXSIZE_T };
@@ -531,9 +527,20 @@ namespace JWEngine
 
 	struct SModelAnimation
 	{
+		// Animation's name. This can be null.
 		STRING Name;
-		float TotalTicks{};
-		float TicksPerSecond{};
+
+		// Animation duration based on animation ticks
+		float TotalAnimationTicks{};
+		
+		// Model renderer's crieterion of animation ticks per model renderer's second of time.
+		float AnimationTicksPerSecond{};
+		
+		// Our game loop based animation time
+		// In every tick of the main loop,
+		// the animation time will be increased by this amount.
+		float AnimationTicksPerGameTick{};
+
 		VECTOR<SModelNodeAnimation> vNodeAnimation;
 
 		SModelAnimation() = default;
@@ -566,7 +573,7 @@ namespace JWEngine
 		size_t CurrentAnimationID{ KSizeTInvalid };
 
 		// If SetAnimation() is called, CurrentAnimationTick is reset to 0.
-		int CurrentAnimationTick{};
+		float CurrentAnimationTick{};
 
 		bool ShouldRepeatCurrentAnimation{ true };
 

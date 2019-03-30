@@ -8,6 +8,7 @@ using namespace JWEngine;
 
 static JWGame myGame;
 
+JW_FUNCTION_ON_WINDOWS_KEYDOWN(OnWindowsKeyDown);
 JW_FUNCTION_ON_INPUT(OnInput);
 JW_FUNCTION_ON_RENDER(OnRender);
 
@@ -17,7 +18,7 @@ bool g_ShouldDrawWireframe{ false };
 int main()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	
+
 	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\", "megt20all");
 	//myGame.LoadCursorImage("cursor_default.png");
 
@@ -32,7 +33,7 @@ int main()
 		.SetTranslation(XMFLOAT3(10.0f, 0.0f, 0.0f))
 		.ShouldBeLit(true);
 
-	myGame.AddOpaqueModel("Ezreal_Idle.X", true);
+	myGame.AddOpaqueModel("Ezreal_Punching.X", true);
 	myGame.GetOpaqueModel(1)
 		.SetScale(XMFLOAT3(0.05f, 0.05f, 0.05f))
 		.SetAnimation(0)
@@ -42,11 +43,10 @@ int main()
 	myGame.GetImage(0)
 		.SetPosition(XMFLOAT2(20, 30));
 
-	
-
 	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f, XMFLOAT3(0, -5, 0)));
 	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5, 5, 0), 0.6f));
 
+	myGame.SetOnWindowsKeyDownFunction(OnWindowsKeyDown);
 	myGame.SetOnInputFunction(OnInput);
 	myGame.SetOnRenderFunction(OnRender);
 
@@ -55,14 +55,9 @@ int main()
 	return 0;
 }
 
-JW_FUNCTION_ON_INPUT(OnInput)
+JW_FUNCTION_ON_WINDOWS_KEYDOWN(OnWindowsKeyDown)
 {
-	if (DeviceState.Keys[DIK_ESCAPE])
-	{
-		myGame.Terminate();
-	}
-
-	if (DeviceState.Keys[DIK_1])
+	if (VK == VK_F1)
 	{
 		g_ShouldDrawWireframe = !g_ShouldDrawWireframe;
 		if (g_ShouldDrawWireframe)
@@ -73,13 +68,19 @@ JW_FUNCTION_ON_INPUT(OnInput)
 		{
 			myGame.SetRasterizerState(ERasterizerState::SolidNoCull);
 		}
-
-		Sleep(50);
 	}
-	if (DeviceState.Keys[DIK_2])
+
+	if (VK == VK_F2)
 	{
 		g_ShouldDrawNormals = !g_ShouldDrawNormals;
-		Sleep(50);
+	}
+}
+
+JW_FUNCTION_ON_INPUT(OnInput)
+{
+	if (DeviceState.Keys[DIK_ESCAPE])
+	{
+		myGame.Terminate();
 	}
 
 	if (DeviceState.Keys[DIK_W])

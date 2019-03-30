@@ -403,9 +403,13 @@ PRIVATE void JWAssimpLoader::ExtractAnimationSet(const aiScene* Scene, const SMo
 
 			const auto& ai_animation = Scene->mAnimations[animation_id];
 			animation.Name = ai_animation->mName.C_Str();
-			animation.TicksPerSecond = static_cast<float>(ai_animation->mTicksPerSecond);
-			animation.TotalTicks = static_cast<float>(ai_animation->mDuration);
+			
+			animation.AnimationTicksPerSecond = static_cast<float>(ai_animation->mTicksPerSecond);
+			
+			animation.AnimationTicksPerGameTick = animation.AnimationTicksPerSecond / KAnimationTickBase;
 
+			animation.TotalAnimationTicks = static_cast<float>(ai_animation->mDuration);
+			
 			// channel = animation of a single node
 			if (ai_animation->mNumChannels)
 			{

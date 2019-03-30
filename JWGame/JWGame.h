@@ -14,6 +14,12 @@
 
 namespace JWEngine
 {
+	using FP_ON_INPUT = void(*)(SDirectInputDeviceState&);
+	using FP_ON_RENDER = void(*)(void);
+
+#define JW_FUNCTION_ON_INPUT(FunctionName) void FunctionName(SDirectInputDeviceState& DeviceState)
+#define JW_FUNCTION_ON_RENDER(FunctionName) void FunctionName()
+
 	class JWGame
 	{
 	public:
@@ -23,8 +29,9 @@ namespace JWEngine
 		void Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING BaseDirectory, STRING GameFontFileName) noexcept;
 		void LoadCursorImage(STRING FileName) noexcept;
 
-		void SetOnInputFunction(FP_ON_INPUT OnInput) noexcept;
-		void SetOnRenderFunction(FP_ON_RENDER OnRender) noexcept;
+		void SetOnInputFunction(FP_ON_INPUT Function) noexcept;
+		void SetOnRenderFunction(FP_ON_RENDER Function) noexcept;
+		void SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEYDOWN Function) noexcept;
 
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;

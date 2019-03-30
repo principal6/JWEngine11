@@ -67,10 +67,10 @@ namespace JWEngine
 		void UpdateBonesTransformation() noexcept;
 
 		// Called by UpdateBonesTransformation() and by this function itself (recursively)
-		void UpdateNodeAnimationIntoBones(int AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept;
+		void UpdateNodeAnimationIntoBones(float AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept;
 
 		// Called by SetTPose()
-		void UpdateNodeTPoseIntoBones(int AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept;
+		void UpdateNodeTPoseIntoBones(float AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept;
 
 	private:
 		bool m_IsValid{ false };

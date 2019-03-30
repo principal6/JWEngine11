@@ -37,24 +37,34 @@ void JWGame::LoadCursorImage(STRING FileName) noexcept
 	m_MouseCursorImage.LoadImageFromFile(m_BaseDirectory + KAssetDirectory, FileName);
 }
 
-void JWGame::SetOnRenderFunction(FP_ON_RENDER OnRender) noexcept
+void JWGame::SetOnRenderFunction(FP_ON_RENDER Function) noexcept
 {
-	if (OnRender == nullptr)
+	if (Function == nullptr)
 	{
-		JWAbort("FP_ON_RENDER OnRender is nullptr.");
+		JWAbort("FP_ON_RENDER Function is nullptr.");
 	}
 
-	m_fpOnRender = OnRender;
+	m_fpOnRender = Function;
 }
 
-void JWGame::SetOnInputFunction(FP_ON_INPUT OnInput) noexcept
+void JWGame::SetOnInputFunction(FP_ON_INPUT Function) noexcept
 {
-	if (OnInput == nullptr)
+	if (Function == nullptr)
 	{
-		JWAbort("FP_ON_INPUT OnInput is nullptr.");
+		JWAbort("FP_ON_INPUT Function is nullptr.");
 	}
 
-	m_fpOnInput = OnInput;
+	m_fpOnInput = Function;
+}
+
+void JWGame::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEYDOWN Function) noexcept
+{
+	if (Function == nullptr)
+	{
+		JWAbort("FP_ON_WINDOWS_KEYDOWN Function is nullptr.");
+	}
+
+	m_Window.SetOnWindowsKeyDownFunction(Function);
 }
 
 void JWGame::SetRasterizerState(ERasterizerState State) noexcept
