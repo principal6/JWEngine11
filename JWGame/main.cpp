@@ -36,8 +36,8 @@ int main()
 	myGame.AddOpaqueModel("Ezreal_Punching.X", true);
 	myGame.GetOpaqueModel(1)
 		.SetScale(XMFLOAT3(0.05f, 0.05f, 0.05f))
-		.SetAnimation(0)
-		.ShouldBeLit(false);
+		.SetAnimation(0);
+		//.ShouldBeLit(false);
 
 	myGame.AddImage("Grayscale_Interval_Ten.png");
 	myGame.GetImage(0)

@@ -275,6 +275,7 @@ auto JWModel::SetAnimation(size_t AnimationID, bool ShouldRepeat) noexcept->JWMo
 		{
 			AnimationID = min(AnimationID, m_SkinnedModelData.AnimationSet.vAnimations.size() - 1);
 
+			// Set animation only when animation id has changed from the previous one.
 			if (m_SkinnedModelData.CurrentAnimationID != AnimationID)
 			{
 				m_SkinnedModelData.CurrentAnimationID = AnimationID;
@@ -284,7 +285,7 @@ auto JWModel::SetAnimation(size_t AnimationID, bool ShouldRepeat) noexcept->JWMo
 		}
 		else
 		{
-			// Model has no animation set
+			// This is skinned model, but it has no animation set
 			JWAbort("This model doesn't have any animation set.");
 		}
 	}
