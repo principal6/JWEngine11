@@ -401,6 +401,7 @@ PRIVATE void JWModel::UpdateNodeAnimationIntoBones(float AnimationTime, const SM
 				XMVECTOR translation_key_b{};
 				XMVECTOR translation_interpolated{};
 				
+				// #1. Find scaling keys
 				for (const auto& key : node_animation.vKeyScaling)
 				{
 					if (key.TimeInTicks <= CurrAnimationTime)
@@ -413,8 +414,13 @@ PRIVATE void JWModel::UpdateNodeAnimationIntoBones(float AnimationTime, const SM
 					}
 				}
 				scaling_interpolated = scaling_key_a + (Delta * (scaling_key_b - scaling_key_a));
+				if (!m_ShouldInterpolateAnimation)
+				{
+					scaling_interpolated = scaling_key_a;
+				}
 				matrix_scaling = XMMatrixScalingFromVector(scaling_interpolated);
 
+				// #2. Find rotation keys
 				for (const auto& key : node_animation.vKeyRotation)
 				{
 					if (key.TimeInTicks <= CurrAnimationTime)
@@ -427,8 +433,13 @@ PRIVATE void JWModel::UpdateNodeAnimationIntoBones(float AnimationTime, const SM
 					}
 				}
 				rotation_interpolated = XMQuaternionSlerp(rotation_key_a, rotation_key_b, Delta);
+				if (!m_ShouldInterpolateAnimation)
+				{
+					rotation_interpolated = rotation_key_a;
+				}
 				matrix_rotation = XMMatrixRotationQuaternion(rotation_interpolated);
 
+				// #3. Find translation keys
 				for (const auto& key : node_animation.vKeyPosition)
 				{
 					if (key.TimeInTicks <= CurrAnimationTime)
@@ -441,6 +452,10 @@ PRIVATE void JWModel::UpdateNodeAnimationIntoBones(float AnimationTime, const SM
 					}
 				}
 				translation_interpolated = translation_key_a + (Delta * (translation_key_b - translation_key_a));
+				if (!m_ShouldInterpolateAnimation)
+				{
+					translation_interpolated = translation_key_a;
+				}
 				matrix_translation = XMMatrixTranslationFromVector(translation_interpolated);
 
 				global_transformation = matrix_scaling * matrix_rotation * matrix_translation * Accumulated;
@@ -491,6 +506,13 @@ auto JWModel::ShouldDrawNormals(bool Value) noexcept->JWModel&
 auto JWModel::ShouldBeLit(bool Value) noexcept->JWModel&
 {
 	m_ShouldBeLit = Value;
+
+	return *this;
+}
+
+auto JWModel::ShouldInterpolateAnimation(bool Value) noexcept->JWModel&
+{
+	m_ShouldInterpolateAnimation = Value;
 
 	return *this;
 }

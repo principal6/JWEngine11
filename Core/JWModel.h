@@ -37,6 +37,7 @@ namespace JWEngine
 		
 		auto ShouldDrawNormals(bool Value) noexcept->JWModel&;
 		auto ShouldBeLit(bool Value) noexcept->JWModel&;
+		auto ShouldInterpolateAnimation(bool Value) noexcept->JWModel&;
 
 		auto GetWorldPosition() noexcept->XMVECTOR;
 		auto GetDistanceFromCamera() noexcept->float;
@@ -79,6 +80,7 @@ namespace JWEngine
 		bool m_HasTexture{ false };
 		bool m_ShouldDrawNormals{ false };
 		bool m_ShouldBeLit{ true };
+		bool m_ShouldInterpolateAnimation{ true };
 
 		EModelType m_ModelType{ EModelType::Invalid };
 
