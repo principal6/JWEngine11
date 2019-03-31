@@ -3,7 +3,7 @@
 using namespace JWEngine;
 
 static FP_ON_WINDOWS_KEY_DOWN s_fpWindowsKeyDown{};
-static FP_ON_WINDOWS_CHAR_KEY_PRESSED s_fpWindowsCharKeyPressed{};
+static FP_ON_WINDOWS_CHAR_INPUT s_fpWindowsCharKeyPressed{};
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -78,7 +78,7 @@ void JWWin32Window::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function)
 	s_fpWindowsKeyDown = Function;
 }
 
-void JWWin32Window::SetOnWindowsCharKeyPressedFunction(FP_ON_WINDOWS_CHAR_KEY_PRESSED Function) noexcept
+void JWWin32Window::SetOnWindowsCharInputFunction(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept
 {
 	s_fpWindowsCharKeyPressed = Function;
 }

@@ -7,8 +7,8 @@ namespace JWEngine
 	using FP_ON_WINDOWS_KEY_DOWN = void(*)(WPARAM);
 #define JW_FUNCTION_ON_WINDOWS_KEY_DOWN(FunctionName) void FunctionName(WPARAM VK)
 
-	using FP_ON_WINDOWS_CHAR_KEY_PRESSED = void(*)(TCHAR);
-#define JW_FUNCTION_ON_WINDOWS_CHAR_KEY_PRESSED(FunctionName) void FunctionName(TCHAR Character)
+	using FP_ON_WINDOWS_CHAR_INPUT = void(*)(TCHAR);
+#define JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(FunctionName) void FunctionName(TCHAR Character)
 
 	class JWWin32Window
 	{
@@ -19,7 +19,7 @@ namespace JWEngine
 		void Create(SPositionInt Position, SSizeInt Size, const STRING& Title) noexcept;
 
 		void SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexcept;
-		void SetOnWindowsCharKeyPressedFunction(FP_ON_WINDOWS_CHAR_KEY_PRESSED Function) noexcept;
+		void SetOnWindowsCharInputFunction(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept;
 
 		auto GetWidth() const noexcept->int;
 		auto GetHeight() const noexcept->int;

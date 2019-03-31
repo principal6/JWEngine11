@@ -67,14 +67,14 @@ void JWGame::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexce
 	m_Window.SetOnWindowsKeyDownFunction(Function);
 }
 
-void JWGame::SetOnWindowsCharKeyPressedFunction(FP_ON_WINDOWS_CHAR_KEY_PRESSED Function) noexcept
+void JWGame::SetOnWindowsCharInputFunction(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept
 {
 	if (Function == nullptr)
 	{
-		JWAbort("FP_ON_WINDOWS_KEYDOWN Function is nullptr.");
+		JWAbort("FP_ON_WINDOWS_CHAR_INPUT Function is nullptr.");
 	}
 
-	m_Window.SetOnWindowsCharKeyPressedFunction(Function);
+	m_Window.SetOnWindowsCharInputFunction(Function);
 }
 
 void JWGame::SetRasterizerState(ERasterizerState State) noexcept

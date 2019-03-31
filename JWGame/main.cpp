@@ -9,7 +9,7 @@ using namespace JWEngine;
 static JWGame myGame;
 
 JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown);
-JW_FUNCTION_ON_WINDOWS_CHAR_KEY_PRESSED(OnWindowsCharKeyPressed);
+JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput);
 JW_FUNCTION_ON_INPUT(OnInput);
 JW_FUNCTION_ON_RENDER(OnRender);
 
@@ -50,7 +50,7 @@ int main()
 	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5, 5, 0), 0.6f));
 
 	myGame.SetOnWindowsKeyDownFunction(OnWindowsKeyDown);
-	myGame.SetOnWindowsCharKeyPressedFunction(OnWindowsCharKeyPressed);
+	myGame.SetOnWindowsCharInputFunction(OnWindowsCharKeyInput);
 	myGame.SetOnInputFunction(OnInput);
 	myGame.SetOnRenderFunction(OnRender);
 
@@ -80,7 +80,7 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 	}
 }
 
-JW_FUNCTION_ON_WINDOWS_CHAR_KEY_PRESSED(OnWindowsCharKeyPressed)
+JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 {
 	if (Character == '1')
 	{
