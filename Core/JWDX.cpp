@@ -27,7 +27,7 @@ JWDX::~JWDX()
 	JW_RELEASE(m_ColorPS11);
 	JW_RELEASE(m_ColorPSBuffer);
 	JW_RELEASE(m_PSCBDefault);
-	JW_RELEASE(m_VSCBSkinned);
+	JW_RELEASE(m_VSCBRigged);
 	JW_RELEASE(m_VSCBStatic);
 	JW_RELEASE(m_PSRaw);
 	JW_RELEASE(m_PSRawBuffer);
@@ -213,8 +213,8 @@ PRIVATE void JWDX::CreateVSCBs() noexcept
 	constant_buffer_description.MiscFlags = 0;
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBStatic);
 
-	constant_buffer_description.ByteWidth = sizeof(SVSCBSkinned);
-	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBSkinned);
+	constant_buffer_description.ByteWidth = sizeof(SVSCBRigged);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBRigged);
 }
 
 PRIVATE void JWDX::CreatePSCB() noexcept
@@ -573,12 +573,12 @@ void JWDX::SetVSCBStatic(SVSCBStatic& Data) noexcept
 	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBStatic);
 }
 
-void JWDX::SetVSCBSkinned(SVSCBSkinned& Data) noexcept
+void JWDX::SetVSCBRigged(SVSCBRigged& Data) noexcept
 {
-	m_VSCBSkinnedData = Data;
+	m_VSCBRiggedData = Data;
 
-	m_DeviceContext11->UpdateSubresource(m_VSCBSkinned, 0, nullptr, &m_VSCBSkinnedData, 0, 0);
-	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBSkinned);
+	m_DeviceContext11->UpdateSubresource(m_VSCBRigged, 0, nullptr, &m_VSCBRiggedData, 0, 0);
+	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBRigged);
 }
 
 void JWDX::SetPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcept

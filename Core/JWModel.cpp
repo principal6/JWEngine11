@@ -72,16 +72,16 @@ void JWModel::SetStaticModelData(SStaticModelData ModelData) noexcept
 	m_IsModelLoaded = true;
 }
 
-void JWModel::SetSkinnedModelData(SSkinnedModelData ModelData) noexcept
+void JWModel::SetRiggedModelData(SRiggedModelData ModelData) noexcept
 {
 	JW_AVOID_DUPLICATE_CREATION(m_IsModelLoaded);
 
 	CheckValidity();
 
-	m_ModelType = EModelType::SkinnedModel;
+	m_ModelType = EModelType::RiggedModel;
 
 	// Save the model data
-	m_SkinnedModelData = ModelData;
+	m_RiggedModelData = ModelData;
 
 	CreateModelVertexIndexBuffers();
 
@@ -157,12 +157,12 @@ PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 		m_pDX->CreateIndexBuffer(m_StaticModelData.IndexData.GetByteSize(), m_StaticModelData.IndexData.GetPtrData(), &m_IndexBuffer);
 
 		break;
-	case JWEngine::EModelType::SkinnedModel:
+	case JWEngine::EModelType::RiggedModel:
 		// Create vertex buffer
-		m_pDX->CreateStaticVertexBuffer(m_SkinnedModelData.VertexData.GetByteSize(), m_SkinnedModelData.VertexData.GetPtrData(), &m_VertexBuffer);
+		m_pDX->CreateStaticVertexBuffer(m_RiggedModelData.VertexData.GetByteSize(), m_RiggedModelData.VertexData.GetPtrData(), &m_VertexBuffer);
 
 		// Create index buffer
-		m_pDX->CreateIndexBuffer(m_SkinnedModelData.IndexData.GetByteSize(), m_SkinnedModelData.IndexData.GetPtrData(), &m_IndexBuffer);
+		m_pDX->CreateIndexBuffer(m_RiggedModelData.IndexData.GetByteSize(), m_RiggedModelData.IndexData.GetPtrData(), &m_IndexBuffer);
 
 		break;
 	default:
@@ -269,23 +269,23 @@ PRIVATE void JWModel::UpdateWorldMatrix() noexcept
 
 auto JWModel::SetAnimation(size_t AnimationID, bool ShouldRepeat) noexcept->JWModel&
 {
-	if (m_ModelType == EModelType::SkinnedModel)
+	if (m_ModelType == EModelType::RiggedModel)
 	{
-		if (m_SkinnedModelData.AnimationSet.vAnimations.size())
+		if (m_RiggedModelData.AnimationSet.vAnimations.size())
 		{
-			AnimationID = min(AnimationID, m_SkinnedModelData.AnimationSet.vAnimations.size() - 1);
+			AnimationID = min(AnimationID, m_RiggedModelData.AnimationSet.vAnimations.size() - 1);
 
 			// Set animation only when animation id has changed from the previous one.
-			if (m_SkinnedModelData.CurrentAnimationID != AnimationID)
+			if (m_RiggedModelData.CurrentAnimationID != AnimationID)
 			{
-				m_SkinnedModelData.CurrentAnimationID = AnimationID;
-				m_SkinnedModelData.CurrentAnimationTick = 0;
-				m_SkinnedModelData.ShouldRepeatCurrentAnimation = ShouldRepeat;
+				m_RiggedModelData.CurrentAnimationID = AnimationID;
+				m_RiggedModelData.CurrentAnimationTick = 0;
+				m_RiggedModelData.ShouldRepeatCurrentAnimation = ShouldRepeat;
 			}
 		}
 		else
 		{
-			// This is skinned model, but it has no animation set
+			// This is rigged model, but it has no animation set
 			JWAbort("This model doesn't have any animation set.");
 		}
 	}
@@ -295,20 +295,20 @@ auto JWModel::SetAnimation(size_t AnimationID, bool ShouldRepeat) noexcept->JWMo
 
 auto JWModel::Animate() noexcept->JWModel&
 {
-	if (m_ModelType == EModelType::SkinnedModel)
+	if (m_ModelType == EModelType::RiggedModel)
 	{
-		auto& current_animation_id = m_SkinnedModelData.CurrentAnimationID;
+		auto& current_animation_id = m_RiggedModelData.CurrentAnimationID;
 
 		if (current_animation_id != KSizeTInvalid)
 		{
-			auto& current_anim{ m_SkinnedModelData.AnimationSet.vAnimations[current_animation_id] };
+			auto& current_anim{ m_RiggedModelData.AnimationSet.vAnimations[current_animation_id] };
 
 			// Reset tick if the animation is over.
-			if (m_SkinnedModelData.CurrentAnimationTick >= current_anim.TotalAnimationTicks)
+			if (m_RiggedModelData.CurrentAnimationTick >= current_anim.TotalAnimationTicks)
 			{
-				m_SkinnedModelData.CurrentAnimationTick = 0;
+				m_RiggedModelData.CurrentAnimationTick = 0;
 
-				if (!m_SkinnedModelData.ShouldRepeatCurrentAnimation)
+				if (!m_RiggedModelData.ShouldRepeatCurrentAnimation)
 				{
 					// Non-repeating animation
 					current_animation_id = KSizeTInvalid;
@@ -319,8 +319,8 @@ auto JWModel::Animate() noexcept->JWModel&
 			UpdateBonesTransformation();
 
 			// Advance animation tick
-			//m_SkinnedModelData.CurrentAnimationTick += m_SkinnedModelData.AnimationSet.vAnimations[current_animation_id].AnimationTicksPerGameTick;
-			m_SkinnedModelData.CurrentAnimationTick += 1.0f;
+			//m_RiggedModelData.CurrentAnimationTick += m_RiggedModelData.AnimationSet.vAnimations[current_animation_id].AnimationTicksPerGameTick;
+			m_RiggedModelData.CurrentAnimationTick += 1.0f;
 		}
 		else
 		{
@@ -333,15 +333,15 @@ auto JWModel::Animate() noexcept->JWModel&
 
 auto JWModel::SetTPose() noexcept->JWModel&
 {
-	if (m_ModelType == EModelType::SkinnedModel)
+	if (m_ModelType == EModelType::RiggedModel)
 	{
-		UpdateNodeTPoseIntoBones(m_SkinnedModelData.CurrentAnimationTick, m_SkinnedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+		UpdateNodeTPoseIntoBones(m_RiggedModelData.CurrentAnimationTick, m_RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
 
 		// Update bone's T-Pose transformation for shader's constant buffer
-		for (size_t iterator_bone_mat{}; iterator_bone_mat < m_SkinnedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
+		for (size_t iterator_bone_mat{}; iterator_bone_mat < m_RiggedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
 		{
-			m_VSCBSkinned.TransformedBoneMatrices[iterator_bone_mat] =
-				XMMatrixTranspose(m_SkinnedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
+			m_VSCBRigged.TransformedBoneMatrices[iterator_bone_mat] =
+				XMMatrixTranspose(m_RiggedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
 		}
 	}
 
@@ -350,13 +350,13 @@ auto JWModel::SetTPose() noexcept->JWModel&
 
 PRIVATE void JWModel::UpdateBonesTransformation() noexcept
 {
-	UpdateNodeAnimationIntoBones(m_SkinnedModelData.CurrentAnimationTick, m_SkinnedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+	UpdateNodeAnimationIntoBones(m_RiggedModelData.CurrentAnimationTick, m_RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
 
 	// Update bone's final transformation for shader's constant buffer
-	for (size_t iterator_bone_mat{}; iterator_bone_mat < m_SkinnedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
+	for (size_t iterator_bone_mat{}; iterator_bone_mat < m_RiggedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
 	{
-		m_VSCBSkinned.TransformedBoneMatrices[iterator_bone_mat] =
-			XMMatrixTranspose(m_SkinnedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
+		m_VSCBRigged.TransformedBoneMatrices[iterator_bone_mat] =
+			XMMatrixTranspose(m_RiggedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
 	}
 }
 
@@ -366,8 +366,8 @@ PRIVATE void JWModel::UpdateNodeAnimationIntoBones(float AnimationTime, const SM
 
 	if (node.BoneID >= 0)
 	{
-		auto& bone = m_SkinnedModelData.BoneTree.vBones[node.BoneID];
-		auto& current_animation = m_SkinnedModelData.AnimationSet.vAnimations[m_SkinnedModelData.CurrentAnimationID];
+		auto& bone = m_RiggedModelData.BoneTree.vBones[node.BoneID];
+		auto& current_animation = m_RiggedModelData.AnimationSet.vAnimations[m_RiggedModelData.CurrentAnimationID];
 
 		// Calculate current animation time for interpolation
 		float CurrAnimationTime = AnimationTime - fmodf(AnimationTime, current_animation.AnimationTicksPerGameTick);
@@ -472,7 +472,7 @@ PRIVATE void JWModel::UpdateNodeAnimationIntoBones(float AnimationTime, const SM
 	{
 		for (auto child_id : node.vChildrenID)
 		{
-			UpdateNodeAnimationIntoBones(AnimationTime, m_SkinnedModelData.NodeTree.vNodes[child_id], global_transformation);
+			UpdateNodeAnimationIntoBones(AnimationTime, m_RiggedModelData.NodeTree.vNodes[child_id], global_transformation);
 		}
 	}
 }
@@ -483,7 +483,7 @@ PRIVATE void JWModel::UpdateNodeTPoseIntoBones(float AnimationTime, const SModel
 
 	if (node.BoneID >= 0)
 	{
-		auto& bone = m_SkinnedModelData.BoneTree.vBones[node.BoneID];
+		auto& bone = m_RiggedModelData.BoneTree.vBones[node.BoneID];
 
 		bone.FinalTransformation = bone.Offset * accumulation;
 	}
@@ -492,7 +492,7 @@ PRIVATE void JWModel::UpdateNodeTPoseIntoBones(float AnimationTime, const SModel
 	{
 		for (auto child_id : node.vChildrenID)
 		{
-			UpdateNodeTPoseIntoBones(AnimationTime, m_SkinnedModelData.NodeTree.vNodes[child_id], accumulation);
+			UpdateNodeTPoseIntoBones(AnimationTime, m_RiggedModelData.NodeTree.vNodes[child_id], accumulation);
 		}
 	}
 }
@@ -549,14 +549,14 @@ PRIVATE void JWModel::Update() noexcept
 		m_pDX->SetVSCBStatic(m_VSCBStatic);
 
 		break;
-	case JWEngine::EModelType::SkinnedModel:
+	case JWEngine::EModelType::RiggedModel:
 		m_pDX->SetVSAnim();
 
 		// Set VS constant buffer
-		m_VSCBSkinned.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
-		m_VSCBSkinned.World = XMMatrixTranspose(m_MatrixWorld);
+		m_VSCBRigged.WVP = XMMatrixTranspose(m_MatrixWorld * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBRigged.World = XMMatrixTranspose(m_MatrixWorld);
 
-		m_pDX->SetVSCBSkinned(m_VSCBSkinned);
+		m_pDX->SetVSCBRigged(m_VSCBRigged);
 
 		break;
 	default:
@@ -589,9 +589,9 @@ void JWModel::Draw() noexcept
 			0, 1, &m_VertexBuffer, m_StaticModelData.VertexData.GetPtrStride(), m_StaticModelData.VertexData.GetPtrOffset());
 
 		break;
-	case JWEngine::EModelType::SkinnedModel:
+	case JWEngine::EModelType::RiggedModel:
 		m_pDX->GetDeviceContext()->IASetVertexBuffers(
-			0, 1, &m_VertexBuffer, m_SkinnedModelData.VertexData.GetPtrStride(), m_SkinnedModelData.VertexData.GetPtrOffset());
+			0, 1, &m_VertexBuffer, m_RiggedModelData.VertexData.GetPtrStride(), m_RiggedModelData.VertexData.GetPtrOffset());
 
 		break;
 	default:
@@ -608,8 +608,8 @@ void JWModel::Draw() noexcept
 		m_pDX->GetDeviceContext()->DrawIndexed(m_StaticModelData.IndexData.GetCount(), 0, 0);
 
 		break;
-	case JWEngine::EModelType::SkinnedModel:
-		m_pDX->GetDeviceContext()->DrawIndexed(m_SkinnedModelData.IndexData.GetCount(), 0, 0);
+	case JWEngine::EModelType::RiggedModel:
+		m_pDX->GetDeviceContext()->DrawIndexed(m_RiggedModelData.IndexData.GetCount(), 0, 0);
 
 		break;
 	default:

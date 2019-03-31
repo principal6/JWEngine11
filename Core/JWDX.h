@@ -60,7 +60,7 @@ namespace JWEngine
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
 		void SetVSCBStatic(SVSCBStatic& Data) noexcept;
 		// Called in each animated JWModel's Animate() function
-		void SetVSCBSkinned(SVSCBSkinned& Data) noexcept;
+		void SetVSCBRigged(SVSCBRigged& Data) noexcept;
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
 		void SetPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcept;
 		// Called when Ambient Light is set by JWGame::AddLight()
@@ -145,8 +145,8 @@ namespace JWEngine
 		ID3D11PixelShader*	m_PSRaw{};
 		ID3D11Buffer*		m_VSCBStatic{};
 		SVSCBStatic			m_VSCBStaticData{};
-		ID3D11Buffer*		m_VSCBSkinned{};
-		SVSCBSkinned		m_VSCBSkinnedData{};
+		ID3D11Buffer*		m_VSCBRigged{};
+		SVSCBRigged		m_VSCBRiggedData{};
 		ID3D11Buffer*		m_PSCBDefault{};
 		SPSCBDefault		m_PSCBDefaultData{};
 

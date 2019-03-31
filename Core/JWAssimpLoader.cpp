@@ -116,9 +116,9 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 	return temporary_model_data;
 }
 
-auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SSkinnedModelData
+auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SRiggedModelData
 {
-	SSkinnedModelData result{};
+	SRiggedModelData result{};
 	result.BaseDirectory = Directory;
 
 	Assimp::Importer importer{};
@@ -210,7 +210,7 @@ PRIVATE void JWAssimpLoader::ExtractNodeTree(const aiScene* Scene, const aiNode*
 	}
 }
 
-PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, SSkinnedModelData& OutModelData) noexcept
+PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, SRiggedModelData& OutModelData) noexcept
 {
 	int indices_offset{};
 
@@ -365,7 +365,7 @@ PRIVATE void JWAssimpLoader::ExtractBone(const aiBone* paiBone, int VertexOffset
 	}
 }
 
-PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTree, SSkinnedVertexData& OutVertexData) noexcept
+PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTree, SRiggedVertexData& OutVertexData) noexcept
 {
 	for (const auto& bone : BoneTree.vBones)
 	{

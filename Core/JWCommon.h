@@ -134,7 +134,7 @@ namespace JWEngine
 	{
 		Invalid,
 		StaticModel,
-		SkinnedModel,
+		RiggedModel,
 		LineModel,
 	};
 
@@ -246,28 +246,28 @@ namespace JWEngine
 		XMFLOAT4 Specular{};
 	};
 	
-	struct SSkinnedVertex
+	struct SRiggedVertex
 	{
-		SSkinnedVertex() {};
-		SSkinnedVertex(XMFLOAT3 _Position) :
+		SRiggedVertex() {};
+		SRiggedVertex(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
-		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SSkinnedVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
+		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
-		SSkinnedVertex(float x, float y, float z) :
+		SRiggedVertex(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SSkinnedVertex(float x, float y, float z, float u, float v) :
+		SRiggedVertex(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		SSkinnedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+		SRiggedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
-		SSkinnedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+		SRiggedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
@@ -324,15 +324,15 @@ namespace JWEngine
 		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
 	};
 
-	struct SSkinnedVertexData
+	struct SRiggedVertexData
 	{
-		VECTOR<SSkinnedVertex> Vertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SSkinnedVertex)) };
+		VECTOR<SRiggedVertex> Vertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SRiggedVertex)) };
 		UINT Offset{};
 
 		void Clear() noexcept { Vertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SSkinnedVertex)); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SRiggedVertex)); };
 		auto GetPtrData() const noexcept { return &Vertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
@@ -421,9 +421,9 @@ namespace JWEngine
 		XMMATRIX World{};
 	};
 	
-	struct SVSCBSkinned
+	struct SVSCBRigged
 	{
-		SVSCBSkinned() {};
+		SVSCBRigged() {};
 
 		XMMATRIX WVP{};
 		XMMATRIX World{};
@@ -559,9 +559,9 @@ namespace JWEngine
 		WSTRING TextureFileNameW{};
 	};
 	
-	struct SSkinnedModelData
+	struct SRiggedModelData
 	{
-		SSkinnedVertexData VertexData{};
+		SRiggedVertexData VertexData{};
 		SIndex3Data IndexData{};
 		bool HasTexture{ false };
 		STRING BaseDirectory{};

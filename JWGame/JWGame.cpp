@@ -85,7 +85,7 @@ void JWGame::AddOpaqueModel(STRING ModelFileName, bool IsAnimated) noexcept
 
 	if (IsAnimated)
 	{
-		m_pOpaqueModels[m_pOpaqueModels.size() - 1]->SetSkinnedModelData(m_AssimpLoader.LoadRiggedModel(m_BaseDirectory + KAssetDirectory, ModelFileName));
+		m_pOpaqueModels[m_pOpaqueModels.size() - 1]->SetRiggedModelData(m_AssimpLoader.LoadRiggedModel(m_BaseDirectory + KAssetDirectory, ModelFileName));
 	}
 	else
 	{

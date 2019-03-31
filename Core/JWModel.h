@@ -20,7 +20,7 @@ namespace JWEngine
 
 		// Called in JWGame class
 		void SetStaticModelData(SStaticModelData ModelData) noexcept;
-		void SetSkinnedModelData(SSkinnedModelData ModelData) noexcept;
+		void SetRiggedModelData(SRiggedModelData ModelData) noexcept;
 
 		void SetModel2Data(SModel2Data Model2Data) noexcept;
 		
@@ -91,7 +91,7 @@ namespace JWEngine
 		ID3D11Buffer* m_IndexBuffer{};
 
 		SStaticModelData m_StaticModelData{};
-		SSkinnedModelData m_SkinnedModelData{};
+		SRiggedModelData m_RiggedModelData{};
 
 		ID3D11Buffer* m_NormalVertexBuffer{};
 		ID3D11Buffer* m_NormalIndexBuffer{};
@@ -112,6 +112,6 @@ namespace JWEngine
 		EWorldMatrixCalculationOrder m_CalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 
 		SVSCBStatic m_VSCBStatic{};
-		SVSCBSkinned m_VSCBSkinned{};
+		SVSCBRigged m_VSCBRigged{};
 	};
 };

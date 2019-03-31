@@ -37,16 +37,16 @@ namespace JWEngine
 	public:
 		auto LoadStaticModel(STRING Directory, STRING ModelFileName) noexcept->SStaticModelData;
 
-		auto LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SSkinnedModelData;
+		auto LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SRiggedModelData;
 
 	private:
 		void ExtractNodeTree(const aiScene* Scene, const aiNode* Node, int ParentNodeID, SModelNodeTree& OutNodeTree) noexcept;
 
-		void BuildMeshesAndBonesFromNodes(const aiScene* Scene, SSkinnedModelData& OutModelData) noexcept;
+		void BuildMeshesAndBonesFromNodes(const aiScene* Scene, SRiggedModelData& OutModelData) noexcept;
 
 		void ExtractBone(const aiBone* paiBone, int VertexOffset, SModelBoneTree& OutBoneTree) noexcept;
 
-		void MatchBonesAndVertices(const SModelBoneTree& BoneTree, SSkinnedVertexData& OutVertexData) noexcept;
+		void MatchBonesAndVertices(const SModelBoneTree& BoneTree, SRiggedVertexData& OutVertexData) noexcept;
 
 		void MatchBonesAndNodes(const SModelBoneTree& BoneTree, SModelNodeTree& OutNodeTree) noexcept;
 
