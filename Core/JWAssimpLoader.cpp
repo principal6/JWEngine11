@@ -122,9 +122,6 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 	result.BaseDirectory = Directory;
 
 	Assimp::Importer importer{};
-
-	// aiProcess_FindDegenerates (this may cause indices count to be 2, not 3)
-
 	const aiScene* scene{ importer.ReadFile(result.BaseDirectory + ModelFileName,
 		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes |
 		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality | aiProcess_FixInfacingNormals |
@@ -142,7 +139,7 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 	// Extract node hierarchy from model file.
 	ExtractNodeTree(scene, scene->mRootNode, -1, result.NodeTree);
 	
-	// Build meshes and bones from nodes in extracted node hierarchy.
+	// Build meshes and bones from nodes into extracted node hierarchy.
 	BuildMeshesAndBonesFromNodes(scene, result);
 
 	// Match bones and vertices
@@ -476,4 +473,37 @@ PRIVATE void JWAssimpLoader::ExtractAnimationSet(const aiScene* Scene, const SMo
 			}
 		}
 	}
+}
+
+void JWAssimpLoader::LoadAdditionalAnimationIntoRiggedModel(SRiggedModelData& ModelData, STRING Directory, STRING ModelFileName) noexcept
+{
+	SRiggedModelData new_animation_model{};
+	new_animation_model.BaseDirectory = Directory;
+
+	Assimp::Importer importer{};
+	const aiScene* scene{ importer.ReadFile(new_animation_model.BaseDirectory + ModelFileName,
+		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes |
+		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality | aiProcess_FixInfacingNormals |
+		aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices) };
+
+	if (scene == nullptr)
+	{
+		JWAbort("Model not imported. Check out the model file.");
+	}
+	else if (scene->mRootNode == nullptr)
+	{
+		JWAbort("Model not imported. Check out the model file.");
+	}
+
+	// Extract node hierarchy from model file.
+	ExtractNodeTree(scene, scene->mRootNode, -1, new_animation_model.NodeTree);
+
+	if (new_animation_model.NodeTree.vNodes.size() != ModelData.NodeTree.vNodes.size())
+	{
+		// New model must have the same nodes as the existing one.
+		JWAbort("This new model file does not match the existing one.");
+	}
+
+	// Extract animation set into the existing model data.
+	ExtractAnimationSet(scene, ModelData.NodeTree, ModelData.AnimationSet);
 }

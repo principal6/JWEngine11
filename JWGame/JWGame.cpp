@@ -57,7 +57,7 @@ void JWGame::SetOnInputFunction(FP_ON_INPUT Function) noexcept
 	m_fpOnInput = Function;
 }
 
-void JWGame::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEYDOWN Function) noexcept
+void JWGame::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexcept
 {
 	if (Function == nullptr)
 	{
@@ -65,6 +65,16 @@ void JWGame::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEYDOWN Function) noexcep
 	}
 
 	m_Window.SetOnWindowsKeyDownFunction(Function);
+}
+
+void JWGame::SetOnWindowsCharKeyPressedFunction(FP_ON_WINDOWS_CHAR_KEY_PRESSED Function) noexcept
+{
+	if (Function == nullptr)
+	{
+		JWAbort("FP_ON_WINDOWS_KEYDOWN Function is nullptr.");
+	}
+
+	m_Window.SetOnWindowsCharKeyPressedFunction(Function);
 }
 
 void JWGame::SetRasterizerState(ERasterizerState State) noexcept
@@ -77,13 +87,13 @@ void JWGame::SetBlendState(EBlendState State) noexcept
 	m_DX.SetBlendState(State);
 }
 
-void JWGame::AddOpaqueModel(STRING ModelFileName, bool IsAnimated) noexcept
+void JWGame::AddOpaqueModel(STRING ModelFileName, bool IsRigged) noexcept
 {
 	m_pOpaqueModels.push_back(MAKE_UNIQUE_AND_MOVE(JWModel)());
 
 	m_pOpaqueModels[m_pOpaqueModels.size() - 1]->Create(m_DX, m_Camera);
 
-	if (IsAnimated)
+	if (IsRigged)
 	{
 		m_pOpaqueModels[m_pOpaqueModels.size() - 1]->SetRiggedModelData(m_AssimpLoader.LoadRiggedModel(m_BaseDirectory + KAssetDirectory, ModelFileName));
 	}

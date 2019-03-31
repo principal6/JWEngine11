@@ -1,7 +1,6 @@
 #pragma once
 
 #include "JWCommon.h"
-#include "JWAssimpLoader.h"
 
 namespace JWEngine
 {
@@ -31,7 +30,10 @@ namespace JWEngine
 		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;
 
 		// Animation
+		auto AddAdditionalAnimationFromFile(STRING ModelFileName) noexcept->JWModel&;
 		auto SetAnimation(size_t AnimationID, bool ShouldRepeat = true) noexcept->JWModel&;
+		auto SetPrevAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
+		auto SetNextAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
 		auto Animate() noexcept->JWModel&;
 		auto SetTPose() noexcept->JWModel&;
 		

@@ -567,8 +567,6 @@ namespace JWEngine
 		STRING BaseDirectory{};
 		WSTRING TextureFileNameW{};
 
-		bool IsRigged{ false };
-
 		// If no animation is set, CurrentAnimationID is KSizeTInvalid(-1)
 		size_t CurrentAnimationID{ KSizeTInvalid };
 

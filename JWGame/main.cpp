@@ -8,7 +8,8 @@ using namespace JWEngine;
 
 static JWGame myGame;
 
-JW_FUNCTION_ON_WINDOWS_KEYDOWN(OnWindowsKeyDown);
+JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown);
+JW_FUNCTION_ON_WINDOWS_CHAR_KEY_PRESSED(OnWindowsCharKeyPressed);
 JW_FUNCTION_ON_INPUT(OnInput);
 JW_FUNCTION_ON_RENDER(OnRender);
 
@@ -33,8 +34,10 @@ int main()
 		.SetTranslation(XMFLOAT3(10.0f, 0.0f, 0.0f))
 		.ShouldBeLit(true);
 
-	myGame.AddOpaqueModel("Ezreal_Punching.X", true);
+	myGame.AddOpaqueModel("Ezreal_Idle.X", true);
 	myGame.GetOpaqueModel(1)
+		.AddAdditionalAnimationFromFile("Ezreal_Punching.X")
+		.AddAdditionalAnimationFromFile("Ezreal_Walk.X")
 		.SetScale(XMFLOAT3(0.05f, 0.05f, 0.05f))
 		.SetAnimation(0);
 		//.ShouldBeLit(false);
@@ -47,6 +50,7 @@ int main()
 	myGame.AddLight(SLightData(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5, 5, 0), 0.6f));
 
 	myGame.SetOnWindowsKeyDownFunction(OnWindowsKeyDown);
+	myGame.SetOnWindowsCharKeyPressedFunction(OnWindowsCharKeyPressed);
 	myGame.SetOnInputFunction(OnInput);
 	myGame.SetOnRenderFunction(OnRender);
 
@@ -55,7 +59,7 @@ int main()
 	return 0;
 }
 
-JW_FUNCTION_ON_WINDOWS_KEYDOWN(OnWindowsKeyDown)
+JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 {
 	if (VK == VK_F1)
 	{
@@ -73,6 +77,21 @@ JW_FUNCTION_ON_WINDOWS_KEYDOWN(OnWindowsKeyDown)
 	if (VK == VK_F2)
 	{
 		g_ShouldDrawNormals = !g_ShouldDrawNormals;
+	}
+}
+
+JW_FUNCTION_ON_WINDOWS_CHAR_KEY_PRESSED(OnWindowsCharKeyPressed)
+{
+	if (Character == '1')
+	{
+		myGame.GetOpaqueModel(1)
+			.SetPrevAnimation();
+	}
+
+	if (Character == '2')
+	{
+		myGame.GetOpaqueModel(1)
+			.SetNextAnimation();
 	}
 }
 

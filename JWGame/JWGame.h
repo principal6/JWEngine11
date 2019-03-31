@@ -31,12 +31,13 @@ namespace JWEngine
 
 		void SetOnInputFunction(FP_ON_INPUT Function) noexcept;
 		void SetOnRenderFunction(FP_ON_RENDER Function) noexcept;
-		void SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEYDOWN Function) noexcept;
+		void SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexcept;
+		void SetOnWindowsCharKeyPressedFunction(FP_ON_WINDOWS_CHAR_KEY_PRESSED Function) noexcept;
 
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
 
-		void AddOpaqueModel(STRING ModelFileName, bool IsAnimated = false) noexcept;
+		void AddOpaqueModel(STRING ModelFileName, bool IsRigged = false) noexcept;
 		auto GetOpaqueModel(size_t OpaqueModelIndex) const noexcept->JWModel&;
 
 		void AddTransparentModel(STRING ModelFileName) noexcept;

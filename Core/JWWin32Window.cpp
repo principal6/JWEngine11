@@ -2,12 +2,19 @@
 
 using namespace JWEngine;
 
-static FP_ON_WINDOWS_KEYDOWN s_fpWindowsKeyDown{};
+static FP_ON_WINDOWS_KEY_DOWN s_fpWindowsKeyDown{};
+static FP_ON_WINDOWS_CHAR_KEY_PRESSED s_fpWindowsCharKeyPressed{};
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
 	{
+	case WM_CHAR:
+		if (s_fpWindowsCharKeyPressed)
+		{
+			s_fpWindowsCharKeyPressed(static_cast<TCHAR>(wParam));
+		}
+		break;
 	case WM_KEYDOWN:
 		if (s_fpWindowsKeyDown)
 		{
@@ -66,9 +73,14 @@ void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& T
 	UpdateWindow(m_hWnd);
 }
 
-void JWWin32Window::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEYDOWN Function) noexcept
+void JWWin32Window::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexcept
 {
 	s_fpWindowsKeyDown = Function;
+}
+
+void JWWin32Window::SetOnWindowsCharKeyPressedFunction(FP_ON_WINDOWS_CHAR_KEY_PRESSED Function) noexcept
+{
+	s_fpWindowsCharKeyPressed = Function;
 }
 
 auto JWWin32Window::GetWidth() const noexcept->int

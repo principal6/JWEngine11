@@ -1,6 +1,7 @@
 #include "JWModel.h"
 #include "../Core/JWDX.h"
 #include "JWCamera.h"
+#include "JWAssimpLoader.h"
 
 using namespace JWEngine;
 
@@ -267,6 +268,17 @@ PRIVATE void JWModel::UpdateWorldMatrix() noexcept
 	m_WorldPosition = XMVector3TransformCoord(XMVectorZero(), m_MatrixWorld);
 }
 
+auto JWModel::AddAdditionalAnimationFromFile(STRING ModelFileName) noexcept->JWModel&
+{
+	if (m_ModelType == EModelType::RiggedModel)
+	{
+		JWAssimpLoader loader;
+		loader.LoadAdditionalAnimationIntoRiggedModel(m_RiggedModelData, m_RiggedModelData.BaseDirectory, ModelFileName);
+	}
+
+	return *this;
+}
+
 auto JWModel::SetAnimation(size_t AnimationID, bool ShouldRepeat) noexcept->JWModel&
 {
 	if (m_ModelType == EModelType::RiggedModel)
@@ -288,6 +300,35 @@ auto JWModel::SetAnimation(size_t AnimationID, bool ShouldRepeat) noexcept->JWMo
 			// This is rigged model, but it has no animation set
 			JWAbort("This model doesn't have any animation set.");
 		}
+	}
+
+	return *this;
+}
+
+auto JWModel::SetPrevAnimation(bool ShouldRepeat) noexcept->JWModel&
+{
+	if (m_ModelType == EModelType::RiggedModel)
+	{
+		size_t AnimationID = m_RiggedModelData.CurrentAnimationID - 1;
+		AnimationID = min(AnimationID, m_RiggedModelData.AnimationSet.vAnimations.size() - 1);
+
+		SetAnimation(AnimationID, ShouldRepeat);
+	}
+
+	return *this;
+}
+
+auto JWModel::SetNextAnimation(bool ShouldRepeat) noexcept->JWModel&
+{
+	if (m_ModelType == EModelType::RiggedModel)
+	{
+		size_t AnimationID = m_RiggedModelData.CurrentAnimationID + 1;
+		if (AnimationID >= m_RiggedModelData.AnimationSet.vAnimations.size())
+		{
+			AnimationID = 0;
+		}
+
+		SetAnimation(AnimationID, ShouldRepeat);
 	}
 
 	return *this;

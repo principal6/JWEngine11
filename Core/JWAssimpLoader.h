@@ -39,6 +39,8 @@ namespace JWEngine
 
 		auto LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SRiggedModelData;
 
+		void LoadAdditionalAnimationIntoRiggedModel(SRiggedModelData& ModelData, STRING Directory, STRING ModelFileName) noexcept;
+
 	private:
 		void ExtractNodeTree(const aiScene* Scene, const aiNode* Node, int ParentNodeID, SModelNodeTree& OutNodeTree) noexcept;
 
