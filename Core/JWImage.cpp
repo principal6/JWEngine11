@@ -179,7 +179,7 @@ PROTECTED void JWImage::UpdateVSCB() noexcept
 PROTECTED void JWImage::UpdatePSCB() noexcept
 {
 	// Set PS constant buffer
-	m_pDX->SetPSCBDefaultFlags(true, false);
+	m_pDX->SetPSCBFlags(true, false);
 }
 
 PROTECTED void JWImage::UpdateTexture() noexcept

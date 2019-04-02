@@ -4,9 +4,18 @@
 
 namespace JWEngine
 {
-	// Forward declaration
 	class JWDX;
-	class JWCamera;
+
+	enum EFLAGRenderOption : uint8_t
+	{
+		JWFlagRenderOption_UseTexture = 0b1,
+		JWFlagRenderOption_UseLighting = 0b10,
+		JWFlagRenderOption_UseAnimationInterpolation = 0b100,
+		JWFlagRenderOption_UseTransparency = 0b1000,
+		JWFlagRenderOption_DrawNormals = 0b10000,
+		JWFlagRenderOption_DrawTPose = 0b100000,
+	};
+	using JWFlagRenderOption = uint8_t;
 
 	class JWModel
 	{
@@ -14,42 +23,20 @@ namespace JWEngine
 		JWModel() = default;
 		~JWModel();
 
-		// Called in JWGame class
-		void Create(JWDX& DX, JWCamera& Camera) noexcept;
+		void Create(JWDX& DX) noexcept;
 
-		// Called in JWGame class
 		void SetStaticModelData(SStaticModelData ModelData) noexcept;
 		void SetRiggedModelData(SRiggedModelData ModelData) noexcept;
-
 		void SetModel2Data(SModel2Data Model2Data) noexcept;
-		
-		auto SetWorldMatrixToIdentity() noexcept->JWModel&;
-		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder Order) noexcept->JWModel&;
-		auto SetTranslation(XMFLOAT3 Offset) noexcept->JWModel&;
-		auto SetRotation(XMFLOAT4 RotationAxis, float Angle) noexcept->JWModel&;
-		auto SetScale(XMFLOAT3 Scale) noexcept->JWModel&;
 
-		// Animation
-		auto AddAdditionalAnimationFromFile(STRING ModelFileName) noexcept->JWModel&;
+		// Load & Set animation
+		auto AddAnimationFromFile(STRING ModelFileName) noexcept->JWModel&;
 		auto SetAnimation(size_t AnimationID, bool ShouldRepeat = true) noexcept->JWModel&;
 		auto SetPrevAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
 		auto SetNextAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
-		auto Animate() noexcept->JWModel&;
-		auto SetTPose() noexcept->JWModel&;
+		auto ToggleTPose() noexcept->JWModel&;
 		
-		auto ShouldDrawNormals(bool Value) noexcept->JWModel&;
-		auto ShouldBeLit(bool Value) noexcept->JWModel&;
-		auto ShouldInterpolateAnimation(bool Value) noexcept->JWModel&;
-
-		auto GetWorldPosition() noexcept->XMVECTOR;
-		auto GetDistanceFromCamera() noexcept->float;
-
-		// Called in JWGame class
-		void Draw() noexcept;
-
 	private:
-		void CheckValidity() const noexcept;
-
 		void CreateTexture(WSTRING TextureFileName) noexcept;
 
 		void CreateModelVertexIndexBuffers() noexcept;
@@ -58,62 +45,23 @@ namespace JWEngine
 		auto NormalAddIndex(const SIndex2& Index) noexcept->JWModel&;
 		void NormalAddEnd() noexcept;
 
-		// Called by Draw()
-		void DrawNormals() noexcept;
+	public:
+		JWFlagRenderOption FlagRenderOption{};
+		
+		ID3D11Buffer* ModelVertexBuffer{};
+		ID3D11Buffer* ModelIndexBuffer{};
+		SStaticModelData StaticModelData{};
+		SRiggedModelData RiggedModelData{};
 
-		// Called by Draw()
-		void Update() noexcept;
+		ID3D11Buffer* NormalVertexBuffer{};
+		ID3D11Buffer* NormalIndexBuffer{};
+		SModel2Data NormalData{};
 
-		void UpdateWorldMatrix() noexcept;
-
-		// Called by Animate()
-		void UpdateBonesTransformation() noexcept;
-
-		// Called by UpdateBonesTransformation() and by this function itself (recursively)
-		void UpdateNodeAnimationIntoBones(float AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept;
-
-		// Called by SetTPose()
-		void UpdateNodeTPoseIntoBones(float AnimationTime, const SModelNode& node, const XMMATRIX Accumulated) noexcept;
+		ID3D11ShaderResourceView* TextureShaderResourceView{};
 
 	private:
-		bool m_IsValid{ false };
-		bool m_IsModelLoaded{ false };
-		bool m_IsMode2lLoaded{ false };
-		bool m_HasTexture{ false };
-		bool m_ShouldDrawNormals{ false };
-		bool m_ShouldBeLit{ true };
-		bool m_ShouldInterpolateAnimation{ true };
+		JWDX* m_pDX{};
 
 		EModelType m_ModelType{ EModelType::Invalid };
-
-		JWDX* m_pDX{};
-		JWCamera* m_pCamera{};
-
-		ID3D11Buffer* m_VertexBuffer{};
-		ID3D11Buffer* m_IndexBuffer{};
-
-		SStaticModelData m_StaticModelData{};
-		SRiggedModelData m_RiggedModelData{};
-
-		ID3D11Buffer* m_NormalVertexBuffer{};
-		ID3D11Buffer* m_NormalIndexBuffer{};
-
-		SModel2Data m_NormalData{};
-		//SVertexData m_NormalVertexData{};
-		//SIndex2Data m_NormalIndexData{};
-
-		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
-
-		XMMATRIX m_MatrixWorld{};
-		XMMATRIX m_MatrixTranslation{};
-		XMMATRIX m_MatrixRotation{};
-		XMMATRIX m_MatrixScale{};
-
-		XMVECTOR m_WorldPosition{};
-
-		EWorldMatrixCalculationOrder m_CalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
-
-		SVSCBStatic m_VSCBStatic{};
-		SVSCBRigged m_VSCBRigged{};
 	};
 };

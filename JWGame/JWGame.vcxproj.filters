@@ -20,6 +20,9 @@
     <Filter Include="TinyXml2">
       <UniqueIdentifier>{b66aac87-fa41-4d28-be97-797f026f8148}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ECS">
+      <UniqueIdentifier>{cb057b77-710a-46e6-9c5c-2b9d04980616}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Core\JWWin32Window.cpp">
@@ -65,6 +68,18 @@
     </ClCompile>
     <ClCompile Include="..\Core\JWRawPixelSetter.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ECS\JWEntity.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ECS\JWSystemLight.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ECS\JWSystemRender.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ECS\JWSystemTransform.cpp">
+      <Filter>ECS</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -395,6 +410,30 @@
     </ClInclude>
     <ClInclude Include="..\Shaders\ColorHeader.hlsl">
       <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWComponentLight.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWComponentRender.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWComponentTransform.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWECS.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWEntity.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWSystemLight.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWSystemRender.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWSystemTransform.h">
+      <Filter>ECS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

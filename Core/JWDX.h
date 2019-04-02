@@ -62,13 +62,12 @@ namespace JWEngine
 		// Called in each animated JWModel's Animate() function
 		void SetVSCBRigged(SVSCBRigged& Data) noexcept;
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
-		void SetPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcept;
-		// Called when Ambient Light is set by JWGame::AddLight()
-		void SetPSCBDefaultAmbientLight(XMFLOAT4 AmbientColor) noexcept;
-		// Called when Directional Light is set by JWGame::AddLight()
-		void SetPSCBDefaultDirectionalLight(XMFLOAT4 DirectionalColor, XMFLOAT3 DirectionalDirection) noexcept;
+		void SetPSCBFlags(bool HasTexture, bool UseLighting) noexcept;
+		
+		void SetPSCBLights(SPSCBLights& Data) noexcept;
+		
 		// Called once per game loop, which is when the camera's position would probably be changed.
-		void SetPSCBDefaultCameraPosition(XMFLOAT4 CameraPosition) noexcept;
+		void SetPSCBCamera(XMFLOAT4 CameraPosition) noexcept;
 
 		void SetColorVS() noexcept;
 		void SetColorPS() noexcept;
@@ -97,7 +96,7 @@ namespace JWEngine
 		// PS Shader cretion
 		void CreatePSBase() noexcept;
 		void CreatePSRaw() noexcept;
-		void CreatePSCB() noexcept;
+		void CreatePSCBs() noexcept;
 		void CreateColorPS() noexcept;
 
 		// Called in Create()
@@ -131,6 +130,7 @@ namespace JWEngine
 		ID3D11Device* m_Device11{};
 		ID3D11DeviceContext* m_DeviceContext11{};
 
+		// Shader and input layout
 		ID3D10Blob*			m_VSBaseBuffer{};
 		ID3D11VertexShader*	m_VSBase{};
 		ID3D11InputLayout*	m_VSBaseInputLayout{};
@@ -143,20 +143,25 @@ namespace JWEngine
 		ID3D11PixelShader*	m_PSBase{};
 		ID3D10Blob*			m_PSRawBuffer{};
 		ID3D11PixelShader*	m_PSRaw{};
+		ID3D10Blob*			m_ColorVSBuffer{};
+		ID3D11VertexShader*	m_ColorVS11{};
+		ID3D11InputLayout*	m_ColorVSInputLayout11{};
+		ID3D10Blob*			m_ColorPSBuffer{};
+		ID3D11PixelShader*	m_ColorPS11{};
+
+		// Shader constant buffer
 		ID3D11Buffer*		m_VSCBStatic{};
 		SVSCBStatic			m_VSCBStaticData{};
 		ID3D11Buffer*		m_VSCBRigged{};
-		SVSCBRigged		m_VSCBRiggedData{};
-		ID3D11Buffer*		m_PSCBDefault{};
-		SPSCBDefault		m_PSCBDefaultData{};
-
-		ID3D10Blob* m_ColorVSBuffer{};
-		ID3D11VertexShader* m_ColorVS11{};
-		ID3D11InputLayout* m_ColorVSInputLayout11{};
-		ID3D10Blob* m_ColorPSBuffer{};
-		ID3D11PixelShader* m_ColorPS11{};
-		ID3D11Buffer* m_ColorVSCB{};
-		SVSCBColor m_ColorVSCBData;
+		SVSCBRigged			m_VSCBRiggedData{};
+		ID3D11Buffer*		m_PSCBFlags{};
+		SPSCBFlags			m_PSCBFlagsData{};
+		ID3D11Buffer*		m_PSCBLights{};
+		SPSCBLights			m_PSCBLightsData{};
+		ID3D11Buffer*		m_PSCBCamera{};
+		SPSCBCamera			m_PSCBCameraData{};
+		ID3D11Buffer*		m_ColorVSCB{};
+		SVSCBColor			m_ColorVSCBData{};
 
 		ID3D11DepthStencilView* m_DepthStencilView11{};
 		ID3D11DepthStencilState* m_DepthStencilStateZEnabled11{};

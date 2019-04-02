@@ -109,7 +109,7 @@ PRIVATE void JWLine::Update() noexcept
 	m_pDX->SetVSCBStatic(m_VSCBStatic);
 
 	// Set PS constant buffer
-	m_pDX->SetPSCBDefaultFlags(false, false);
+	m_pDX->SetPSCBFlags(false, false);
 }
 
 void JWLine::Draw() noexcept

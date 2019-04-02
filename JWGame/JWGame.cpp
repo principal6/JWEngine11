@@ -29,6 +29,8 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 	m_RawPixelSetter.Create(m_DX);
 
+	m_ECS.Create(m_DX, m_Camera, BaseDirectory);
+
 	m_IsValid = true;
 }
 
@@ -37,7 +39,7 @@ void JWGame::LoadCursorImage(STRING FileName) noexcept
 	m_MouseCursorImage.LoadImageFromFile(m_BaseDirectory + KAssetDirectory, FileName);
 }
 
-void JWGame::SetOnRenderFunction(FP_ON_RENDER Function) noexcept
+void JWGame::SetFunctionOnRender(FP_ON_RENDER Function) noexcept
 {
 	if (Function == nullptr)
 	{
@@ -47,7 +49,7 @@ void JWGame::SetOnRenderFunction(FP_ON_RENDER Function) noexcept
 	m_fpOnRender = Function;
 }
 
-void JWGame::SetOnInputFunction(FP_ON_INPUT Function) noexcept
+void JWGame::SetFunctionOnInput(FP_ON_INPUT Function) noexcept
 {
 	if (Function == nullptr)
 	{
@@ -57,7 +59,7 @@ void JWGame::SetOnInputFunction(FP_ON_INPUT Function) noexcept
 	m_fpOnInput = Function;
 }
 
-void JWGame::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexcept
+void JWGame::SetFunctionOnWindowsKeyDown(FP_ON_WINDOWS_KEY_DOWN Function) noexcept
 {
 	if (Function == nullptr)
 	{
@@ -67,7 +69,7 @@ void JWGame::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexce
 	m_Window.SetOnWindowsKeyDownFunction(Function);
 }
 
-void JWGame::SetOnWindowsCharInputFunction(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept
+void JWGame::SetFunctionOnWindowsCharInput(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept
 {
 	if (Function == nullptr)
 	{
@@ -77,48 +79,24 @@ void JWGame::SetOnWindowsCharInputFunction(FP_ON_WINDOWS_CHAR_INPUT Function) no
 	m_Window.SetOnWindowsCharInputFunction(Function);
 }
 
-void JWGame::SetRasterizerState(ERasterizerState State) noexcept
+void JWGame::ToggleWireFrame() noexcept
 {
-	m_DX.SetRasterizerState(State);
-}
-
-void JWGame::SetBlendState(EBlendState State) noexcept
-{
-	m_DX.SetBlendState(State);
-}
-
-void JWGame::AddOpaqueModel(STRING ModelFileName, bool IsRigged) noexcept
-{
-	m_pOpaqueModels.push_back(MAKE_UNIQUE_AND_MOVE(JWModel)());
-
-	m_pOpaqueModels[m_pOpaqueModels.size() - 1]->Create(m_DX, m_Camera);
-
-	if (IsRigged)
+	if (m_RasterizerState == ERasterizerState::WireFrame)
 	{
-		m_pOpaqueModels[m_pOpaqueModels.size() - 1]->SetRiggedModelData(m_AssimpLoader.LoadRiggedModel(m_BaseDirectory + KAssetDirectory, ModelFileName));
+		m_RasterizerState = ERasterizerState::SolidNoCull;
 	}
 	else
 	{
-		m_pOpaqueModels[m_pOpaqueModels.size() - 1]->SetStaticModelData(m_AssimpLoader.LoadStaticModel(m_BaseDirectory + KAssetDirectory, ModelFileName));
+		m_RasterizerState = ERasterizerState::WireFrame;
 	}
+	
+	m_DX.SetRasterizerState(m_RasterizerState);
 }
 
-auto JWGame::GetOpaqueModel(size_t OpaqueModelIndex) const noexcept->JWModel&
+void JWGame::SetRasterizerState(ERasterizerState State) noexcept
 {
-	return *m_pOpaqueModels[OpaqueModelIndex].get();
-}
-
-void JWGame::AddTransparentModel(STRING ModelFileName) noexcept
-{
-	m_pTransparentModels.push_back(MAKE_UNIQUE_AND_MOVE(JWModel)());
-
-	m_pTransparentModels[m_pTransparentModels.size() - 1]->Create(m_DX, m_Camera);
-	m_pTransparentModels[m_pTransparentModels.size() - 1]->SetStaticModelData(m_AssimpLoader.LoadStaticModel(m_BaseDirectory + KAssetDirectory, ModelFileName));
-}
-
-auto JWGame::GetTransparentModel(size_t TransparentModelIndex) const noexcept->JWModel&
-{
-	return *m_pTransparentModels[TransparentModelIndex].get();
+	m_RasterizerState = State;
+	m_DX.SetRasterizerState(m_RasterizerState);
 }
 
 void JWGame::AddImage(STRING ImageFileName) noexcept
@@ -134,53 +112,24 @@ auto JWGame::GetImage(size_t Image2DIndex) const noexcept->JWImage&
 	return *m_p2DImages[Image2DIndex].get();
 }
 
-void JWGame::AddLight(SLightData LightData) noexcept
-{
-	if (LightData.LightType == ELightType::Ambient)
-	{
-		m_AmbientLightData = LightData;
-
-		// Set ambient light of the game
-		m_DX.SetPSCBDefaultAmbientLight(
-			XMFLOAT4(m_AmbientLightData.LightColor.x, m_AmbientLightData.LightColor.y, m_AmbientLightData.LightColor.z, m_AmbientLightData.Intensity)
-		);
-	}
-	else if (LightData.LightType == ELightType::Directional)
-	{
-		m_DirectionalLightData = LightData;
-
-		// Calculate direction of Directional Light
-		XMVECTOR direction = XMVectorSet(m_DirectionalLightData.Position.x, m_DirectionalLightData.Position.y, m_DirectionalLightData.Position.z, 0);
-		direction = -XMVector3Normalize(direction);
-		XMStoreFloat3(&m_DirectionalLightData.Direction, direction);
-
-		// Set directional light of the game
-		m_DX.SetPSCBDefaultDirectionalLight(
-			XMFLOAT4(m_DirectionalLightData.LightColor.x, m_DirectionalLightData.LightColor.y, m_DirectionalLightData.LightColor.z,
-				m_DirectionalLightData.Intensity), m_DirectionalLightData.Direction
-		);
-	}
-	else
-	{
-		m_LightsData.push_back(LightData);
-	}
-
-	m_DesignerUI.UpdateLightData(m_AmbientLightData, m_DirectionalLightData, m_LightsData);
-}
-
-auto JWGame::GetCameraObject() noexcept->JWCamera&
+auto JWGame::Camera() noexcept->JWCamera&
 {
 	return m_Camera;
 }
 
-auto JWGame::GetInstantTextObject() noexcept->JWInstantText&
+auto JWGame::InstantText() noexcept->JWInstantText&
 {
 	return m_InstantText;
 }
 
-auto JWGame::GetRawPixelSetterObject() noexcept->JWRawPixelSetter&
+auto JWGame::RawPixelSetter() noexcept->JWRawPixelSetter&
 {
 	return m_RawPixelSetter;
+}
+
+auto JWGame::ECS() noexcept->JWECS&
+{
+	return m_ECS;
 }
 
 auto JWGame::GetFPS() noexcept->int
@@ -200,7 +149,7 @@ PRIVATE void JWGame::CheckValidity() const noexcept
 	}
 	if (!m_fpOnRender)
 	{
-		JWAbort("m_pMainLoop is nullptr.\nYou must call JWGame::SetMainLoopFunction()");
+		JWAbort("m_pMainLoop is nullptr.\nYou must call JWGame::SetFunctionOnRender()");
 	}
 }
 
@@ -246,19 +195,13 @@ void JWGame::Run() noexcept
 			m_fpOnInput(m_InputDeviceState);
 
 			// Update camera position into DefaultPSCBDefault
-			m_DX.SetPSCBDefaultCameraPosition(m_Camera.GetPositionFloat4());
+			m_DX.SetPSCBCamera(m_Camera.GetPositionFloat4());
 
 			// Begin the drawing process
 			m_DX.BeginDrawing(m_ClearColor);
 
 			// Call the outter OnRender function.
 			m_fpOnRender();
-
-			if (m_ShouldDrawMiniAxis)
-			{
-				m_DesignerUI.DrawMiniAxis();
-				m_ShouldDrawMiniAxis = false;
-			}
 
 			// Draw mouse cursor if it exists
 			if (m_MouseCursorImage.IsImageLoaded())
@@ -284,8 +227,6 @@ void JWGame::Run() noexcept
 			}
 		}
 	}
-
-
 }
 
 void JWGame::Terminate() noexcept
@@ -293,60 +234,31 @@ void JWGame::Terminate() noexcept
 	m_IsRunning = false;
 }
 
+void JWGame::UpdateEntities() noexcept
+{
+	m_ECS.UpdateAll();
+}
+
 void JWGame::DrawDesignerUI() noexcept
 {
 	// Draw designer UI
-	SetBlendState(EBlendState::Opaque);
 	m_DesignerUI.Draw();
-
-	m_ShouldDrawMiniAxis = true;
-}
-
-void JWGame::DrawModels() noexcept
-{
-	// Draw 3D models
-	DrawAllOpaqueModels();
-	SetBlendState(EBlendState::Transprent);
-	DrawAllTransparentModels();
+	m_DesignerUI.DrawMiniAxis();
 }
 
 void JWGame::DrawImages() noexcept
 {
 	// Draw 2D images
 	// with Z-buffer disabled, in order to draw them on top of everything else
-	SetBlendState(EBlendState::Opaque);
+	// Set blend state
+	m_DX.SetBlendState(EBlendState::Opaque);
 	DrawAll2DImages();
 }
 
 void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
 {
-	SetBlendState(EBlendState::Transprent);
+	m_DX.SetBlendState(EBlendState::Transprent);
 	m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
-}
-
-PRIVATE void JWGame::DrawAllOpaqueModels() const noexcept
-{
-	if (m_pOpaqueModels.size())
-	{
-		for (auto& iterator_model : m_pOpaqueModels)
-		{
-			iterator_model->Draw();
-		}
-	}
-}
-
-PRIVATE void JWGame::DrawAllTransparentModels() const noexcept
-{
-	if (m_pTransparentModels.size())
-	{
-		//VECTOR<size_t> draw_oreder;
-
-		for (size_t iterator_index{}; iterator_index < m_pTransparentModels.size(); ++iterator_index)
-		{
-			//m_pTransparentModels[iterator_model]->GetDistanceFromCamera();
-			m_pTransparentModels[iterator_index]->Draw();
-		}
-	}
 }
 
 PRIVATE void JWGame::DrawAll2DImages() const noexcept

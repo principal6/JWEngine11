@@ -26,7 +26,9 @@ JWDX::~JWDX()
 	JW_RELEASE(m_ColorVSCB);
 	JW_RELEASE(m_ColorPS11);
 	JW_RELEASE(m_ColorPSBuffer);
-	JW_RELEASE(m_PSCBDefault);
+	JW_RELEASE(m_PSCBCamera);
+	JW_RELEASE(m_PSCBLights);
+	JW_RELEASE(m_PSCBFlags);
 	JW_RELEASE(m_VSCBRigged);
 	JW_RELEASE(m_VSCBStatic);
 	JW_RELEASE(m_PSRaw);
@@ -76,7 +78,7 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 	CreatePSBase();
 	CreatePSRaw();
 	CreateColorPS();
-	CreatePSCB();
+	CreatePSCBs();
 
 	// Set default shaders (VSBase, PSBase)
 	SetVSBase();
@@ -217,17 +219,22 @@ PRIVATE void JWDX::CreateVSCBs() noexcept
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBRigged);
 }
 
-PRIVATE void JWDX::CreatePSCB() noexcept
+PRIVATE void JWDX::CreatePSCBs() noexcept
 {
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
 	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SPSCBDefault);
+	constant_buffer_description.ByteWidth = sizeof(SPSCBFlags);
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
-	
-	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_PSCBDefault);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_PSCBFlags);
+
+	constant_buffer_description.ByteWidth = sizeof(SPSCBLights);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_PSCBLights);
+
+	constant_buffer_description.ByteWidth = sizeof(SPSCBCamera);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_PSCBCamera);
 }
 
 PRIVATE void JWDX::CreateColorVS() noexcept
@@ -289,7 +296,7 @@ PRIVATE void JWDX::CreateDepthStencilView() noexcept
 	ID3D11Texture2D* depth_stencil_buffer{};
 	m_Device11->CreateTexture2D(&depth_stencil_texture_descrption, nullptr, &depth_stencil_buffer);
 
-	//Create the depth-stencil View
+	// Create the depth-stencil View
 	m_Device11->CreateDepthStencilView(depth_stencil_buffer, nullptr, &m_DepthStencilView11);
 	
 	JW_RELEASE(depth_stencil_buffer);
@@ -581,53 +588,44 @@ void JWDX::SetVSCBRigged(SVSCBRigged& Data) noexcept
 	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBRigged);
 }
 
-void JWDX::SetPSCBDefaultFlags(bool HasTexture, bool UseLighting) noexcept
+void JWDX::SetPSCBFlags(bool HasTexture, bool UseLighting) noexcept
 {
 	if (HasTexture)
 	{
-		m_PSCBDefaultData.HasTexture = TRUE;
+		m_PSCBFlagsData.HasTexture = TRUE;
 	}
 	else
 	{
-		m_PSCBDefaultData.HasTexture = FALSE;
+		m_PSCBFlagsData.HasTexture = FALSE;
 	}
 
 	if (UseLighting)
 	{
-		m_PSCBDefaultData.UseLighting = TRUE;
+		m_PSCBFlagsData.UseLighting = TRUE;
 	}
 	else
 	{
-		m_PSCBDefaultData.UseLighting = FALSE;
+		m_PSCBFlagsData.UseLighting = FALSE;
 	}
 
-	m_DeviceContext11->UpdateSubresource(m_PSCBDefault, 0, nullptr, &m_PSCBDefaultData, 0, 0);
-	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBDefault);
+	m_DeviceContext11->UpdateSubresource(m_PSCBFlags, 0, nullptr, &m_PSCBFlagsData, 0, 0);
+	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBFlags);
 }
 
-void JWDX::SetPSCBDefaultAmbientLight(XMFLOAT4 AmbientColor) noexcept
+void JWDX::SetPSCBLights(SPSCBLights& Data) noexcept
 {
-	m_PSCBDefaultData.AmbientColor = AmbientColor;
-
-	m_DeviceContext11->UpdateSubresource(m_PSCBDefault, 0, nullptr, &m_PSCBDefaultData, 0, 0);
-	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBDefault);
+	m_PSCBLightsData = Data;
+	
+	m_DeviceContext11->UpdateSubresource(m_PSCBLights, 0, nullptr, &m_PSCBLightsData, 0, 0);
+	m_DeviceContext11->PSSetConstantBuffers(1, 1, &m_PSCBLights);
 }
 
-void JWDX::SetPSCBDefaultDirectionalLight(XMFLOAT4 DirectionalColor, XMFLOAT3 DirectionalDirection) noexcept
+void JWDX::SetPSCBCamera(XMFLOAT4 CameraPosition) noexcept
 {
-	m_PSCBDefaultData.DirectionalColor = DirectionalColor;
-	m_PSCBDefaultData.DirectionalDirection = XMFLOAT4(-DirectionalDirection.x, -DirectionalDirection.y, -DirectionalDirection.z, 1.0f);
+	m_PSCBCameraData.CameraPosition = CameraPosition;
 
-	m_DeviceContext11->UpdateSubresource(m_PSCBDefault, 0, nullptr, &m_PSCBDefaultData, 0, 0);
-	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBDefault);
-}
-
-void JWDX::SetPSCBDefaultCameraPosition(XMFLOAT4 CameraPosition) noexcept
-{
-	m_PSCBDefaultData.CameraPosition = CameraPosition;
-
-	m_DeviceContext11->UpdateSubresource(m_PSCBDefault, 0, nullptr, &m_PSCBDefaultData, 0, 0);
-	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBDefault);
+	m_DeviceContext11->UpdateSubresource(m_PSCBCamera, 0, nullptr, &m_PSCBCameraData, 0, 0);
+	m_DeviceContext11->PSSetConstantBuffers(2, 1, &m_PSCBCamera);
 }
 
 void JWDX::SetColorVS() noexcept

@@ -1,0 +1,402 @@
+#include "JWSystemRender.h"
+#include "JWEntity.h"
+#include "../Core/JWDX.h"
+#include "../Core/JWCamera.h"
+
+using namespace JWEngine;
+
+JWSystemRender::~JWSystemRender()
+{
+	if (m_vpComponents.size())
+	{
+		for (auto& iter : m_vpComponents)
+		{
+			JW_DELETE(iter);
+		}
+	}
+}
+
+void JWSystemRender::CreateSystem(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
+{
+	// Set JWDX pointer.
+	m_pDX = &DX;
+
+	// Set JWCamera pointer.
+	m_pCamera = &Camera;
+	
+	// Set base directory.
+	m_BaseDirectory = BaseDirectory;
+}
+
+auto JWSystemRender::CreateComponent() noexcept->JWComponentRender&
+{
+	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
+
+	auto new_entry{ new JWComponentRender(slot) };
+	m_vpComponents.push_back(new_entry);
+
+	// @important
+	// Set default data for the component
+	m_vpComponents[slot]->m_pDX = m_pDX;
+	m_vpComponents[slot]->m_pBaseDirectory = &m_BaseDirectory;
+
+	return *m_vpComponents[slot];
+}
+
+void JWSystemRender::DestroyComponent(JWComponentRender& Component) noexcept
+{
+	uint32_t slot{};
+	for (const auto& iter : m_vpComponents)
+	{
+		if (iter->m_ComponentID == Component.m_ComponentID)
+		{
+			break;
+		}
+
+		++slot;
+	}
+	JW_DELETE(m_vpComponents[slot]);
+
+	// Swap the last element of the vector and the deleted element & shrink the size of the vector.
+	uint32_t last_index = static_cast<uint32_t>(m_vpComponents.size() - 1);
+	if (slot < last_index)
+	{
+		m_vpComponents[slot] = m_vpComponents[last_index];
+		m_vpComponents[last_index] = nullptr;
+	}
+
+	m_vpComponents.pop_back();
+}
+
+void JWSystemRender::Update() noexcept
+{
+	// Enable Z-buffer for 3D drawing
+	m_pDX->SetDepthStencilState(EDepthStencilState::ZEnabled);
+
+	for (auto& iter : m_vpComponents)
+	{
+		SetShaders(*iter);
+
+		Animate(*iter);
+		
+		Draw(*iter);
+	}
+}
+
+void JWSystemRender::SetShaders(JWComponentRender& Component) noexcept
+{
+	auto type = Component.m_ComponentRenderType;
+	const auto& model = Component.m_Model;
+
+	const auto& component_transform = Component.pEntity->GetComponentTransform();
+	const auto& world_matrix = component_transform->m_WorldMatrix;
+
+	// Set PS
+	m_pDX->SetPSBase();
+
+	// Set PS constant buffer
+	m_pDX->SetPSCBFlags((model.FlagRenderOption & JWFlagRenderOption_UseTexture), (model.FlagRenderOption & JWFlagRenderOption_UseLighting));
+
+	// Set PS texture and sampler
+	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &model.TextureShaderResourceView);
+	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
+
+	// Set VS and its constant buffer
+	switch (type)
+	{
+	case EComponentRenderType::Model_StaticModel:
+		m_pDX->SetVSBase();
+
+		m_VSCBStatic.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBStatic.World = XMMatrixTranspose(world_matrix);
+		m_pDX->SetVSCBStatic(m_VSCBStatic);
+
+		break;
+
+	case EComponentRenderType::Model_RiggedModel:
+		m_pDX->SetVSAnim();
+
+		m_VSCBRigged.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBRigged.World = XMMatrixTranspose(world_matrix);
+		m_pDX->SetVSCBRigged(m_VSCBRigged);
+
+		break;
+
+	default:
+		break;
+	}
+}
+
+void JWSystemRender::Animate(JWComponentRender& Component) noexcept
+{
+	auto type = Component.m_ComponentRenderType;
+	if (type == EComponentRenderType::Model_RiggedModel)
+	{
+		auto& model = Component.m_Model;
+		auto& current_animation_id = model.RiggedModelData.CurrentAnimationID;
+
+		if (model.FlagRenderOption & JWFlagRenderOption_DrawTPose)
+		{
+			UpdateNodeTPoseIntoBones(model.RiggedModelData.CurrentAnimationTick, model.RiggedModelData, model.RiggedModelData.NodeTree.vNodes[0],
+				XMMatrixIdentity());
+
+			// Update bone's T-Pose transformation for shader's constant buffer
+			for (size_t iterator_bone_mat{}; iterator_bone_mat < model.RiggedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
+			{
+				m_VSCBRigged.TransformedBoneMatrices[iterator_bone_mat] =
+					XMMatrixTranspose(model.RiggedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
+			}
+		}
+		else
+		{
+			if (current_animation_id != KSizeTInvalid)
+			{
+				auto& current_anim{ model.RiggedModelData.AnimationSet.vAnimations[current_animation_id] };
+
+				// Reset tick if the animation is over.
+				if (model.RiggedModelData.CurrentAnimationTick >= current_anim.TotalAnimationTicks)
+				{
+					model.RiggedModelData.CurrentAnimationTick = 0;
+
+					if (!model.RiggedModelData.ShouldRepeatCurrentAnimation)
+					{
+						// Non-repeating animation
+						current_animation_id = KSizeTInvalid;
+					}
+				}
+
+				// Update bones' transformations for the animation.
+				UpdateNodeAnimationIntoBones((model.FlagRenderOption & JWFlagRenderOption_UseAnimationInterpolation),
+					model.RiggedModelData.CurrentAnimationTick, model.RiggedModelData, model.RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+
+				// Update bone's final transformation for shader's constant buffer
+				for (size_t iterator_bone_mat{}; iterator_bone_mat < model.RiggedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
+				{
+					m_VSCBRigged.TransformedBoneMatrices[iterator_bone_mat] =
+						XMMatrixTranspose(model.RiggedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
+				}
+
+				// Advance animation tick
+				//model_data.CurrentAnimationTick += model_data.AnimationSet.vAnimations[current_animation_id].AnimationTicksPerGameTick;
+				model.RiggedModelData.CurrentAnimationTick += 1.0f;
+			}
+			else
+			{
+				// No animation is set.
+			}
+		}
+	}
+}
+
+PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation, float AnimationTime, SRiggedModelData& ModelData,
+	const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept
+{
+	XMMATRIX global_transformation = CurrentNode.Transformation * Accumulated;
+
+	if (CurrentNode.BoneID >= 0)
+	{
+		auto& bone = ModelData.BoneTree.vBones[CurrentNode.BoneID];
+		auto& current_animation = ModelData.AnimationSet.vAnimations[ModelData.CurrentAnimationID];
+
+		// Calculate current animation time for interpolation
+		float CurrAnimationTime = AnimationTime - fmodf(AnimationTime, current_animation.AnimationTicksPerGameTick);
+
+		// Calculate next animation time for interpolation
+		float NextAnimationTime = CurrAnimationTime + current_animation.AnimationTicksPerGameTick;
+
+		// Interpolation factor Delta's range is [0.0, 1.0]
+		float Delta = (AnimationTime - CurrAnimationTime) / current_animation.AnimationTicksPerGameTick;
+
+		if (NextAnimationTime > current_animation.TotalAnimationTicks)
+		{
+			NextAnimationTime = 0;
+		}
+
+		for (const auto& CurrentNode_animation : current_animation.vNodeAnimation)
+		{
+			if (CurrentNode_animation.NodeID == CurrentNode.ID)
+			{
+				XMMATRIX matrix_scaling{};
+				XMVECTOR scaling_key_a{};
+				XMVECTOR scaling_key_b{};
+				XMVECTOR scaling_interpolated{};
+
+				XMMATRIX matrix_rotation{};
+				XMVECTOR rotation_key_a{};
+				XMVECTOR rotation_key_b{};
+				XMVECTOR rotation_interpolated{};
+
+				XMMATRIX matrix_translation{};
+				XMVECTOR translation_key_a{};
+				XMVECTOR translation_key_b{};
+				XMVECTOR translation_interpolated{};
+
+				// #1. Find scaling keys
+				for (const auto& key : CurrentNode_animation.vKeyScaling)
+				{
+					if (key.TimeInTicks <= CurrAnimationTime)
+					{
+						scaling_key_a = XMLoadFloat3(&key.Key);
+					}
+					if (key.TimeInTicks <= NextAnimationTime)
+					{
+						scaling_key_b = XMLoadFloat3(&key.Key);
+					}
+				}
+				scaling_interpolated = scaling_key_a + (Delta * (scaling_key_b - scaling_key_a));
+
+				// #2. Find rotation keys
+				for (const auto& key : CurrentNode_animation.vKeyRotation)
+				{
+					if (key.TimeInTicks <= CurrAnimationTime)
+					{
+						rotation_key_a = key.Key;
+					}
+					if (key.TimeInTicks <= NextAnimationTime)
+					{
+						rotation_key_b = key.Key;
+					}
+				}
+				rotation_interpolated = XMQuaternionSlerp(rotation_key_a, rotation_key_b, Delta);
+
+				// #3. Find translation keys
+				for (const auto& key : CurrentNode_animation.vKeyPosition)
+				{
+					if (key.TimeInTicks <= CurrAnimationTime)
+					{
+						translation_key_a = XMLoadFloat3(&key.Key);
+					}
+					if (key.TimeInTicks <= NextAnimationTime)
+					{
+						translation_key_b = XMLoadFloat3(&key.Key);
+					}
+				}
+				translation_interpolated = translation_key_a + (Delta * (translation_key_b - translation_key_a));
+				
+				if (!UseInterpolation)
+				{
+					scaling_interpolated = scaling_key_a;
+					rotation_interpolated = rotation_key_a;
+					translation_interpolated = translation_key_a;
+				}
+
+				matrix_scaling = XMMatrixScalingFromVector(scaling_interpolated);
+				matrix_rotation = XMMatrixRotationQuaternion(rotation_interpolated);
+				matrix_translation = XMMatrixTranslationFromVector(translation_interpolated);
+
+				global_transformation = matrix_scaling * matrix_rotation * matrix_translation * Accumulated;
+
+				break;
+			}
+		}
+
+		bone.FinalTransformation = bone.Offset * global_transformation;
+	}
+
+	if (CurrentNode.vChildrenID.size())
+	{
+		for (auto child_id : CurrentNode.vChildrenID)
+		{
+			UpdateNodeAnimationIntoBones(UseInterpolation, AnimationTime, ModelData, ModelData.NodeTree.vNodes[child_id], global_transformation);
+		}
+	}
+}
+
+PRIVATE void JWSystemRender::UpdateNodeTPoseIntoBones(float AnimationTime, SRiggedModelData& ModelData, const SModelNode& CurrentNode,
+	const XMMATRIX Accumulated) noexcept
+{
+	XMMATRIX accumulation = CurrentNode.Transformation * Accumulated;
+
+	if (CurrentNode.BoneID >= 0)
+	{
+		auto& bone = ModelData.BoneTree.vBones[CurrentNode.BoneID];
+
+		bone.FinalTransformation = bone.Offset * accumulation;
+	}
+
+	if (CurrentNode.vChildrenID.size())
+	{
+		for (auto child_id : CurrentNode.vChildrenID)
+		{
+			UpdateNodeTPoseIntoBones(AnimationTime, ModelData, ModelData.NodeTree.vNodes[child_id], accumulation);
+		}
+	}
+}
+
+PRIVATE void JWSystemRender::Draw(JWComponentRender& Component) noexcept
+{
+	auto type = Component.m_ComponentRenderType;
+	auto& model = Component.m_Model;
+
+	if (model.FlagRenderOption & JWFlagRenderOption_UseTransparency)
+	{
+		m_pDX->SetBlendState(EBlendState::Transprent);
+	}
+	else
+	{
+		m_pDX->SetBlendState(EBlendState::Opaque);
+	}
+
+	// Set IA index buffer
+	m_pDX->GetDeviceContext()->IASetIndexBuffer(model.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	// Set IA primitive topology
+	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Set IA vertex buffer & Draw
+	switch (type)
+	{
+	case EComponentRenderType::Model_StaticModel:
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+			0, 1, &model.ModelVertexBuffer, model.StaticModelData.VertexData.GetPtrStride(), model.StaticModelData.VertexData.GetPtrOffset());
+
+		m_pDX->GetDeviceContext()->DrawIndexed(model.StaticModelData.IndexData.GetCount(), 0, 0);
+
+		break;
+	case EComponentRenderType::Model_RiggedModel:
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+			0, 1, &model.ModelVertexBuffer, model.RiggedModelData.VertexData.GetPtrStride(), model.RiggedModelData.VertexData.GetPtrOffset());
+
+		m_pDX->GetDeviceContext()->DrawIndexed(model.RiggedModelData.IndexData.GetCount(), 0, 0);
+
+		break;
+	default:
+		break;
+	}
+
+	// Draw normals
+	if (model.FlagRenderOption & JWFlagRenderOption_DrawNormals)
+	{
+		DrawNormals(Component);
+	}
+}
+
+PRIVATE void JWSystemRender::DrawNormals(JWComponentRender& Component) noexcept
+{
+	auto& model = Component.m_Model;
+	const auto& component_transform = Component.pEntity->GetComponentTransform();
+	const auto& world_matrix = component_transform->m_WorldMatrix;
+
+	// Set VS base
+	m_pDX->SetVSBase();
+
+	// Set VS constant buffer
+	m_VSCBStatic.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+	m_VSCBStatic.World = XMMatrixTranspose(world_matrix);
+
+	// Set PS constant buffer
+	m_pDX->SetPSCBFlags(false, false);
+
+	// Set IA primitive topology
+	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+	// Set IA vertex buffer
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &model.NormalVertexBuffer,
+		model.NormalData.VertexData.GetPtrStride(), model.NormalData.VertexData.GetPtrOffset());
+
+	// Set IA index buffer
+	m_pDX->GetDeviceContext()->IASetIndexBuffer(model.NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	// Draw
+	m_pDX->GetDeviceContext()->DrawIndexed(model.NormalData.IndexData.GetCount(), 0, 0);
+}

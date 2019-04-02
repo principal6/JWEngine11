@@ -176,6 +176,10 @@
     <ClCompile Include="..\Core\JWRawPixelSetter.cpp" />
     <ClCompile Include="..\Core\JWTimer.cpp" />
     <ClCompile Include="..\Core\JWWin32Window.cpp" />
+    <ClCompile Include="..\ECS\JWEntity.cpp" />
+    <ClCompile Include="..\ECS\JWSystemLight.cpp" />
+    <ClCompile Include="..\ECS\JWSystemRender.cpp" />
+    <ClCompile Include="..\ECS\JWSystemTransform.cpp" />
     <ClCompile Include="..\TinyXml2\tinyxml2.cpp" />
     <ClCompile Include="JWGame.cpp" />
     <ClCompile Include="main.cpp" />
@@ -287,6 +291,14 @@
     <ClInclude Include="..\DirectXTK\VertexTypes.h" />
     <ClInclude Include="..\DirectXTK\WICTextureLoader.h" />
     <ClInclude Include="..\DirectXTK\XboxDDSTextureLoader.h" />
+    <ClInclude Include="..\ECS\JWComponentLight.h" />
+    <ClInclude Include="..\ECS\JWComponentRender.h" />
+    <ClInclude Include="..\ECS\JWComponentTransform.h" />
+    <ClInclude Include="..\ECS\JWECS.h" />
+    <ClInclude Include="..\ECS\JWEntity.h" />
+    <ClInclude Include="..\ECS\JWSystemLight.h" />
+    <ClInclude Include="..\ECS\JWSystemRender.h" />
+    <ClInclude Include="..\ECS\JWSystemTransform.h" />
     <ClInclude Include="..\TinyXml2\tinyxml2.h" />
     <ClInclude Include="JWGame.h" />
   </ItemGroup>

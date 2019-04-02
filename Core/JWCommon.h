@@ -107,6 +107,7 @@ namespace JWEngine
 	struct SDirectInputDeviceState;
 
 #define JW_AVOID_DUPLICATE_CREATION(Bool) {if (Bool) { return; }}
+#define JW_DELETE(pVar) { if(pVar) {delete pVar; pVar = nullptr; }}
 #define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
 	
 	using namespace DirectX;
@@ -148,16 +149,6 @@ namespace JWEngine
 		ScaleRotTrans,
 	};
 
-	enum class ELightType
-	{
-		Invalid,
-
-		Ambient, // Entire scene's base light
-		Directional, // Sunlight
-		Pointlight, // Bulb
-		Spotlight, // Flashlight
-	};
-	
 	struct SPositionInt
 	{
 		SPositionInt() {};
@@ -586,60 +577,38 @@ namespace JWEngine
 		SIndex2Data IndexData{};
 	};
 
-	struct SLightData
+	struct SPSCBFlags
 	{
-		ELightType LightType{ ELightType::Invalid };
-		XMFLOAT3 LightColor{}; // Ambient | Directional | Pointlight | Spotlight
-		float Intensity{}; // Ambient | Directional | Pointlight | Spotlight
-		XMFLOAT3 Position{}; // ( Ambient | Directional ) | Pointlight | Spotlight
-		float Range{}; // Pointlight | Spotlight ?? Radius??
-		XMFLOAT3 Direction{}; // Directional | Spotlight
-		XMFLOAT3 Attenuation{}; // Pointlight | Spotlight
-		float Cone{}; // Spotlight
-
-		SLightData() = default;
-
-		// Make AMBIENT light
-		// @warning: '_Position' data will only be used for light model's 3D representation,
-		// and it has NOTHING to do with ambient light's INTENSITY.
-		SLightData(XMFLOAT3 _Color, float _Intensity, XMFLOAT3 _Position)
-			: LightType{ ELightType::Ambient }, LightColor{ _Color }, Intensity{ _Intensity }, Position{ _Position } {};
-
-		// Make DIRECTIONAL light
-		// @warning: '_Position' data WILL be used to calculate the DIRECTION of directional light.
-		SLightData(XMFLOAT3 _Color, XMFLOAT3 _Position, float _Intensity)
-			: LightType{ ELightType::Directional }, LightColor{ _Color }, Intensity{ _Intensity }, Position{ _Position } {};
-
-		// Make POINT light
-		SLightData(XMFLOAT3 _Color, XMFLOAT3 _Position, float _Intensity, float _Range, XMFLOAT3 _Attenuation)
-			: LightType{ ELightType::Directional }, LightColor{ _Color }, Position{ _Position },
-			Intensity{ _Intensity }, Range{ _Range }, Attenuation{ _Attenuation } {};
-	};
-
-	struct SPSCBDefault
-	{
-		SPSCBDefault() = default;
-		SPSCBDefault(BOOL _HasTexture)
+		SPSCBFlags() = default;
+		SPSCBFlags(BOOL _HasTexture)
 			: HasTexture{ _HasTexture } {};
-		SPSCBDefault(BOOL _HasTexture, BOOL _UseLighting)
+		SPSCBFlags(BOOL _HasTexture, BOOL _UseLighting)
 			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting } {};
-		SPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight)
-			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientColor{ _AmbientLight } {};
-		SPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight,
-			XMFLOAT4 _DirectionalColor, XMFLOAT4 _DirectionalDirection)
-			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientColor{ _AmbientLight },
-			DirectionalColor{ _DirectionalColor }, DirectionalDirection{ _DirectionalDirection } {};
-		SPSCBDefault(BOOL _HasTexture, BOOL _UseLighting, XMFLOAT4 _AmbientLight,
-			XMFLOAT4 _DirectionalColor, XMFLOAT4 _DirectionalDirection, XMFLOAT4 _CameraPosition)
-			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting }, AmbientColor{ _AmbientLight },
-			DirectionalColor{ _DirectionalColor }, DirectionalDirection{ _DirectionalDirection }, CameraPosition{ _CameraPosition } {};
 
 		BOOL HasTexture{ FALSE };
 		BOOL UseLighting{ FALSE };
 		float pad[2]{};
+	};
+
+	struct SPSCBLights
+	{
+		SPSCBLights() = default;
+		SPSCBLights(XMFLOAT4 _AmbientLight)
+			: AmbientColor{ _AmbientLight } {};
+		SPSCBLights(XMFLOAT4 _AmbientLight, XMFLOAT4 _DirectionalColor, XMFLOAT4 _DirectionalDirection)
+			: AmbientColor{ _AmbientLight }, DirectionalColor{ _DirectionalColor }, DirectionalDirection{ _DirectionalDirection } {};
+
 		XMFLOAT4 AmbientColor{};
+
 		XMFLOAT4 DirectionalColor{};
 		XMFLOAT4 DirectionalDirection{};
+	};
+
+	struct SPSCBCamera
+	{
+		SPSCBCamera() = default;
+		SPSCBCamera(XMFLOAT4 _CameraPosition) : CameraPosition{ _CameraPosition } {};
+
 		XMFLOAT4 CameraPosition{};
 	};
 };

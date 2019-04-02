@@ -1,13 +1,21 @@
 #include "BaseHeader.hlsl"
 
-cbuffer cbDefault
+cbuffer cbFlags
 {
 	bool HasTexture;
 	bool UseLighting;
-		float2 pad;
+	float2 pad;
+};
+
+cbuffer cbLights
+{
 	float4 AmbientColor;
 	float4 DirectionalColor;
 	float4 DirectionalDirection;
+};
+
+cbuffer cbCamera
+{
 	float4 CameraPosition;
 };
 
