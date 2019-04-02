@@ -119,10 +119,9 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SRiggedModelData
 {
 	SRiggedModelData result{};
-	result.BaseDirectory = Directory;
 
 	Assimp::Importer importer{};
-	const aiScene* scene{ importer.ReadFile(result.BaseDirectory + ModelFileName,
+	const aiScene* scene{ importer.ReadFile(Directory + ModelFileName,
 		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes |
 		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality | aiProcess_FixInfacingNormals |
 		aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices) };
@@ -140,7 +139,7 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 	ExtractNodeTree(scene, scene->mRootNode, -1, result.NodeTree);
 	
 	// Build meshes and bones from nodes into extracted node hierarchy.
-	BuildMeshesAndBonesFromNodes(scene, result);
+	BuildMeshesAndBonesFromNodes(Directory, scene, result);
 
 	// Match bones and vertices
 	MatchBonesAndVertices(result.BoneTree, result.VertexData);
@@ -207,7 +206,7 @@ PRIVATE void JWAssimpLoader::ExtractNodeTree(const aiScene* Scene, const aiNode*
 	}
 }
 
-PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, SRiggedModelData& OutModelData) noexcept
+PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const STRING Directory, const aiScene* Scene, SRiggedModelData& OutModelData) noexcept
 {
 	int indices_offset{};
 
@@ -231,7 +230,7 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const aiScene* Scene, 
 			{
 				aiString path{};
 				aiGetMaterialTexture(ai_material, aiTextureType_DIFFUSE, 0, &path);
-				STRING path_string{ OutModelData.BaseDirectory + path.C_Str() };
+				STRING path_string{ Directory + path.C_Str() };
 				if (path.length)
 				{
 					OutModelData.HasTexture = true;
@@ -362,7 +361,7 @@ PRIVATE void JWAssimpLoader::ExtractBone(const aiBone* paiBone, int VertexOffset
 	}
 }
 
-PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTree, SRiggedVertexData& OutVertexData) noexcept
+PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTree, SRiggedModelVertexData& OutVertexData) noexcept
 {
 	for (const auto& bone : BoneTree.vBones)
 	{
@@ -478,10 +477,9 @@ PRIVATE void JWAssimpLoader::ExtractAnimationSet(const aiScene* Scene, const SMo
 void JWAssimpLoader::LoadAdditionalAnimationIntoRiggedModel(SRiggedModelData& ModelData, STRING Directory, STRING ModelFileName) noexcept
 {
 	SRiggedModelData new_animation_model{};
-	new_animation_model.BaseDirectory = Directory;
 
 	Assimp::Importer importer{};
-	const aiScene* scene{ importer.ReadFile(new_animation_model.BaseDirectory + ModelFileName,
+	const aiScene* scene{ importer.ReadFile(Directory + ModelFileName,
 		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes |
 		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality | aiProcess_FixInfacingNormals |
 		aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices) };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "JWCommon.h"
+#include "JWAssimpLoader.h"
 
 namespace JWEngine
 {
@@ -27,10 +27,10 @@ namespace JWEngine
 
 		void SetStaticModelData(SStaticModelData ModelData) noexcept;
 		void SetRiggedModelData(SRiggedModelData ModelData) noexcept;
-		void SetModel2Data(SModel2Data Model2Data) noexcept;
+		void SetLineModelData(SLineModelData Model2Data) noexcept;
 
 		// Load & Set animation
-		auto AddAnimationFromFile(STRING ModelFileName) noexcept->JWModel&;
+		auto AddAnimationFromFile(STRING Directory, STRING ModelFileName) noexcept->JWModel&;
 		auto SetAnimation(size_t AnimationID, bool ShouldRepeat = true) noexcept->JWModel&;
 		auto SetPrevAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
 		auto SetNextAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
@@ -41,23 +41,19 @@ namespace JWEngine
 
 		void CreateModelVertexIndexBuffers() noexcept;
 
-		auto NormalAddVertex(const SStaticVertex& Vertex) noexcept->JWModel&;
-		auto NormalAddIndex(const SIndex2& Index) noexcept->JWModel&;
-		void NormalAddEnd() noexcept;
-
 	public:
-		JWFlagRenderOption FlagRenderOption{};
-		
-		ID3D11Buffer* ModelVertexBuffer{};
-		ID3D11Buffer* ModelIndexBuffer{};
-		SStaticModelData StaticModelData{};
-		SRiggedModelData RiggedModelData{};
+		ID3D11Buffer*		ModelVertexBuffer{};
+		ID3D11Buffer*		ModelIndexBuffer{};
+		SStaticModelData	StaticModelData{};
+		SRiggedModelData	RiggedModelData{};
 
-		ID3D11Buffer* NormalVertexBuffer{};
-		ID3D11Buffer* NormalIndexBuffer{};
-		SModel2Data NormalData{};
+		ID3D11Buffer*		NormalVertexBuffer{};
+		ID3D11Buffer*		NormalIndexBuffer{};
+		SLineModelData		NormalData{};
 
-		ID3D11ShaderResourceView* TextureShaderResourceView{};
+		ID3D11ShaderResourceView*	TextureShaderResourceView{};
+
+		JWFlagRenderOption			FlagRenderOption{};
 
 	private:
 		JWDX* m_pDX{};

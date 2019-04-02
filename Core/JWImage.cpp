@@ -22,10 +22,10 @@ void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
 	// Set JWCamera pointer.
 	m_pCamera = &Camera;
 
-	AddVertex(SStaticVertex(0, 0, 0, 0, 0));
-	AddVertex(SStaticVertex(1, 0, 0, 1, 0));
-	AddVertex(SStaticVertex(0, -1, 0, 0, 1));
-	AddVertex(SStaticVertex(1, -1, 0, 1, 1));
+	AddVertex(SStaticModelVertex(0, 0, 0, 0, 0));
+	AddVertex(SStaticModelVertex(1, 0, 0, 1, 0));
+	AddVertex(SStaticModelVertex(0, -1, 0, 0, 1));
+	AddVertex(SStaticModelVertex(1, -1, 0, 1, 1));
 
 	AddIndex(SIndex3(0, 1, 2));
 	AddIndex(SIndex3(1, 3, 2));
@@ -43,7 +43,7 @@ PROTECTED void JWImage::CheckValidity() const noexcept
 	}
 }
 
-PROTECTED void JWImage::AddVertex(const SStaticVertex& Vertex) noexcept
+PROTECTED void JWImage::AddVertex(const SStaticModelVertex& Vertex) noexcept
 {
 	m_VertexData.Vertices.push_back(Vertex);
 }

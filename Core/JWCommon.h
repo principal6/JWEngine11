@@ -204,30 +204,30 @@ namespace JWEngine
 		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
-	struct SStaticVertex
+	struct SStaticModelVertex
 	{
-		SStaticVertex() {};
-		SStaticVertex(XMFLOAT3 _Position) :
+		SStaticModelVertex() {};
+		SStaticModelVertex(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SStaticVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SStaticVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
-		SStaticVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SStaticVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SStaticVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
+		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
-		SStaticVertex(float x, float y, float z) :
+		SStaticModelVertex(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SStaticVertex(float x, float y, float z, float u, float v) :
+		SStaticModelVertex(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		SStaticVertex(float x, float y, float z, float r, float g, float b, float a) :
+		SStaticModelVertex(float x, float y, float z, float r, float g, float b, float a) :
 			Position{ x, y, z }, ColorDiffuse{ r, g, b, a } {};
-		SStaticVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+		SStaticModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
-		SStaticVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+		SStaticModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
@@ -237,28 +237,28 @@ namespace JWEngine
 		XMFLOAT4 Specular{};
 	};
 	
-	struct SRiggedVertex
+	struct SRiggedModelVertex
 	{
-		SRiggedVertex() {};
-		SRiggedVertex(XMFLOAT3 _Position) :
+		SRiggedModelVertex() {};
+		SRiggedModelVertex(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
-		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SRiggedVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
+		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
-		SRiggedVertex(float x, float y, float z) :
+		SRiggedModelVertex(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SRiggedVertex(float x, float y, float z, float u, float v) :
+		SRiggedModelVertex(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		SRiggedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+		SRiggedModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
-		SRiggedVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+		SRiggedModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
@@ -266,6 +266,7 @@ namespace JWEngine
 		XMFLOAT3 Normal{};
 		XMFLOAT4 ColorDiffuse{};
 		XMFLOAT4 Specular{};
+
 		int BoneIndex[KMaxBoneCountPerVertex]{}; // BLENDINDICES
 		float BoneWeight[KMaxBoneCountPerVertex]{}; // BLENDWEIGHT
 
@@ -300,30 +301,30 @@ namespace JWEngine
 		XMFLOAT4 ColorRGBA{ 1.0f, 1.0f, 1.0f, 1.0f };
 	};
 
-	struct SStaticVertexData
+	struct SStaticModelVertexData
 	{
-		VECTOR<SStaticVertex> Vertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SStaticVertex)) };
+		VECTOR<SStaticModelVertex> Vertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SStaticModelVertex)) };
 		UINT Offset{};
 
 		void Clear() noexcept { Vertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SStaticVertex)); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SStaticModelVertex)); };
 		auto GetPtrData() const noexcept { return &Vertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
 		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
 	};
 
-	struct SRiggedVertexData
+	struct SRiggedModelVertexData
 	{
-		VECTOR<SRiggedVertex> Vertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SRiggedVertex)) };
+		VECTOR<SRiggedModelVertex> Vertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SRiggedModelVertex)) };
 		UINT Offset{};
 
 		void Clear() noexcept { Vertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SRiggedVertex)); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SRiggedModelVertex)); };
 		auto GetPtrData() const noexcept { return &Vertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
@@ -364,7 +365,7 @@ namespace JWEngine
 		DWORD _1{};
 	};
 
-	struct SIndex3Data
+	struct SModelIndexData
 	{
 		VECTOR<SIndex3> Indices;
 
@@ -374,7 +375,7 @@ namespace JWEngine
 		auto GetPtrData() const noexcept { return &Indices[0]; };
 	};
 
-	struct SIndex2Data
+	struct SLineIndexData
 	{
 		VECTOR<SIndex2> Indices;
 
@@ -422,161 +423,6 @@ namespace JWEngine
 		XMMATRIX TransformedBoneMatrices[KMaxBoneCount]{};
 	};
 	
-	struct SModelNode
-	{
-		// Current node's index in SModelNodeTree.vNodes
-		int ID{};
-
-		// Parent node's index in SModelNodeTree.vNodes
-		int ParentID{ -1 };
-
-		// Child nodes' index in SModelNodeTree.vNodes
-		VECTOR<int> vChildrenID;
-
-		STRING Name;
-		XMMATRIX Transformation{};
-		VECTOR<int> vMeshesID;
-
-		// This data will be used to match bones to each vertex!
-		// This is required, because different from nodes,
-		// bones will be stored unordered in bone tree
-		// so, if nodes don't have vertex indicator,
-		// bones can't find vertex offset properly.
-		int AccumulatedVerticesCount{};
-
-		// BoneID is '-1' when this node is not referring to any bone.
-		// If (BoneID >= 0) : this node matches the bone in model's bone tree
-		int BoneID{ -1 };
-
-		SModelNode() = default;
-	};
-
-	struct SModelNodeTree
-	{
-		// Each node will be stored in this vector.
-		// Root node is always at index 0.
-		VECTOR<SModelNode> vNodes;
-		int TotalVerticesCount{};
-	};
-	
-	struct SModelWeight
-	{
-		int VertexID{};
-		float Weight{};
-
-		SModelWeight() = default;
-		SModelWeight(int _VertexID, float _Weight) :VertexID{ _VertexID }, Weight{ _Weight } {};
-	};
-	
-	struct SModelBone
-	{
-		// Current bone's index in SModelBoneTree.vBones
-		int ID;
-		STRING Name;
-		VECTOR<SModelWeight> vWeights;
-
-		// Loaded at model import time, and will not be altered.
-		XMMATRIX Offset{};
-
-		// Updated evrey (rendering) frame according to node's animation.
-		XMMATRIX FinalTransformation{};
-
-		SModelBone() = default;
-		SModelBone(STRING _Name) :Name{ _Name } {};
-	};
-
-	struct SModelBoneTree
-	{
-		VECTOR<SModelBone> vBones;
-	};
-
-	struct SModelAnimationKeyPosition
-	{
-		float TimeInTicks{};
-		XMFLOAT3 Key{};
-	};
-
-	struct SModelAnimationKeyRotation
-	{
-		float TimeInTicks{};
-		XMVECTOR Key{};
-	};
-
-	struct SModelAnimationKeyScaling
-	{
-		float TimeInTicks{};
-		XMFLOAT3 Key{};
-	};
-
-	struct SModelNodeAnimation
-	{
-		size_t NodeID;
-		VECTOR<SModelAnimationKeyPosition> vKeyPosition;
-		VECTOR<SModelAnimationKeyRotation> vKeyRotation;
-		VECTOR<SModelAnimationKeyScaling> vKeyScaling;
-	};
-
-	struct SModelAnimation
-	{
-		// Animation's name. This can be null.
-		STRING Name;
-
-		// Animation duration based on animation ticks
-		float TotalAnimationTicks{};
-		
-		// Model renderer's crieterion of animation ticks per model renderer's second of time.
-		float AnimationTicksPerSecond{};
-		
-		// Our game loop based animation time
-		// In every tick of the main loop,
-		// the animation time will be increased by this amount.
-		float AnimationTicksPerGameTick{};
-
-		VECTOR<SModelNodeAnimation> vNodeAnimation;
-
-		SModelAnimation() = default;
-	};
-
-	struct SModelAnimationSet
-	{
-		VECTOR<SModelAnimation> vAnimations;
-	};
-
-	struct SStaticModelData
-	{
-		SStaticVertexData VertexData{};
-		SIndex3Data IndexData{};
-		bool HasTexture{ false };
-		WSTRING TextureFileNameW{};
-	};
-	
-	struct SRiggedModelData
-	{
-		SRiggedVertexData VertexData{};
-		SIndex3Data IndexData{};
-		bool HasTexture{ false };
-		STRING BaseDirectory{};
-		WSTRING TextureFileNameW{};
-
-		// If no animation is set, CurrentAnimationID is KSizeTInvalid(-1)
-		size_t CurrentAnimationID{ KSizeTInvalid };
-
-		// If SetAnimation() is called, CurrentAnimationTick is reset to 0.
-		float CurrentAnimationTick{};
-
-		bool ShouldRepeatCurrentAnimation{ true };
-
-		SModelNodeTree NodeTree{};
-		SModelBoneTree BoneTree{};
-		SModelAnimationSet AnimationSet{};
-	};
-
-	struct SModel2Data
-	{
-		SStaticVertexData VertexData{};
-		SIndex2Data IndexData{};
-	};
-
 	struct SPSCBFlags
 	{
 		SPSCBFlags() = default;

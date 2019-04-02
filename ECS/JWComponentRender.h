@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../Core/JWCommon.h"
 #include "../Core/JWAssimpLoader.h"
 #include "../Core/JWModel.h"
 #include "../Core/JWDX.h"
@@ -64,7 +63,7 @@ namespace JWEngine
 
 		auto AddAnimation(STRING FileName)
 		{
-			m_Model.AddAnimationFromFile(FileName);
+			m_Model.AddAnimationFromFile(*m_pBaseDirectory + KAssetDirectory, FileName);
 
 			return this;
 		}

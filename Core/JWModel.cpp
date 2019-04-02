@@ -1,5 +1,4 @@
 #include "JWModel.h"
-#include "JWAssimpLoader.h"
 #include "JWDX.h"
 
 using namespace JWEngine;
@@ -42,6 +41,9 @@ void JWModel::SetStaticModelData(SStaticModelData ModelData) noexcept
 	}
 
 	// For normal line drawing
+	NormalData.VertexData.Clear();
+	NormalData.IndexData.Clear();
+
 	size_t iterator_vertex{};
 	XMFLOAT3 second_vertex_position{};
 	for (const auto& vertex : ModelData.VertexData.Vertices)
@@ -50,12 +52,17 @@ void JWModel::SetStaticModelData(SStaticModelData ModelData) noexcept
 		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
 		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
 
-		NormalAddVertex(SStaticVertex(vertex.Position, KDefaultColorNormals));
-		NormalAddVertex(SStaticVertex(second_vertex_position, KDefaultColorNormals));
-		NormalAddIndex(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+		NormalData.VertexData.Vertices.push_back(SStaticModelVertex(vertex.Position, KDefaultColorNormals));
+		NormalData.VertexData.Vertices.push_back(SStaticModelVertex(second_vertex_position, KDefaultColorNormals));
+		NormalData.IndexData.Indices.push_back(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
 		++iterator_vertex;
 	}
-	NormalAddEnd();
+	
+	// Create vertex buffer for normals
+	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetByteSize(), NormalData.VertexData.GetPtrData(), &NormalVertexBuffer);
+
+	// Create index buffer for normals
+	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
 void JWModel::SetRiggedModelData(SRiggedModelData ModelData) noexcept
@@ -79,6 +86,9 @@ void JWModel::SetRiggedModelData(SRiggedModelData ModelData) noexcept
 	}
 
 	// For normal line drawing
+	NormalData.VertexData.Clear();
+	NormalData.IndexData.Clear();
+
 	size_t iterator_vertex{};
 	XMFLOAT3 second_vertex_position{};
 	for (const auto& vertex : ModelData.VertexData.Vertices)
@@ -87,15 +97,20 @@ void JWModel::SetRiggedModelData(SRiggedModelData ModelData) noexcept
 		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
 		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
 
-		NormalAddVertex(SStaticVertex(vertex.Position, KDefaultColorNormals));
-		NormalAddVertex(SStaticVertex(second_vertex_position, KDefaultColorNormals));
-		NormalAddIndex(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+		NormalData.VertexData.Vertices.push_back(SStaticModelVertex(vertex.Position, KDefaultColorNormals));
+		NormalData.VertexData.Vertices.push_back(SStaticModelVertex(second_vertex_position, KDefaultColorNormals));
+		NormalData.IndexData.Indices.push_back(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
 		++iterator_vertex;
 	}
-	NormalAddEnd();
+
+	// Create vertex buffer for normals
+	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetByteSize(), NormalData.VertexData.GetPtrData(), &NormalVertexBuffer);
+
+	// Create index buffer for normals
+	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
-void JWModel::SetModel2Data(SModel2Data Model2Data) noexcept
+void JWModel::SetLineModelData(SLineModelData Model2Data) noexcept
 {
 	if (m_ModelType != EModelType::Invalid)
 	{
@@ -105,7 +120,12 @@ void JWModel::SetModel2Data(SModel2Data Model2Data) noexcept
 	m_ModelType = EModelType::LineModel;
 
 	NormalData = Model2Data;
-	NormalAddEnd();
+	
+	// Create vertex buffer for normals
+	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetByteSize(), NormalData.VertexData.GetPtrData(), &NormalVertexBuffer);
+
+	// Create index buffer for normals
+	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
 PRIVATE void JWModel::CreateTexture(WSTRING TextureFileName) noexcept
@@ -145,35 +165,12 @@ PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 	}
 }
 
-PRIVATE auto JWModel::NormalAddVertex(const SStaticVertex& Vertex) noexcept->JWModel&
-{
-	NormalData.VertexData.Vertices.push_back(Vertex);
-
-	return *this;
-}
-
-PRIVATE auto JWModel::NormalAddIndex(const SIndex2& Index) noexcept->JWModel&
-{
-	NormalData.IndexData.Indices.push_back(Index);
-
-	return *this;
-}
-
-PRIVATE void JWModel::NormalAddEnd() noexcept
-{
-	// Create vertex buffer
-	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetByteSize(), NormalData.VertexData.GetPtrData(), &NormalVertexBuffer);
-
-	// Create index buffer
-	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
-}
-
-auto JWModel::AddAnimationFromFile(STRING ModelFileName) noexcept->JWModel&
+auto JWModel::AddAnimationFromFile(STRING Directory, STRING ModelFileName) noexcept->JWModel&
 {
 	if (m_ModelType == EModelType::RiggedModel)
 	{
 		JWAssimpLoader loader;
-		loader.LoadAdditionalAnimationIntoRiggedModel(RiggedModelData, RiggedModelData.BaseDirectory, ModelFileName);
+		loader.LoadAdditionalAnimationIntoRiggedModel(RiggedModelData, Directory, ModelFileName);
 	}
 
 	return *this;

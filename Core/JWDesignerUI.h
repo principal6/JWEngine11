@@ -52,7 +52,7 @@ namespace JWEngine
 		ID3D11Buffer* m_VertexBuffer{};
 		ID3D11Buffer* m_IndexBuffer{};
 		SColorVertexData m_VertexData{};
-		SIndex2Data m_IndexData{};
+		SLineIndexData m_IndexData{};
 		
 		SVSCBColor m_ColorVSConstantBufferData{};
 

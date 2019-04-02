@@ -34,7 +34,7 @@ namespace JWEngine
 		virtual void CheckValidity() const noexcept;
 
 		// Buffer creation
-		virtual void AddVertex(const SStaticVertex& Vertex) noexcept;
+		virtual void AddVertex(const SStaticModelVertex& Vertex) noexcept;
 		virtual void AddIndex(const SIndex3& Index) noexcept;
 		virtual void AddEnd() noexcept;
 
@@ -62,8 +62,8 @@ namespace JWEngine
 		ID3D11Buffer* m_VertexBuffer{};
 		ID3D11Buffer* m_IndexBuffer{};
 
-		SStaticVertexData m_VertexData{};
-		SIndex3Data m_IndexData{};
+		SStaticModelVertexData m_VertexData{};
+		SModelIndexData m_IndexData{};
 
 		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
 

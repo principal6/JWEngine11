@@ -50,7 +50,7 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 
 	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength * 4; ++iterator_count)
 	{
-		m_VertexData.Vertices.push_back(SStaticVertex());
+		m_VertexData.Vertices.push_back(SStaticModelVertex());
 	}
 
 	// Create vertex buffer

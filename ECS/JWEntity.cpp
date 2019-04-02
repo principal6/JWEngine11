@@ -9,9 +9,15 @@ JWEntity::~JWEntity()
 	{
 		m_pECS->SystemTransform().DestroyComponent(*m_pComponentTransform);
 	}
+
 	if (m_pComponentRender)
 	{
 		m_pECS->SystemRender().DestroyComponent(*m_pComponentRender);
+	}
+
+	if (m_pComponentLight)
+	{
+		m_pECS->SystemLight().DestroyComponent(*m_pComponentLight);
 	}
 }
 
