@@ -21,6 +21,31 @@ namespace JWEngine
 		friend class JWSystemRender;
 
 	public:
+		auto MakeSquare(float Size) noexcept
+		{
+			if (m_ComponentRenderType == EComponentRenderType::Invalid)
+			{
+				m_Model.Create(*m_pDX);
+				m_Model.MakeSquare(Size);
+
+				m_ComponentRenderType = EComponentRenderType::Model_StaticModel;
+			}
+
+			return this;
+		}
+
+		auto MakeCircle(float Radius, uint8_t Detail) noexcept
+		{
+			if (m_ComponentRenderType == EComponentRenderType::Invalid)
+			{
+				m_Model.Create(*m_pDX);
+				m_Model.MakeCircle(Radius, Detail);
+
+				m_ComponentRenderType = EComponentRenderType::Model_StaticModel;
+			}
+
+			return this;
+		}
 
 		auto MakeCube(float Size) noexcept
 		{
@@ -67,6 +92,19 @@ namespace JWEngine
 			{
 				m_Model.Create(*m_pDX);
 				m_Model.MakeCylinder(Height, Radius, Detail);
+
+				m_ComponentRenderType = EComponentRenderType::Model_StaticModel;
+			}
+
+			return this;
+		}
+
+		auto MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept
+		{
+			if (m_ComponentRenderType == EComponentRenderType::Invalid)
+			{
+				m_Model.Create(*m_pDX);
+				m_Model.MakeSphere(Radius, VerticalDetail, HorizontalDetail);
 
 				m_ComponentRenderType = EComponentRenderType::Model_StaticModel;
 			}

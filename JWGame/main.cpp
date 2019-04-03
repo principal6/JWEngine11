@@ -63,12 +63,12 @@ int main()
 	directional_light.CreateComponentRender()
 		->LoadModel(EComponentRenderType::Model_StaticModel, "lightbulb.obj");
 
-	auto& primitive_cube = myGame.ECS().CreateEntity();
-	primitive_cube.CreateComponentTransform()
+	auto& primitive = myGame.ECS().CreateEntity();
+	primitive.CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	primitive_cube.CreateComponentRender()
-		->MakeCylinder(2.0f, 1.0f, 2);
+	primitive.CreateComponentRender()
+		->MakeSphere(2.0f, 16, 7);
 	
 	myGame.AddImage("Grayscale_Interval_Ten.png");
 	myGame.GetImage(0).SetPosition(XMFLOAT2(20, 30));
