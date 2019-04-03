@@ -21,6 +21,59 @@ namespace JWEngine
 		friend class JWSystemRender;
 
 	public:
+
+		auto MakeCube(float Size) noexcept
+		{
+			if (m_ComponentRenderType == EComponentRenderType::Invalid)
+			{
+				m_Model.Create(*m_pDX);
+				m_Model.MakeCube(Size);
+
+				m_ComponentRenderType = EComponentRenderType::Model_StaticModel;
+			}
+
+			return this;
+		}
+
+		auto MakePyramid(float Height, float Width) noexcept
+		{
+			if (m_ComponentRenderType == EComponentRenderType::Invalid)
+			{
+				m_Model.Create(*m_pDX);
+				m_Model.MakePyramid(Height, Width);
+
+				m_ComponentRenderType = EComponentRenderType::Model_StaticModel;
+			}
+
+			return this;
+		}
+
+		auto MakeCone(float Height, float Radius, uint8_t Detail) noexcept
+		{
+			if (m_ComponentRenderType == EComponentRenderType::Invalid)
+			{
+				m_Model.Create(*m_pDX);
+				m_Model.MakeCone(Height, Radius, Detail);
+
+				m_ComponentRenderType = EComponentRenderType::Model_StaticModel;
+			}
+
+			return this;
+		}
+
+		auto MakeCylinder(float Height, float Radius, uint8_t Detail) noexcept
+		{
+			if (m_ComponentRenderType == EComponentRenderType::Invalid)
+			{
+				m_Model.Create(*m_pDX);
+				m_Model.MakeCylinder(Height, Radius, Detail);
+
+				m_ComponentRenderType = EComponentRenderType::Model_StaticModel;
+			}
+
+			return this;
+		}
+
 		auto LoadModel(EComponentRenderType Type, STRING FileName) noexcept
 		{
 			if (m_ComponentRenderType == EComponentRenderType::Invalid)

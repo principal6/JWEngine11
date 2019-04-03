@@ -20,6 +20,267 @@ void JWModel::Create(JWDX& DX) noexcept
 	m_pDX = &DX;
 }
 
+void JWModel::MakeCube(float Size) noexcept
+{
+	m_ModelType = EModelType::StaticModel;
+
+	float half_size = Size / 2.0f;
+
+	XMFLOAT3 UpColor[4]
+		= { {1, 1, 1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
+
+	XMFLOAT3 DownColor[4]
+		= { {1, 1, 0}, {0, 1, 1}, {1, 0, 1}, {0, 0, 0} };
+
+	/*
+	** Vertex
+	*/
+	SStaticModelVertexData vert_data;
+	// Up (LeftUp - RightUp - LeftDown - RightDown order)
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, +half_size, 0, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, +half_size, 1, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, -half_size, 0, 1, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, -half_size, 1, 1, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
+
+	// Down
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, +half_size, 0, 0, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, +half_size, 1, 0, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, -half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, -half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+
+	// Front
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, -half_size, 0, 0, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, -half_size, 1, 0, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, -half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, -half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+
+	// Right
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, -half_size, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, +half_size, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, -half_size, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, +half_size, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+
+	// Back
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, +half_size, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, +half_size, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, +half_size, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, +half_size, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+
+	// Left
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, +half_size, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, -half_size, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, +half_size, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, -half_size, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+
+	/*
+	** Index
+	*/
+	SModelIndexData ind_data;
+	for (unsigned int i = 0; i < vert_data.GetCount() / 4; ++i)
+	{
+		// Clock-wise winding
+		ind_data.Indices.push_back(SIndex3( i * 4		, i * 4 + 1	, i * 4 + 2 ));
+		ind_data.Indices.push_back(SIndex3( i * 4 + 1	, i * 4 + 3	, i * 4 + 2 ));
+	}
+
+	/*
+	** Saving model data
+	*/
+	StaticModelData.HasTexture = false;
+	StaticModelData.VertexData = vert_data;
+	StaticModelData.IndexData = ind_data;
+
+	// Create buffers
+	CreateModelVertexIndexBuffers();
+}
+
+void JWModel::MakePyramid(float Height, float Width) noexcept
+{
+	m_ModelType = EModelType::StaticModel;
+
+	float half_width = Width / 2.0f;
+
+	XMFLOAT3 UpColor{ 1, 1, 1 };
+	XMFLOAT3 DownColor[4]
+		= { {1, 1, 1}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
+
+	/*
+	** Vertex
+	*/
+	SStaticModelVertexData vert_data;
+	// Down (LeftUp - RightUp - LeftDown - RightDown order)
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_width, 0, +half_width, 0, 0, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_width, 0, +half_width, 1, 0, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_width, 0, -half_width, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_width, 0, -half_width, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+
+	// Front (Tip - LeftDown - RightDown order)
+	vert_data.Vertices.push_back(SStaticModelVertex(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_width, 0, -half_width, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_width, 0, -half_width, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+
+	// Right
+	vert_data.Vertices.push_back(SStaticModelVertex(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_width, 0, -half_width, 0, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_width, 0, +half_width, 1, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+
+	// Back
+	vert_data.Vertices.push_back(SStaticModelVertex(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_width, 0, +half_width, 0, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_width, 0, +half_width, 1, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+
+	// Left
+	vert_data.Vertices.push_back(SStaticModelVertex(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_width, 0, +half_width, 0, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_width, 0, -half_width, 1, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+
+	/*
+	** Index
+	*/
+	SModelIndexData ind_data;
+	ind_data.Indices.push_back(SIndex3(0, 1, 2));
+	ind_data.Indices.push_back(SIndex3(1, 3, 2));
+
+	int ind_offset = 4;
+	for (unsigned int i = 0; i < (vert_data.GetCount() - 4) / 3; ++i)
+	{
+		// Clock-wise winding
+		ind_data.Indices.push_back(SIndex3(ind_offset + i * 3, ind_offset + i * 3 + 2, ind_offset + i * 3 + 1));
+	}
+
+	/*
+	** Saving model data
+	*/
+	StaticModelData.HasTexture = false;
+	StaticModelData.VertexData = vert_data;
+	StaticModelData.IndexData = ind_data;
+
+	// Create buffers
+	CreateModelVertexIndexBuffers();
+}
+
+void JWModel::MakeCone(float Height, float Radius, uint8_t Detail) noexcept
+{
+	m_ModelType = EModelType::StaticModel;
+
+	XMFLOAT3 UpColor{ 0, 0, 1 };
+	XMFLOAT3 DownColor{ 0, 1, 0 };
+
+	Detail = max(Detail, 5);
+	
+	// (Straight right -> Counter-clokwise)
+	/*
+	** Vertex
+	*/
+	SStaticModelVertexData vert_data;
+	float stride = XM_2PI / Detail;
+	for (uint8_t i = 0; i < Detail; ++i)
+	{
+		// Down
+		vert_data.Vertices.push_back(SStaticModelVertex(0, 0, 0, 0, 0, DownColor.x, DownColor.y, DownColor.z, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+			DownColor.x, DownColor.y, DownColor.z, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
+			DownColor.x, DownColor.y, DownColor.z, 1));
+
+		// Side
+		vert_data.Vertices.push_back(SStaticModelVertex(0, Height, 0, 0, 0, UpColor.x, UpColor.y, UpColor.z, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+			DownColor.x, DownColor.y, DownColor.z, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
+			DownColor.x, DownColor.y, DownColor.z, 1));
+	}
+
+	/*
+	** Index
+	*/
+	SModelIndexData ind_data;
+	for (unsigned int i = 0; i < vert_data.GetCount() / 3; ++i)
+	{
+		// Clock-wise winding
+		ind_data.Indices.push_back(SIndex3(i * 3, i * 3 + 2, i * 3 + 1));
+	}
+
+	/*
+	** Saving model data
+	*/
+	StaticModelData.HasTexture = false;
+	StaticModelData.VertexData = vert_data;
+	StaticModelData.IndexData = ind_data;
+
+	// Create buffers
+	CreateModelVertexIndexBuffers();
+}
+
+void JWModel::MakeCylinder(float Height, float Radius, uint8_t Detail) noexcept
+{
+	m_ModelType = EModelType::StaticModel;
+
+	XMFLOAT3 UpColor{ 0, 0, 1 };
+	XMFLOAT3 DownColor{ 0, 1, 0 };
+
+	Detail = max(Detail, 5);
+
+	// (Straight right -> Counter-clokwise)
+	/*
+	** Vertex
+	*/
+	SStaticModelVertexData vert_data;
+	float stride = XM_2PI / Detail;
+	for (uint8_t i = 0; i < Detail; ++i)
+	{
+		// Up
+		vert_data.Vertices.push_back(SStaticModelVertex(0, Height, 0, 0, 0, UpColor.x, UpColor.y, UpColor.z, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * i), Height, Radius * sinf(stride * i), 0, 0,
+			UpColor.x, UpColor.y, UpColor.z, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * (i + 1)), Height, Radius * sinf(stride * (i + 1)), 0, 0,
+			UpColor.x, UpColor.y, UpColor.z, 1));
+
+		// Down
+		vert_data.Vertices.push_back(SStaticModelVertex(0, 0, 0, 0, 0, DownColor.x, DownColor.y, DownColor.z, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+			DownColor.x, DownColor.y, DownColor.z, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
+			DownColor.x, DownColor.y, DownColor.z, 1));
+
+		// Side #1 (0 - 1 - 2)
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * i), Height, Radius * sinf(stride * i), 0, 0,
+			UpColor.x * 0.9f, UpColor.y * 0.9f, UpColor.z * 0.9f, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * (i + 1)), Height, Radius * sinf(stride * (i + 1)), 0, 0,
+			UpColor.x * 0.9f, UpColor.y * 0.9f, UpColor.z * 0.9f, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+			DownColor.x * 0.9f, DownColor.y * 0.9f, DownColor.z * 0.9f, 1));
+
+		// Side #2 (1 - 3 - 2)
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * (i + 1)), Height, Radius * sinf(stride * (i + 1)), 0, 0,
+			UpColor.x * 0.9f, UpColor.y * 0.9f, UpColor.z * 0.9f, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
+			DownColor.x * 0.9f, DownColor.y * 0.9f, DownColor.z * 0.9f, 1));
+		vert_data.Vertices.push_back(SStaticModelVertex(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+			DownColor.x * 0.9f, DownColor.y * 0.9f, DownColor.z * 0.9f, 1));
+	}
+
+	/*
+	** Index
+	*/
+	SModelIndexData ind_data;
+	for (unsigned int i = 0; i < vert_data.GetCount() / 3; ++i)
+	{
+		// Clock-wise winding
+		ind_data.Indices.push_back(SIndex3(i * 3, i * 3 + 2, i * 3 + 1));
+	}
+
+	/*
+	** Saving model data
+	*/
+	StaticModelData.HasTexture = false;
+	StaticModelData.VertexData = vert_data;
+	StaticModelData.IndexData = ind_data;
+
+	// Create buffers
+	CreateModelVertexIndexBuffers();
+}
+
 void JWModel::SetStaticModelData(SStaticModelData ModelData) noexcept
 {
 	if (m_ModelType != EModelType::Invalid)

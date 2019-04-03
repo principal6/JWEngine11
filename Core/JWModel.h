@@ -25,6 +25,17 @@ namespace JWEngine
 
 		void Create(JWDX& DX) noexcept;
 
+		void MakeCube(float Size) noexcept;
+		void MakePyramid(float Height, float Width) noexcept;
+
+		// Minimum detail is 5
+		void MakeCone(float Height, float Radius, uint8_t Detail) noexcept;
+
+		// Minimum detail is 5
+		void MakeCylinder(float Height, float Radius, uint8_t Detail) noexcept;
+
+		//void MakeSphere(float Radius, int VerticalLineCount, int HorizontalLineCount) noexcept;
+
 		void SetStaticModelData(SStaticModelData ModelData) noexcept;
 		void SetRiggedModelData(SRiggedModelData ModelData) noexcept;
 		void SetLineModelData(SLineModelData Model2Data) noexcept;

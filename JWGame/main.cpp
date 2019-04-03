@@ -38,7 +38,7 @@ int main()
 	auto& main_sprite = myGame.ECS().CreateEntity();
 	main_sprite.CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f))
+		->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
 		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
 	main_sprite.CreateComponentRender()
 		->LoadModel(EComponentRenderType::Model_RiggedModel, "Ezreal_Idle.X")
@@ -62,6 +62,13 @@ int main()
 		->SetPosition(XMFLOAT3(8.0f, 8.0f, 0.0f));
 	directional_light.CreateComponentRender()
 		->LoadModel(EComponentRenderType::Model_StaticModel, "lightbulb.obj");
+
+	auto& primitive_cube = myGame.ECS().CreateEntity();
+	primitive_cube.CreateComponentTransform()
+		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	primitive_cube.CreateComponentRender()
+		->MakeCylinder(2.0f, 1.0f, 2);
 	
 	myGame.AddImage("Grayscale_Interval_Ten.png");
 	myGame.GetImage(0).SetPosition(XMFLOAT2(20, 30));

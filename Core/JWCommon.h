@@ -225,6 +225,8 @@ namespace JWEngine
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
 		SStaticModelVertex(float x, float y, float z, float r, float g, float b, float a) :
 			Position{ x, y, z }, ColorDiffuse{ r, g, b, a } {};
+		SStaticModelVertex(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
+			Position{ x, y, z }, TextureCoordinates{ u, v }, ColorDiffuse{ r, g, b, a } {};
 		SStaticModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
 		SStaticModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
@@ -233,7 +235,7 @@ namespace JWEngine
 		XMFLOAT3 Position{};
 		XMFLOAT2 TextureCoordinates{};
 		XMFLOAT3 Normal{};
-		XMFLOAT4 ColorDiffuse{};
+		XMFLOAT4 ColorDiffuse{ 0.0f, 0.0f, 0.0f, 1.0f };
 		XMFLOAT4 Specular{};
 	};
 	
@@ -264,7 +266,7 @@ namespace JWEngine
 		XMFLOAT3 Position{};
 		XMFLOAT2 TextureCoordinates{};
 		XMFLOAT3 Normal{};
-		XMFLOAT4 ColorDiffuse{};
+		XMFLOAT4 ColorDiffuse{ 0.0f, 0.0f, 0.0f, 1.0f };
 		XMFLOAT4 Specular{};
 
 		int BoneIndex[KMaxBoneCountPerVertex]{}; // BLENDINDICES
