@@ -98,18 +98,18 @@ PRIVATE void JWLine::Update() noexcept
 	// Disable Z-buffer for 2D drawing
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
-	// Set default VS & PS
-	m_pDX->SetVSBase();
-	m_pDX->SetPSBase();
+	// Set VS & PS
+	m_pDX->SetVS(EVertexShader::VSBase);
+	m_pDX->SetPS(EPixelShader::PSBase);
 
 	// Set VS constant buffer
 	// set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
 	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetFixedOrthographicMatrix();
-	m_pDX->SetVSCBStatic(m_VSCBStatic);
+	m_pDX->UpdateVSCBStatic(m_VSCBStatic);
 
 	// Set PS constant buffer
-	m_pDX->SetPSCBFlags(false, false);
+	m_pDX->UpdatePSCBFlags(false, false);
 }
 
 void JWLine::Draw() noexcept

@@ -195,7 +195,7 @@ void JWGame::Run() noexcept
 			m_fpOnInput(m_InputDeviceState);
 
 			// Update camera position into DefaultPSCBDefault
-			m_DX.SetPSCBCamera(m_Camera.GetPositionFloat4());
+			m_DX.UpdatePSCBCamera(m_Camera.GetPositionFloat4());
 
 			// Begin the drawing process
 			m_DX.BeginDrawing(m_ClearColor);

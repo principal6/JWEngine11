@@ -23,22 +23,26 @@ JWDX::~JWDX()
 	JW_RELEASE(m_DepthStencilStateZEnabled11);
 	JW_RELEASE(m_DepthStencilView11);
 
-	JW_RELEASE(m_ColorVSCB);
-	JW_RELEASE(m_ColorPS11);
-	JW_RELEASE(m_ColorPSBuffer);
 	JW_RELEASE(m_PSCBCamera);
 	JW_RELEASE(m_PSCBLights);
 	JW_RELEASE(m_PSCBFlags);
+	JW_RELEASE(m_VSCBColor);
 	JW_RELEASE(m_VSCBRigged);
 	JW_RELEASE(m_VSCBStatic);
+	JW_RELEASE(m_PSColor);
+	JW_RELEASE(m_PSColorBuffer);
+	JW_RELEASE(m_PSSkyMap);
+	JW_RELEASE(m_PSSkyMapBuffer);
 	JW_RELEASE(m_PSRaw);
 	JW_RELEASE(m_PSRawBuffer);
 	JW_RELEASE(m_PSBase);
 	JW_RELEASE(m_PSBaseBuffer);
 
-	JW_RELEASE(m_ColorVSInputLayout11);
-	JW_RELEASE(m_ColorVS11);
-	JW_RELEASE(m_ColorVSBuffer);
+	JW_RELEASE(m_VSColorInputLayout);
+	JW_RELEASE(m_VSColor);
+	JW_RELEASE(m_VSColorBuffer);
+	JW_RELEASE(m_VSSkyMap);
+	JW_RELEASE(m_VSSkyMapBuffer);
 	JW_RELEASE(m_VSRaw);
 	JW_RELEASE(m_VSRawBuffer);
 	JW_RELEASE(m_VSAnimInputLayout);
@@ -70,19 +74,20 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 	CreateVSBase();
 	CreateVSAnim();
 	CreateVSRaw();
+	CreateVSSkyMap();
+	CreateVSColor();
 	CreateVSCBs();
-	CreateColorVS();
-	CreateColorVSCB();
 
 	// Create PS shaders and constant buffers
 	CreatePSBase();
 	CreatePSRaw();
-	CreateColorPS();
+	CreatePSSkyMap();
+	CreatePSColor();
 	CreatePSCBs();
 
-	// Set default shaders (VSBase, PSBase)
-	SetVSBase();
-	SetPSBase();
+	// Set default shaders
+	SetVS(EVertexShader::VSBase);
+	SetPS(EPixelShader::PSBase);
 
 	// Create depth-stencil view
 	CreateDepthStencilView();
@@ -181,6 +186,33 @@ PRIVATE void JWDX::CreateVSRaw() noexcept
 	m_Device11->CreateVertexShader(m_VSRawBuffer->GetBufferPointer(), m_VSRawBuffer->GetBufferSize(), nullptr, &m_VSRaw);
 }
 
+PRIVATE void JWDX::CreateVSSkyMap() noexcept
+{
+	// Compile shader from file (SkyMap)
+	WSTRING shader_file_name;
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSSkyMap.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSSkyMapBuffer, nullptr);
+
+	// Create shader (SkyMap)
+	m_Device11->CreateVertexShader(m_VSSkyMapBuffer->GetBufferPointer(), m_VSSkyMapBuffer->GetBufferSize(), nullptr, &m_VSSkyMap);
+}
+
+PRIVATE void JWDX::CreateVSColor() noexcept
+{
+	// Compile shader from file
+	WSTRING shader_file_name;
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSColor.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0", 0, 0, &m_VSColorBuffer, nullptr);
+
+	// Create shader
+	m_Device11->CreateVertexShader(m_VSColorBuffer->GetBufferPointer(), m_VSColorBuffer->GetBufferSize(), nullptr, &m_VSColor);
+
+	// Create color input layout
+	m_Device11->CreateInputLayout(KInputElementDescriptionColor, ARRAYSIZE(KInputElementDescriptionColor),
+		m_VSColorBuffer->GetBufferPointer(), m_VSColorBuffer->GetBufferSize(), &m_VSColorInputLayout);
+}
+
 PRIVATE void JWDX::CreatePSBase() noexcept
 {
 	// Compile shader from file
@@ -205,6 +237,18 @@ PRIVATE void JWDX::CreatePSRaw() noexcept
 	m_Device11->CreatePixelShader(m_PSRawBuffer->GetBufferPointer(), m_PSRawBuffer->GetBufferSize(), nullptr, &m_PSRaw);
 }
 
+PRIVATE void JWDX::CreatePSSkyMap() noexcept
+{
+	// Compile shader from file (SkyMap)
+	WSTRING shader_file_name;
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSSkyMap.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSSkyMapBuffer, nullptr);
+
+	// Create shader (SkyMap)
+	m_Device11->CreatePixelShader(m_PSSkyMapBuffer->GetBufferPointer(), m_PSSkyMapBuffer->GetBufferSize(), nullptr, &m_PSSkyMap);
+}
+
 PRIVATE void JWDX::CreateVSCBs() noexcept
 {
 	// Create buffer to send to constant buffer in HLSL
@@ -218,6 +262,20 @@ PRIVATE void JWDX::CreateVSCBs() noexcept
 
 	constant_buffer_description.ByteWidth = sizeof(SVSCBRigged);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBRigged);
+
+	constant_buffer_description.ByteWidth = sizeof(SVSCBColor);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBColor);
+}
+
+PRIVATE void JWDX::CreatePSColor() noexcept
+{
+	// Compile shader from file
+	WSTRING shader_file_name;
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSColor.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &m_PSColorBuffer, nullptr);
+
+	// Create shader
+	m_Device11->CreatePixelShader(m_PSColorBuffer->GetBufferPointer(), m_PSColorBuffer->GetBufferSize(), nullptr, &m_PSColor);
 }
 
 PRIVATE void JWDX::CreatePSCBs() noexcept
@@ -236,45 +294,6 @@ PRIVATE void JWDX::CreatePSCBs() noexcept
 
 	constant_buffer_description.ByteWidth = sizeof(SPSCBCamera);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_PSCBCamera);
-}
-
-PRIVATE void JWDX::CreateColorVS() noexcept
-{
-	// Compile shader from file
-	WSTRING shader_file_name;
-	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\ColorVS.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0", 0, 0, &m_ColorVSBuffer, nullptr);
-
-	// Create shader
-	m_Device11->CreateVertexShader(m_ColorVSBuffer->GetBufferPointer(), m_ColorVSBuffer->GetBufferSize(), nullptr, &m_ColorVS11);
-
-	// Create color input layout
-	m_Device11->CreateInputLayout(KInputElementDescriptionColor, ARRAYSIZE(KInputElementDescriptionColor),
-		m_ColorVSBuffer->GetBufferPointer(), m_ColorVSBuffer->GetBufferSize(), &m_ColorVSInputLayout11);
-}
-
-PRIVATE void JWDX::CreateColorPS() noexcept
-{
-	// Compile shader from file
-	WSTRING shader_file_name;
-	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\ColorPS.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &m_ColorPSBuffer, nullptr);
-
-	// Create shader
-	m_Device11->CreatePixelShader(m_ColorPSBuffer->GetBufferPointer(), m_ColorPSBuffer->GetBufferSize(), nullptr, &m_ColorPS11);
-}
-
-PRIVATE void JWDX::CreateColorVSCB() noexcept
-{
-	// Create buffer to send to constant buffer in HLSL
-	D3D11_BUFFER_DESC constant_buffer_description{};
-	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SVSCBColor);
-	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	constant_buffer_description.CPUAccessFlags = 0;
-	constant_buffer_description.MiscFlags = 0;
-
-	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_ColorVSCB);
 }
 
 PRIVATE void JWDX::CreateDepthStencilView() noexcept
@@ -536,44 +555,57 @@ void JWDX::SetDepthStencilState(EDepthStencilState State) noexcept
 	}
 }
 
-void JWDX::SetVSBase() noexcept
+void JWDX::SetVS(EVertexShader VS) noexcept
 {
-	// Set VSBase
-	m_DeviceContext11->VSSetShader(m_VSBase, nullptr, 0);
-
-	// Set VSBase's input layout
-	m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
+	switch (VS)
+	{
+	case JWEngine::EVertexShader::VSBase:
+		m_DeviceContext11->VSSetShader(m_VSBase, nullptr, 0);
+		m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
+		break;
+	case JWEngine::EVertexShader::VSAnim:
+		m_DeviceContext11->VSSetShader(m_VSAnim, nullptr, 0);
+		m_DeviceContext11->IASetInputLayout(m_VSAnimInputLayout);
+		break;
+	case JWEngine::EVertexShader::VSRaw:
+		m_DeviceContext11->VSSetShader(m_VSRaw, nullptr, 0);
+		m_DeviceContext11->IASetInputLayout(nullptr);
+		break;
+	case JWEngine::EVertexShader::VSSkyMap:
+		m_DeviceContext11->VSSetShader(m_VSSkyMap, nullptr, 0);
+		m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
+		break;
+	case JWEngine::EVertexShader::VSColor:
+		m_DeviceContext11->VSSetShader(m_VSColor, nullptr, 0);
+		m_DeviceContext11->IASetInputLayout(m_VSColorInputLayout);
+		break;
+	default:
+		break;
+	}
 }
 
-void JWDX::SetVSAnim() noexcept
+void JWDX::SetPS(EPixelShader PS) noexcept
 {
-	// Set VSAnim
-	m_DeviceContext11->VSSetShader(m_VSAnim, nullptr, 0);
-
-	// Set VSAnim's input layout
-	m_DeviceContext11->IASetInputLayout(m_VSAnimInputLayout);
+	switch (PS)
+	{
+	case JWEngine::EPixelShader::PSBase:
+		m_DeviceContext11->PSSetShader(m_PSBase, nullptr, 0);
+		break;
+	case JWEngine::EPixelShader::PSRaw:
+		m_DeviceContext11->PSSetShader(m_PSRaw, nullptr, 0);
+		break;
+	case JWEngine::EPixelShader::PSSkyMap:
+		m_DeviceContext11->PSSetShader(m_PSSkyMap, nullptr, 0);
+		break;
+	case JWEngine::EPixelShader::PSColor:
+		m_DeviceContext11->PSSetShader(m_PSColor, nullptr, 0);
+		break;
+	default:
+		break;
+	}
 }
 
-void JWDX::SetVSRaw() noexcept
-{
-	// Set VSAnim
-	m_DeviceContext11->VSSetShader(m_VSRaw, nullptr, 0);
-}
-
-void JWDX::SetPSBase() noexcept
-{
-	// Set default PS
-	m_DeviceContext11->PSSetShader(m_PSBase, nullptr, 0);
-}
-
-void JWDX::SetPSRaw() noexcept
-{
-	// Set default PS
-	m_DeviceContext11->PSSetShader(m_PSRaw, nullptr, 0);
-}
-
-
-void JWDX::SetVSCBStatic(SVSCBStatic& Data) noexcept
+void JWDX::UpdateVSCBStatic(SVSCBStatic& Data) noexcept
 {
 	m_VSCBStaticData = Data;
 
@@ -581,7 +613,7 @@ void JWDX::SetVSCBStatic(SVSCBStatic& Data) noexcept
 	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBStatic);
 }
 
-void JWDX::SetVSCBRigged(SVSCBRigged& Data) noexcept
+void JWDX::UpdateVSCBRigged(SVSCBRigged& Data) noexcept
 {
 	m_VSCBRiggedData = Data;
 
@@ -589,7 +621,7 @@ void JWDX::SetVSCBRigged(SVSCBRigged& Data) noexcept
 	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBRigged);
 }
 
-void JWDX::SetPSCBFlags(bool HasTexture, bool UseLighting) noexcept
+void JWDX::UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept
 {
 	if (HasTexture)
 	{
@@ -613,7 +645,7 @@ void JWDX::SetPSCBFlags(bool HasTexture, bool UseLighting) noexcept
 	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBFlags);
 }
 
-void JWDX::SetPSCBLights(SPSCBLights& Data) noexcept
+void JWDX::UpdatePSCBLights(SPSCBLights& Data) noexcept
 {
 	m_PSCBLightsData = Data;
 	
@@ -621,7 +653,7 @@ void JWDX::SetPSCBLights(SPSCBLights& Data) noexcept
 	m_DeviceContext11->PSSetConstantBuffers(1, 1, &m_PSCBLights);
 }
 
-void JWDX::SetPSCBCamera(XMFLOAT4 CameraPosition) noexcept
+void JWDX::UpdatePSCBCamera(XMFLOAT4 CameraPosition) noexcept
 {
 	m_PSCBCameraData.CameraPosition = CameraPosition;
 
@@ -629,27 +661,12 @@ void JWDX::SetPSCBCamera(XMFLOAT4 CameraPosition) noexcept
 	m_DeviceContext11->PSSetConstantBuffers(2, 1, &m_PSCBCamera);
 }
 
-void JWDX::SetColorVS() noexcept
+void JWDX::UpdateColorVSCB(SVSCBColor& Data) noexcept
 {
-	// Set color VS
-	m_DeviceContext11->VSSetShader(m_ColorVS11, nullptr, 0);
+	m_VSCBColorData = Data;
 
-	// Set color input layout
-	m_DeviceContext11->IASetInputLayout(m_ColorVSInputLayout11);
-}
-
-void JWDX::SetColorPS() noexcept
-{
-	// Set color PS
-	m_DeviceContext11->PSSetShader(m_ColorPS11, nullptr, 0);
-}
-
-void JWDX::SetColorVSConstantBufferData(SVSCBColor& Data) noexcept
-{
-	m_ColorVSCBData = Data;
-
-	m_DeviceContext11->UpdateSubresource(m_ColorVSCB, 0, nullptr, &m_ColorVSCBData, 0, 0);
-	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_ColorVSCB);
+	m_DeviceContext11->UpdateSubresource(m_VSCBColor, 0, nullptr, &m_VSCBColorData, 0, 0);
+	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBColor);
 }
 
 void JWDX::BeginDrawing(const SClearColor& ClearColor) noexcept

@@ -158,9 +158,9 @@ void JWImage::UpdateAll() noexcept
 	// Disable Z-buffer for 2D drawing
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
-	// Set default VS & PS
-	m_pDX->SetVSBase();
-	m_pDX->SetPSBase();
+	// Set VS & PS
+	m_pDX->SetVS(EVertexShader::VSBase);
+	m_pDX->SetPS(EPixelShader::PSBase);
 
 	UpdateVSCB();
 	UpdatePSCB();
@@ -173,13 +173,13 @@ PROTECTED void JWImage::UpdateVSCB() noexcept
 	// set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
 	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
-	m_pDX->SetVSCBStatic(m_VSCBStatic);
+	m_pDX->UpdateVSCBStatic(m_VSCBStatic);
 }
 
 PROTECTED void JWImage::UpdatePSCB() noexcept
 {
 	// Set PS constant buffer
-	m_pDX->SetPSCBFlags(true, false);
+	m_pDX->UpdatePSCBFlags(true, false);
 }
 
 PROTECTED void JWImage::UpdateTexture() noexcept

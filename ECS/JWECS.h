@@ -7,6 +7,12 @@ namespace JWEngine
 	class JWDX;
 	class JWCamera;
 
+	enum class ESharedResourceType
+	{
+		Texture2D,
+		TextureCubeMap,
+	};
+
 	class JWECS final
 	{
 	public:
@@ -19,14 +25,21 @@ namespace JWEngine
 				{
 					JW_DELETE(iter);
 				}
+
+				for (auto& iter : m_vpSharedResources)
+				{
+					JW_RELEASE(iter);
+				}
 			}
 		};
 
 		// Called in JWGame class
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
 		{
-			// @important
+			m_pDX = &DX;
+			m_BaseDirectory = BaseDirectory;
 
+			// @important
 			m_SystemRender.CreateSystem(DX, Camera, BaseDirectory);
 			m_SystemLight.CreateSystem(DX);
 		}
@@ -66,25 +79,83 @@ namespace JWEngine
 			}
 		}
 
-		auto& SystemTransform() noexcept { return m_SystemTransform; }
-		auto& SystemRender() noexcept { return m_SystemRender; }
-		auto& SystemLight() noexcept { return m_SystemLight; }
+		void CreateSharedResource(ESharedResourceType Type, STRING FileName) noexcept
+		{
+			bool IsDDS = false;
+			if (FileName.find(".dds") != std::string::npos)
+			{
+				IsDDS = true;
+			}
+
+			WSTRING TextureFileName{};
+			TextureFileName = StringToWstring(m_BaseDirectory + KAssetDirectory + FileName);
+
+			m_vpSharedResources.push_back(nullptr);
+			auto& current_srv = m_vpSharedResources[m_vpSharedResources.size() - 1];
+
+			switch (Type)
+			{
+			case JWEngine::ESharedResourceType::Texture2D:
+				if (IsDDS)
+				{
+					CreateDDSTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &current_srv, 0);
+				}
+				else
+				{
+					CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &current_srv, 0);
+				}
+				break;
+			case JWEngine::ESharedResourceType::TextureCubeMap:
+				CreateDDSTextureFromFileEx(m_pDX->GetDevice(), TextureFileName.c_str(), 0, D3D11_USAGE_DEFAULT,
+					D3D11_BIND_SHADER_RESOURCE, 0, D3D11_RESOURCE_MISC_TEXTURECUBE, false, nullptr,
+					&current_srv);
+				break;
+			default:
+				break;
+			}
+
+			if (current_srv == nullptr)
+			{
+				m_vpSharedResources.pop_back();
+			}
+		}
+
+		auto GetSharedResource(size_t Index) noexcept->ID3D11ShaderResourceView*
+		{
+			ID3D11ShaderResourceView* result{};
+
+			if (Index < m_vpSharedResources.size())
+			{
+				result = m_vpSharedResources[Index];
+			}
+
+			return result;
+		}
 
 		void UpdateAll() noexcept
 		{
 			m_SystemTransform.Update();
 
 			m_SystemLight.Update();
-			
+
 			m_SystemRender.Update();
 		}
 
-	private:
-		JWSystemTransform m_SystemTransform;
-		JWSystemRender m_SystemRender;
-		JWSystemLight m_SystemLight;
+		auto& SystemTransform() noexcept { return m_SystemTransform; }
+		auto& SystemRender() noexcept { return m_SystemRender; }
+		auto& SystemLight() noexcept { return m_SystemLight; }
 
-		VECTOR<JWEntity*> m_vpEntities;
+	private:
+		JWDX*				m_pDX{};
+		STRING				m_BaseDirectory{};
+
+		JWSystemTransform	m_SystemTransform{};
+		JWSystemRender		m_SystemRender{};
+		JWSystemLight		m_SystemLight{};
+
+		VECTOR<JWEntity*>	m_vpEntities;
+
+		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedResources;
 	};
 };
 

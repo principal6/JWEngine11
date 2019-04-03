@@ -87,7 +87,7 @@ void JWSystemLight::Update() noexcept
 			}
 		}
 
-		m_pDX->SetPSCBLights(m_PSCSLights);
+		m_pDX->UpdatePSCBLights(m_PSCSLights);
 
 		m_ShouldUpdate = false;
 	}

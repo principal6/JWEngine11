@@ -76,10 +76,10 @@ void JWSystemRender::Update() noexcept
 
 	for (auto& iter : m_vpComponents)
 	{
+		Animate(*iter);
+
 		SetShaders(*iter);
 
-		Animate(*iter);
-		
 		Draw(*iter);
 	}
 }
@@ -93,34 +93,36 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	const auto& world_matrix = component_transform->WorldMatrix;
 
 	// Set PS
-	m_pDX->SetPSBase();
+	m_pDX->SetPS(Component.PixelShader);
 
-	// Set PS constant buffer
-	m_pDX->SetPSCBFlags((model.FlagRenderOption & JWFlagRenderOption_UseTexture), (model.FlagRenderOption & JWFlagRenderOption_UseLighting));
+	if (Component.PixelShader == EPixelShader::PSBase)
+	{
+		// Update PS constant buffer
+		m_pDX->UpdatePSCBFlags((model.FlagRenderOption & JWFlagRenderOption_UseTexture), (model.FlagRenderOption & JWFlagRenderOption_UseLighting));
+	}
 
-	// Set PS texture and sampler
+	// Set PS texture
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &model.TextureShaderResourceView);
+
+	// Set PS sampler
 	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
 
-	// Set VS and its constant buffer
+	// Set VS
+	m_pDX->SetVS(Component.VertexShader);
+
+	// Update VS constant buffer
 	switch (type)
 	{
 	case ERenderType::Model_StaticModel:
-		m_pDX->SetVSBase();
-
 		m_VSCBStatic.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
 		m_VSCBStatic.World = XMMatrixTranspose(world_matrix);
-		m_pDX->SetVSCBStatic(m_VSCBStatic);
-
+		m_pDX->UpdateVSCBStatic(m_VSCBStatic);
 		break;
 
 	case ERenderType::Model_RiggedModel:
-		m_pDX->SetVSAnim();
-
 		m_VSCBRigged.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
 		m_VSCBRigged.World = XMMatrixTranspose(world_matrix);
-		m_pDX->SetVSCBRigged(m_VSCBRigged);
-
+		m_pDX->UpdateVSCBRigged(m_VSCBRigged);
 		break;
 
 	default:
@@ -378,15 +380,19 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
 	const auto& world_matrix = component_transform->WorldMatrix;
 
-	// Set VS base
-	m_pDX->SetVSBase();
+	// Set VS Base
+	m_pDX->SetVS(EVertexShader::VSBase);
 
-	// Set VS constant buffer
+	// Update VS constant buffer
 	m_VSCBStatic.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
 	m_VSCBStatic.World = XMMatrixTranspose(world_matrix);
+	m_pDX->UpdateVSCBStatic(m_VSCBStatic);
 
-	// Set PS constant buffer
-	m_pDX->SetPSCBFlags(false, false);
+	// Set PS Base
+	m_pDX->SetPS(EPixelShader::PSBase);
+
+	// Update PS constant buffer
+	m_pDX->UpdatePSCBFlags(false, false);
 
 	// Set IA primitive topology
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);

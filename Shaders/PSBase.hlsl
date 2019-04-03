@@ -25,6 +25,7 @@ cbuffer cbPointlight
 };
 
 Texture2D CurrentTexture;
+TextureCube SkyMapTexture;
 SamplerState CurrentSamplerState;
 
 float4 main(VS_OUTPUT input) : SV_TARGET

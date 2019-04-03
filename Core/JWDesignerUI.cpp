@@ -133,12 +133,12 @@ PRIVATE void JWDesignerUI::Update() noexcept
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZEnabled);
 
 	// Set color VS, PS
-	m_pDX->SetColorVS();
-	m_pDX->SetColorPS();
+	m_pDX->SetVS(EVertexShader::VSColor);
+	m_pDX->SetPS(EPixelShader::PSColor);
 
 	// Set VS constant buffer
 	m_ColorVSConstantBufferData.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetViewProjectionMatrix());
-	m_pDX->SetColorVSConstantBufferData(m_ColorVSConstantBufferData);
+	m_pDX->UpdateColorVSCB(m_ColorVSConstantBufferData);
 }
 
 void JWDesignerUI::Draw() noexcept

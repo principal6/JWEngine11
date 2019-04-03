@@ -33,6 +33,23 @@ namespace JWEngine
 		ZDisabled,
 	};
 
+	enum class EVertexShader
+	{
+		VSBase,
+		VSAnim,
+		VSRaw,
+		VSSkyMap,
+		VSColor,
+	};
+
+	enum class EPixelShader
+	{
+		PSBase,
+		PSRaw,
+		PSSkyMap,
+		PSColor,
+	};
+
 	class JWDX
 	{
 	public:
@@ -51,27 +68,19 @@ namespace JWEngine
 		void SetBlendState(EBlendState State) noexcept;
 		void SetPSSamplerState(ESamplerState State) noexcept;
 
-		void SetVSBase() noexcept;
-		void SetVSAnim() noexcept;
-		void SetVSRaw() noexcept;
+		void SetVS(EVertexShader VS) noexcept;
+		void SetPS(EPixelShader PS) noexcept;
 
-		void SetPSBase() noexcept;
-		void SetPSRaw() noexcept;
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
-		void SetVSCBStatic(SVSCBStatic& Data) noexcept;
+		void UpdateVSCBStatic(SVSCBStatic& Data) noexcept;
 		// Called in each animated JWModel's Animate() function
-		void SetVSCBRigged(SVSCBRigged& Data) noexcept;
+		void UpdateVSCBRigged(SVSCBRigged& Data) noexcept;
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
-		void SetPSCBFlags(bool HasTexture, bool UseLighting) noexcept;
-		
-		void SetPSCBLights(SPSCBLights& Data) noexcept;
-		
+		void UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept;
+		void UpdatePSCBLights(SPSCBLights& Data) noexcept;
 		// Called once per game loop, which is when the camera's position would probably be changed.
-		void SetPSCBCamera(XMFLOAT4 CameraPosition) noexcept;
-
-		void SetColorVS() noexcept;
-		void SetColorPS() noexcept;
-		void SetColorVSConstantBufferData(SVSCBColor& Data) noexcept;
+		void UpdatePSCBCamera(XMFLOAT4 CameraPosition) noexcept;
+		void UpdateColorVSCB(SVSCBColor& Data) noexcept;
 
 		void BeginDrawing(const SClearColor& ClearColor) noexcept;
 		void EndDrawing() noexcept;
@@ -89,16 +98,17 @@ namespace JWEngine
 		void CreateVSBase() noexcept;
 		void CreateVSAnim() noexcept;
 		void CreateVSRaw() noexcept;
+		void CreateVSSkyMap() noexcept;
+		void CreateVSColor() noexcept;
 		void CreateVSCBs() noexcept;
-		void CreateColorVS() noexcept;
-		void CreateColorVSCB() noexcept;
 
-		// PS Shader cretion
+		// PS Shader creation
 		void CreatePSBase() noexcept;
 		void CreatePSRaw() noexcept;
+		void CreatePSSkyMap() noexcept;
+		void CreatePSColor() noexcept;
 		void CreatePSCBs() noexcept;
-		void CreateColorPS() noexcept;
-
+		
 		// Called in Create()
 		void CreateDepthStencilView() noexcept;
 
@@ -121,14 +131,14 @@ namespace JWEngine
 		void CreateDefaultViewport() noexcept;
 
 	private:
-		bool m_IsValid{ false };
+		bool		m_IsValid{ false };
 
-		STRING m_BaseDirectory;
-		SSizeInt m_WindowSize{};
+		STRING		m_BaseDirectory;
+		SSizeInt	m_WindowSize{};
 
-		IDXGISwapChain* m_SwapChain{};
-		ID3D11Device* m_Device11{};
-		ID3D11DeviceContext* m_DeviceContext11{};
+		IDXGISwapChain*			m_SwapChain{};
+		ID3D11Device*			m_Device11{};
+		ID3D11DeviceContext*	m_DeviceContext11{};
 
 		// Shader and input layout
 		ID3D10Blob*			m_VSBaseBuffer{};
@@ -139,29 +149,33 @@ namespace JWEngine
 		ID3D11InputLayout*	m_VSAnimInputLayout{};
 		ID3D10Blob*			m_VSRawBuffer{};
 		ID3D11VertexShader*	m_VSRaw{};
+		ID3D10Blob*			m_VSSkyMapBuffer{};
+		ID3D11VertexShader*	m_VSSkyMap{};
+		ID3D10Blob*			m_VSColorBuffer{};
+		ID3D11VertexShader*	m_VSColor{};
+		ID3D11InputLayout*	m_VSColorInputLayout{};
 		ID3D10Blob*			m_PSBaseBuffer{};
 		ID3D11PixelShader*	m_PSBase{};
 		ID3D10Blob*			m_PSRawBuffer{};
 		ID3D11PixelShader*	m_PSRaw{};
-		ID3D10Blob*			m_ColorVSBuffer{};
-		ID3D11VertexShader*	m_ColorVS11{};
-		ID3D11InputLayout*	m_ColorVSInputLayout11{};
-		ID3D10Blob*			m_ColorPSBuffer{};
-		ID3D11PixelShader*	m_ColorPS11{};
+		ID3D10Blob*			m_PSSkyMapBuffer{};
+		ID3D11PixelShader*	m_PSSkyMap{};
+		ID3D10Blob*			m_PSColorBuffer{};
+		ID3D11PixelShader*	m_PSColor{};
 
 		// Shader constant buffer
 		ID3D11Buffer*		m_VSCBStatic{};
 		SVSCBStatic			m_VSCBStaticData{};
 		ID3D11Buffer*		m_VSCBRigged{};
 		SVSCBRigged			m_VSCBRiggedData{};
+		ID3D11Buffer*		m_VSCBColor{};
+		SVSCBColor			m_VSCBColorData{};
 		ID3D11Buffer*		m_PSCBFlags{};
 		SPSCBFlags			m_PSCBFlagsData{};
 		ID3D11Buffer*		m_PSCBLights{};
 		SPSCBLights			m_PSCBLightsData{};
 		ID3D11Buffer*		m_PSCBCamera{};
 		SPSCBCamera			m_PSCBCameraData{};
-		ID3D11Buffer*		m_ColorVSCB{};
-		SVSCBColor			m_ColorVSCBData{};
 
 		ID3D11DepthStencilView* m_DepthStencilView11{};
 		ID3D11DepthStencilState* m_DepthStencilStateZEnabled11{};

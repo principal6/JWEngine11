@@ -8,7 +8,7 @@ namespace JWEngine
 {
 	class JWECS;
 
-	class JWEntity final
+	class JWEntity
 	{
 	public:
 		// Called by ECS

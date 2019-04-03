@@ -28,6 +28,12 @@ struct VS_OUTPUT
 	float3 WorldPosition	: COLOR2;
 };
 
+struct SKY_MAP_OUTPUT
+{
+	float4 Position	: SV_POSITION;
+	float3 TexCoord	: TEXCOORD;
+};
+
 struct SPointlight
 {
 	float3 LightColor;

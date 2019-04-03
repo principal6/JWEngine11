@@ -24,6 +24,10 @@ int main()
 		.SetCameraType(ECameraType::FreeLook)
 		.SetPosition(XMFLOAT3(0.0f, 0.0f, -4.0f));
 
+	// Create shared resource for ECS
+	// Texture source: http://www.custommapmakers.org/skyboxes.php
+	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // SharedResource #0
+
 	auto& prop = myGame.ECS().CreateEntity();
 	prop.CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
@@ -62,13 +66,16 @@ int main()
 		->SetPosition(XMFLOAT3(8.0f, 8.0f, 0.0f));
 	directional_light.CreateComponentRender()
 		->LoadModel(ERenderType::Model_StaticModel, "lightbulb.obj");
-
-	auto& primitive = myGame.ECS().CreateEntity();
-	primitive.CreateComponentTransform()
+	
+	auto& sky_sphere = myGame.ECS().CreateEntity();
+	sky_sphere.CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	primitive.CreateComponentRender()
-		->MakeSphere(2.0f, 16, 7);
+	sky_sphere.CreateComponentRender()
+		->MakeSphere(10.0f, 16, 7)
+		->SetVertexShader(EVertexShader::VSSkyMap)
+		->SetPixelShader(EPixelShader::PSSkyMap)
+		->SetTexture(myGame.ECS().GetSharedResource(0));
 	
 	myGame.AddImage("Grayscale_Interval_Ten.png");
 	myGame.GetImage(0).SetPosition(XMFLOAT2(20, 30));
@@ -159,6 +166,9 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 JW_FUNCTION_ON_RENDER(OnRender)
 {
+	myGame.ECS().GetEntity(4)->GetComponentTransform()->SetPosition(XMFLOAT3(
+		myGame.Camera().GetPositionFloat4().x, myGame.Camera().GetPositionFloat4().y, myGame.Camera().GetPositionFloat4().z));
+
 	myGame.DrawDesignerUI();
 
 	myGame.UpdateEntities();

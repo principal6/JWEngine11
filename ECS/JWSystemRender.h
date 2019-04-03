@@ -27,6 +27,31 @@ namespace JWEngine
 		const STRING*	PtrBaseDirectory{};
 		JWModel			Model{};
 
+		EVertexShader	VertexShader{ EVertexShader::VSBase };
+		EPixelShader	PixelShader{ EPixelShader::PSBase };
+
+		auto SetTexture(ID3D11ShaderResourceView* pShaderResourceView) noexcept
+		{
+			JW_RELEASE(Model.TextureShaderResourceView);
+
+			Model.TextureShaderResourceView = pShaderResourceView;
+			Model.FlagRenderOption |= JWFlagRenderOption_UseTexture;
+
+			return this;
+		}
+
+		auto SetVertexShader(EVertexShader Shader) noexcept
+		{
+			VertexShader = Shader;
+			return this;
+		}
+
+		auto SetPixelShader(EPixelShader Shader) noexcept
+		{
+			PixelShader = Shader;
+			return this;
+		}
+
 		auto MakeSquare(float Size) noexcept
 		{
 			if (RenderType == ERenderType::Invalid)
@@ -133,6 +158,9 @@ namespace JWEngine
 				case JWEngine::ERenderType::Model_RiggedModel:
 					Model.Create(*PtrDX);
 					Model.SetRiggedModelData(loader.LoadRiggedModel(*PtrBaseDirectory + KAssetDirectory, FileName));
+
+					// @important
+					VertexShader = EVertexShader::VSAnim;
 					break;
 				default:
 					break;

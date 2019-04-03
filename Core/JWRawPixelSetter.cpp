@@ -85,8 +85,8 @@ void JWRawPixelSetter::Draw() noexcept
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
 	// Set default VS & PS
-	m_pDX->SetVSRaw();
-	m_pDX->SetPSRaw();
+	m_pDX->SetVS(EVertexShader::VSRaw);
+	m_pDX->SetPS(EPixelShader::PSRaw);
 
 	// Set texture and sampler for pixel shader
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_RawTexture2DSRV);
