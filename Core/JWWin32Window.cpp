@@ -58,11 +58,16 @@ void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& T
 		JWAbort("RegisterClassExA() failed.");
 	}
 	
-	RECT rect = { Position.X, Position.Y, Position.X + Size.Width, Position.Y + Size.Height };
+	RECT rect{};
+	rect.left = Position.X;
+	rect.top = Position.Y;
+	rect.right = Position.X + Size.Width;
+	rect.bottom = Position.Y + Size.Height;
+
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
-	m_hWnd = CreateWindowExA(0, wc.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, Position.X, Position.Y,
-		Size.Width, Size.Height, nullptr, nullptr, m_hInstance, nullptr);
+	m_hWnd = CreateWindowExA(0, wc.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, rect.left, rect.top,
+		rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, m_hInstance, nullptr);
 
 	if (!m_hWnd)
 	{

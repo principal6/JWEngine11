@@ -132,8 +132,9 @@ PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 	swap_chain_description.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
 	// Create the Device and the SwapChain
-	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0,
-		D3D11_SDK_VERSION, &swap_chain_description, &m_SwapChain, &m_Device11, nullptr, &m_DeviceContext11);
+	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
+		nullptr, 0, D3D11_SDK_VERSION, &swap_chain_description, &m_SwapChain,
+		&m_Device11, nullptr, &m_DeviceContext11);
 }
 
 PRIVATE void JWDX::CreateVSBase() noexcept
