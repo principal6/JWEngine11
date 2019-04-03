@@ -17,20 +17,20 @@ namespace JWEngine
 		// Destroy all the components this Entity has
 		~JWEntity();
 
-		auto CreateComponentTransform() noexcept->JWComponentTransform*;
+		auto CreateComponentTransform() noexcept->SComponentTransform*;
 		auto GetComponentTransform() noexcept { return m_pComponentTransform; };
 
-		auto CreateComponentRender() noexcept->JWComponentRender*;
+		auto CreateComponentRender() noexcept->SComponentRender*;
 		auto GetComponentRender() noexcept { return m_pComponentRender; };
 
-		auto CreateComponentLight() noexcept->JWComponentLight*;
+		auto CreateComponentLight() noexcept->SComponentLight*;
 		auto GetComponentLight() noexcept { return m_pComponentLight; };
 
 	private:
 		JWECS* m_pECS{};
 
-		JWComponentTransform*	m_pComponentTransform{};
-		JWComponentRender*		m_pComponentRender{};
-		JWComponentLight*		m_pComponentLight{};
+		SComponentTransform*	m_pComponentTransform{};
+		SComponentRender*		m_pComponentRender{};
+		SComponentLight*		m_pComponentLight{};
 	};
 };

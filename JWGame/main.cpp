@@ -30,9 +30,9 @@ int main()
 		->SetPosition(XMFLOAT3(10.0f, 0.0f, 0.0f))
 		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
 	prop.CreateComponentRender()
-		->LoadModel(EComponentRenderType::Model_StaticModel, "Decoration_18.obj")
+		->LoadModel(ERenderType::Model_StaticModel, "Decoration_18.obj")
 		->SetRenderFlag(JWFlagRenderOption_UseLighting);
-		//->Load(EComponentRenderType::Model_StaticModel, "TestBox.obj")
+		//->LoadModel(ERenderType::Model_StaticModel, "TestBox.obj")
 		//->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseTransparency);
 
 	auto& main_sprite = myGame.ECS().CreateEntity();
@@ -41,7 +41,7 @@ int main()
 		->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
 		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
 	main_sprite.CreateComponentRender()
-		->LoadModel(EComponentRenderType::Model_RiggedModel, "Ezreal_Idle.X")
+		->LoadModel(ERenderType::Model_RiggedModel, "Ezreal_Idle.X")
 		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
 		->AddAnimation("Ezreal_Punching.X")
 		->AddAnimation("Ezreal_Walk.X")
@@ -53,7 +53,7 @@ int main()
 	ambient_light.CreateComponentTransform()
 		->SetPosition(XMFLOAT3(0.0f, -5.0f, 0.0f));
 	ambient_light.CreateComponentRender()
-		->LoadModel(EComponentRenderType::Model_StaticModel, "lightbulb.obj");
+		->LoadModel(ERenderType::Model_StaticModel, "lightbulb.obj");
 
 	auto& directional_light = myGame.ECS().CreateEntity();
 	directional_light.CreateComponentLight()
@@ -61,7 +61,7 @@ int main()
 	directional_light.CreateComponentTransform()
 		->SetPosition(XMFLOAT3(8.0f, 8.0f, 0.0f));
 	directional_light.CreateComponentRender()
-		->LoadModel(EComponentRenderType::Model_StaticModel, "lightbulb.obj");
+		->LoadModel(ERenderType::Model_StaticModel, "lightbulb.obj");
 
 	auto& primitive = myGame.ECS().CreateEntity();
 	primitive.CreateComponentTransform()

@@ -21,26 +21,26 @@ JWEntity::~JWEntity()
 	}
 }
 
-auto JWEntity::CreateComponentTransform() noexcept->JWComponentTransform*
+auto JWEntity::CreateComponentTransform() noexcept->SComponentTransform*
 {
 	m_pComponentTransform = &m_pECS->SystemTransform().CreateComponent();
-	m_pComponentTransform->pEntity = this;
+	m_pComponentTransform->PtrEntity = this;
 
 	return m_pComponentTransform;
 }
 
-auto JWEntity::CreateComponentRender() noexcept->JWComponentRender*
+auto JWEntity::CreateComponentRender() noexcept->SComponentRender*
 {
 	m_pComponentRender = &m_pECS->SystemRender().CreateComponent();
-	m_pComponentRender->pEntity = this;
+	m_pComponentRender->PtrEntity = this;
 
 	return m_pComponentRender;
 }
 
-auto JWEntity::CreateComponentLight() noexcept->JWComponentLight*
+auto JWEntity::CreateComponentLight() noexcept->SComponentLight*
 {
 	m_pComponentLight = &m_pECS->SystemLight().CreateComponent();
-	m_pComponentLight->pEntity = this;
+	m_pComponentLight->PtrEntity = this;
 
 	return m_pComponentLight;
 }

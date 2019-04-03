@@ -291,9 +291,6 @@
     <ClInclude Include="..\DirectXTK\VertexTypes.h" />
     <ClInclude Include="..\DirectXTK\WICTextureLoader.h" />
     <ClInclude Include="..\DirectXTK\XboxDDSTextureLoader.h" />
-    <ClInclude Include="..\ECS\JWComponentLight.h" />
-    <ClInclude Include="..\ECS\JWComponentRender.h" />
-    <ClInclude Include="..\ECS\JWComponentTransform.h" />
     <ClInclude Include="..\ECS\JWECS.h" />
     <ClInclude Include="..\ECS\JWEntity.h" />
     <ClInclude Include="..\ECS\JWSystemLight.h" />

@@ -411,15 +411,6 @@
     <ClInclude Include="..\Shaders\ColorHeader.hlsl">
       <Filter>Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="..\ECS\JWComponentLight.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ECS\JWComponentRender.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ECS\JWComponentTransform.h">
-      <Filter>ECS</Filter>
-    </ClInclude>
     <ClInclude Include="..\ECS\JWECS.h">
       <Filter>ECS</Filter>
     </ClInclude>

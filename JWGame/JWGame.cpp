@@ -257,8 +257,20 @@ void JWGame::DrawImages() noexcept
 
 void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
 {
-	m_DX.SetBlendState(EBlendState::Transprent);
-	m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
+	if (m_RasterizerState == ERasterizerState::WireFrame)
+	{
+		ToggleWireFrame();
+
+		m_DX.SetBlendState(EBlendState::Transprent);
+		m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
+
+		ToggleWireFrame();
+	}
+	else
+	{
+		m_DX.SetBlendState(EBlendState::Transprent);
+		m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
+	}	
 }
 
 PRIVATE void JWGame::DrawAll2DImages() const noexcept

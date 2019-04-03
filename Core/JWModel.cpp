@@ -369,8 +369,8 @@ void JWModel::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t Horizonta
 {
 	m_ModelType = EModelType::StaticModel;
 
-	XMFLOAT3 ColorA{ 0, 1, 0 };
-	XMFLOAT3 ColorB{ 0, 1, 1 };
+	XMFLOAT3 ColorA{ 0, 0.5f, 0 };
+	XMFLOAT3 ColorB{ 0, 0.5f, 1 };
 
 	VerticalDetail = max(VerticalDetail, 4);
 	HorizontalDetail = max(HorizontalDetail, 1);

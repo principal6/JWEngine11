@@ -28,27 +28,28 @@ void JWSystemRender::CreateSystem(JWDX& DX, JWCamera& Camera, STRING BaseDirecto
 	m_BaseDirectory = BaseDirectory;
 }
 
-auto JWSystemRender::CreateComponent() noexcept->JWComponentRender&
+auto JWSystemRender::CreateComponent() noexcept->SComponentRender&
 {
 	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
 
-	auto new_entry{ new JWComponentRender(slot) };
+	auto new_entry{ new SComponentRender() };
 	m_vpComponents.push_back(new_entry);
 
 	// @important
-	// Set default data for the component
-	m_vpComponents[slot]->m_pDX = m_pDX;
-	m_vpComponents[slot]->m_pBaseDirectory = &m_BaseDirectory;
+	// Save component ID & set default data
+	m_vpComponents[slot]->ComponentID = slot;
+	m_vpComponents[slot]->PtrDX = m_pDX;
+	m_vpComponents[slot]->PtrBaseDirectory = &m_BaseDirectory;
 
 	return *m_vpComponents[slot];
 }
 
-void JWSystemRender::DestroyComponent(JWComponentRender& Component) noexcept
+void JWSystemRender::DestroyComponent(SComponentRender& Component) noexcept
 {
 	uint32_t slot{};
 	for (const auto& iter : m_vpComponents)
 	{
-		if (iter->m_ComponentID == Component.m_ComponentID)
+		if (iter->ComponentID == Component.ComponentID)
 		{
 			break;
 		}
@@ -83,13 +84,13 @@ void JWSystemRender::Update() noexcept
 	}
 }
 
-void JWSystemRender::SetShaders(JWComponentRender& Component) noexcept
+void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 {
-	auto type = Component.m_ComponentRenderType;
-	const auto& model = Component.m_Model;
+	auto type = Component.RenderType;
+	const auto& model = Component.Model;
 
-	const auto& component_transform = Component.pEntity->GetComponentTransform();
-	const auto& world_matrix = component_transform->m_WorldMatrix;
+	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
+	const auto& world_matrix = component_transform->WorldMatrix;
 
 	// Set PS
 	m_pDX->SetPSBase();
@@ -104,7 +105,7 @@ void JWSystemRender::SetShaders(JWComponentRender& Component) noexcept
 	// Set VS and its constant buffer
 	switch (type)
 	{
-	case EComponentRenderType::Model_StaticModel:
+	case ERenderType::Model_StaticModel:
 		m_pDX->SetVSBase();
 
 		m_VSCBStatic.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
@@ -113,7 +114,7 @@ void JWSystemRender::SetShaders(JWComponentRender& Component) noexcept
 
 		break;
 
-	case EComponentRenderType::Model_RiggedModel:
+	case ERenderType::Model_RiggedModel:
 		m_pDX->SetVSAnim();
 
 		m_VSCBRigged.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
@@ -127,12 +128,12 @@ void JWSystemRender::SetShaders(JWComponentRender& Component) noexcept
 	}
 }
 
-void JWSystemRender::Animate(JWComponentRender& Component) noexcept
+void JWSystemRender::Animate(SComponentRender& Component) noexcept
 {
-	auto type = Component.m_ComponentRenderType;
-	if (type == EComponentRenderType::Model_RiggedModel)
+	auto type = Component.RenderType;
+	if (type == ERenderType::Model_RiggedModel)
 	{
-		auto& model = Component.m_Model;
+		auto& model = Component.Model;
 		auto& current_animation_id = model.RiggedModelData.CurrentAnimationID;
 
 		if (model.FlagRenderOption & JWFlagRenderOption_DrawTPose)
@@ -323,10 +324,10 @@ PRIVATE void JWSystemRender::UpdateNodeTPoseIntoBones(float AnimationTime, SRigg
 	}
 }
 
-PRIVATE void JWSystemRender::Draw(JWComponentRender& Component) noexcept
+PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 {
-	auto type = Component.m_ComponentRenderType;
-	auto& model = Component.m_Model;
+	auto type = Component.RenderType;
+	auto& model = Component.Model;
 
 	if (model.FlagRenderOption & JWFlagRenderOption_UseTransparency)
 	{
@@ -346,14 +347,14 @@ PRIVATE void JWSystemRender::Draw(JWComponentRender& Component) noexcept
 	// Set IA vertex buffer & Draw
 	switch (type)
 	{
-	case EComponentRenderType::Model_StaticModel:
+	case ERenderType::Model_StaticModel:
 		m_pDX->GetDeviceContext()->IASetVertexBuffers(
 			0, 1, &model.ModelVertexBuffer, model.StaticModelData.VertexData.GetPtrStride(), model.StaticModelData.VertexData.GetPtrOffset());
 
 		m_pDX->GetDeviceContext()->DrawIndexed(model.StaticModelData.IndexData.GetCount(), 0, 0);
 
 		break;
-	case EComponentRenderType::Model_RiggedModel:
+	case ERenderType::Model_RiggedModel:
 		m_pDX->GetDeviceContext()->IASetVertexBuffers(
 			0, 1, &model.ModelVertexBuffer, model.RiggedModelData.VertexData.GetPtrStride(), model.RiggedModelData.VertexData.GetPtrOffset());
 
@@ -371,11 +372,11 @@ PRIVATE void JWSystemRender::Draw(JWComponentRender& Component) noexcept
 	}
 }
 
-PRIVATE void JWSystemRender::DrawNormals(JWComponentRender& Component) noexcept
+PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 {
-	auto& model = Component.m_Model;
-	const auto& component_transform = Component.pEntity->GetComponentTransform();
-	const auto& world_matrix = component_transform->m_WorldMatrix;
+	auto& model = Component.Model;
+	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
+	const auto& world_matrix = component_transform->WorldMatrix;
 
 	// Set VS base
 	m_pDX->SetVSBase();

@@ -21,24 +21,28 @@ void JWSystemLight::CreateSystem(JWDX& DX) noexcept
 	m_pDX = &DX;
 }
 
-auto JWSystemLight::CreateComponent() noexcept->JWComponentLight&
+auto JWSystemLight::CreateComponent() noexcept->SComponentLight&
 {
 	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
 
-	auto new_entry{ new JWComponentLight(slot) };
+	auto new_entry{ new SComponentLight() };
 	m_vpComponents.push_back(new_entry);
+
+	// @important
+	// Save component ID
+	m_vpComponents[slot]->ComponentID = slot;
 
 	m_ShouldUpdate = true;
 
 	return *m_vpComponents[slot];
 }
 
-void JWSystemLight::DestroyComponent(JWComponentLight& Component) noexcept
+void JWSystemLight::DestroyComponent(SComponentLight& Component) noexcept
 {
 	uint32_t slot{};
 	for (const auto& iter : m_vpComponents)
 	{
-		if (iter->m_ComponentID == Component.m_ComponentID)
+		if (iter->ComponentID == Component.ComponentID)
 		{
 			break;
 		}
