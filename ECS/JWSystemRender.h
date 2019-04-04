@@ -1,8 +1,9 @@
 #pragma once
 
 #include "../Core/JWAssimpLoader.h"
-#include "../Core/JWModel.h"
 #include "../Core/JWDX.h"
+#include "../Core/JWModel.h"
+#include "../Core/JWImage.h"
 
 namespace JWEngine
 {
@@ -15,27 +16,46 @@ namespace JWEngine
 
 		Model_StaticModel,
 		Model_RiggedModel,
+
+		Image_2D,
 	};
+
+	enum EFLAGRenderOption : uint8_t
+	{
+		JWFlagRenderOption_UseTexture = 0b1,
+		JWFlagRenderOption_UseLighting = 0b10,
+		JWFlagRenderOption_UseAnimationInterpolation = 0b100,
+		JWFlagRenderOption_UseTransparency = 0b1000,
+		JWFlagRenderOption_DrawNormals = 0b10000,
+		JWFlagRenderOption_DrawTPose = 0b100000,
+	};
+	using JWFlagRenderOption = uint8_t;
 
 	struct SComponentRender
 	{
-		JWEntity*		PtrEntity{};
-		uint32_t		ComponentID{};
+		JWEntity*			PtrEntity{};
+		uint32_t			ComponentID{};
 
-		ERenderType		RenderType{ ERenderType::Invalid };
-		JWDX*			PtrDX{};
-		const STRING*	PtrBaseDirectory{};
-		JWModel			Model{};
+		ERenderType			RenderType{ ERenderType::Invalid };
+		JWDX*				PtrDX{};
+		JWCamera*			PtrCamera{};
+		const STRING*		PtrBaseDirectory{};
+		JWModel				Model{};
+		JWImage				Image{};
 
-		EVertexShader	VertexShader{ EVertexShader::VSBase };
-		EPixelShader	PixelShader{ EPixelShader::PSBase };
+		EDepthStencilState	DepthStencilState{ EDepthStencilState::ZEnabled };
+		EVertexShader		VertexShader{ EVertexShader::VSBase };
+		EPixelShader		PixelShader{ EPixelShader::PSBase };
+
+		JWFlagRenderOption	FlagRenderOption{};
 
 		auto SetTexture(ID3D11ShaderResourceView* pShaderResourceView) noexcept
 		{
 			JW_RELEASE(Model.TextureShaderResourceView);
 
 			Model.TextureShaderResourceView = pShaderResourceView;
-			Model.FlagRenderOption |= JWFlagRenderOption_UseTexture;
+
+			FlagRenderOption |= JWFlagRenderOption_UseTexture;
 
 			return this;
 		}
@@ -52,12 +72,12 @@ namespace JWEngine
 			return this;
 		}
 
-		auto MakeSquare(float Size) noexcept
+		auto MakeSquare(float Size, XMFLOAT2 UVMap) noexcept
 		{
 			if (RenderType == ERenderType::Invalid)
 			{
 				Model.Create(*PtrDX);
-				Model.MakeSquare(Size);
+				Model.MakeSquare(Size, UVMap);
 
 				RenderType = ERenderType::Model_StaticModel;
 			}
@@ -143,6 +163,19 @@ namespace JWEngine
 			return this;
 		}
 
+		auto MakeCapsule(float Height, float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept
+		{
+			if (RenderType == ERenderType::Invalid)
+			{
+				Model.Create(*PtrDX);
+				Model.MakeCapsule(Height, Radius, VerticalDetail, HorizontalDetail);
+
+				RenderType = ERenderType::Model_StaticModel;
+			}
+
+			return this;
+		}
+
 		auto LoadModel(ERenderType Type, STRING FileName) noexcept
 		{
 			if (RenderType == ERenderType::Invalid)
@@ -154,6 +187,8 @@ namespace JWEngine
 				case JWEngine::ERenderType::Model_StaticModel:
 					Model.Create(*PtrDX);
 					Model.SetStaticModelData(loader.LoadStaticModel(*PtrBaseDirectory + KAssetDirectory, FileName));
+
+					RenderType = Type;
 					break;
 				case JWEngine::ERenderType::Model_RiggedModel:
 					Model.Create(*PtrDX);
@@ -161,12 +196,30 @@ namespace JWEngine
 
 					// @important
 					VertexShader = EVertexShader::VSAnim;
+
+					RenderType = Type;
 					break;
 				default:
 					break;
 				}
 
-				RenderType = Type;
+				
+			}
+
+			return this;
+		}
+
+		auto MakeImage2D(SPositionInt Position, SSizeInt Size) noexcept
+		{
+			if (RenderType == ERenderType::Invalid)
+			{
+				Image.Create(*PtrDX, *PtrCamera);
+
+				Image.SetPosition(XMFLOAT2(static_cast<float>(Position.X), static_cast<float>(Position.Y)));
+				Image.SetSize(XMFLOAT2(static_cast<float>(Size.Width), static_cast<float>(Size.Height)));
+
+				DepthStencilState = EDepthStencilState::ZDisabled;
+				RenderType = ERenderType::Image_2D;
 			}
 
 			return this;
@@ -174,14 +227,14 @@ namespace JWEngine
 
 		auto SetRenderFlag(JWFlagRenderOption Flag)
 		{
-			Model.FlagRenderOption = Flag;
+			FlagRenderOption = Flag;
 
 			return this;
 		}
 
 		auto ToggleRenderFlag(JWFlagRenderOption Flag)
 		{
-			Model.FlagRenderOption ^= Flag;
+			FlagRenderOption ^= Flag;
 
 			return this;
 		}

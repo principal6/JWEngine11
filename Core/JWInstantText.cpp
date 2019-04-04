@@ -1,12 +1,18 @@
 #include "JWInstantText.h"
 #include "JWDX.h"
+#include "JWCamera.h"
 
 using namespace JWEngine;
 
 JWInstantText::~JWInstantText()
 {
-	JW_RELEASE(m_InstantTextPS);
-	JW_RELEASE(m_InstantTextPSConstantBuffer);
+	JW_RELEASE(m_TextureShaderResourceView);
+
+	JW_RELEASE(m_PSInstantTextCB);
+	JW_RELEASE(m_PSInstantText);
+	
+	JW_RELEASE(m_IndexBuffer);
+	JW_RELEASE(m_VertexBuffer);
 }
 
 void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept
@@ -40,7 +46,7 @@ void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STR
 
 	m_IsValid = true;
 
-	JWImage::LoadImageFromFile(BaseDirectory, FontFileName + "_0.png");
+	LoadImageFromFile(BaseDirectory, FontFileName + "_0.png");
 }
 
 PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
@@ -81,7 +87,7 @@ PRIVATE void JWInstantText::CreateInstantTextPS() noexcept
 	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &buffer_ps, nullptr);
 
 	// Create the shader
-	m_pDX->GetDevice()->CreatePixelShader(buffer_ps->GetBufferPointer(), buffer_ps->GetBufferSize(), nullptr, &m_InstantTextPS);
+	m_pDX->GetDevice()->CreatePixelShader(buffer_ps->GetBufferPointer(), buffer_ps->GetBufferSize(), nullptr, &m_PSInstantText);
 
 	JW_RELEASE(buffer_ps);
 }
@@ -91,17 +97,24 @@ PRIVATE void JWInstantText::CreatePSConstantBuffer() noexcept
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
 	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SInstantTextPSConstantBufferData);
+	constant_buffer_description.ByteWidth = sizeof(SPSInstantTextCBData);
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
 
-	m_pDX->GetDevice()->CreateBuffer(&constant_buffer_description, nullptr, &m_InstantTextPSConstantBuffer);
+	m_pDX->GetDevice()->CreateBuffer(&constant_buffer_description, nullptr, &m_PSInstantTextCB);
 }
 
-void JWInstantText::SetInstantTextPS() noexcept
+PRIVATE void JWInstantText::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 {
-	m_pDX->GetDeviceContext()->PSSetShader(m_InstantTextPS, nullptr, 0);
+	JW_AVOID_DUPLICATE_CREATION(m_IsTextureCreated);
+
+	STRING path_string = Directory + FileName;
+	WSTRING w_path = StringToWstring(path_string);
+
+	CreateWICTextureFromFile(m_pDX->GetDevice(), w_path.c_str(), nullptr, &m_TextureShaderResourceView, 0);
+
+	m_IsTextureCreated = true;
 }
 
 void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
@@ -109,22 +122,26 @@ void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 Fon
 	// Disable Z-buffer for 2D drawing
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
-	// Set VS & PS
+	// Set VS
 	m_pDX->SetVS(EVertexShader::VSBase);
-	m_pDX->SetPS(EPixelShader::PSBase);
 
-	JWImage::UpdateVSCB();
-	JWImage::UpdateTexture();
+	// Update VS constant buffer (WVP matrix, which in reality is WO matrix.)
+	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
+	m_pDX->UpdateVSCBStatic(m_VSCBStatic);
 
-	// Set pixel shader
-	SetInstantTextPS();
-	
-	// Update InstantText pixel shader's constant buffer (font color)
+	// Set PS
+	m_pDX->GetDeviceContext()->PSSetShader(m_PSInstantText, nullptr, 0);
+
+	// Set PS texture and sampler
+	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
+	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
+
+	// Update PS constant buffer (font color)
 	m_TextColor._RGBA = XMFLOAT4(FontColorRGB.x, FontColorRGB.y, FontColorRGB.z, 1);
-	m_pDX->GetDeviceContext()->UpdateSubresource(m_InstantTextPSConstantBuffer, 0, nullptr, &m_TextColor, 0, 0);
-	m_pDX->GetDeviceContext()->PSSetConstantBuffers(0, 1, &m_InstantTextPSConstantBuffer);
+	m_pDX->GetDeviceContext()->UpdateSubresource(m_PSInstantTextCB, 0, nullptr, &m_TextColor, 0, 0);
+	m_pDX->GetDeviceContext()->PSSetConstantBuffers(0, 1, &m_PSInstantTextCB);
 
-	// Empty vertex data
+	// Empty the vertex data
 	m_VertexData.EmptyData();
 	
 	float window_width_half = static_cast<float>(m_pDX->GetWindowSize().Width) / 2;
@@ -173,8 +190,25 @@ void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 Fon
 		base_x_position += current_bm_char.XAdvance;
 		++iterator_index;
 	}
+	
+	// Update vertex buffer
+	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
+	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
+	{
+		memcpy(mapped_subresource.pData, m_VertexData.GetPtrData(), m_VertexData.GetByteSize());
 
-	JWImage::UpdateVertexBuffer();
+		m_pDX->GetDeviceContext()->Unmap(m_VertexBuffer, 0);
+	}
+	
+	// Set IA primitive topology
+	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	JWImage::Draw();
+	// Set IA vertex buffer
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, m_VertexData.GetPtrStride(), m_VertexData.GetPtrOffset());
+
+	// Set IA index buffer
+	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	// Draw indexed
+	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
 }

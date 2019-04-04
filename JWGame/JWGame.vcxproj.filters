@@ -81,6 +81,9 @@
     <ClCompile Include="..\ECS\JWSystemTransform.cpp">
       <Filter>ECS</Filter>
     </ClCompile>
+    <ClCompile Include="..\Core\JWImageCursor.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Core\JWCommon.h">
@@ -425,6 +428,9 @@
     </ClInclude>
     <ClInclude Include="..\ECS\JWSystemTransform.h">
       <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\JWImageCursor.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

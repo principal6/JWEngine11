@@ -4,6 +4,7 @@
 #include "../Core/JWDX.h"
 #include "../Core/JWCamera.h"
 #include "../Core/JWImage.h"
+#include "../Core/JWImageCursor.h"
 #include "../Core/JWInstantText.h"
 #include "../Core/JWTimer.h"
 #include "../Core/JWDesignerUI.h"
@@ -37,9 +38,6 @@ namespace JWEngine
 		void ToggleWireFrame() noexcept;
 		void SetRasterizerState(ERasterizerState State) noexcept;
 
-		void AddImage(STRING ImageFileName) noexcept;
-		auto GetImage(size_t Image2DIndex) const noexcept->JWImage&;
-
 		// Object getter
 		auto Camera() noexcept->JWCamera&;
 		auto InstantText() noexcept->JWInstantText&;
@@ -54,19 +52,17 @@ namespace JWEngine
 		void UpdateEntities() noexcept;
 
 		void DrawDesignerUI() noexcept;
-		void DrawImages() noexcept;
 		void DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
 
 	private:
 		void CheckValidity() const noexcept;
-
-		void DrawAll2DImages() const noexcept;
 
 	private:
 		bool m_IsValid{ false };
 		bool m_IsWindowCreated{ false };
 		bool m_IsDXCreated{ false };
 		bool m_IsRunning{ false };
+		bool m_IsMouseCursorLoaded{ false };
 		
 		STRING m_BaseDirectory;
 		SClearColor m_ClearColor{};
@@ -88,9 +84,7 @@ namespace JWEngine
 		long long m_FPSCount{};
 		int m_FPS{};
 
-		VECTOR<UNIQUE_PTR<JWImage>> m_p2DImages;
-
-		JWImage m_MouseCursorImage{};
+		JWImageCursor m_MouseCursorImage{};
 		XMFLOAT2 m_MouseCursorPosition{};
 		
 		ERasterizerState m_RasterizerState{ ERasterizerState::SolidNoCull };

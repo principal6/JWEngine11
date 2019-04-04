@@ -12,65 +12,27 @@ namespace JWEngine
 	{
 	public:
 		JWImage() = default;
-		virtual ~JWImage();
+		~JWImage();
 
-		// Called in JWGame class
-		virtual void Create(JWDX& DX, JWCamera& Camera) noexcept;
+		void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
-		// Called in JWGame class
-		virtual void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
+		void SetPosition(XMFLOAT2 Position) noexcept;
+		void SetSize(XMFLOAT2 Size) noexcept;
 
-		virtual auto IsImageLoaded() const noexcept->bool;
-		virtual auto SetPosition(XMFLOAT2 Position) noexcept->JWImage&;
-		virtual auto SetSize(XMFLOAT2 Size) noexcept->JWImage&;
-		
-		// Called in JWGame class
-		virtual void UpdateAll() noexcept;
+	public:
+		ID3D11Buffer*				m_VertexBuffer{};
+		ID3D11Buffer*				m_IndexBuffer{};
+		SStaticModelVertexData		m_VertexData{};
+		SModelIndexData				m_IndexData{};
 
-		// Called in JWGame class
-		virtual void Draw() noexcept;
+	private:
+		void UpdateScreenPositionAndSize() noexcept;
 
-	protected:
-		virtual void CheckValidity() const noexcept;
-
-		// Buffer creation
-		virtual void AddVertex(const SStaticModelVertex& Vertex) noexcept;
-		virtual void AddIndex(const SIndex3& Index) noexcept;
-		virtual void AddEnd() noexcept;
-
-		// Texture creation
-		virtual void CreateTexture(WSTRING TextureFileName) noexcept;
-
-		// Called by SetPosition() or SetSize()
-		virtual void UpdateScreenPositionAndSize() noexcept;
-
-		// Called by UpdateVertices()
-		virtual void UpdateVertexBuffer() noexcept;
-
-		// Called by UpdateAll()
-		virtual void UpdateVSCB() noexcept;
-		virtual void UpdatePSCB() noexcept;
-		virtual void UpdateTexture() noexcept;
-
-	protected:
-		bool m_IsValid{ false };
-		bool m_IsTextureCreated{ false };
-
-		JWDX* m_pDX{};
-		JWCamera* m_pCamera{};
-
-		ID3D11Buffer* m_VertexBuffer{};
-		ID3D11Buffer* m_IndexBuffer{};
-
-		SStaticModelVertexData m_VertexData{};
-		SModelIndexData m_IndexData{};
-
-		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
-
-		XMFLOAT2 m_Position{};
-		XMFLOAT2 m_Size{};
-		SSizeInt m_ImageOriginalSize{};
-
-		SVSCBStatic m_VSCBStatic{};
+	private:
+		bool						m_IsValid{ false };
+		JWDX*						m_pDX{};
+		JWCamera*					m_pCamera{};
+		XMFLOAT2					m_Position{};
+		XMFLOAT2					m_Size{};
 	};
 };

@@ -36,7 +36,9 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 void JWGame::LoadCursorImage(STRING FileName) noexcept
 {
-	m_MouseCursorImage.LoadImageFromFile(m_BaseDirectory + KAssetDirectory, FileName);
+	m_MouseCursorImage.LoadImageCursorFromFile(m_BaseDirectory + KAssetDirectory, FileName);
+
+	m_IsMouseCursorLoaded = true;
 }
 
 void JWGame::SetFunctionOnRender(FP_ON_RENDER Function) noexcept
@@ -97,19 +99,6 @@ void JWGame::SetRasterizerState(ERasterizerState State) noexcept
 {
 	m_RasterizerState = State;
 	m_DX.SetRasterizerState(m_RasterizerState);
-}
-
-void JWGame::AddImage(STRING ImageFileName) noexcept
-{
-	m_p2DImages.push_back(MAKE_UNIQUE_AND_MOVE(JWImage)());
-
-	m_p2DImages[m_p2DImages.size() - 1]->Create(m_DX, m_Camera);
-	m_p2DImages[m_p2DImages.size() - 1]->LoadImageFromFile(m_BaseDirectory + KAssetDirectory, ImageFileName);
-}
-
-auto JWGame::GetImage(size_t Image2DIndex) const noexcept->JWImage&
-{
-	return *m_p2DImages[Image2DIndex].get();
 }
 
 auto JWGame::Camera() noexcept->JWCamera&
@@ -204,10 +193,9 @@ void JWGame::Run() noexcept
 			m_fpOnRender();
 
 			// Draw mouse cursor if it exists
-			if (m_MouseCursorImage.IsImageLoaded())
+			if (m_IsMouseCursorLoaded)
 			{
 				m_MouseCursorImage.SetPosition(m_MouseCursorPosition);
-				m_MouseCursorImage.UpdateAll();
 				m_MouseCursorImage.Draw();
 			}
 
@@ -246,15 +234,6 @@ void JWGame::DrawDesignerUI() noexcept
 	m_DesignerUI.DrawMiniAxis();
 }
 
-void JWGame::DrawImages() noexcept
-{
-	// Draw 2D images
-	// with Z-buffer disabled, in order to draw them on top of everything else
-	// Set blend state
-	m_DX.SetBlendState(EBlendState::Opaque);
-	DrawAll2DImages();
-}
-
 void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
 {
 	if (m_RasterizerState == ERasterizerState::WireFrame)
@@ -271,16 +250,4 @@ void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorR
 		m_DX.SetBlendState(EBlendState::Transprent);
 		m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
 	}	
-}
-
-PRIVATE void JWGame::DrawAll2DImages() const noexcept
-{
-	if (m_p2DImages.size())
-	{
-		for (auto& iterator_2d_image : m_p2DImages)
-		{
-			iterator_2d_image->UpdateAll();
-			iterator_2d_image->Draw();
-		}
-	}
 }

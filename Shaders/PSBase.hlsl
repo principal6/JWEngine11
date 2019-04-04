@@ -68,5 +68,6 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 	// Gamma correction
 	final_color *= final_color;
+
 	return final_color;
 }

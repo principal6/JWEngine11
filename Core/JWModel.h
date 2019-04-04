@@ -6,16 +6,14 @@ namespace JWEngine
 {
 	class JWDX;
 
-	enum EFLAGRenderOption : uint8_t
+	enum class EModelType
 	{
-		JWFlagRenderOption_UseTexture = 0b1,
-		JWFlagRenderOption_UseLighting = 0b10,
-		JWFlagRenderOption_UseAnimationInterpolation = 0b100,
-		JWFlagRenderOption_UseTransparency = 0b1000,
-		JWFlagRenderOption_DrawNormals = 0b10000,
-		JWFlagRenderOption_DrawTPose = 0b100000,
+		Invalid,
+
+		StaticModel,
+		RiggedModel,
+		LineModel,
 	};
-	using JWFlagRenderOption = uint8_t;
 
 	class JWModel
 	{
@@ -25,7 +23,7 @@ namespace JWEngine
 
 		void Create(JWDX& DX) noexcept;
 
-		void MakeSquare(float Size) noexcept;
+		void MakeSquare(float Size, XMFLOAT2 UVMap) noexcept;
 
 		// Minimum detail is 5
 		void MakeCircle(float Radius, uint8_t Detail) noexcept;
@@ -43,6 +41,12 @@ namespace JWEngine
 		// Minimum horizontal detail is 1
 		void MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept;
 
+		// Minimum vertical detail is 4
+		// Minimum horizontal detail is 1
+		// If horizontal detail input is an even number, it automatically changes to be an odd number by adding 1 to it.
+		// This is because even numbered horizontal detail can cause crack in the capsule.
+		void MakeCapsule(float Height, float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept;
+
 		void SetStaticModelData(SStaticModelData ModelData) noexcept;
 		void SetRiggedModelData(SRiggedModelData ModelData) noexcept;
 		void SetLineModelData(SLineModelData Model2Data) noexcept;
@@ -52,13 +56,7 @@ namespace JWEngine
 		auto SetAnimation(size_t AnimationID, bool ShouldRepeat = true) noexcept->JWModel&;
 		auto SetPrevAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
 		auto SetNextAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
-		auto ToggleTPose() noexcept->JWModel&;
 		
-	private:
-		void CreateTexture(WSTRING TextureFileName) noexcept;
-
-		void CreateModelVertexIndexBuffers() noexcept;
-
 	public:
 		ID3D11Buffer*		ModelVertexBuffer{};
 		ID3D11Buffer*		ModelIndexBuffer{};
@@ -71,11 +69,12 @@ namespace JWEngine
 
 		ID3D11ShaderResourceView*	TextureShaderResourceView{};
 
-		JWFlagRenderOption			FlagRenderOption{};
+	private:
+		void CreateTexture(WSTRING TextureFileName) noexcept;
+		void CreateModelVertexIndexBuffers() noexcept;
 
 	private:
-		JWDX* m_pDX{};
-
-		EModelType m_ModelType{ EModelType::Invalid };
+		JWDX*		m_pDX{};
+		EModelType	m_ModelType{ EModelType::Invalid };
 	};
 };

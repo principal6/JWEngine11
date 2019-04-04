@@ -39,6 +39,7 @@ auto JWSystemRender::CreateComponent() noexcept->SComponentRender&
 	// Save component ID & set default data
 	m_vpComponents[slot]->ComponentID = slot;
 	m_vpComponents[slot]->PtrDX = m_pDX;
+	m_vpComponents[slot]->PtrCamera = m_pCamera;
 	m_vpComponents[slot]->PtrBaseDirectory = &m_BaseDirectory;
 
 	return *m_vpComponents[slot];
@@ -71,62 +72,16 @@ void JWSystemRender::DestroyComponent(SComponentRender& Component) noexcept
 
 void JWSystemRender::Update() noexcept
 {
-	// Enable Z-buffer for 3D drawing
-	m_pDX->SetDepthStencilState(EDepthStencilState::ZEnabled);
-
 	for (auto& iter : m_vpComponents)
 	{
+		// Set depth stencil state for the component
+		m_pDX->SetDepthStencilState(iter->DepthStencilState);
+
 		Animate(*iter);
 
 		SetShaders(*iter);
 
 		Draw(*iter);
-	}
-}
-
-void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
-{
-	auto type = Component.RenderType;
-	const auto& model = Component.Model;
-
-	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
-	const auto& world_matrix = component_transform->WorldMatrix;
-
-	// Set PS
-	m_pDX->SetPS(Component.PixelShader);
-
-	if (Component.PixelShader == EPixelShader::PSBase)
-	{
-		// Update PS constant buffer
-		m_pDX->UpdatePSCBFlags((model.FlagRenderOption & JWFlagRenderOption_UseTexture), (model.FlagRenderOption & JWFlagRenderOption_UseLighting));
-	}
-
-	// Set PS texture
-	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &model.TextureShaderResourceView);
-
-	// Set PS sampler
-	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
-
-	// Set VS
-	m_pDX->SetVS(Component.VertexShader);
-
-	// Update VS constant buffer
-	switch (type)
-	{
-	case ERenderType::Model_StaticModel:
-		m_VSCBStatic.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
-		m_VSCBStatic.World = XMMatrixTranspose(world_matrix);
-		m_pDX->UpdateVSCBStatic(m_VSCBStatic);
-		break;
-
-	case ERenderType::Model_RiggedModel:
-		m_VSCBRigged.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
-		m_VSCBRigged.World = XMMatrixTranspose(world_matrix);
-		m_pDX->UpdateVSCBRigged(m_VSCBRigged);
-		break;
-
-	default:
-		break;
 	}
 }
 
@@ -138,7 +93,7 @@ void JWSystemRender::Animate(SComponentRender& Component) noexcept
 		auto& model = Component.Model;
 		auto& current_animation_id = model.RiggedModelData.CurrentAnimationID;
 
-		if (model.FlagRenderOption & JWFlagRenderOption_DrawTPose)
+		if (Component.FlagRenderOption & JWFlagRenderOption_DrawTPose)
 		{
 			UpdateNodeTPoseIntoBones(model.RiggedModelData.CurrentAnimationTick, model.RiggedModelData, model.RiggedModelData.NodeTree.vNodes[0],
 				XMMatrixIdentity());
@@ -169,7 +124,7 @@ void JWSystemRender::Animate(SComponentRender& Component) noexcept
 				}
 
 				// Update bones' transformations for the animation.
-				UpdateNodeAnimationIntoBones((model.FlagRenderOption & JWFlagRenderOption_UseAnimationInterpolation),
+				UpdateNodeAnimationIntoBones((Component.FlagRenderOption & JWFlagRenderOption_UseAnimationInterpolation),
 					model.RiggedModelData.CurrentAnimationTick, model.RiggedModelData, model.RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
 
 				// Update bone's final transformation for shader's constant buffer
@@ -275,7 +230,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 					}
 				}
 				translation_interpolated = translation_key_a + (Delta * (translation_key_b - translation_key_a));
-				
+
 				if (!UseInterpolation)
 				{
 					scaling_interpolated = scaling_key_a;
@@ -326,12 +281,66 @@ PRIVATE void JWSystemRender::UpdateNodeTPoseIntoBones(float AnimationTime, SRigg
 	}
 }
 
+void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
+{
+	auto type = Component.RenderType;
+	const auto& model = Component.Model;
+
+	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
+	const auto& world_matrix = component_transform->WorldMatrix;
+
+	// Set PS
+	m_pDX->SetPS(Component.PixelShader);
+
+	if (Component.PixelShader == EPixelShader::PSBase)
+	{
+		// Update PS constant buffer
+		m_pDX->UpdatePSCBFlags(
+			(Component.FlagRenderOption & JWFlagRenderOption_UseTexture),
+			(Component.FlagRenderOption & JWFlagRenderOption_UseLighting)
+		);
+	}
+
+	// Set PS texture
+	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &model.TextureShaderResourceView);
+
+	// Set PS sampler
+	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
+
+	// Set VS
+	m_pDX->SetVS(Component.VertexShader);
+
+	// Update VS constant buffer
+	switch (type)
+	{
+	case ERenderType::Model_StaticModel:
+		m_VSCBStatic.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBStatic.World = XMMatrixTranspose(world_matrix);
+		m_pDX->UpdateVSCBStatic(m_VSCBStatic);
+		break;
+
+	case ERenderType::Model_RiggedModel:
+		m_VSCBRigged.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBRigged.World = XMMatrixTranspose(world_matrix);
+		m_pDX->UpdateVSCBRigged(m_VSCBRigged);
+		break;
+
+	case ERenderType::Image_2D:
+		m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
+		m_pDX->UpdateVSCBStatic(m_VSCBStatic);
+
+	default:
+		break;
+	}
+}
+
 PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 {
 	auto type = Component.RenderType;
 	auto& model = Component.Model;
+	auto& image = Component.Image;
 
-	if (model.FlagRenderOption & JWFlagRenderOption_UseTransparency)
+	if (Component.FlagRenderOption & JWFlagRenderOption_UseTransparency)
 	{
 		m_pDX->SetBlendState(EBlendState::Transprent);
 	}
@@ -339,36 +348,50 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	{
 		m_pDX->SetBlendState(EBlendState::Opaque);
 	}
-
-	// Set IA index buffer
-	m_pDX->GetDeviceContext()->IASetIndexBuffer(model.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
+	
 	// Set IA primitive topology
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	// Set IA vertex buffer & Draw
+	
 	switch (type)
 	{
 	case ERenderType::Model_StaticModel:
+		// Set IA vertex buffer
 		m_pDX->GetDeviceContext()->IASetVertexBuffers(
 			0, 1, &model.ModelVertexBuffer, model.StaticModelData.VertexData.GetPtrStride(), model.StaticModelData.VertexData.GetPtrOffset());
 
-		m_pDX->GetDeviceContext()->DrawIndexed(model.StaticModelData.IndexData.GetCount(), 0, 0);
+		// Set IA index buffer
+		m_pDX->GetDeviceContext()->IASetIndexBuffer(model.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
+		// Draw indexed
+		m_pDX->GetDeviceContext()->DrawIndexed(model.StaticModelData.IndexData.GetCount(), 0, 0);
 		break;
 	case ERenderType::Model_RiggedModel:
+		// Set IA vertex buffer
 		m_pDX->GetDeviceContext()->IASetVertexBuffers(
 			0, 1, &model.ModelVertexBuffer, model.RiggedModelData.VertexData.GetPtrStride(), model.RiggedModelData.VertexData.GetPtrOffset());
 
-		m_pDX->GetDeviceContext()->DrawIndexed(model.RiggedModelData.IndexData.GetCount(), 0, 0);
+		// Set IA index buffer
+		m_pDX->GetDeviceContext()->IASetIndexBuffer(model.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
+		// Draw indexed
+		m_pDX->GetDeviceContext()->DrawIndexed(model.RiggedModelData.IndexData.GetCount(), 0, 0);
+		break;
+	case ERenderType::Image_2D:
+		// Set IA vertex buffer
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &image.m_VertexBuffer, image.m_VertexData.GetPtrStride(), image.m_VertexData.GetPtrOffset());
+
+		// Set IA index buffer
+		m_pDX->GetDeviceContext()->IASetIndexBuffer(image.m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		// Draw indexed
+		m_pDX->GetDeviceContext()->DrawIndexed(image.m_IndexData.GetCount(), 0, 0);
 		break;
 	default:
 		break;
 	}
 
 	// Draw normals
-	if (model.FlagRenderOption & JWFlagRenderOption_DrawNormals)
+	if (Component.FlagRenderOption & JWFlagRenderOption_DrawNormals)
 	{
 		DrawNormals(Component);
 	}

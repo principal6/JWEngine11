@@ -131,14 +131,6 @@ namespace JWEngine
 		assert(false);
 	}
 
-	enum class EModelType
-	{
-		Invalid,
-		StaticModel,
-		RiggedModel,
-		LineModel,
-	};
-
 	enum class EWorldMatrixCalculationOrder
 	{
 		TransRotScale,

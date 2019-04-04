@@ -1,30 +1,31 @@
 #pragma once
 
+#include "JWCommon.h"
 #include "JWBMFontParser.h"
-#include "JWImage.h"
 
 namespace JWEngine
 {
 	// Forward declaration
 	class JWDX;
 	class JWCamera;
+	
+	static constexpr uint16_t KMaxInsantTextLength = 256;
 
-	struct SInstantTextPSConstantBufferData
+	struct SPSInstantTextCBData
 	{
-		SInstantTextPSConstantBufferData() {};
-		SInstantTextPSConstantBufferData(XMFLOAT4 __RGBA) : _RGBA(__RGBA) {};
+		SPSInstantTextCBData() {};
+		SPSInstantTextCBData(XMFLOAT4 __RGBA) : _RGBA(__RGBA) {};
 
 		XMFLOAT4 _RGBA{};
 	};
 	
-	class JWInstantText final : protected JWImage
+	class JWInstantText
 	{
 	public:
+		JWInstantText() = default;
 		~JWInstantText();
 
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept;
-
-		void SetInstantTextPS() noexcept;
 
 		void DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
 
@@ -34,16 +35,28 @@ namespace JWEngine
 		void CreateInstantTextPS() noexcept;
 		void CreatePSConstantBuffer() noexcept;
 
+		void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
+
 	private:
-		static constexpr int KMaxInsantTextLength = 256;
+		bool m_IsValid{ false };
+		bool m_IsTextureCreated{ false };
 
-		STRING m_BaseDirectory;
+		JWDX* m_pDX{};
+		JWCamera* m_pCamera{};
 
-		JWBMFontParser m_FontParser;
+		STRING m_BaseDirectory{};
+		JWBMFontParser m_FontParser{};
 
-		ID3D11PixelShader* m_InstantTextPS{};
+		ID3D11Buffer* m_VertexBuffer{};
+		ID3D11Buffer* m_IndexBuffer{};
+		SStaticModelVertexData m_VertexData{};
+		SModelIndexData m_IndexData{};
 
-		ID3D11Buffer* m_InstantTextPSConstantBuffer{};
-		SInstantTextPSConstantBufferData m_TextColor{};
+		SVSCBStatic	m_VSCBStatic{};
+		ID3D11PixelShader* m_PSInstantText{};
+		ID3D11Buffer* m_PSInstantTextCB{};
+
+		SPSInstantTextCBData m_TextColor{};
+		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
 	};
 }

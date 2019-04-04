@@ -27,17 +27,17 @@ int main()
 	// Create shared resource for ECS
 	// Texture source: http://www.custommapmakers.org/skyboxes.php
 	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // SharedResource #0
+	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "grass.png"); //SharedResource #1
+	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "Grayscale_Interval_Ten.png"); //SharedResource #2
 
-	auto& prop = myGame.ECS().CreateEntity();
-	prop.CreateComponentTransform()
+	auto& jars = myGame.ECS().CreateEntity();
+	jars.CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(10.0f, 0.0f, 0.0f))
 		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
-	prop.CreateComponentRender()
+	jars.CreateComponentRender()
 		->LoadModel(ERenderType::Model_StaticModel, "Decoration_18.obj")
 		->SetRenderFlag(JWFlagRenderOption_UseLighting);
-		//->LoadModel(ERenderType::Model_StaticModel, "TestBox.obj")
-		//->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseTransparency);
 
 	auto& main_sprite = myGame.ECS().CreateEntity();
 	main_sprite.CreateComponentTransform()
@@ -72,13 +72,23 @@ int main()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 	sky_sphere.CreateComponentRender()
-		->MakeSphere(10.0f, 16, 7)
+		->MakeSphere(100.0f, 16, 7)
 		->SetVertexShader(EVertexShader::VSSkyMap)
 		->SetPixelShader(EPixelShader::PSSkyMap)
 		->SetTexture(myGame.ECS().GetSharedResource(0));
-	
-	myGame.AddImage("Grayscale_Interval_Ten.png");
-	myGame.GetImage(0).SetPosition(XMFLOAT2(20, 30));
+
+	auto& floor_plane = myGame.ECS().CreateEntity();
+	floor_plane.CreateComponentTransform()
+		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	floor_plane.CreateComponentRender()
+		->MakeSquare(10.0f, XMFLOAT2(10.0f, 10.0f))
+		->SetTexture(myGame.ECS().GetSharedResource(1));
+
+	auto& image_gamma = myGame.ECS().CreateEntity();
+	image_gamma.CreateComponentRender()
+		->MakeImage2D(SPositionInt(160, 10), SSizeInt(100, 40))
+		->SetTexture(myGame.ECS().GetSharedResource(2));
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);
@@ -172,8 +182,6 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	myGame.DrawDesignerUI();
 
 	myGame.UpdateEntities();
-
-	myGame.DrawImages();
 
 	myGame.DrawInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()), XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
 	myGame.DrawInstantText("Test instant text", XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));
