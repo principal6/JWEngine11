@@ -144,8 +144,9 @@ namespace JWEngine
 		bool HasTexture{ false };
 		WSTRING TextureFileNameW{};
 
-		// If no animation is set, CurrentAnimationID is KSizeTInvalid(-1)
-		size_t CurrentAnimationID{ KSizeTInvalid };
+		/// If no animation is set, CurrentAnimationID is KSizeTInvalid(-1)
+		// If no animation is set, CurrentAnimationID is 0 (TPose)
+		size_t CurrentAnimationID{ 0 };
 
 		// If SetAnimation() is called, CurrentAnimationTick is reset to 0.
 		float CurrentAnimationTick{};

@@ -926,20 +926,20 @@ auto JWModel::SetAnimation(size_t AnimationID, bool ShouldRepeat) noexcept->JWMo
 	{
 		if (RiggedModelData.AnimationSet.vAnimations.size())
 		{
-			AnimationID = min(AnimationID, RiggedModelData.AnimationSet.vAnimations.size() - 1);
-
-			// Set animation only when animation id has changed from the previous one.
-			if (RiggedModelData.CurrentAnimationID != AnimationID)
-			{
-				RiggedModelData.CurrentAnimationID = AnimationID;
-				RiggedModelData.CurrentAnimationTick = 0;
-				RiggedModelData.ShouldRepeatCurrentAnimation = ShouldRepeat;
-			}
+			AnimationID = min(AnimationID, RiggedModelData.AnimationSet.vAnimations.size());
 		}
 		else
 		{
-			// This is rigged model, but it has no animation set
-			JWAbort("This model doesn't have any animation set.");
+			// Only TPose is available
+			AnimationID = 0;
+		}
+
+		// Set animation only when animation id has changed from the previous one.
+		if (RiggedModelData.CurrentAnimationID != AnimationID)
+		{
+			RiggedModelData.CurrentAnimationID = AnimationID;
+			RiggedModelData.CurrentAnimationTick = 0;
+			RiggedModelData.ShouldRepeatCurrentAnimation = ShouldRepeat;
 		}
 	}
 
@@ -951,7 +951,6 @@ auto JWModel::SetPrevAnimation(bool ShouldRepeat) noexcept->JWModel&
 	if (m_ModelType == EModelType::RiggedModel)
 	{
 		size_t AnimationID = RiggedModelData.CurrentAnimationID - 1;
-		AnimationID = min(AnimationID, RiggedModelData.AnimationSet.vAnimations.size() - 1);
 
 		SetAnimation(AnimationID, ShouldRepeat);
 	}
@@ -964,7 +963,8 @@ auto JWModel::SetNextAnimation(bool ShouldRepeat) noexcept->JWModel&
 	if (m_ModelType == EModelType::RiggedModel)
 	{
 		size_t AnimationID = RiggedModelData.CurrentAnimationID + 1;
-		if (AnimationID >= RiggedModelData.AnimationSet.vAnimations.size())
+
+		if (AnimationID > RiggedModelData.AnimationSet.vAnimations.size())
 		{
 			AnimationID = 0;
 		}

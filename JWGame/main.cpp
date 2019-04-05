@@ -29,7 +29,8 @@ int main()
 	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // SharedResource #0
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "grass.png"); //SharedResource #1
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "Grayscale_Interval_Ten.png"); //SharedResource #2
-	myGame.ECS().CreateAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400)); //AnimationTexture #0
+	///myGame.ECS().CreateAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400)); //AnimationTexture #0
+	myGame.ECS().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 
 	auto& jars = myGame.ECS().CreateEntity();
 	jars.CreateComponentTransform()
@@ -50,9 +51,11 @@ int main()
 		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
 		->AddAnimation("Ezreal_Punching.X")
 		->AddAnimation("Ezreal_Walk.X")
-		->BakeAnimationsIntoTexture(myGame.ECS().GetAnimationTexture(0))
-		->SaveBakedAnimationAsTIF("baked_animation.tif")
-		->SetAnimation(0);
+		///->BakeAnimationsIntoTexture(myGame.ECS().GetAnimationTexture(0))
+		///->SaveBakedAnimationAsDDS("baked_animation.dds")
+		///->LoadBakedAnimationFromDDS(myGame.ECS().GetAnimationTexture(1))
+		->LoadBakedAnimationFromDDS(myGame.ECS().GetAnimationTexture(0))
+		->SetAnimation(1);
 	
 	auto& ambient_light = myGame.ECS().CreateEntity();
 	ambient_light.CreateComponentLight()
@@ -127,12 +130,12 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 {
 	if (Character == '1')
 	{
-		myGame.ECS().GetEntity(1)->GetComponentRender()->NextAnimation();
+		myGame.ECS().GetEntity(1)->GetComponentRender()->PrevAnimation();
 	}
 
 	if (Character == '2')
 	{
-		myGame.ECS().GetEntity(1)->GetComponentRender()->PrevAnimation();
+		myGame.ECS().GetEntity(1)->GetComponentRender()->NextAnimation();
 	}
 }
 
@@ -179,13 +182,27 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 JW_FUNCTION_ON_RENDER(OnRender)
 {
+	// Skybox
 	myGame.ECS().GetEntity(4)->GetComponentTransform()->SetPosition(XMFLOAT3(
 		myGame.Camera().GetPositionFloat4().x, myGame.Camera().GetPositionFloat4().y, myGame.Camera().GetPositionFloat4().z));
+
+	// Sprite info
+	const auto& sprite = myGame.ECS().GetEntity(1)->GetComponentRender();
+	int32_t sprite_anim_id = static_cast<int32_t>(sprite->Model.RiggedModelData.CurrentAnimationID);
+	float current_time = sprite->CurrentAnimationState.CurrAnimationTime;
+	float next_time = sprite->CurrentAnimationState.NextAnimationTime;
+	float delta_time = sprite->CurrentAnimationState.DeltaTime;
 
 	myGame.DrawDesignerUI();
 
 	myGame.UpdateEntities();
 
 	myGame.DrawInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()), XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
-	myGame.DrawInstantText("Test instant text", XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));
+	
+	/*
+	myGame.DrawInstantText("Animation ID: " + ConvertIntToSTRING(sprite_anim_id), XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));
+	myGame.DrawInstantText("Animation Current time	: " + ConvertFloatToSTRING(current_time), XMFLOAT2(10, 50), XMFLOAT3(0, 0.5f, 0.7f));
+	myGame.DrawInstantText("Animation Next time		: " + ConvertFloatToSTRING(next_time), XMFLOAT2(10, 70), XMFLOAT3(0, 0.5f, 0.7f));
+	myGame.DrawInstantText("Animation Delta time	: " + ConvertFloatToSTRING(delta_time), XMFLOAT2(10, 90), XMFLOAT3(0, 0.5f, 0.7f));
+	*/
 }

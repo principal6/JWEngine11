@@ -77,7 +77,16 @@ void JWSystemRender::Update() noexcept
 		// Set depth stencil state for the component
 		m_pDX->SetDepthStencilState(iter->DepthStencilState);
 
-		Animate(*iter);
+		if (iter->FlagRenderOption & JWFlagRenderOption_UseGPUAnimation)
+		{
+			// GPU animation
+			AnimateOnGPU(*iter);
+		}
+		else
+		{
+			// CPU animation
+			AnimateOnCPU(*iter);
+		}
 
 		SetShaders(*iter);
 
@@ -85,7 +94,78 @@ void JWSystemRender::Update() noexcept
 	}
 }
 
-void JWSystemRender::Animate(SComponentRender& Component) noexcept
+void JWSystemRender::AnimateOnGPU(SComponentRender& Component) noexcept
+{
+	// Set VS texture
+	m_pDX->GetDeviceContext()->VSSetShaderResources(0, 1, &Component.PtrBakedAnimationTexture->TextureSRV);
+
+	auto& anim_state = Component.CurrentAnimationState;
+	auto& model = Component.Model;
+	auto& current_animation_id = model.RiggedModelData.CurrentAnimationID;
+
+	// Set data for GPU
+	uint32_t AnimationID = static_cast<uint32_t>(current_animation_id);
+	uint32_t CurrFrame{};
+	uint32_t Nextrame{};
+
+	// Not TPose
+	if (current_animation_id > 0)
+	{
+		auto& current_anim{ model.RiggedModelData.AnimationSet.vAnimations[current_animation_id - 1] };
+
+		// Advance animation tick
+		//model.RiggedModelData.CurrentAnimationTick += model.RiggedModelData.AnimationSet.vAnimations[current_animation_id - 1].AnimationTicksPerGameTick;
+		model.RiggedModelData.CurrentAnimationTick += 2.0f;
+
+		// Reset tick if the animation is over.
+		if (model.RiggedModelData.CurrentAnimationTick >= current_anim.TotalAnimationTicks)
+		{
+			model.RiggedModelData.CurrentAnimationTick = 0;
+
+			if (!model.RiggedModelData.ShouldRepeatCurrentAnimation)
+			{
+				// Non-repeating animation
+				current_animation_id = 0;
+			}
+		}
+
+		anim_state.AnimationTime = model.RiggedModelData.CurrentAnimationTick;
+
+		// Calculate current animation time for interpolation
+		anim_state.CurrAnimationTime = anim_state.AnimationTime - fmodf(anim_state.AnimationTime, current_anim.AnimationTicksPerGameTick);
+
+		// Calculate next animation time for interpolation
+		anim_state.NextAnimationTime = anim_state.CurrAnimationTime + current_anim.AnimationTicksPerGameTick;
+
+		// Interpolation factor Delta's range is [0.0, 1.0]
+		anim_state.DeltaTime = (anim_state.AnimationTime - anim_state.CurrAnimationTime) / current_anim.AnimationTicksPerGameTick;
+
+		// Constrain next animation time
+		if (anim_state.NextAnimationTime >= current_anim.TotalAnimationTicks)
+		{
+			anim_state.NextAnimationTime = 0.0f;
+		}
+
+		CurrFrame = static_cast<uint32_t>(anim_state.CurrAnimationTime / current_anim.AnimationTicksPerGameTick);
+		Nextrame = static_cast<uint32_t>(anim_state.NextAnimationTime / current_anim.AnimationTicksPerGameTick);
+	}
+
+	// TPose
+	if (AnimationID == 0)
+	{
+		CurrFrame = 0;
+		Nextrame = 0;
+		anim_state.DeltaTime = 0;
+	}
+
+	// Update constant buffer for GPU
+	m_VSCBGPUAnimation.AnimationID = AnimationID;
+	m_VSCBGPUAnimation.CurrFrame = CurrFrame;
+	m_VSCBGPUAnimation.Nextrame = Nextrame;
+	m_VSCBGPUAnimation.DeltaTime = anim_state.DeltaTime;
+}
+
+void JWSystemRender::AnimateOnCPU(SComponentRender& Component) noexcept
 {
 	auto type = Component.RenderType;
 	if (type == ERenderType::Model_RiggedModel)
@@ -95,21 +175,27 @@ void JWSystemRender::Animate(SComponentRender& Component) noexcept
 
 		if (Component.FlagRenderOption & JWFlagRenderOption_DrawTPose)
 		{
+			// TPose
+
 			UpdateNodeTPoseIntoBones(model.RiggedModelData.CurrentAnimationTick, model.RiggedModelData, model.RiggedModelData.NodeTree.vNodes[0],
 				XMMatrixIdentity());
 
 			// Update bone's T-Pose transformation for shader's constant buffer
 			for (size_t iterator_bone_mat{}; iterator_bone_mat < model.RiggedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
 			{
-				m_VSCBRigged.TransformedBoneMatrices[iterator_bone_mat] =
+				m_VSCBCPUAnimation.TransformedBoneMatrices[iterator_bone_mat] =
 					XMMatrixTranspose(model.RiggedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
 			}
 		}
 		else
 		{
-			if (current_animation_id != KSizeTInvalid)
+			if (current_animation_id != 0)
 			{
-				auto& current_anim{ model.RiggedModelData.AnimationSet.vAnimations[current_animation_id] };
+				auto& current_anim{ model.RiggedModelData.AnimationSet.vAnimations[current_animation_id - 1] };
+
+				// Advance animation tick
+				//model.RiggedModelData.CurrentAnimationTick += model.RiggedModelData.AnimationSet.vAnimations[current_animation_id - 1].AnimationTicksPerGameTick;
+				model.RiggedModelData.CurrentAnimationTick += 2.0f;
 
 				// Reset tick if the animation is over.
 				if (model.RiggedModelData.CurrentAnimationTick >= current_anim.TotalAnimationTicks)
@@ -119,7 +205,7 @@ void JWSystemRender::Animate(SComponentRender& Component) noexcept
 					if (!model.RiggedModelData.ShouldRepeatCurrentAnimation)
 					{
 						// Non-repeating animation
-						current_animation_id = KSizeTInvalid;
+						current_animation_id = 0;
 					}
 				}
 
@@ -130,17 +216,23 @@ void JWSystemRender::Animate(SComponentRender& Component) noexcept
 				// Update bone's final transformation for shader's constant buffer
 				for (size_t iterator_bone_mat{}; iterator_bone_mat < model.RiggedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
 				{
-					m_VSCBRigged.TransformedBoneMatrices[iterator_bone_mat] =
+					m_VSCBCPUAnimation.TransformedBoneMatrices[iterator_bone_mat] =
 						XMMatrixTranspose(model.RiggedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
 				}
-
-				// Advance animation tick
-				//model_data.CurrentAnimationTick += model_data.AnimationSet.vAnimations[current_animation_id].AnimationTicksPerGameTick;
-				model.RiggedModelData.CurrentAnimationTick += 1.0f;
 			}
 			else
 			{
-				// No animation is set.
+				// TPose
+
+				UpdateNodeTPoseIntoBones(model.RiggedModelData.CurrentAnimationTick, model.RiggedModelData, model.RiggedModelData.NodeTree.vNodes[0],
+					XMMatrixIdentity());
+
+				// Update bone's T-Pose transformation for shader's constant buffer
+				for (size_t iterator_bone_mat{}; iterator_bone_mat < model.RiggedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
+				{
+					m_VSCBCPUAnimation.TransformedBoneMatrices[iterator_bone_mat] =
+						XMMatrixTranspose(model.RiggedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
+				}
 			}
 		}
 	}
@@ -154,7 +246,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 	if (CurrentNode.BoneID >= 0)
 	{
 		auto& bone = ModelData.BoneTree.vBones[CurrentNode.BoneID];
-		auto& current_animation = ModelData.AnimationSet.vAnimations[ModelData.CurrentAnimationID];
+		auto& current_animation = ModelData.AnimationSet.vAnimations[ModelData.CurrentAnimationID - 1];
 
 		// Calculate current animation time for interpolation
 		float CurrAnimationTime = AnimationTime - fmodf(AnimationTime, current_animation.AnimationTicksPerGameTick);
@@ -165,7 +257,8 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 		// Interpolation factor Delta's range is [0.0, 1.0]
 		float Delta = (AnimationTime - CurrAnimationTime) / current_animation.AnimationTicksPerGameTick;
 
-		if (NextAnimationTime > current_animation.TotalAnimationTicks)
+		// Constrain next animation time
+		if (NextAnimationTime >= current_animation.TotalAnimationTicks)
 		{
 			NextAnimationTime = 0;
 		}
@@ -201,6 +294,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 						scaling_key_b = XMLoadFloat3(&key.Key);
 					}
 				}
+				// Linear interpolation
 				scaling_interpolated = scaling_key_a + (Delta * (scaling_key_b - scaling_key_a));
 
 				// #2. Find rotation keys
@@ -215,6 +309,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 						rotation_key_b = key.Key;
 					}
 				}
+				// Spherical linear interpolation!
 				rotation_interpolated = XMQuaternionSlerp(rotation_key_a, rotation_key_b, Delta);
 
 				// #3. Find translation keys
@@ -229,6 +324,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 						translation_key_b = XMLoadFloat3(&key.Key);
 					}
 				}
+				// Linear interpolation
 				translation_interpolated = translation_key_a + (Delta * (translation_key_b - translation_key_a));
 
 				if (!UseInterpolation)
@@ -311,22 +407,46 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	m_pDX->SetVS(Component.VertexShader);
 
 	// Update VS constant buffer
+	XMMATRIX WVP{}, World{};
+
+	if (component_transform)
+	{
+		WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+		World = XMMatrixTranspose(world_matrix);
+	}
+	
 	switch (type)
 	{
 	case ERenderType::Model_StaticModel:
-		m_VSCBStatic.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
-		m_VSCBStatic.World = XMMatrixTranspose(world_matrix);
+		m_VSCBStatic.WVP = WVP;
+		m_VSCBStatic.World = World;
 		m_pDX->UpdateVSCBStatic(m_VSCBStatic);
 		break;
 
 	case ERenderType::Model_RiggedModel:
-		m_VSCBRigged.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
-		m_VSCBRigged.World = XMMatrixTranspose(world_matrix);
+		if (Component.FlagRenderOption & JWFlagRenderOption_UseGPUAnimation)
+		{
+			m_VSCBRigged.ShouldUseGPUAnimation = TRUE;
+			
+			m_pDX->UpdateVSCBGPUAnimation(m_VSCBGPUAnimation);
+		}
+		else
+		{
+			m_VSCBRigged.ShouldUseGPUAnimation = FALSE;
+			
+			m_pDX->UpdateVSCBCPUAnimation(m_VSCBCPUAnimation);
+		}
+
+		m_VSCBRigged.WVP = WVP;
+		m_VSCBRigged.World = World;
 		m_pDX->UpdateVSCBRigged(m_VSCBRigged);
+		
 		break;
 
 	case ERenderType::Image_2D:
-		m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
+		WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
+
+		m_VSCBStatic.WVP = WVP;
 		m_pDX->UpdateVSCBStatic(m_VSCBStatic);
 
 	default:

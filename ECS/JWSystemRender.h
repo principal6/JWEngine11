@@ -20,29 +20,31 @@ namespace JWEngine
 		Image_2D,
 	};
 
-	enum EFLAGRenderOption : uint8_t
+	enum EFLAGRenderOption : uint16_t
 	{
 		JWFlagRenderOption_UseTexture = 0b1,
 		JWFlagRenderOption_UseLighting = 0b10,
-		JWFlagRenderOption_UseAnimationInterpolation = 0b100,
-		JWFlagRenderOption_UseTransparency = 0b1000,
-		JWFlagRenderOption_DrawNormals = 0b10000,
-		JWFlagRenderOption_DrawTPose = 0b100000,
+		JWFlagRenderOption_UseGPUAnimation = 0b100,
+		JWFlagRenderOption_UseAnimationInterpolation = 0b1000,
+		JWFlagRenderOption_UseTransparency = 0b10000,
+		JWFlagRenderOption_DrawNormals = 0b100000,
+		JWFlagRenderOption_DrawTPose = 0b1000000,
 	};
-	using JWFlagRenderOption = uint8_t;
+	using JWFlagRenderOption = uint16_t;
 
 	struct SAnimationTextureData
 	{
 		ID3D11Texture2D*			Texture{};
 		ID3D11ShaderResourceView*	TextureSRV{};
 		SSizeInt					TextureSize{};
+	};
 
-		SAnimationTextureData() = default;
-		~SAnimationTextureData()
-		{
-			JW_RELEASE(Texture);
-			JW_RELEASE(TextureSRV);
-		}
+	struct SAnimationState
+	{
+		float AnimationTime{};
+		float CurrAnimationTime{};
+		float NextAnimationTime{};
+		float DeltaTime{};
 	};
 
 	struct SComponentRender
@@ -57,6 +59,7 @@ namespace JWEngine
 		JWModel					Model{};
 		JWImage					Image{};
 		SAnimationTextureData*	PtrBakedAnimationTexture; // Non-owner pointer
+		SAnimationState			CurrentAnimationState;
 
 		EDepthStencilState		DepthStencilState{ EDepthStencilState::ZEnabled };
 		EVertexShader			VertexShader{ EVertexShader::VSBase };
@@ -261,6 +264,7 @@ namespace JWEngine
 			return this;
 		}
 
+		// Animation ID 0 is TPose
 		auto SetAnimation(uint32_t AnimationID)
 		{
 			Model.SetAnimation(AnimationID);
@@ -282,6 +286,7 @@ namespace JWEngine
 			return this;
 		}
 
+		// To use this function, first call CreateAnimationTexture() of ECS.
 		auto BakeAnimationsIntoTexture(SAnimationTextureData* PtrAnimationTexture)
 		{
 			if (Model.RiggedModelData.AnimationSet.vAnimations.size())
@@ -291,24 +296,36 @@ namespace JWEngine
 				auto& texture_size{ PtrAnimationTexture->TextureSize };
 				uint32_t texel_count{ texture_size.Width * texture_size.Height };
 				uint32_t texel_y_advance{ texture_size.Width * KColorCountPerTexel };
-				float* data = new float[texel_count * KColorCountPerTexel] {};
+				uint32_t data_size{ texel_count * KColorCountPerTexel };
+				float* data = new float[data_size] {};
 
+				//
 				// Set animation set's info
 				// (with maximum bone count = KMaxBoneCount)
-
-				// data[0 ~ 1] = TPose
+				// data[0 ~ 3] = Animation ID 0 = TPose
+				//
 				// TPose frame count(=texel line count)
 				data[0] = 1;
 				// TPose texel start y index
 				data[1] = 1;
+				// Reserved
+				data[2] = 0; 
+				// Reserved
+				data[3] = 0;
 
 				for (uint16_t iter_anim = 0; iter_anim < vec_animations.size(); iter_anim++)
 				{
 					// current animation's frame count(=texel line count)
-					data[2 + iter_anim * 2] = static_cast<float>(vec_animations[iter_anim].TotalFrameCount);
+					data[4 + iter_anim * 4] = static_cast<float>(vec_animations[iter_anim].TotalFrameCount);
 					
 					// current animation's texel start y index
-					data[2 + iter_anim * 2 + 1] = data[1 + iter_anim * 2] + data[iter_anim * 2];
+					data[4 + iter_anim * 4 + 1] = data[iter_anim * 4] + data[1 + iter_anim * 4];
+
+					// Reserved
+					//data[4 + iter_anim * 4 + 2] = 0;
+
+					// Reserved
+					//data[4 + iter_anim * 4 + 3] = 0;
 				}
 
 				// Bake animations into the texture
@@ -350,7 +367,7 @@ namespace JWEngine
 				D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
 				if (SUCCEEDED(PtrDX->GetDeviceContext()->Map(PtrAnimationTexture->Texture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
 				{
-					memcpy(mapped_subresource.pData, data, sizeof(float) * texel_count);
+					memcpy(mapped_subresource.pData, data, sizeof(float) * data_size);
 
 					PtrDX->GetDeviceContext()->Unmap(PtrAnimationTexture->Texture, 0);
 				}
@@ -364,12 +381,23 @@ namespace JWEngine
 			return this;
 		}
 
-		auto SaveBakedAnimationAsTIF(STRING FileName) noexcept
+		auto LoadBakedAnimationFromDDS(SAnimationTextureData* PtrAnimationTexture) noexcept
+		{
+			// Save this texture data's pointer
+			PtrBakedAnimationTexture = PtrAnimationTexture;
+
+			FlagRenderOption |= JWFlagRenderOption_UseGPUAnimation;
+
+			return this;
+		}
+
+		auto SaveBakedAnimationAsDDS(STRING FileName) noexcept
 		{
 			if (PtrBakedAnimationTexture)
 			{
 				WSTRING w_fn = StringToWstring(*PtrBaseDirectory + KAssetDirectory + FileName);
-				SaveWICTextureToFile(PtrDX->GetDeviceContext(), PtrBakedAnimationTexture->Texture, GUID_ContainerFormatTiff, w_fn.c_str());
+				
+				SaveDDSTextureToFile(PtrDX->GetDeviceContext(), PtrBakedAnimationTexture->Texture, w_fn.c_str());
 			}
 
 			return this;
@@ -495,7 +523,9 @@ namespace JWEngine
 
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;
-		void Animate(SComponentRender& Component) noexcept;
+
+		void AnimateOnGPU(SComponentRender& Component) noexcept;
+		void AnimateOnCPU(SComponentRender& Component) noexcept;
 
 		void UpdateNodeAnimationIntoBones(bool UseInterpolation, float AnimationTime, SRiggedModelData& ModelData,
 			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
@@ -511,5 +541,7 @@ namespace JWEngine
 		STRING						m_BaseDirectory{};
 		SVSCBStatic					m_VSCBStatic{};
 		SVSCBRigged					m_VSCBRigged{};
+		SVSCBCPUAnimation			m_VSCBCPUAnimation{};
+		SVSCBGPUAnimation			m_VSCBGPUAnimation{};
 	};
 };

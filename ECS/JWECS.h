@@ -30,6 +30,12 @@ namespace JWEngine
 				{
 					JW_RELEASE(iter);
 				}
+
+				for (auto& iter : m_vAnimationTextureData)
+				{
+					JW_RELEASE(iter.Texture);
+					JW_RELEASE(iter.TextureSRV);
+				}
 			}
 		};
 
@@ -154,6 +160,36 @@ namespace JWEngine
 			// Create the shader resource view.
 			m_pDX->GetDevice()->CreateShaderResourceView(current_tex, &srv_description, &current_srv);
 
+			if (current_srv == nullptr)
+			{
+				JW_RELEASE(current_tex);
+
+				m_vAnimationTextureData.pop_back();
+			}
+		}
+
+		void CreateAnimationTextureFromFile(STRING FileName) noexcept
+		{
+			m_vAnimationTextureData.push_back(SAnimationTextureData());
+
+			auto& current_tex = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].Texture;
+			auto& current_srv = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].TextureSRV;
+			auto& current_tex_size = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].TextureSize;
+
+			WSTRING w_fn = StringToWstring(m_BaseDirectory + KAssetDirectory + FileName);
+
+			// Load image file to get texture info.
+			ID3D11Texture2D* tex_original{};
+			CreateDDSTextureFromFile(m_pDX->GetDevice(), w_fn.c_str(), (ID3D11Resource**)&tex_original, nullptr, 0);
+			D3D11_TEXTURE2D_DESC tex_original_desc{};
+			tex_original->GetDesc(&tex_original_desc);
+			current_tex_size.Width = tex_original_desc.Width;
+			current_tex_size.Height = tex_original_desc.Height;
+			JW_RELEASE(tex_original);
+
+			// Load texture from file
+			CreateDDSTextureFromFile(m_pDX->GetDevice(), w_fn.c_str(), (ID3D11Resource**)&current_tex, &current_srv, 0);
+			
 			if (current_srv == nullptr)
 			{
 				JW_RELEASE(current_tex);

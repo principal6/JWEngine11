@@ -75,6 +75,8 @@ namespace JWEngine
 		void UpdateVSCBStatic(SVSCBStatic& Data) noexcept;
 		// Called in each animated JWModel's Animate() function
 		void UpdateVSCBRigged(SVSCBRigged& Data) noexcept;
+		void UpdateVSCBCPUAnimation(SVSCBCPUAnimation& Data) noexcept;
+		void UpdateVSCBGPUAnimation(SVSCBGPUAnimation& Data) noexcept;
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
 		void UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept;
 		void UpdatePSCBLights(SPSCBLights& Data) noexcept;
@@ -168,6 +170,10 @@ namespace JWEngine
 		SVSCBStatic			m_VSCBStaticData{};
 		ID3D11Buffer*		m_VSCBRigged{};
 		SVSCBRigged			m_VSCBRiggedData{};
+		ID3D11Buffer*		m_VSCBCPUAnimation{};
+		SVSCBCPUAnimation	m_VSCBCPUAnimationData{};
+		ID3D11Buffer*		m_VSCBGPUAnimation{};
+		SVSCBGPUAnimation	m_VSCBGPUAnimationData{};
 		ID3D11Buffer*		m_VSCBColor{};
 		SVSCBColor			m_VSCBColorData{};
 		ID3D11Buffer*		m_PSCBFlags{};

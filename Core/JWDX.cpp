@@ -27,6 +27,8 @@ JWDX::~JWDX()
 	JW_RELEASE(m_PSCBLights);
 	JW_RELEASE(m_PSCBFlags);
 	JW_RELEASE(m_VSCBColor);
+	JW_RELEASE(m_VSCBGPUAnimation);
+	JW_RELEASE(m_VSCBCPUAnimation);
 	JW_RELEASE(m_VSCBRigged);
 	JW_RELEASE(m_VSCBStatic);
 	JW_RELEASE(m_PSColor);
@@ -262,6 +264,12 @@ PRIVATE void JWDX::CreateVSCBs() noexcept
 
 	constant_buffer_description.ByteWidth = sizeof(SVSCBRigged);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBRigged);
+
+	constant_buffer_description.ByteWidth = sizeof(SVSCBCPUAnimation);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBCPUAnimation);
+
+	constant_buffer_description.ByteWidth = sizeof(SVSCBGPUAnimation);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBGPUAnimation);
 
 	constant_buffer_description.ByteWidth = sizeof(SVSCBColor);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBColor);
@@ -619,6 +627,22 @@ void JWDX::UpdateVSCBRigged(SVSCBRigged& Data) noexcept
 
 	m_DeviceContext11->UpdateSubresource(m_VSCBRigged, 0, nullptr, &m_VSCBRiggedData, 0, 0);
 	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBRigged);
+}
+
+void JWDX::UpdateVSCBCPUAnimation(SVSCBCPUAnimation& Data) noexcept
+{
+	m_VSCBCPUAnimationData = Data;
+
+	m_DeviceContext11->UpdateSubresource(m_VSCBCPUAnimation, 0, nullptr, &m_VSCBCPUAnimationData, 0, 0);
+	m_DeviceContext11->VSSetConstantBuffers(1, 1, &m_VSCBCPUAnimation);
+}
+
+void JWDX::UpdateVSCBGPUAnimation(SVSCBGPUAnimation& Data) noexcept
+{
+	m_VSCBGPUAnimationData = Data;
+
+	m_DeviceContext11->UpdateSubresource(m_VSCBGPUAnimation, 0, nullptr, &m_VSCBGPUAnimationData, 0, 0);
+	m_DeviceContext11->VSSetConstantBuffers(2, 1, &m_VSCBGPUAnimation);
 }
 
 void JWDX::UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept

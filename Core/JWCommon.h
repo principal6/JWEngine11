@@ -93,6 +93,13 @@
 		return STRING(temp);
 	}
 
+	inline auto ConvertFloatToSTRING(float value)->STRING
+	{
+		char temp[255]{};
+		sprintf_s(temp, "%f", value);
+		return STRING(temp);
+	}
+
 #endif
 
 // Static function prefix
@@ -406,18 +413,36 @@ namespace JWEngine
 		SVSCBStatic(XMMATRIX _WVP) : WVP{ _WVP } {};
 		SVSCBStatic(XMMATRIX _WVP, XMMATRIX _World) : WVP{ _WVP }, World{ _World } {};
 
-		XMMATRIX WVP{};
-		XMMATRIX World{};
+		XMMATRIX	WVP{};
+		XMMATRIX	World{};
 	};
-	
+
 	struct SVSCBRigged
 	{
 		SVSCBRigged() {};
 
-		XMMATRIX WVP{};
-		XMMATRIX World{};
+		XMMATRIX	WVP{};
+		XMMATRIX	World{};
 
-		XMMATRIX TransformedBoneMatrices[KMaxBoneCount]{};
+		BOOL		ShouldUseGPUAnimation{ FALSE };
+	};
+	
+	struct SVSCBCPUAnimation
+	{
+		SVSCBCPUAnimation() {};
+
+		XMMATRIX	TransformedBoneMatrices[KMaxBoneCount]{};
+	};
+
+	struct SVSCBGPUAnimation
+	{
+		SVSCBGPUAnimation() {};
+
+		// Animation info for GPU
+		uint32_t	AnimationID{};
+		uint32_t	CurrFrame{};
+		uint32_t	Nextrame{};
+		float		DeltaTime{};
 	};
 	
 	struct SPSCBFlags
