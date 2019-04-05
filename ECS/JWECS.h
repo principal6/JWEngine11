@@ -81,17 +81,17 @@ namespace JWEngine
 
 		void CreateSharedResource(ESharedResourceType Type, STRING FileName) noexcept
 		{
-			bool IsDDS = false;
+			m_vpSharedResources.push_back(nullptr);
+
+			auto& current_srv = m_vpSharedResources[m_vpSharedResources.size() - 1];
+
+			bool IsDDS{ false };
 			if (FileName.find(".dds") != std::string::npos)
 			{
 				IsDDS = true;
 			}
-
 			WSTRING TextureFileName{};
 			TextureFileName = StringToWstring(m_BaseDirectory + KAssetDirectory + FileName);
-
-			m_vpSharedResources.push_back(nullptr);
-			auto& current_srv = m_vpSharedResources[m_vpSharedResources.size() - 1];
 
 			switch (Type)
 			{
@@ -120,6 +120,48 @@ namespace JWEngine
 			}
 		}
 
+		void CreateAnimationTexture(SSizeInt TextureSize) noexcept
+		{
+			m_vAnimationTextureData.push_back(SAnimationTextureData());
+
+			auto& current_tex = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].Texture;
+			auto& current_srv = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].TextureSRV;
+			auto& current_tex_size = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].TextureSize;
+
+			// Describe the texture.
+			D3D11_TEXTURE2D_DESC texture_descrption{};
+			texture_descrption.Width = current_tex_size.Width = TextureSize.Width;
+			texture_descrption.Height = current_tex_size.Height = TextureSize.Height;
+			texture_descrption.MipLevels = 1;
+			texture_descrption.ArraySize = 1;
+			texture_descrption.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			texture_descrption.SampleDesc.Count = 1;
+			texture_descrption.Usage = D3D11_USAGE_DYNAMIC;
+			texture_descrption.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+			texture_descrption.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			texture_descrption.MiscFlags = 0;
+
+			// Create the texture.
+			m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &current_tex);
+
+			// Describe the shader resource view.
+			D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
+			srv_description.Format = texture_descrption.Format;
+			srv_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			srv_description.Texture2D.MostDetailedMip = 0;
+			srv_description.Texture2D.MipLevels = 1;
+
+			// Create the shader resource view.
+			m_pDX->GetDevice()->CreateShaderResourceView(current_tex, &srv_description, &current_srv);
+
+			if (current_srv == nullptr)
+			{
+				JW_RELEASE(current_tex);
+
+				m_vAnimationTextureData.pop_back();
+			}
+		}
+
 		auto GetSharedResource(size_t Index) noexcept->ID3D11ShaderResourceView*
 		{
 			ID3D11ShaderResourceView* result{};
@@ -127,6 +169,18 @@ namespace JWEngine
 			if (Index < m_vpSharedResources.size())
 			{
 				result = m_vpSharedResources[Index];
+			}
+
+			return result;
+		}
+
+		auto GetAnimationTexture(size_t Index) noexcept->SAnimationTextureData*
+		{
+			SAnimationTextureData* result{};
+
+			if (Index < m_vAnimationTextureData.size())
+			{
+				result = &m_vAnimationTextureData[Index];
 			}
 
 			return result;
@@ -156,6 +210,7 @@ namespace JWEngine
 		VECTOR<JWEntity*>	m_vpEntities;
 
 		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedResources;
+		VECTOR<SAnimationTextureData>		m_vAnimationTextureData;
 	};
 };
 

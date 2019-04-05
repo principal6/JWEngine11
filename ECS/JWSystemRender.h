@@ -31,23 +31,38 @@ namespace JWEngine
 	};
 	using JWFlagRenderOption = uint8_t;
 
+	struct SAnimationTextureData
+	{
+		ID3D11Texture2D*			Texture{};
+		ID3D11ShaderResourceView*	TextureSRV{};
+		SSizeInt					TextureSize{};
+
+		SAnimationTextureData() = default;
+		~SAnimationTextureData()
+		{
+			JW_RELEASE(Texture);
+			JW_RELEASE(TextureSRV);
+		}
+	};
+
 	struct SComponentRender
 	{
-		JWEntity*			PtrEntity{};
-		uint32_t			ComponentID{};
+		JWEntity*				PtrEntity{};
+		uint32_t				ComponentID{};
 
-		ERenderType			RenderType{ ERenderType::Invalid };
-		JWDX*				PtrDX{};
-		JWCamera*			PtrCamera{};
-		const STRING*		PtrBaseDirectory{};
-		JWModel				Model{};
-		JWImage				Image{};
+		ERenderType				RenderType{ ERenderType::Invalid };
+		JWDX*					PtrDX{};
+		JWCamera*				PtrCamera{};
+		const STRING*			PtrBaseDirectory{};
+		JWModel					Model{};
+		JWImage					Image{};
+		SAnimationTextureData*	PtrBakedAnimationTexture; // Non-owner pointer
 
-		EDepthStencilState	DepthStencilState{ EDepthStencilState::ZEnabled };
-		EVertexShader		VertexShader{ EVertexShader::VSBase };
-		EPixelShader		PixelShader{ EPixelShader::PSBase };
+		EDepthStencilState		DepthStencilState{ EDepthStencilState::ZEnabled };
+		EVertexShader			VertexShader{ EVertexShader::VSBase };
+		EPixelShader			PixelShader{ EPixelShader::PSBase };
 
-		JWFlagRenderOption	FlagRenderOption{};
+		JWFlagRenderOption		FlagRenderOption{};
 
 		auto SetTexture(ID3D11ShaderResourceView* pShaderResourceView) noexcept
 		{
@@ -266,7 +281,204 @@ namespace JWEngine
 
 			return this;
 		}
+
+		auto BakeAnimationsIntoTexture(SAnimationTextureData* PtrAnimationTexture)
+		{
+			if (Model.RiggedModelData.AnimationSet.vAnimations.size())
+			{
+				auto& vec_animations{ Model.RiggedModelData.AnimationSet.vAnimations };
+
+				auto& texture_size{ PtrAnimationTexture->TextureSize };
+				uint32_t texel_count{ texture_size.Width * texture_size.Height };
+				uint32_t texel_y_advance{ texture_size.Width * KColorCountPerTexel };
+				float* data = new float[texel_count * KColorCountPerTexel] {};
+
+				// Set animation set's info
+				// (with maximum bone count = KMaxBoneCount)
+
+				// data[0 ~ 1] = TPose
+				// TPose frame count(=texel line count)
+				data[0] = 1;
+				// TPose texel start y index
+				data[1] = 1;
+
+				for (uint16_t iter_anim = 0; iter_anim < vec_animations.size(); iter_anim++)
+				{
+					// current animation's frame count(=texel line count)
+					data[2 + iter_anim * 2] = static_cast<float>(vec_animations[iter_anim].TotalFrameCount);
+					
+					// current animation's texel start y index
+					data[2 + iter_anim * 2 + 1] = data[1 + iter_anim * 2] + data[iter_anim * 2];
+				}
+
+				// Bake animations into the texture
+				uint32_t start_index{ texel_y_advance };
+				XMMATRIX frame_matrices[KMaxBoneCount]{};
+
+				// TPose into FrameMatrices
+				SaveTPoseIntoFrameMatrices(frame_matrices, Model.RiggedModelData,
+					Model.RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+				
+				// Bake FrameMatrices into Texture
+				BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
+
+				// Update start index
+				start_index += texel_y_advance;
+
+				for (uint16_t anim_index = 0; anim_index < vec_animations.size(); anim_index++)
+				{
+					// This loop iterates each animation, starting from vec_animations[0]
+
+					float frame_time{};
+
+					for (uint16_t frame_index = 0; frame_index < vec_animations[anim_index].TotalFrameCount; frame_index++)
+					{
+						frame_time = static_cast<float>(frame_index) * vec_animations[anim_index].AnimationTicksPerGameTick;
+
+						// Current frame into FrameMatrices
+						SaveAnimationFrameIntoFrameMatrices(frame_matrices, anim_index, frame_time,
+							Model.RiggedModelData, Model.RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+
+						// Bake FrameMatrices into Texture
+						BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
+
+						// Update start index
+						start_index += texel_y_advance;
+					}
+				}
+
+				D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
+				if (SUCCEEDED(PtrDX->GetDeviceContext()->Map(PtrAnimationTexture->Texture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
+				{
+					memcpy(mapped_subresource.pData, data, sizeof(float) * texel_count);
+
+					PtrDX->GetDeviceContext()->Unmap(PtrAnimationTexture->Texture, 0);
+				}
+				
+				// Save this texture data's pointer
+				PtrBakedAnimationTexture = PtrAnimationTexture;
+
+				JW_DELETE_ARRAY(data);
+			}
+
+			return this;
+		}
+
+		auto SaveBakedAnimationAsTIF(STRING FileName) noexcept
+		{
+			if (PtrBakedAnimationTexture)
+			{
+				WSTRING w_fn = StringToWstring(*PtrBaseDirectory + KAssetDirectory + FileName);
+				SaveWICTextureToFile(PtrDX->GetDeviceContext(), PtrBakedAnimationTexture->Texture, GUID_ContainerFormatTiff, w_fn.c_str());
+			}
+
+			return this;
+		}
+
+	private:
+		void SaveTPoseIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const SRiggedModelData& ModelData,
+			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept
+		{
+			XMMATRIX accumulation = CurrentNode.Transformation * Accumulated;
+
+			if (CurrentNode.BoneID >= 0)
+			{
+				auto& bone = ModelData.BoneTree.vBones[CurrentNode.BoneID];
+
+				OutFrameMatrices[CurrentNode.BoneID] = bone.Offset * accumulation;
+			}
+
+			if (CurrentNode.vChildrenID.size())
+			{
+				for (auto child_id : CurrentNode.vChildrenID)
+				{
+					SaveTPoseIntoFrameMatrices(OutFrameMatrices, ModelData, ModelData.NodeTree.vNodes[child_id], accumulation);
+				}
+			}
+		}
+
+		void SaveAnimationFrameIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const int AnimationID, const float FrameTime,
+			const SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept
+		{
+			XMMATRIX global_transformation = CurrentNode.Transformation * Accumulated;
+
+			if (CurrentNode.BoneID >= 0)
+			{
+				auto& bone = ModelData.BoneTree.vBones[CurrentNode.BoneID];
+				auto& current_animation = ModelData.AnimationSet.vAnimations[AnimationID];
+
+				for (const auto& CurrentNode_animation : current_animation.vNodeAnimation)
+				{
+					if (CurrentNode_animation.NodeID == CurrentNode.ID)
+					{
+						XMVECTOR scaling_key_a{};
+						XMVECTOR rotation_key_a{};
+						XMVECTOR translation_key_a{};
+
+						// #1. Find scaling keys
+						for (const auto& key : CurrentNode_animation.vKeyScaling)
+						{
+							if (key.TimeInTicks <= FrameTime)
+							{
+								scaling_key_a = XMLoadFloat3(&key.Key);
+							}
+						}
+						
+						// #2. Find rotation keys
+						for (const auto& key : CurrentNode_animation.vKeyRotation)
+						{
+							if (key.TimeInTicks <= FrameTime)
+							{
+								rotation_key_a = key.Key;
+							}
+						}
+						
+						// #3. Find translation keys
+						for (const auto& key : CurrentNode_animation.vKeyPosition)
+						{
+							if (key.TimeInTicks <= FrameTime)
+							{
+								translation_key_a = XMLoadFloat3(&key.Key);
+							}
+						}
+
+						XMMATRIX matrix_scaling{ XMMatrixScalingFromVector(scaling_key_a) };
+						XMMATRIX matrix_rotation{ XMMatrixRotationQuaternion(rotation_key_a) };
+						XMMATRIX matrix_translation{ XMMatrixTranslationFromVector(translation_key_a) };
+						
+						global_transformation = matrix_scaling * matrix_rotation * matrix_translation * Accumulated;
+
+						break;
+					}
+				}
+
+				OutFrameMatrices[CurrentNode.BoneID] = bone.Offset * global_transformation;
+			}
+
+			if (CurrentNode.vChildrenID.size())
+			{
+				for (auto child_id : CurrentNode.vChildrenID)
+				{
+					SaveAnimationFrameIntoFrameMatrices(OutFrameMatrices, AnimationID, FrameTime,
+						ModelData, ModelData.NodeTree.vNodes[child_id], global_transformation);
+				}
+			}
+		}
+
+		inline void BakeCurrentFrameIntoTexture(uint32_t StartIndex, const XMMATRIX* FrameMatrices, float*& OutData) noexcept
+		{
+			XMFLOAT4X4A current_matrix{};
+			const int matrix_size_in_floats = 16;
+
+			for (uint16_t bone_index = 0; bone_index < KMaxBoneCount; ++bone_index)
+			{
+				XMStoreFloat4x4(&current_matrix, FrameMatrices[bone_index]);
+				
+				memcpy(&OutData[StartIndex + bone_index * matrix_size_in_floats], current_matrix.m, sizeof(float) * matrix_size_in_floats);
+			}
+		}
 	};
+	
 
 	class JWSystemRender
 	{

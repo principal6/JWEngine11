@@ -103,6 +103,9 @@ namespace JWEngine
 		// Animation's name. This can be null.
 		STRING Name;
 
+		// Animation duration (= TotalAnimationTicks / AnimationTicksPerGameTick)
+		int TotalFrameCount{};
+
 		// Animation duration based on animation ticks
 		float TotalAnimationTicks{};
 

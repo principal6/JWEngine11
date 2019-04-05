@@ -51,14 +51,14 @@ namespace JWEngine
 
 		void FillRect(SPositionInt Position, SSizeInt Size, SRawPixelColor Color)
 		{
-			int32_t color_byte4 = (Color.B << 24 | Color.G << 16 | Color.R << 8 | Color.A);
+			uint32_t color_byte4 = (Color.B << 24 | Color.G << 16 | Color.R << 8 | Color.A);
 
-			for (int y = 0; y < Size.Height; ++y)
+			for (uint32_t y = 0; y < Size.Height; ++y)
 			{
-				int start_id = Position.X + (y + Position.Y) * Width;
-				int copy_byte_size = 4;
+				uint32_t start_id = Position.X + (y + Position.Y) * Width;
+				uint32_t copy_byte_size = 4;
 
-				for (int x = 0; x < Size.Width; ++x)
+				for (uint32_t x = 0; x < Size.Width; ++x)
 				{
 					memcpy(&Pixels[start_id + x], &color_byte4, copy_byte_size);
 				}

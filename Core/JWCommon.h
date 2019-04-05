@@ -15,6 +15,7 @@
 #include <DirectXPackedVector.h>
 #include <d3dcompiler.h>
 #include <DirectXTK/pch.h>
+#include <wincodec.h> // For GUID formats
 
 #include <assimp\Importer.hpp>
 #include <assimp\scene.h>
@@ -108,14 +109,16 @@ namespace JWEngine
 
 #define JW_AVOID_DUPLICATE_CREATION(Bool) {if (Bool) { return; }}
 #define JW_DELETE(pVar) { if(pVar) {delete pVar; pVar = nullptr; }}
+#define JW_DELETE_ARRAY(pArray) { if(pArray) {delete[] pArray; pArray = nullptr; }}
 #define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
 	
 	using namespace DirectX;
 
-	static constexpr int KMaxBoneCount{ 50 };
-	static constexpr int KMaxBoneCountPerVertex{ 4 };
-	static constexpr int KMaxFileLength{ 255 };
-	static constexpr int KInputKeyCount{ 256 };
+	static constexpr uint8_t KMaxBoneCount{ 50 };
+	static constexpr uint8_t KColorCountPerTexel{ 4 };
+	static constexpr uint8_t KMaxBoneCountPerVertex{ 4 };
+	static constexpr uint16_t KMaxFileLength{ 255 };
+	static constexpr uint16_t KInputKeyCount{ 256 };
 	static constexpr const char* KAssetDirectory{ "Asset\\" };
 	static constexpr float KAnimationTickBase{ 30.0f };
 	static constexpr XMFLOAT4 KDefaultColorNormals{ XMFLOAT4(0.4f, 0.8f, 0.0f, 1.0f) };
@@ -153,10 +156,10 @@ namespace JWEngine
 	struct SSizeInt
 	{
 		SSizeInt() {};
-		SSizeInt(int _Width, int _Height) : Width(_Width), Height(_Height) {};
+		SSizeInt(uint32_t _Width, uint32_t _Height) : Width(_Width), Height(_Height) {};
 
-		int Width{};
-		int Height{};
+		uint32_t Width{};
+		uint32_t Height{};
 	};
 
 	struct SClearColor
@@ -294,7 +297,7 @@ namespace JWEngine
 		XMFLOAT3 Position{};
 		XMFLOAT4 ColorRGBA{ 1.0f, 1.0f, 1.0f, 1.0f };
 	};
-
+	
 	struct SStaticModelVertexData
 	{
 		VECTOR<SStaticModelVertex> Vertices;

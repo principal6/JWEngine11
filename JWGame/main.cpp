@@ -29,6 +29,7 @@ int main()
 	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // SharedResource #0
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "grass.png"); //SharedResource #1
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "Grayscale_Interval_Ten.png"); //SharedResource #2
+	myGame.ECS().CreateAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400)); //AnimationTexture #0
 
 	auto& jars = myGame.ECS().CreateEntity();
 	jars.CreateComponentTransform()
@@ -49,6 +50,8 @@ int main()
 		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
 		->AddAnimation("Ezreal_Punching.X")
 		->AddAnimation("Ezreal_Walk.X")
+		->BakeAnimationsIntoTexture(myGame.ECS().GetAnimationTexture(0))
+		->SaveBakedAnimationAsTIF("baked_animation.tif")
 		->SetAnimation(0);
 	
 	auto& ambient_light = myGame.ECS().CreateEntity();

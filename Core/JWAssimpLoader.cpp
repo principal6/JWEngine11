@@ -405,6 +405,8 @@ PRIVATE void JWAssimpLoader::ExtractAnimationSet(const aiScene* Scene, const SMo
 			animation.AnimationTicksPerGameTick = animation.AnimationTicksPerSecond / KAnimationTickBase;
 
 			animation.TotalAnimationTicks = static_cast<float>(ai_animation->mDuration);
+
+			animation.TotalFrameCount = static_cast<int>(animation.TotalAnimationTicks / animation.AnimationTicksPerGameTick);
 			
 			// channel = animation of a single node
 			if (ai_animation->mNumChannels)
