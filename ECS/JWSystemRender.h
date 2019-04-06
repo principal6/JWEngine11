@@ -46,28 +46,22 @@ namespace JWEngine
 		bool ShouldRepeat{};
 	};
 	
+	// Every pointer is a non-owner pointer.
 	struct SComponentRender
 	{
-		// Non-owner pointer
 		JWEntity*					PtrEntity{};
 		uint32_t					ComponentID{};
 		ERenderType					RenderType{ ERenderType::Invalid };
 
-		// Non-owner pointer
 		JWDX*						PtrDX{};
-		// Non-owner pointer
 		JWCamera*					PtrCamera{};
-		// Non-owner pointer
 		const STRING*				PtrBaseDirectory{};
 
-		// Non-owner pointer
 		JWModel*					PtrModel{};
 		JWImage						Image{};
 
-		// Non-owner pointer
 		ID3D11ShaderResourceView*	PtrTexture;
 
-		// Non-owner pointer
 		SAnimationTextureData*		PtrBakedAnimationTexture;
 		SAnimationState				AnimationState;
 
