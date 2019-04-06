@@ -4,12 +4,15 @@ using namespace JWEngine;
 
 auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noexcept->SStaticModelData
 {
-	SStaticModelData temporary_model_data{};
+	SStaticModelData result{};
 
-	Assimp::Importer assimp_importer{};
-	const aiScene* assimp_scene{ assimp_importer.ReadFile(Directory + ModelFileName,
-		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes | aiProcess_FixInfacingNormals |
-		aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices) };
+	Assimp::Importer importer{};
+	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_NORMALS);
+
+	const aiScene* assimp_scene{ importer.ReadFile(Directory + ModelFileName, aiProcess_ConvertToLeftHanded
+		| aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes | aiProcess_FixInfacingNormals
+		| aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices
+		| aiProcess_RemoveComponent | aiProcess_GenSmoothNormals) };
 
 	if (assimp_scene && assimp_scene->HasMeshes())
 	{
@@ -26,15 +29,15 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 
 			// Load the texture only once per model (not per mesh).
 			// i.e. multi-texture not supported.
-			if (!temporary_model_data.HasTexture)
+			if (!result.HasTexture)
 			{
 				aiString path{};
 				aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &path);
 				STRING path_string{ Directory + path.C_Str() };
 				if (path.length)
 				{
-					temporary_model_data.HasTexture = true;
-					temporary_model_data.TextureFileNameW = StringToWstring(path_string);
+					result.HasTexture = true;
+					result.TextureFileNameW = StringToWstring(path_string);
 				}
 			}
 
@@ -65,7 +68,7 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 
 					normal = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
 
-					temporary_model_data.VertexData.Vertices.emplace_back(position, texcoord, normal, diffuse, specular);
+					result.VertexData.Vertices.emplace_back(position, texcoord, normal, diffuse, specular);
 				}
 			}
 			else
@@ -85,7 +88,7 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 
 					if (indices_count == 3)
 					{
-						temporary_model_data.IndexData.Indices.emplace_back(
+						result.IndexData.Indices.emplace_back(
 							indices_offset + indices[0],
 							indices_offset + indices[1],
 							indices_offset + indices[2]);
@@ -113,7 +116,7 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 		JWAbort("Model file not found.");
 	}
 
-	return temporary_model_data;
+	return result;
 }
 
 auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SRiggedModelData
@@ -121,11 +124,14 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 	SRiggedModelData result{};
 
 	Assimp::Importer importer{};
-	const aiScene* scene{ importer.ReadFile(Directory + ModelFileName,
-		aiProcess_ConvertToLeftHanded | aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes |
-		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality | aiProcess_FixInfacingNormals |
-		aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices) };
+	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_NORMALS);
 
+	const aiScene* scene{ importer.ReadFile(Directory + ModelFileName, aiProcess_ConvertToLeftHanded
+		| aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes
+		| aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality | aiProcess_FixInfacingNormals 
+		| aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices
+		| aiProcess_RemoveComponent | aiProcess_GenSmoothNormals) };
+		
 	if (scene == nullptr)
 	{
 		JWAbort("Model not imported. Check out the model file.");
