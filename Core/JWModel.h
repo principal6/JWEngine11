@@ -6,22 +6,16 @@ namespace JWEngine
 {
 	class JWDX;
 
-	enum class EModelType
-	{
-		Invalid,
-
-		StaticModel,
-		RiggedModel,
-		LineModel,
-	};
-
 	class JWModel
 	{
 	public:
 		JWModel() = default;
-		~JWModel();
+		~JWModel() = default;
 
-		void Create(JWDX& DX) noexcept;
+		void Create(JWDX& DX, STRING& BaseDirectory) noexcept;
+		
+		// Release all resources
+		void Destroy() noexcept;
 
 		void MakeSquare(float Size, XMFLOAT2 UVMap) noexcept;
 
@@ -51,12 +45,24 @@ namespace JWEngine
 		void SetRiggedModelData(SRiggedModelData ModelData) noexcept;
 		void SetLineModelData(SLineModelData Model2Data) noexcept;
 
-		// Load & Set animation
-		auto AddAnimationFromFile(STRING Directory, STRING ModelFileName) noexcept->JWModel&;
-		auto SetAnimation(size_t AnimationID, bool ShouldRepeat = true) noexcept->JWModel&;
-		auto SetPrevAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
-		auto SetNextAnimation(bool ShouldRepeat = true) noexcept->JWModel&;
-		
+		// Load animation
+		auto AddAnimationFromFile(STRING ModelFileName) noexcept->JWModel*;
+
+		auto GetRenderType() const noexcept { return m_RenderType; };
+		auto GetTextureFileName() const noexcept->WSTRING
+		{
+			if (m_RenderType == ERenderType::Model_Static)
+			{
+				return StaticModelData.TextureFileNameW;
+			}
+			else if (m_RenderType == ERenderType::Model_Rigged)
+			{
+				return RiggedModelData.TextureFileNameW;
+			}
+
+			return L"";
+		}
+
 	public:
 		ID3D11Buffer*		ModelVertexBuffer{};
 		ID3D11Buffer*		ModelIndexBuffer{};
@@ -67,14 +73,12 @@ namespace JWEngine
 		ID3D11Buffer*		NormalIndexBuffer{};
 		SLineModelData		NormalData{};
 
-		ID3D11ShaderResourceView*	TextureShaderResourceView{};
-
 	private:
-		void CreateTexture(WSTRING TextureFileName) noexcept;
 		void CreateModelVertexIndexBuffers() noexcept;
 
 	private:
-		JWDX*		m_pDX{};
-		EModelType	m_ModelType{ EModelType::Invalid };
+		JWDX*			m_pDX{};
+		const STRING*	m_pBaseDirectory{};
+		ERenderType		m_RenderType{ ERenderType::Invalid };
 	};
 };

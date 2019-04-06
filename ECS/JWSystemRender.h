@@ -10,16 +10,6 @@ namespace JWEngine
 	class JWCamera;
 	class JWEntity;
 
-	enum class ERenderType : uint8_t
-	{
-		Invalid,
-
-		Model_StaticModel,
-		Model_RiggedModel,
-
-		Image_2D,
-	};
-
 	enum EFLAGRenderOption : uint16_t
 	{
 		JWFlagRenderOption_UseTexture = 0b1,
@@ -41,37 +31,55 @@ namespace JWEngine
 
 	struct SAnimationState
 	{
-		float AnimationTime{};
-		float CurrAnimationTime{};
-		float NextAnimationTime{};
-		float DeltaTime{};
-	};
+		// If no animation is set, CurrAnimationID is 0 (TPose)
+		uint32_t CurrAnimationID{};
 
+		// If SetAnimation() is called, CurrAnimationTick is reset to 0.
+		float CurrAnimationTick{};
+
+		float CurrFrameTime{};
+		float NextFrameTime{};
+
+		// Used for interpolation
+		float DeltaTime{};
+
+		bool ShouldRepeat{};
+	};
+	
 	struct SComponentRender
 	{
-		JWEntity*				PtrEntity{};
-		uint32_t				ComponentID{};
+		// Non-owner pointer
+		JWEntity*					PtrEntity{};
+		uint32_t					ComponentID{};
+		ERenderType					RenderType{ ERenderType::Invalid };
 
-		ERenderType				RenderType{ ERenderType::Invalid };
-		JWDX*					PtrDX{};
-		JWCamera*				PtrCamera{};
-		const STRING*			PtrBaseDirectory{};
-		JWModel					Model{};
-		JWImage					Image{};
-		SAnimationTextureData*	PtrBakedAnimationTexture; // Non-owner pointer
-		SAnimationState			CurrentAnimationState;
+		// Non-owner pointer
+		JWDX*						PtrDX{};
+		// Non-owner pointer
+		JWCamera*					PtrCamera{};
+		// Non-owner pointer
+		const STRING*				PtrBaseDirectory{};
 
-		EDepthStencilState		DepthStencilState{ EDepthStencilState::ZEnabled };
-		EVertexShader			VertexShader{ EVertexShader::VSBase };
-		EPixelShader			PixelShader{ EPixelShader::PSBase };
+		// Non-owner pointer
+		JWModel*					PtrModel{};
+		JWImage						Image{};
 
-		JWFlagRenderOption		FlagRenderOption{};
+		// Non-owner pointer
+		ID3D11ShaderResourceView*	PtrTexture;
+
+		// Non-owner pointer
+		SAnimationTextureData*		PtrBakedAnimationTexture;
+		SAnimationState				AnimationState;
+
+		EDepthStencilState			DepthStencilState{ EDepthStencilState::ZEnabled };
+		EVertexShader				VertexShader{ EVertexShader::VSBase };
+		EPixelShader				PixelShader{ EPixelShader::PSBase };
+
+		JWFlagRenderOption			FlagRenderOption{};
 
 		auto SetTexture(ID3D11ShaderResourceView* pShaderResourceView) noexcept
 		{
-			JW_RELEASE(Model.TextureShaderResourceView);
-
-			Model.TextureShaderResourceView = pShaderResourceView;
+			PtrTexture = pShaderResourceView;
 
 			FlagRenderOption |= JWFlagRenderOption_UseTexture;
 
@@ -90,138 +98,22 @@ namespace JWEngine
 			return this;
 		}
 
-		auto MakeSquare(float Size, XMFLOAT2 UVMap) noexcept
+		auto SetModel(JWModel* pModel) noexcept
 		{
+			assert(pModel);
+
 			if (RenderType == ERenderType::Invalid)
 			{
-				Model.Create(*PtrDX);
-				Model.MakeSquare(Size, UVMap);
+				PtrModel = pModel;
 
-				RenderType = ERenderType::Model_StaticModel;
-			}
-
-			return this;
-		}
-
-		auto MakeCircle(float Radius, uint8_t Detail) noexcept
-		{
-			if (RenderType == ERenderType::Invalid)
-			{
-				Model.Create(*PtrDX);
-				Model.MakeCircle(Radius, Detail);
-
-				RenderType = ERenderType::Model_StaticModel;
-			}
-
-			return this;
-		}
-
-		auto MakeCube(float Size) noexcept
-		{
-			if (RenderType == ERenderType::Invalid)
-			{
-				Model.Create(*PtrDX);
-				Model.MakeCube(Size);
-
-				RenderType = ERenderType::Model_StaticModel;
-			}
-
-			return this;
-		}
-
-		auto MakePyramid(float Height, float Width) noexcept
-		{
-			if (RenderType == ERenderType::Invalid)
-			{
-				Model.Create(*PtrDX);
-				Model.MakePyramid(Height, Width);
-
-				RenderType = ERenderType::Model_StaticModel;
-			}
-
-			return this;
-		}
-
-		auto MakeCone(float Height, float Radius, uint8_t Detail) noexcept
-		{
-			if (RenderType == ERenderType::Invalid)
-			{
-				Model.Create(*PtrDX);
-				Model.MakeCone(Height, Radius, Detail);
-
-				RenderType = ERenderType::Model_StaticModel;
-			}
-
-			return this;
-		}
-
-		auto MakeCylinder(float Height, float Radius, uint8_t Detail) noexcept
-		{
-			if (RenderType == ERenderType::Invalid)
-			{
-				Model.Create(*PtrDX);
-				Model.MakeCylinder(Height, Radius, Detail);
-
-				RenderType = ERenderType::Model_StaticModel;
-			}
-
-			return this;
-		}
-
-		auto MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept
-		{
-			if (RenderType == ERenderType::Invalid)
-			{
-				Model.Create(*PtrDX);
-				Model.MakeSphere(Radius, VerticalDetail, HorizontalDetail);
-
-				RenderType = ERenderType::Model_StaticModel;
-			}
-
-			return this;
-		}
-
-		auto MakeCapsule(float Height, float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept
-		{
-			if (RenderType == ERenderType::Invalid)
-			{
-				Model.Create(*PtrDX);
-				Model.MakeCapsule(Height, Radius, VerticalDetail, HorizontalDetail);
-
-				RenderType = ERenderType::Model_StaticModel;
-			}
-
-			return this;
-		}
-
-		auto LoadModel(ERenderType Type, STRING FileName) noexcept
-		{
-			if (RenderType == ERenderType::Invalid)
-			{
-				JWAssimpLoader loader;
-
-				switch (Type)
-				{
-				case JWEngine::ERenderType::Model_StaticModel:
-					Model.Create(*PtrDX);
-					Model.SetStaticModelData(loader.LoadStaticModel(*PtrBaseDirectory + KAssetDirectory, FileName));
-
-					RenderType = Type;
-					break;
-				case JWEngine::ERenderType::Model_RiggedModel:
-					Model.Create(*PtrDX);
-					Model.SetRiggedModelData(loader.LoadRiggedModel(*PtrBaseDirectory + KAssetDirectory, FileName));
-
-					// @important
-					VertexShader = EVertexShader::VSAnim;
-
-					RenderType = Type;
-					break;
-				default:
-					break;
-				}
+				RenderType = PtrModel->GetRenderType();
 
 				
+				if (RenderType == ERenderType::Model_Rigged)
+				{
+					// @important
+					VertexShader = EVertexShader::VSAnim;
+				}
 			}
 
 			return this;
@@ -237,6 +129,7 @@ namespace JWEngine
 				Image.SetSize(XMFLOAT2(static_cast<float>(Size.Width), static_cast<float>(Size.Height)));
 
 				DepthStencilState = EDepthStencilState::ZDisabled;
+
 				RenderType = ERenderType::Image_2D;
 			}
 
@@ -257,41 +150,68 @@ namespace JWEngine
 			return this;
 		}
 
-		auto AddAnimation(STRING FileName)
-		{
-			Model.AddAnimationFromFile(*PtrBaseDirectory + KAssetDirectory, FileName);
-
-			return this;
-		}
-
 		// Animation ID 0 is TPose
-		auto SetAnimation(uint32_t AnimationID)
+		auto SetAnimation(uint32_t AnimationID, bool ShouldRepeat = true)
 		{
-			Model.SetAnimation(AnimationID);
+			if (RenderType == ERenderType::Model_Rigged)
+			{
+				if (PtrModel->RiggedModelData.AnimationSet.vAnimations.size())
+				{
+					AnimationID = min(AnimationID, static_cast<uint32_t>(PtrModel->RiggedModelData.AnimationSet.vAnimations.size()));
+				}
+				else
+				{
+					// Only TPose is available
+					AnimationID = 0;
+				}
+
+				// Set animation only when animation id has changed from the previous one.
+				if (AnimationState.CurrAnimationID != AnimationID)
+				{
+					AnimationState.CurrAnimationID = AnimationID;
+					AnimationState.CurrAnimationTick = 0;
+					AnimationState.ShouldRepeat = ShouldRepeat;
+				}
+			}
 
 			return this;
 		}
 
-		auto NextAnimation()
+		auto NextAnimation(bool ShouldRepeat = true)
 		{
-			Model.SetNextAnimation();
+			if (RenderType == ERenderType::Model_Rigged)
+			{
+				uint32_t AnimationID = AnimationState.CurrAnimationID + 1;
+
+				if (AnimationID > PtrModel->RiggedModelData.AnimationSet.vAnimations.size())
+				{
+					AnimationID = 0;
+				}
+
+				SetAnimation(AnimationID, ShouldRepeat);
+			}
 
 			return this;
 		}
 
-		auto PrevAnimation()
+		auto PrevAnimation(bool ShouldRepeat = true)
 		{
-			Model.SetPrevAnimation();
+			if (RenderType == ERenderType::Model_Rigged)
+			{
+				uint32_t AnimationID = AnimationState.CurrAnimationID - 1;
+
+				SetAnimation(AnimationID, ShouldRepeat);
+			}
 
 			return this;
 		}
 
-		// To use this function, first call CreateAnimationTexture() of ECS.
+		// Befroe calling this function, first call CreateAnimationTexture() of ECS in order to create texture.
 		auto BakeAnimationsIntoTexture(SAnimationTextureData* PtrAnimationTexture)
 		{
-			if (Model.RiggedModelData.AnimationSet.vAnimations.size())
+			if (PtrModel->RiggedModelData.AnimationSet.vAnimations.size())
 			{
-				auto& vec_animations{ Model.RiggedModelData.AnimationSet.vAnimations };
+				auto& vec_animations{ PtrModel->RiggedModelData.AnimationSet.vAnimations };
 
 				auto& texture_size{ PtrAnimationTexture->TextureSize };
 				uint32_t texel_count{ texture_size.Width * texture_size.Height };
@@ -333,8 +253,8 @@ namespace JWEngine
 				XMMATRIX frame_matrices[KMaxBoneCount]{};
 
 				// TPose into FrameMatrices
-				SaveTPoseIntoFrameMatrices(frame_matrices, Model.RiggedModelData,
-					Model.RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+				SaveTPoseIntoFrameMatrices(frame_matrices, PtrModel->RiggedModelData,
+					PtrModel->RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
 				
 				// Bake FrameMatrices into Texture
 				BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
@@ -354,7 +274,7 @@ namespace JWEngine
 
 						// Current frame into FrameMatrices
 						SaveAnimationFrameIntoFrameMatrices(frame_matrices, anim_index, frame_time,
-							Model.RiggedModelData, Model.RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+							PtrModel->RiggedModelData, PtrModel->RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
 
 						// Bake FrameMatrices into Texture
 						BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
@@ -381,7 +301,7 @@ namespace JWEngine
 			return this;
 		}
 
-		auto LoadBakedAnimationFromDDS(SAnimationTextureData* PtrAnimationTexture) noexcept
+		auto SetAnimationTexture(SAnimationTextureData* PtrAnimationTexture) noexcept
 		{
 			// Save this texture data's pointer
 			PtrBakedAnimationTexture = PtrAnimationTexture;
@@ -391,7 +311,7 @@ namespace JWEngine
 			return this;
 		}
 
-		auto SaveBakedAnimationAsDDS(STRING FileName) noexcept
+		auto SaveAnimationTextureToFile(STRING FileName) noexcept
 		{
 			if (PtrBakedAnimationTexture)
 			{
@@ -527,9 +447,10 @@ namespace JWEngine
 		void AnimateOnGPU(SComponentRender& Component) noexcept;
 		void AnimateOnCPU(SComponentRender& Component) noexcept;
 
-		void UpdateNodeAnimationIntoBones(bool UseInterpolation, float AnimationTime, SRiggedModelData& ModelData,
+		void UpdateNodeAnimationIntoBones(bool UseInterpolation, SAnimationState& AnimationState,
+			SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
+		void UpdateNodeTPoseIntoBones(float AnimationTime, SRiggedModelData& ModelData,
 			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
-		void UpdateNodeTPoseIntoBones(float AnimationTime, SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
 
 		void Draw(SComponentRender& Component) noexcept;
 		void DrawNormals(SComponentRender& Component) noexcept;

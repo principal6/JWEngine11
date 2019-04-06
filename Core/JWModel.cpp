@@ -3,26 +3,27 @@
 
 using namespace JWEngine;
 
-JWModel::~JWModel()
-{
-	JW_RELEASE(TextureShaderResourceView);
-	
-	JW_RELEASE(NormalVertexBuffer);
-	JW_RELEASE(NormalIndexBuffer);
-
-	JW_RELEASE(ModelVertexBuffer);
-	JW_RELEASE(ModelIndexBuffer);
-}
-
-void JWModel::Create(JWDX& DX) noexcept
+void JWModel::Create(JWDX& DX, STRING& BaseDirectory) noexcept
 {
 	// Set JWDX pointer.
 	m_pDX = &DX;
+
+	// Set BaseDirectory pointer.
+	m_pBaseDirectory = &BaseDirectory;
+}
+
+void JWModel::Destroy() noexcept
+{
+	JW_RELEASE(ModelVertexBuffer);
+	JW_RELEASE(ModelIndexBuffer);
+
+	JW_RELEASE(NormalVertexBuffer);
+	JW_RELEASE(NormalIndexBuffer);
 }
 
 void JWModel::MakeSquare(float Size, XMFLOAT2 UVMap) noexcept
 {
-	m_ModelType = EModelType::StaticModel;
+	m_RenderType = ERenderType::Model_Static;
 
 	float half_size = Size / 2.0f;
 
@@ -62,7 +63,7 @@ void JWModel::MakeSquare(float Size, XMFLOAT2 UVMap) noexcept
 
 void JWModel::MakeCircle(float Radius, uint8_t Detail) noexcept
 {
-	m_ModelType = EModelType::StaticModel;
+	m_RenderType = ERenderType::Model_Static;
 
 	XMFLOAT3 Color{ 0, 0, 1 };
 
@@ -106,7 +107,7 @@ void JWModel::MakeCircle(float Radius, uint8_t Detail) noexcept
 
 void JWModel::MakeCube(float Size) noexcept
 {
-	m_ModelType = EModelType::StaticModel;
+	m_RenderType = ERenderType::Model_Static;
 
 	float half_size = Size / 2.0f;
 
@@ -180,7 +181,7 @@ void JWModel::MakeCube(float Size) noexcept
 
 void JWModel::MakePyramid(float Height, float Width) noexcept
 {
-	m_ModelType = EModelType::StaticModel;
+	m_RenderType = ERenderType::Model_Static;
 
 	float half_width = Width / 2.0f;
 
@@ -245,7 +246,7 @@ void JWModel::MakePyramid(float Height, float Width) noexcept
 
 void JWModel::MakeCone(float Height, float Radius, uint8_t Detail) noexcept
 {
-	m_ModelType = EModelType::StaticModel;
+	m_RenderType = ERenderType::Model_Static;
 
 	XMFLOAT3 UpColor{ 0, 0, 1 };
 	XMFLOAT3 DownColor{ 0, 1, 0 };
@@ -298,7 +299,7 @@ void JWModel::MakeCone(float Height, float Radius, uint8_t Detail) noexcept
 
 void JWModel::MakeCylinder(float Height, float Radius, uint8_t Detail) noexcept
 {
-	m_ModelType = EModelType::StaticModel;
+	m_RenderType = ERenderType::Model_Static;
 
 	XMFLOAT3 UpColor{ 0, 0, 1 };
 	XMFLOAT3 DownColor{ 0, 1, 0 };
@@ -367,7 +368,7 @@ void JWModel::MakeCylinder(float Height, float Radius, uint8_t Detail) noexcept
 
 void JWModel::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept
 {
-	m_ModelType = EModelType::StaticModel;
+	m_RenderType = ERenderType::Model_Static;
 
 	XMFLOAT3 ColorA{ 0, 0.5f, 0 };
 	XMFLOAT3 ColorB{ 0, 0.5f, 1 };
@@ -520,7 +521,7 @@ void JWModel::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t Horizonta
 
 void JWModel::MakeCapsule(float Height, float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept
 {
-	m_ModelType = EModelType::StaticModel;
+	m_RenderType = ERenderType::Model_Static;
 
 	XMFLOAT3 ColorA{ 0, 0.5f, 0 };
 	XMFLOAT3 ColorB{ 0, 0.5f, 1 };
@@ -766,23 +767,17 @@ void JWModel::MakeCapsule(float Height, float Radius, uint8_t VerticalDetail, ui
 
 void JWModel::SetStaticModelData(SStaticModelData ModelData) noexcept
 {
-	if (m_ModelType != EModelType::Invalid)
+	if (m_RenderType != ERenderType::Invalid)
 	{
 		return;
 	}
 
-	m_ModelType = EModelType::StaticModel;
+	m_RenderType = ERenderType::Model_Static;
 
 	// Save the model data
 	StaticModelData = ModelData;
 
 	CreateModelVertexIndexBuffers();
-
-	// Create texture if there is
-	if (ModelData.HasTexture)
-	{
-		CreateTexture(ModelData.TextureFileNameW);
-	}
 
 	// For normal line drawing
 	NormalData.VertexData.Clear();
@@ -811,23 +806,17 @@ void JWModel::SetStaticModelData(SStaticModelData ModelData) noexcept
 
 void JWModel::SetRiggedModelData(SRiggedModelData ModelData) noexcept
 {
-	if (m_ModelType != EModelType::Invalid)
+	if (m_RenderType != ERenderType::Invalid)
 	{
 		return;
 	}
 
-	m_ModelType = EModelType::RiggedModel;
+	m_RenderType = ERenderType::Model_Rigged;
 
 	// Save the model data
 	RiggedModelData = ModelData;
 
 	CreateModelVertexIndexBuffers();
-
-	// Create texture if there is
-	if (ModelData.HasTexture)
-	{
-		CreateTexture(ModelData.TextureFileNameW);
-	}
 
 	// For normal line drawing
 	NormalData.VertexData.Clear();
@@ -856,12 +845,12 @@ void JWModel::SetRiggedModelData(SRiggedModelData ModelData) noexcept
 
 void JWModel::SetLineModelData(SLineModelData Model2Data) noexcept
 {
-	if (m_ModelType != EModelType::Invalid)
+	if (m_RenderType != ERenderType::Invalid)
 	{
 		return;
 	}
 
-	m_ModelType = EModelType::LineModel;
+	m_RenderType = ERenderType::Model_Line;
 
 	NormalData = Model2Data;
 	
@@ -872,23 +861,11 @@ void JWModel::SetLineModelData(SLineModelData Model2Data) noexcept
 	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
-PRIVATE void JWModel::CreateTexture(WSTRING TextureFileName) noexcept
-{
-	if (TextureFileName.find(L".dds") != std::string::npos)
-	{
-		CreateDDSTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &TextureShaderResourceView, 0);
-	}
-	else
-	{
-		CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &TextureShaderResourceView, 0);
-	}
-}
-
 PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 {
-	switch (m_ModelType)
+	switch (m_RenderType)
 	{
-	case JWEngine::EModelType::StaticModel:
+	case JWEngine::ERenderType::Model_Static:
 		// Create vertex buffer
 		m_pDX->CreateStaticVertexBuffer(StaticModelData.VertexData.GetByteSize(), StaticModelData.VertexData.GetPtrData(), &ModelVertexBuffer);
 
@@ -896,7 +873,7 @@ PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 		m_pDX->CreateIndexBuffer(StaticModelData.IndexData.GetByteSize(), StaticModelData.IndexData.GetPtrData(), &ModelIndexBuffer);
 
 		break;
-	case JWEngine::EModelType::RiggedModel:
+	case JWEngine::ERenderType::Model_Rigged:
 		// Create vertex buffer
 		m_pDX->CreateStaticVertexBuffer(RiggedModelData.VertexData.GetByteSize(), RiggedModelData.VertexData.GetPtrData(), &ModelVertexBuffer);
 
@@ -909,68 +886,13 @@ PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 	}
 }
 
-auto JWModel::AddAnimationFromFile(STRING Directory, STRING ModelFileName) noexcept->JWModel&
+auto JWModel::AddAnimationFromFile(STRING ModelFileName) noexcept->JWModel*
 {
-	if (m_ModelType == EModelType::RiggedModel)
+	if (m_RenderType == ERenderType::Model_Rigged)
 	{
 		JWAssimpLoader loader;
-		loader.LoadAdditionalAnimationIntoRiggedModel(RiggedModelData, Directory, ModelFileName);
+		loader.LoadAdditionalAnimationIntoRiggedModel(RiggedModelData, *m_pBaseDirectory + KAssetDirectory, ModelFileName);
 	}
 
-	return *this;
-}
-
-auto JWModel::SetAnimation(size_t AnimationID, bool ShouldRepeat) noexcept->JWModel&
-{
-	if (m_ModelType == EModelType::RiggedModel)
-	{
-		if (RiggedModelData.AnimationSet.vAnimations.size())
-		{
-			AnimationID = min(AnimationID, RiggedModelData.AnimationSet.vAnimations.size());
-		}
-		else
-		{
-			// Only TPose is available
-			AnimationID = 0;
-		}
-
-		// Set animation only when animation id has changed from the previous one.
-		if (RiggedModelData.CurrentAnimationID != AnimationID)
-		{
-			RiggedModelData.CurrentAnimationID = AnimationID;
-			RiggedModelData.CurrentAnimationTick = 0;
-			RiggedModelData.ShouldRepeatCurrentAnimation = ShouldRepeat;
-		}
-	}
-
-	return *this;
-}
-
-auto JWModel::SetPrevAnimation(bool ShouldRepeat) noexcept->JWModel&
-{
-	if (m_ModelType == EModelType::RiggedModel)
-	{
-		size_t AnimationID = RiggedModelData.CurrentAnimationID - 1;
-
-		SetAnimation(AnimationID, ShouldRepeat);
-	}
-
-	return *this;
-}
-
-auto JWModel::SetNextAnimation(bool ShouldRepeat) noexcept->JWModel&
-{
-	if (m_ModelType == EModelType::RiggedModel)
-	{
-		size_t AnimationID = RiggedModelData.CurrentAnimationID + 1;
-
-		if (AnimationID > RiggedModelData.AnimationSet.vAnimations.size())
-		{
-			AnimationID = 0;
-		}
-
-		SetAnimation(AnimationID, ShouldRepeat);
-	}
-
-	return *this;
+	return this;
 }

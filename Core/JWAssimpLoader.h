@@ -4,6 +4,17 @@
 
 namespace JWEngine
 {
+	enum class ERenderType : uint8_t
+	{
+		Invalid,
+
+		Model_Static,
+		Model_Rigged,
+		Model_Line,
+
+		Image_2D,
+	};
+
 	struct SModelNode
 	{
 		// Current node's index in SModelNodeTree.vNodes
@@ -143,15 +154,6 @@ namespace JWEngine
 
 		bool HasTexture{ false };
 		WSTRING TextureFileNameW{};
-
-		/// If no animation is set, CurrentAnimationID is KSizeTInvalid(-1)
-		// If no animation is set, CurrentAnimationID is 0 (TPose)
-		size_t CurrentAnimationID{ 0 };
-
-		// If SetAnimation() is called, CurrentAnimationTick is reset to 0.
-		float CurrentAnimationTick{};
-
-		bool ShouldRepeatCurrentAnimation{ true };
 
 		SModelNodeTree NodeTree{};
 		SModelBoneTree BoneTree{};

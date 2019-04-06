@@ -441,7 +441,7 @@ namespace JWEngine
 		// Animation info for GPU
 		uint32_t	AnimationID{};
 		uint32_t	CurrFrame{};
-		uint32_t	Nextrame{};
+		uint32_t	NextFrame{};
 		float		DeltaTime{};
 	};
 	

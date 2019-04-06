@@ -6,11 +6,17 @@ namespace JWEngine
 {
 	class JWDX;
 	class JWCamera;
-
+	
 	enum class ESharedResourceType
 	{
 		Texture2D,
 		TextureCubeMap,
+	};
+
+	enum class ESharedModelType
+	{
+		StaticModel,
+		RiggedModel,
 	};
 
 	class JWECS final
@@ -26,7 +32,7 @@ namespace JWEngine
 					JW_DELETE(iter);
 				}
 
-				for (auto& iter : m_vpSharedResources)
+				for (auto& iter : m_vpSharedSRV)
 				{
 					JW_RELEASE(iter);
 				}
@@ -35,6 +41,11 @@ namespace JWEngine
 				{
 					JW_RELEASE(iter.Texture);
 					JW_RELEASE(iter.TextureSRV);
+				}
+
+				for (auto& iter : m_vSharedModel)
+				{
+					iter.Destroy();
 				}
 			}
 		};
@@ -87,9 +98,9 @@ namespace JWEngine
 
 		void CreateSharedResource(ESharedResourceType Type, STRING FileName) noexcept
 		{
-			m_vpSharedResources.push_back(nullptr);
+			m_vpSharedSRV.push_back(nullptr);
 
-			auto& current_srv = m_vpSharedResources[m_vpSharedResources.size() - 1];
+			auto& current_srv = m_vpSharedSRV[m_vpSharedSRV.size() - 1];
 
 			bool IsDDS{ false };
 			if (FileName.find(".dds") != std::string::npos)
@@ -112,9 +123,12 @@ namespace JWEngine
 				}
 				break;
 			case JWEngine::ESharedResourceType::TextureCubeMap:
-				CreateDDSTextureFromFileEx(m_pDX->GetDevice(), TextureFileName.c_str(), 0, D3D11_USAGE_DEFAULT,
-					D3D11_BIND_SHADER_RESOURCE, 0, D3D11_RESOURCE_MISC_TEXTURECUBE, false, nullptr,
-					&current_srv);
+				if (IsDDS)
+				{
+					CreateDDSTextureFromFileEx(m_pDX->GetDevice(), TextureFileName.c_str(), 0, D3D11_USAGE_DEFAULT,
+						D3D11_BIND_SHADER_RESOURCE, 0, D3D11_RESOURCE_MISC_TEXTURECUBE, false, nullptr,
+						&current_srv);
+				}
 				break;
 			default:
 				break;
@@ -122,8 +136,191 @@ namespace JWEngine
 
 			if (current_srv == nullptr)
 			{
-				m_vpSharedResources.pop_back();
+				m_vpSharedSRV.pop_back();
 			}
+		}
+
+		void CreateSharedResourceFromSharedModel(size_t ModelIndex) noexcept
+		{
+			if (m_vSharedModel.size() == 0)
+			{
+				// No shared model exists.
+				return;
+			}
+
+			ModelIndex = min(ModelIndex, m_vSharedModel.size() - 1);
+			const JWModel* ptr_model = &m_vSharedModel[ModelIndex];
+
+			m_vpSharedSRV.push_back(nullptr);
+
+			auto& current_srv = m_vpSharedSRV[m_vpSharedSRV.size() - 1];
+
+			bool IsDDS{ false };
+			if (ptr_model->GetTextureFileName().find(L".dds") != WSTRING::npos)
+			{
+				IsDDS = true;
+			}
+
+			if (IsDDS)
+			{
+				CreateDDSTextureFromFile(m_pDX->GetDevice(), ptr_model->GetTextureFileName().c_str(), nullptr, &current_srv, 0);
+			}
+			else
+			{
+				CreateWICTextureFromFile(m_pDX->GetDevice(), ptr_model->GetTextureFileName().c_str(), nullptr, &current_srv, 0);
+			}
+
+			if (current_srv == nullptr)
+			{
+				m_vpSharedSRV.pop_back();
+			}
+		}
+
+		auto GetSharedResource(size_t Index) noexcept->ID3D11ShaderResourceView*
+		{
+			ID3D11ShaderResourceView* result{};
+
+			if (Index < m_vpSharedSRV.size())
+			{
+				result = m_vpSharedSRV[Index];
+			}
+
+			return result;
+		}
+
+		auto CreateSharedModelSquare(float Size, XMFLOAT2 UVMap) noexcept->JWModel*
+		{
+			m_vSharedModel.push_back(JWModel());
+
+			auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+			current_model.Create(*m_pDX, m_BaseDirectory);
+			current_model.MakeSquare(Size, UVMap);
+
+			return &current_model;
+		}
+
+		auto CreateSharedModelCircle(float Radius, uint8_t Detail) noexcept->JWModel*
+		{
+			m_vSharedModel.push_back(JWModel());
+
+			auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+			current_model.Create(*m_pDX, m_BaseDirectory);
+			current_model.MakeCircle(Radius, Detail);
+
+			return &current_model;
+		}
+
+		auto CreateSharedModelCube(float Size) noexcept->JWModel*
+		{
+			m_vSharedModel.push_back(JWModel());
+
+			auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+			current_model.Create(*m_pDX, m_BaseDirectory);
+			current_model.MakeCube(Size);
+
+			return &current_model;
+		}
+
+		auto CreateSharedModelPyramid(float Height, float Width) noexcept->JWModel*
+		{
+			m_vSharedModel.push_back(JWModel());
+
+			auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+			current_model.Create(*m_pDX, m_BaseDirectory);
+			current_model.MakePyramid(Height, Width);
+
+			return &current_model;
+		}
+
+		auto CreateSharedModelCone(float Height, float Radius, uint8_t Detail) noexcept->JWModel*
+		{
+			m_vSharedModel.push_back(JWModel());
+
+			auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+			current_model.Create(*m_pDX, m_BaseDirectory);
+			current_model.MakeCone(Height, Radius, Detail);
+
+			return &current_model;
+		}
+
+		auto CreateSharedModelCylinder(float Height, float Radius, uint8_t Detail) noexcept->JWModel*
+		{
+			m_vSharedModel.push_back(JWModel());
+
+			auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+			current_model.Create(*m_pDX, m_BaseDirectory);
+			current_model.MakeCylinder(Height, Radius, Detail);
+
+			return &current_model;
+		}
+
+		auto CreateSharedModelSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->JWModel*
+		{
+			m_vSharedModel.push_back(JWModel());
+
+			auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+			current_model.Create(*m_pDX, m_BaseDirectory);
+			current_model.MakeSphere(Radius, VerticalDetail, HorizontalDetail);
+
+			return &current_model;
+		}
+
+		auto CreateSharedModelCapsule(float Height, float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->JWModel*
+		{
+			m_vSharedModel.push_back(JWModel());
+
+			auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+			current_model.Create(*m_pDX, m_BaseDirectory);
+			current_model.MakeCapsule(Height, Radius, VerticalDetail, HorizontalDetail);
+
+			return &current_model;
+		}
+
+		auto CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) noexcept->JWModel*
+		{
+			m_vSharedModel.push_back(JWModel());
+
+			auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+			current_model.Create(*m_pDX, m_BaseDirectory);
+
+			JWAssimpLoader loader{};
+
+			switch (Type)
+			{
+			case JWEngine::ESharedModelType::StaticModel:
+				current_model.SetStaticModelData(loader.LoadStaticModel(m_BaseDirectory + KAssetDirectory, FileName));
+
+				break;
+			case JWEngine::ESharedModelType::RiggedModel:
+				current_model.SetRiggedModelData(loader.LoadRiggedModel(m_BaseDirectory + KAssetDirectory, FileName));
+
+				break;
+			default:
+				break;
+			}
+
+			return &current_model;
+		}
+
+		auto GetSharedModel(size_t Index) noexcept->JWModel*
+		{
+			JWModel* result{};
+
+			if (Index < m_vSharedModel.size())
+			{
+				result = &m_vSharedModel[Index];
+			}
+
+			return result;
 		}
 
 		void CreateAnimationTexture(SSizeInt TextureSize) noexcept
@@ -168,7 +365,7 @@ namespace JWEngine
 			}
 		}
 
-		void CreateAnimationTextureFromFile(STRING FileName) noexcept
+		void LoadAnimationTextureFromFile(STRING FileName) noexcept
 		{
 			m_vAnimationTextureData.push_back(SAnimationTextureData());
 
@@ -196,18 +393,6 @@ namespace JWEngine
 
 				m_vAnimationTextureData.pop_back();
 			}
-		}
-
-		auto GetSharedResource(size_t Index) noexcept->ID3D11ShaderResourceView*
-		{
-			ID3D11ShaderResourceView* result{};
-
-			if (Index < m_vpSharedResources.size())
-			{
-				result = m_vpSharedResources[Index];
-			}
-
-			return result;
 		}
 
 		auto GetAnimationTexture(size_t Index) noexcept->SAnimationTextureData*
@@ -245,8 +430,9 @@ namespace JWEngine
 
 		VECTOR<JWEntity*>	m_vpEntities;
 
-		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedResources;
+		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;
 		VECTOR<SAnimationTextureData>		m_vAnimationTextureData;
+		VECTOR<JWModel>						m_vSharedModel;
 	};
 };
 
