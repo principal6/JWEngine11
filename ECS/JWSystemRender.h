@@ -150,7 +150,7 @@ namespace JWEngine
 			return this;
 		}
 
-		// Animation ID 0 is TPose
+		// Animation ID 0 is not an animation but TPose
 		auto SetAnimation(uint32_t AnimationID, bool ShouldRepeat = true)
 		{
 			if (RenderType == ERenderType::Model_Rigged)
