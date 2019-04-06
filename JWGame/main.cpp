@@ -26,7 +26,7 @@ int main()
 
 	// Create shared resource for ECS
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.obj"); // Shared Model #0
-	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "lightbulb.obj"); // Shared Model #1
+	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.obj"); // Shared Model #1
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X") // Shared Model #2
 		->AddAnimationFromFile("Ezreal_Punching.X")
 		->AddAnimationFromFile("Ezreal_Walk.X");
