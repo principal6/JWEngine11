@@ -32,17 +32,17 @@ float4x4 LoadMatrixFromTexture(uint BoneID)
 	uint start_y = anim_info.y;
 
 	// Get current frame's bone matrix
-	float4 mat_1 = animation_texture.Load(uint3(BoneID * 4 + 0, start_y + CurrFrame, 0));
-	float4 mat_2 = animation_texture.Load(uint3(BoneID * 4 + 1, start_y + CurrFrame, 0));
-	float4 mat_3 = animation_texture.Load(uint3(BoneID * 4 + 2, start_y + CurrFrame, 0));
-	float4 mat_4 = animation_texture.Load(uint3(BoneID * 4 + 3, start_y + CurrFrame, 0));
+	float4 mat_1 = animation_texture[uint2(BoneID * 4 + 0, start_y + CurrFrame)];
+	float4 mat_2 = animation_texture[uint2(BoneID * 4 + 1, start_y + CurrFrame)];
+	float4 mat_3 = animation_texture[uint2(BoneID * 4 + 2, start_y + CurrFrame)];
+	float4 mat_4 = animation_texture[uint2(BoneID * 4 + 3, start_y + CurrFrame)];
 	float4x4 mata = float4x4(mat_1, mat_2, mat_3, mat_4);
 
 	// Get next frame's bone matrix
-	mat_1 = animation_texture.Load(uint3(BoneID * 4 + 0, start_y + NextFrame, 0));
-	mat_2 = animation_texture.Load(uint3(BoneID * 4 + 1, start_y + NextFrame, 0));
-	mat_3 = animation_texture.Load(uint3(BoneID * 4 + 2, start_y + NextFrame, 0));
-	mat_4 = animation_texture.Load(uint3(BoneID * 4 + 3, start_y + NextFrame, 0));
+	mat_1 = animation_texture[uint2(BoneID * 4 + 0, start_y + NextFrame)];
+	mat_2 = animation_texture[uint2(BoneID * 4 + 1, start_y + NextFrame)];
+	mat_3 = animation_texture[uint2(BoneID * 4 + 2, start_y + NextFrame)];
+	mat_4 = animation_texture[uint2(BoneID * 4 + 3, start_y + NextFrame)];
 	float4x4 matb = float4x4(mat_1, mat_2, mat_3, mat_4);
 
 	// Apply linear interpolation
