@@ -58,7 +58,7 @@ void JWImageCursor::LoadImageCursorFromFile(STRING Directory, STRING FileName) n
 	ID3D11Texture2D* p_resource{};
 
 	CreateWICTextureFromFile(m_pDX->GetDevice(), w_path.c_str(), (ID3D11Resource**)&p_resource, &m_TextureShaderResourceView, 0);
-
+	
 	// Get texture file info
 	D3D11_TEXTURE2D_DESC texture_description{};
 	p_resource->GetDesc(&texture_description);
