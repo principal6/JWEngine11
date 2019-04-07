@@ -35,12 +35,14 @@ void JWRawPixelSetter::Create(JWDX& DX) noexcept
 
 void JWRawPixelSetter::CreateRawTexture() noexcept
 {
+	DXGI_FORMAT texture_format = DXGI_FORMAT_B8G8R8A8_UNORM; // DXGI_FORMAT_B8G8R8A8_UNORM?? DXGI_FORMAT_R32G32B32A32_FLOAT??
+
 	D3D11_TEXTURE2D_DESC texture_descrption{};
 	texture_descrption.Width = m_RawPixelData.GetWidth();
 	texture_descrption.Height = m_RawPixelData.GetHeight();
 	texture_descrption.MipLevels = 1;
 	texture_descrption.ArraySize = 1;
-	texture_descrption.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // DXGI_FORMAT_B8G8R8A8_UNORM?? DXGI_FORMAT_R32G32B32A32_FLOAT??
+	texture_descrption.Format = texture_format;
 	texture_descrption.SampleDesc.Count = 1;
 	texture_descrption.Usage = D3D11_USAGE_DYNAMIC;
 	texture_descrption.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -51,7 +53,7 @@ void JWRawPixelSetter::CreateRawTexture() noexcept
 	m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &m_RawTexture2D);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
-	srv_description.Format = texture_descrption.Format;
+	srv_description.Format = texture_format;
 	srv_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srv_description.Texture2D.MostDetailedMip = 0;
 	srv_description.Texture2D.MipLevels = 1;

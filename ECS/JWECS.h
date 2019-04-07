@@ -331,13 +331,16 @@ namespace JWEngine
 			auto& current_srv = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].TextureSRV;
 			auto& current_tex_size = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].TextureSize;
 
+			// Set texture format we want to use
+			DXGI_FORMAT texture_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			
 			// Describe the texture.
 			D3D11_TEXTURE2D_DESC texture_descrption{};
 			texture_descrption.Width = current_tex_size.Width = TextureSize.Width;
 			texture_descrption.Height = current_tex_size.Height = TextureSize.Height;
 			texture_descrption.MipLevels = 1;
 			texture_descrption.ArraySize = 1;
-			texture_descrption.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			texture_descrption.Format = texture_format;
 			texture_descrption.SampleDesc.Count = 1;
 			texture_descrption.Usage = D3D11_USAGE_DYNAMIC;
 			texture_descrption.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -349,7 +352,7 @@ namespace JWEngine
 
 			// Describe the shader resource view.
 			D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
-			srv_description.Format = texture_descrption.Format;
+			srv_description.Format = texture_format;
 			srv_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 			srv_description.Texture2D.MostDetailedMip = 0;
 			srv_description.Texture2D.MipLevels = 1;
@@ -375,18 +378,15 @@ namespace JWEngine
 
 			WSTRING w_fn = StringToWstring(m_BaseDirectory + KAssetDirectory + FileName);
 
-			// Load image file to get texture info.
-			ID3D11Texture2D* tex_original{};
-			CreateDDSTextureFromFile(m_pDX->GetDevice(), w_fn.c_str(), (ID3D11Resource**)&tex_original, nullptr, 0);
-			D3D11_TEXTURE2D_DESC tex_original_desc{};
-			tex_original->GetDesc(&tex_original_desc);
-			current_tex_size.Width = tex_original_desc.Width;
-			current_tex_size.Height = tex_original_desc.Height;
-			JW_RELEASE(tex_original);
-
-			// Load texture from file
+			// Load texture from file.
 			CreateDDSTextureFromFile(m_pDX->GetDevice(), w_fn.c_str(), (ID3D11Resource**)&current_tex, &current_srv, 0);
-			
+
+			// Get texture description from loaded texture.
+			D3D11_TEXTURE2D_DESC loaded_texture_desc{};
+			current_tex->GetDesc(&loaded_texture_desc);
+			current_tex_size.Width = loaded_texture_desc.Width;
+			current_tex_size.Height = loaded_texture_desc.Height;
+
 			if (current_srv == nullptr)
 			{
 				JW_RELEASE(current_tex);
