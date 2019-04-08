@@ -34,7 +34,7 @@ auto JWBMFontParser::ParseComma(const STRING& Data, UINT ID) noexcept->UINT
 
 auto JWBMFontParser::IsParsed() const noexcept->bool
 {
-	return ms_FontData.bFontDataParsed;
+	return ms_FontData.IsFontDataParsed;
 }
 
 auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
@@ -47,9 +47,9 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 	}
 
 	// Clear ms_FontData
-	ms_FontData.Pages.clear();
-	ms_FontData.Chars.clear();
-	ms_FontData.Kernings.clear();
+	ms_FontData.vPages.clear();
+	ms_FontData.vChars.clear();
+	ms_FontData.vKernings.clear();
 	ms_FontData.CharMap.clear();
 	ms_FontData.KerningMap.clear();
 	memset(ms_FontData.MappedCharacters, 0, KMaxWcharIndex);
@@ -137,7 +137,7 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 			tempAttr = tempElement->FirstAttribute();
 			tempPage.ID = tempAttr->UnsignedValue();
 			tempPage.File = StringToWstring(tempAttr->Next()->Value());
-			ms_FontData.Pages.push_back(tempPage);
+			ms_FontData.vPages.push_back(tempPage);
 
 			tempElement = tempElement->NextSiblingElement();
 		}
@@ -172,10 +172,10 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 			tempChar.Page = tempAttr->UnsignedValue();
 			tempAttr = tempAttr->Next();
 			tempChar.Chnl = tempAttr->UnsignedValue();
-			ms_FontData.Chars.push_back(tempChar);
+			ms_FontData.vChars.push_back(tempChar);
 
 			// map Chars
-			ms_FontData.CharMap.insert(std::make_pair(static_cast<wchar_t>(tempChar.ID), ms_FontData.Chars.size() - 1));
+			ms_FontData.CharMap.insert(std::make_pair(static_cast<wchar_t>(tempChar.ID), ms_FontData.vChars.size() - 1));
 
 			tempElement = tempElement->NextSiblingElement();
 		}
@@ -201,7 +201,7 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 				tempKerning.Second = tempAttr->UnsignedValue();
 				tempAttr = tempAttr->Next();
 				tempKerning.Amount = tempAttr->IntValue();
-				ms_FontData.Kernings.push_back(tempKerning);
+				ms_FontData.vKernings.push_back(tempKerning);
 
 				// Map Kernings
 				ms_FontData.KerningMap.insert(std::make_pair(std::make_pair(tempKerning.First, tempKerning.Second), tempKerning.Amount));
@@ -233,7 +233,7 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 		}
 
 		// The parsing ended successfully
-		ms_FontData.bFontDataParsed = true;
+		ms_FontData.IsFontDataParsed = true;
 
 		return true;
 	}
@@ -254,7 +254,7 @@ auto JWBMFontParser::GetFontTextureHeight() const noexcept->float
 
 auto JWBMFontParser::GetBMCharFromWideCharacter(wchar_t WideCharacter) const noexcept->BMFont::BMChar&
 {
-	return ms_FontData.Chars[GetCharsIDFromWideCharacter(WideCharacter)];
+	return ms_FontData.vChars[GetCharsIDFromWideCharacter(WideCharacter)];
 }
 
 PRIVATE auto JWBMFontParser::GetCharsIDFromWideCharacter(wchar_t WideCharacter) const noexcept->size_t

@@ -307,47 +307,47 @@ namespace JWEngine
 	
 	struct SStaticModelVertexData
 	{
-		VECTOR<SStaticModelVertex> Vertices;
+		VECTOR<SStaticModelVertex> vVertices;
 		UINT Stride{ static_cast<UINT>(sizeof(SStaticModelVertex)) };
 		UINT Offset{};
 
-		void Clear() noexcept { Vertices.clear(); };
-		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
+		void Clear() noexcept { vVertices.clear(); };
+		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SStaticModelVertex)); };
-		auto GetPtrData() const noexcept { return &Vertices[0]; };
+		auto GetPtrData() const noexcept { return &vVertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
-		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
+		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
 	};
 
 	struct SRiggedModelVertexData
 	{
-		VECTOR<SRiggedModelVertex> Vertices;
+		VECTOR<SRiggedModelVertex> vVertices;
 		UINT Stride{ static_cast<UINT>(sizeof(SRiggedModelVertex)) };
 		UINT Offset{};
 
-		void Clear() noexcept { Vertices.clear(); };
-		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
+		void Clear() noexcept { vVertices.clear(); };
+		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SRiggedModelVertex)); };
-		auto GetPtrData() const noexcept { return &Vertices[0]; };
+		auto GetPtrData() const noexcept { return &vVertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
-		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
+		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
 	};
 
 	struct SColorVertexData
 	{
-		VECTOR<SColorVertex> Vertices;
+		VECTOR<SColorVertex> vVertices;
 		UINT Stride{ static_cast<UINT>(sizeof(SColorVertex)) };
 		UINT Offset{};
 
-		void Clear() noexcept { Vertices.clear(); };
-		auto GetCount() const noexcept { return static_cast<UINT>(Vertices.size()); };
+		void Clear() noexcept { vVertices.clear(); };
+		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SColorVertex)); };
-		auto GetPtrData() const noexcept { return &Vertices[0]; };
+		auto GetPtrData() const noexcept { return &vVertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
-		void EmptyData() noexcept { memset(&Vertices[0], 0, GetByteSize()); };
+		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
 	};
 
 	struct SIndex3
@@ -371,22 +371,22 @@ namespace JWEngine
 
 	struct SModelIndexData
 	{
-		VECTOR<SIndex3> Indices;
+		VECTOR<SIndex3> vIndices;
 
-		void Clear() noexcept { Indices.clear(); };
-		auto GetCount() const noexcept { return static_cast<UINT>(Indices.size() * 3); };
+		void Clear() noexcept { vIndices.clear(); };
+		auto GetCount() const noexcept { return static_cast<UINT>(vIndices.size() * 3); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(DWORD)); };
-		auto GetPtrData() const noexcept { return &Indices[0]; };
+		auto GetPtrData() const noexcept { return &vIndices[0]; };
 	};
 
 	struct SLineIndexData
 	{
-		VECTOR<SIndex2> Indices;
+		VECTOR<SIndex2> vIndices;
 
-		void Clear() noexcept { Indices.clear(); };
-		auto GetCount() const noexcept { return static_cast<UINT>(Indices.size() * 2); };
+		void Clear() noexcept { vIndices.clear(); };
+		auto GetCount() const noexcept { return static_cast<UINT>(vIndices.size() * 2); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(DWORD)); };
-		auto GetPtrData() const noexcept { return &Indices[0]; };
+		auto GetPtrData() const noexcept { return &vIndices[0]; };
 	};
 
 	struct SLineData

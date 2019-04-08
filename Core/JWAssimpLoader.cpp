@@ -68,7 +68,7 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 
 					normal = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
 
-					result.VertexData.Vertices.emplace_back(position, texcoord, normal, diffuse, specular);
+					result.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
 				}
 			}
 			else
@@ -88,7 +88,7 @@ auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noe
 
 					if (indices_count == 3)
 					{
-						result.IndexData.Indices.emplace_back(
+						result.IndexData.vIndices.emplace_back(
 							indices_offset + indices[0],
 							indices_offset + indices[1],
 							indices_offset + indices[2]);
@@ -259,7 +259,7 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const STRING Directory
 					normal = ConvertaiVector3DToXMFLOAT3(ai_mesh->mNormals[vertex_id]);
 					texcoord = ConvertaiVector3DToXMFLOAT2(ai_mesh->mTextureCoords[0][vertex_id]);
 
-					OutModelData.VertexData.Vertices.emplace_back(position, texcoord, normal, diffuse, specular);
+					OutModelData.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
 				}
 			}
 			else
@@ -277,7 +277,7 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const STRING Directory
 
 					if (indices_count == 3)
 					{
-						OutModelData.IndexData.Indices.emplace_back(
+						OutModelData.IndexData.vIndices.emplace_back(
 							indices_offset + indices[0],
 							indices_offset + indices[1],
 							indices_offset + indices[2]);
@@ -373,7 +373,7 @@ PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTre
 	{
 		for (const auto& weight : bone.vWeights)
 		{
-			OutVertexData.Vertices[weight.VertexID].AddBone(bone.ID, weight.Weight);
+			OutVertexData.vVertices[weight.VertexID].AddBone(bone.ID, weight.Weight);
 		}
 	}
 }

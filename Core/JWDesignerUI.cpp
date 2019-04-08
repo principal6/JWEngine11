@@ -92,14 +92,14 @@ PRIVATE void JWDesignerUI::MakeGrid(float XSize, float ZSize, float GridInterval
 
 PRIVATE auto JWDesignerUI::AddVertex(const SColorVertex& Vertex) noexcept->JWDesignerUI&
 {
-	m_VertexData.Vertices.push_back(Vertex);
+	m_VertexData.vVertices.push_back(Vertex);
 
 	return *this;
 }
 
 PRIVATE auto JWDesignerUI::AddIndex(const SIndex2& Index) noexcept->JWDesignerUI&
 {
-	m_IndexData.Indices.push_back(Index);
+	m_IndexData.vIndices.push_back(Index);
 
 	return *this;
 }

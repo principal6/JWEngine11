@@ -51,12 +51,12 @@ void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STR
 
 PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 {
-	m_VertexData.Vertices.clear();
-	m_VertexData.Vertices.reserve(KMaxInsantTextLength * 4);
+	m_VertexData.vVertices.clear();
+	m_VertexData.vVertices.reserve(KMaxInsantTextLength * 4);
 
 	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength * 4; ++iterator_count)
 	{
-		m_VertexData.Vertices.push_back(SStaticModelVertex());
+		m_VertexData.vVertices.push_back(SStaticModelVertex());
 	}
 
 	// Create vertex buffer
@@ -65,13 +65,13 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 
 PRIVATE void JWInstantText::CreateInstantTextIndexBuffer() noexcept
 {
-	m_IndexData.Indices.clear();
-	m_IndexData.Indices.reserve(KMaxInsantTextLength * 2);
+	m_IndexData.vIndices.clear();
+	m_IndexData.vIndices.reserve(KMaxInsantTextLength * 2);
 
 	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength; ++iterator_count)
 	{
-		m_IndexData.Indices.push_back(SIndex3(iterator_count * 4,     iterator_count * 4 + 1, iterator_count * 4 + 2));
-		m_IndexData.Indices.push_back(SIndex3(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));
+		m_IndexData.vIndices.push_back(SIndex3(iterator_count * 4,     iterator_count * 4 + 1, iterator_count * 4 + 2));
+		m_IndexData.vIndices.push_back(SIndex3(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));
 	}
 
 	// Create index buffer
@@ -170,22 +170,22 @@ void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 Fon
 		x2 = x1 + static_cast<float>(current_bm_char.Width);
 		y2 = y1 - static_cast<float>(current_bm_char.Height);
 
-		m_VertexData.Vertices[iterator_index * 4].Position.x = x1;
-		m_VertexData.Vertices[iterator_index * 4].Position.y = y1;
-		m_VertexData.Vertices[iterator_index * 4].TextureCoordinates.x = u1;
-		m_VertexData.Vertices[iterator_index * 4].TextureCoordinates.y = v1;
-		m_VertexData.Vertices[iterator_index * 4 + 1].Position.x = x2;
-		m_VertexData.Vertices[iterator_index * 4 + 1].Position.y = y1;
-		m_VertexData.Vertices[iterator_index * 4 + 1].TextureCoordinates.x = u2;
-		m_VertexData.Vertices[iterator_index * 4 + 1].TextureCoordinates.y = v1;
-		m_VertexData.Vertices[iterator_index * 4 + 2].Position.x = x1;
-		m_VertexData.Vertices[iterator_index * 4 + 2].Position.y = y2;
-		m_VertexData.Vertices[iterator_index * 4 + 2].TextureCoordinates.x = u1;
-		m_VertexData.Vertices[iterator_index * 4 + 2].TextureCoordinates.y = v2;
-		m_VertexData.Vertices[iterator_index * 4 + 3].Position.x = x2;
-		m_VertexData.Vertices[iterator_index * 4 + 3].Position.y = y2;
-		m_VertexData.Vertices[iterator_index * 4 + 3].TextureCoordinates.x = u2;
-		m_VertexData.Vertices[iterator_index * 4 + 3].TextureCoordinates.y = v2;
+		m_VertexData.vVertices[iterator_index * 4].Position.x = x1;
+		m_VertexData.vVertices[iterator_index * 4].Position.y = y1;
+		m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.x = u1;
+		m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.y = v1;
+		m_VertexData.vVertices[iterator_index * 4 + 1].Position.x = x2;
+		m_VertexData.vVertices[iterator_index * 4 + 1].Position.y = y1;
+		m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.x = u2;
+		m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.y = v1;
+		m_VertexData.vVertices[iterator_index * 4 + 2].Position.x = x1;
+		m_VertexData.vVertices[iterator_index * 4 + 2].Position.y = y2;
+		m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.x = u1;
+		m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.y = v2;
+		m_VertexData.vVertices[iterator_index * 4 + 3].Position.x = x2;
+		m_VertexData.vVertices[iterator_index * 4 + 3].Position.y = y2;
+		m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.x = u2;
+		m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.y = v2;
 
 		base_x_position += current_bm_char.XAdvance;
 		++iterator_index;

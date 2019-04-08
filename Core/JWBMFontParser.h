@@ -173,18 +173,18 @@ namespace JWEngine
 			INT Amount{}; // X position adjusted when drawing the second character after the first one
 		};
 
-		BMInfo Info;
-		BMCommon Common;
-		VECTOR<BMPage> Pages;
-		VECTOR<BMChar> Chars;
-		VECTOR<BMKerning> Kernings;
+		BMInfo									Info;
+		BMCommon								Common;
+		VECTOR<BMPage>							vPages;
+		VECTOR<BMChar>							vChars;
+		VECTOR<BMKerning>						vKernings;
 
-		std::map<wchar_t, size_t> CharMap;
-		std::map<std::pair<UINT, UINT>, int> KerningMap;
+		std::map<wchar_t, size_t>				CharMap;
+		std::map<std::pair<UINT, UINT>, int>	KerningMap;
 
-		size_t MappedCharacters[KMaxWcharIndex]{};
+		size_t									MappedCharacters[KMaxWcharIndex]{};
 
-		bool bFontDataParsed{ false };
+		bool									IsFontDataParsed{ false };
 	};
 
 	class JWBMFontParser

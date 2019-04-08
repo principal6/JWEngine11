@@ -20,13 +20,13 @@ void JWImageCursor::Create(JWDX& DX, JWCamera& Camera) noexcept
 	m_pDX = &DX;
 	m_pCamera = &Camera;
 
-	m_VertexData.Vertices.push_back(SStaticModelVertex(0, 0, 0, 0, 0));
-	m_VertexData.Vertices.push_back(SStaticModelVertex(1, 0, 0, 1, 0));
-	m_VertexData.Vertices.push_back(SStaticModelVertex(0, -1, 0, 0, 1));
-	m_VertexData.Vertices.push_back(SStaticModelVertex(1, -1, 0, 1, 1));
+	m_VertexData.vVertices.push_back(SStaticModelVertex(0, 0, 0, 0, 0));
+	m_VertexData.vVertices.push_back(SStaticModelVertex(1, 0, 0, 1, 0));
+	m_VertexData.vVertices.push_back(SStaticModelVertex(0, -1, 0, 0, 1));
+	m_VertexData.vVertices.push_back(SStaticModelVertex(1, -1, 0, 1, 1));
 
-	m_IndexData.Indices.push_back(SIndex3(0, 1, 2));
-	m_IndexData.Indices.push_back(SIndex3(1, 3, 2));
+	m_IndexData.vIndices.push_back(SIndex3(0, 1, 2));
+	m_IndexData.vIndices.push_back(SIndex3(1, 3, 2));
 
 	// Create vertex buffer
 	m_pDX->CreateDynamicVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);
@@ -90,17 +90,17 @@ PROTECTED void JWImageCursor::UpdateVertices() noexcept
 	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
 	float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
 
-	m_VertexData.Vertices[0].Position.x = -window_width/2 + m_Position.x;
-	m_VertexData.Vertices[0].Position.y = window_height/2 - m_Position.y;
+	m_VertexData.vVertices[0].Position.x = -window_width/2 + m_Position.x;
+	m_VertexData.vVertices[0].Position.y = window_height/2 - m_Position.y;
 
-	m_VertexData.Vertices[1].Position.x = m_VertexData.Vertices[0].Position.x + m_Size.x;
-	m_VertexData.Vertices[1].Position.y = m_VertexData.Vertices[0].Position.y;
+	m_VertexData.vVertices[1].Position.x = m_VertexData.vVertices[0].Position.x + m_Size.x;
+	m_VertexData.vVertices[1].Position.y = m_VertexData.vVertices[0].Position.y;
 
-	m_VertexData.Vertices[2].Position.x = m_VertexData.Vertices[0].Position.x;
-	m_VertexData.Vertices[2].Position.y = m_VertexData.Vertices[0].Position.y - m_Size.y;
+	m_VertexData.vVertices[2].Position.x = m_VertexData.vVertices[0].Position.x;
+	m_VertexData.vVertices[2].Position.y = m_VertexData.vVertices[0].Position.y - m_Size.y;
 
-	m_VertexData.Vertices[3].Position.x = m_VertexData.Vertices[0].Position.x + m_Size.x;
-	m_VertexData.Vertices[3].Position.y = m_VertexData.Vertices[0].Position.y - m_Size.y;
+	m_VertexData.vVertices[3].Position.x = m_VertexData.vVertices[0].Position.x + m_Size.x;
+	m_VertexData.vVertices[3].Position.y = m_VertexData.vVertices[0].Position.y - m_Size.y;
 
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
 	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))

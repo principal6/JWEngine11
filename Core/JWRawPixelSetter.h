@@ -26,7 +26,7 @@ namespace JWEngine
 
 	struct SRawPixelData
 	{
-		VECTOR<SRawPixelColor> Pixels;
+		VECTOR<SRawPixelColor> vPixels;
 
 		int Width{}, Height{};
 		int PixelCount{};
@@ -38,15 +38,15 @@ namespace JWEngine
 
 			PixelCount = screen_width * screen_height;
 
-			Pixels.reserve(PixelCount);
-			Pixels.resize(PixelCount);
+			vPixels.reserve(PixelCount);
+			vPixels.resize(PixelCount);
 
 			ClearData();
 		}
 
 		void SetPixel(int X, int Y, SRawPixelColor Color)
 		{
-			Pixels[X + (Y * Width)] = Color;
+			vPixels[X + (Y * Width)] = Color;
 		}
 
 		void FillRect(SPositionInt Position, SSizeInt Size, SRawPixelColor Color)
@@ -60,15 +60,15 @@ namespace JWEngine
 
 				for (uint32_t x = 0; x < Size.Width; ++x)
 				{
-					memcpy(&Pixels[start_id + x], &color_byte4, copy_byte_size);
+					memcpy(&vPixels[start_id + x], &color_byte4, copy_byte_size);
 				}
 			}
 		}
 
 		auto GetWidth() { return Width; };
 		auto GetHeight() { return Height; };
-		const auto GetPtrData() { return &Pixels[0]; };
-		auto GetByteSize() { return Pixels.size() * sizeof(SRawPixelColor); };
+		const auto GetPtrData() { return &vPixels[0]; };
+		auto GetByteSize() { return vPixels.size() * sizeof(SRawPixelColor); };
 		void ClearData() { memset(GetPtrData(), 0, GetByteSize()); };
 	};
 

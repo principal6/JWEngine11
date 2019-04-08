@@ -41,9 +41,9 @@ void JWLine::AddLine(SLineData LineData) noexcept
 	position_b.x += LineData.Length.x;
 	position_b.y += LineData.Length.y;
 	
-	m_VertexData.Vertices.emplace_back(position_a, LineData.Color);
-	m_VertexData.Vertices.emplace_back(position_b, LineData.Color);
-	m_IndexData.Indices.emplace_back(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1);
+	m_VertexData.vVertices.emplace_back(position_a, LineData.Color);
+	m_VertexData.vVertices.emplace_back(position_b, LineData.Color);
+	m_IndexData.vIndices.emplace_back(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1);
 }
 
 void JWLine::AddEnd() noexcept
@@ -69,11 +69,11 @@ void JWLine::SetLine(size_t LineIndex, SLineData LineData) noexcept
 		position_b.x += LineData.Length.x;
 		position_b.y += LineData.Length.y;
 
-		m_VertexData.Vertices[LineIndex * 2].Position = position_a;
-		m_VertexData.Vertices[LineIndex * 2].ColorDiffuse = LineData.Color;
+		m_VertexData.vVertices[LineIndex * 2].Position = position_a;
+		m_VertexData.vVertices[LineIndex * 2].ColorDiffuse = LineData.Color;
 
-		m_VertexData.Vertices[LineIndex * 2 + 1].Position = position_b;
-		m_VertexData.Vertices[LineIndex * 2 + 1].ColorDiffuse = LineData.Color;
+		m_VertexData.vVertices[LineIndex * 2 + 1].Position = position_b;
+		m_VertexData.vVertices[LineIndex * 2 + 1].ColorDiffuse = LineData.Color;
 	}
 }
 
