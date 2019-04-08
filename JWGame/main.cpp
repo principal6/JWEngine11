@@ -32,7 +32,6 @@ int main()
 		->AddAnimationFromFile("Ezreal_Walk.X");
 	myGame.ECS().CreateSharedModelSphere(100.0f, 16, 7); // Shared Model #3
 	myGame.ECS().CreateSharedModelSquare(10.0f, XMFLOAT2(10.0f, 10.0f)); // Shared Model #4
-	myGame.ECS().CreateSharedModelSphere(1.0f, 16, 7); // Shared Model #5
 
 	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "grass.png"); //Shared Resource #1
@@ -96,14 +95,6 @@ int main()
 		->SetVertexShader(EVertexShader::VSSkyMap)
 		->SetPixelShader(EPixelShader::PSSkyMap);
 
-	auto& just_sphere = myGame.ECS().CreateEntity();
-	just_sphere.CreateComponentTransform()
-		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	just_sphere.CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(5));
-
-	/*
 	auto& floor_plane = myGame.ECS().CreateEntity();
 	floor_plane.CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
@@ -111,7 +102,6 @@ int main()
 	floor_plane.CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(4))
 		->SetTexture(myGame.ECS().GetSharedResource(1));
-	*/
 
 	auto& image_gamma = myGame.ECS().CreateEntity();
 	image_gamma.CreateComponentRender()

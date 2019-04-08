@@ -384,8 +384,8 @@ void JWModel::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t Horizonta
 	SStaticModelVertexData vert_data;
 	float vert_stride = XM_2PI / HorizontalDetail; // Side circle
 	float horz_stride = XM_2PI / VerticalDetail; // Top-down circle
-	float start = ((static_cast<float>(HorizontalDetail) / 4.0f) - 1.0f);
-	for (uint8_t i = 0; i < VerticalDetail; ++i)
+	float vert_start = ((static_cast<float>(HorizontalDetail) / 4.0f) - 1.0f);
+	for (uint8_t vert = 0; vert < VerticalDetail; ++vert)
 	{
 		// Up center (= sphere center)
 		vert_data.vVertices.push_back(SStaticModelVertex(
@@ -395,21 +395,21 @@ void JWModel::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t Horizonta
 			0, 0,
 			ColorA.x, ColorA.y, ColorA.z, 1));
 
-		// Up right down
-		vert_data.vVertices.push_back(SStaticModelVertex(
-			Radius * cosf(horz_stride * (i + 1)) * cosf(vert_stride * start),
-			Radius * sinf(vert_stride * start),
-			Radius * sinf(horz_stride * (i + 1)) * cosf(vert_stride * start),
-			0, 0,
-			ColorB.x, ColorB.y, ColorB.z, 1));
-
 		// Up left down
 		vert_data.vVertices.push_back(SStaticModelVertex(
-			Radius * cosf(horz_stride * i) * cosf(vert_stride * start),
-			Radius * sinf(vert_stride * start),
-			Radius * sinf(horz_stride * i) * cosf(vert_stride * start),
+			Radius * cosf(horz_stride * vert) * cosf(vert_stride * vert_start),
+			Radius * sinf(vert_stride * vert_start),
+			Radius * sinf(horz_stride * vert) * cosf(vert_stride * vert_start),
 			0, 0,
 			ColorA.x, ColorA.y, ColorA.z, 1));
+
+		// Up right down
+		vert_data.vVertices.push_back(SStaticModelVertex(
+			Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
+			Radius * sinf(vert_stride * vert_start),
+			Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
+			0, 0,
+			ColorB.x, ColorB.y, ColorB.z, 1));
 
 		// Down center (= sphere center)
 		vert_data.vVertices.push_back(SStaticModelVertex(
@@ -421,18 +421,17 @@ void JWModel::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t Horizonta
 
 		// Down right down
 		vert_data.vVertices.push_back(SStaticModelVertex(
-			Radius * cosf(horz_stride * (i + 1)) * cosf(vert_stride * start),
-			-Radius * sinf(vert_stride * start),
-			Radius * sinf(horz_stride * (i + 1)) * cosf(vert_stride * start),
+			Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
+			-Radius * sinf(vert_stride * vert_start),
+			Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
 			0, 0,
-
 			ColorB.x, ColorB.y, ColorB.z, 1));
 
 		// Down left down
 		vert_data.vVertices.push_back(SStaticModelVertex(
-			Radius * cosf(horz_stride * i) * cosf(vert_stride * start),
-			-Radius * sinf(vert_stride * start),
-			Radius * sinf(horz_stride * i) * cosf(vert_stride * start),
+			Radius * cosf(horz_stride * vert) * cosf(vert_stride * vert_start),
+			-Radius * sinf(vert_stride * vert_start),
+			Radius * sinf(horz_stride * vert) * cosf(vert_stride * vert_start),
 			0, 0,
 			ColorA.x, ColorA.y, ColorA.z, 1));
 	}
@@ -449,51 +448,51 @@ void JWModel::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t Horizonta
 			{
 				// Side #1 left up
 				vert_data.vVertices.push_back(SStaticModelVertex(
-					Radius * cosf(horz_stride * (vert)) * cosf(vert_stride * (start + 1 - horz)),
-					Radius * sinf(vert_stride * (start + 1 - horz)),
-					Radius * sinf(horz_stride * (vert)) * cosf(vert_stride * (start + 1 - horz)),
-					0, 0,
-					ColorA.x, ColorA.y, ColorA.z, 1));
-
-				// Side #1 right up
-				vert_data.vVertices.push_back(SStaticModelVertex(
-					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (start + 1 - horz)),
-					Radius * sinf(vert_stride * (start + 1 - horz)),
-					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (start + 1 - horz)),
+					Radius * cosf(horz_stride * vert) * cosf(vert_stride * (vert_start + 1 - horz)),
+					Radius * sinf(vert_stride * (vert_start + 1 - horz)),
+					Radius * sinf(horz_stride * vert) * cosf(vert_stride * (vert_start + 1 - horz)),
 					0, 0,
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #1 left down
 				vert_data.vVertices.push_back(SStaticModelVertex(
-					Radius * cosf(horz_stride * (vert)) * cosf(vert_stride * (start - horz)),
-					Radius * sinf(vert_stride * (start - horz)),
-					Radius * sinf(horz_stride * (vert)) * cosf(vert_stride * (start - horz)),
+					Radius * cosf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
+					Radius * sinf(vert_stride * (vert_start - horz)),
+					Radius * sinf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
+					0, 0,
+					ColorA.x, ColorA.y, ColorA.z, 1));
+
+				// Side #1 right up
+				vert_data.vVertices.push_back(SStaticModelVertex(
+					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
+					Radius * sinf(vert_stride * (vert_start + 1 - horz)),
+					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
 					0, 0,
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #2 right up
 				vert_data.vVertices.push_back(SStaticModelVertex(
-					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (start + 1 - horz)),
-					Radius * sinf(vert_stride * (start + 1 - horz)),
-					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (start + 1 - horz)),
+					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
+					Radius * sinf(vert_stride * (vert_start + 1 - horz)),
+					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
+					0, 0,
+					ColorA.x, ColorA.y, ColorA.z, 1));
+
+				// Side #2 left down
+				vert_data.vVertices.push_back(SStaticModelVertex(
+					Radius * cosf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
+					Radius * sinf(vert_stride * (vert_start - horz)),
+					Radius * sinf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
 					0, 0,
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #2 right down
 				vert_data.vVertices.push_back(SStaticModelVertex(
-					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
-					Radius * sinf(vert_stride * (start - horz)),
-					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
+					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start - horz)),
+					Radius * sinf(vert_stride * (vert_start - horz)),
+					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start - horz)),
 					0, 0,
 					ColorB.x, ColorB.y, ColorB.z, 1));
-
-				// Side #2 left down
-				vert_data.vVertices.push_back(SStaticModelVertex(
-					Radius * cosf(horz_stride * (vert)) * cosf(vert_stride * (start - horz)),
-					Radius * sinf(vert_stride * (start - horz)),
-					Radius * sinf(horz_stride * (vert)) * cosf(vert_stride * (start - horz)),
-					0, 0,
-					ColorA.x, ColorA.y, ColorA.z, 1));
 			}
 		}
 	}
