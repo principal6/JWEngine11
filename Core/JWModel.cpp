@@ -120,7 +120,7 @@ void JWModel::MakeCube(float Size) noexcept
 	/*
 	** Vertex
 	*/
-	SStaticModelVertexData vert_data;
+	SStaticModelVertexData	vert_data;
 	// Up (LeftUp - RightUp - LeftDown - RightDown order)
 	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, +half_size, 0, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
 	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, +half_size, 1, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
@@ -128,34 +128,34 @@ void JWModel::MakeCube(float Size) noexcept
 	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, -half_size, 1, 1, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
 
 	// Down
-	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, +half_size, 0, 0, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, +half_size, 1, 0, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, -half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, -half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, -half_size, 0, 0, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, -half_size, 1, 0, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, +half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, +half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
 
 	// Front
 	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, -half_size, 0, 0, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
 	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, -half_size, 1, 0, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, -half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, -half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, -half_size, 0, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, -half_size, 1, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
 
 	// Right
-	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, -half_size, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, +half_size, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, -half_size, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, +half_size, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, -half_size, 0, 0, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, +half_size, 1, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, -half_size, 0, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, +half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
 
 	// Back
-	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, +half_size, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, +half_size, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, +half_size, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, +half_size, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, +half_size, +half_size, 0, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, +half_size, 1, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(+half_size, -half_size, +half_size, 0, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, +half_size, 1, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
 
 	// Left
-	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, +half_size, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, -half_size, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, +half_size, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
-	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, -half_size, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, +half_size, 0, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, +half_size, -half_size, 1, 0, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, +half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	vert_data.Vertices.push_back(SStaticModelVertex(-half_size, -half_size, -half_size, 1, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
 
 	/*
 	** Index
