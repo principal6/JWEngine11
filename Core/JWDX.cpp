@@ -484,17 +484,17 @@ void JWDX::CreateStaticVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buff
 
 void JWDX::CreateIndexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept
 {
-	D3D11_BUFFER_DESC vertex_buffer_description{};
-	vertex_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	vertex_buffer_description.ByteWidth = ByteSize;
-	vertex_buffer_description.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	vertex_buffer_description.CPUAccessFlags = 0;
-	vertex_buffer_description.MiscFlags = 0;
+	D3D11_BUFFER_DESC index_buffer_description{};
+	index_buffer_description.Usage = D3D11_USAGE_DEFAULT;
+	index_buffer_description.ByteWidth = ByteSize;
+	index_buffer_description.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	index_buffer_description.CPUAccessFlags = 0;
+	index_buffer_description.MiscFlags = 0;
 
-	D3D11_SUBRESOURCE_DATA vertex_buffer_data{};
-	vertex_buffer_data.pSysMem = pData;
+	D3D11_SUBRESOURCE_DATA index_buffer_data{};
+	index_buffer_data.pSysMem = pData;
 
-	m_Device11->CreateBuffer(&vertex_buffer_description, &vertex_buffer_data, ppBuffer);
+	m_Device11->CreateBuffer(&index_buffer_description, &index_buffer_data, ppBuffer);
 }
 
 void JWDX::SetRasterizerState(ERasterizerState State) noexcept
