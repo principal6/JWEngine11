@@ -10,7 +10,7 @@ JWDesignerUI::~JWDesignerUI()
 	JW_RELEASE(m_IndexBuffer);
 }
 
-void JWDesignerUI::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
+void JWDesignerUI::Create(JWDX& DX, JWCamera& Camera) noexcept
 {
 	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
 
@@ -20,8 +20,7 @@ void JWDesignerUI::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noex
 	// Set JWCamera pointer.
 	m_pCamera = &Camera;
 
-	m_BaseDirectory = BaseDirectory;
-
+	// Grid
 	MakeGrid(50.0f, 50.0f);
 
 	// Mini axis
@@ -137,8 +136,8 @@ PRIVATE void JWDesignerUI::Update() noexcept
 	m_pDX->SetPS(EPixelShader::PSColor);
 
 	// Set VS constant buffer
-	m_ColorVSConstantBufferData.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetViewProjectionMatrix());
-	m_pDX->UpdateColorVSCB(m_ColorVSConstantBufferData);
+	m_VSCBColorData.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetViewProjectionMatrix());
+	m_pDX->UpdateColorVSCB(m_VSCBColorData);
 }
 
 void JWDesignerUI::Draw() noexcept

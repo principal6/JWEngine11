@@ -31,7 +31,7 @@ namespace JWEngine
 		void CreateMouseDevice(DWORD dwFlags);
 		void CreateKeyboardDevice(DWORD dwFlags);
 
-		PRIVATE void UpdateDeviceState() noexcept;
+		void UpdateDeviceState() noexcept;
 
 	private:
 		bool m_IsValid{ false };

@@ -23,7 +23,7 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 	m_InstantText.Create(m_DX, m_Camera, BaseDirectory, KAssetDirectory + GameFontFileName);
 
-	m_DesignerUI.Create(m_DX, m_Camera, BaseDirectory);
+	m_DesignerUI.Create(m_DX, m_Camera);
 
 	m_MouseCursorImage.Create(m_DX, m_Camera);
 

@@ -18,7 +18,7 @@ namespace JWEngine
 		~JWDesignerUI();
 
 		// Called in JWGame class
-		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
+		void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
 		// Called in JWGame class
 		void Draw() noexcept;
@@ -42,20 +42,18 @@ namespace JWEngine
 		static constexpr XMFLOAT4 KXAxisColor = XMFLOAT4(1, 0, 0, 1); // X = R
 		static constexpr XMFLOAT4 KYAxisColor = XMFLOAT4(0, 1, 0, 1); // Y = G
 		static constexpr XMFLOAT4 KZAxisColor = XMFLOAT4(0, 0, 1, 1); // Z = B
-		bool m_IsValid{ false };
 
-		JWDX* m_pDX{};
-		JWCamera* m_pCamera{};
+		bool				m_IsValid{ false };
+		JWDX*				m_pDX{};
+		JWCamera*			m_pCamera{};
 
-		STRING m_BaseDirectory{};
-
-		ID3D11Buffer* m_VertexBuffer{};
-		ID3D11Buffer* m_IndexBuffer{};
-		SColorVertexData m_VertexData{};
-		SLineIndexData m_IndexData{};
+		ID3D11Buffer*		m_VertexBuffer{};
+		ID3D11Buffer*		m_IndexBuffer{};
+		SColorVertexData	m_VertexData{};
+		SLineIndexData		m_IndexData{};
 		
-		SVSCBColor m_ColorVSConstantBufferData{};
+		SVSCBColor			m_VSCBColorData{};
 
-		JWLine m_MiniAxis;
+		JWLine				m_MiniAxis;
 	};
 };
