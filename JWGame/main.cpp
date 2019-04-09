@@ -17,6 +17,9 @@ int main()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
+	// TODO:
+	// Instancing!
+
 	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\", "megt20all");
 	//myGame.LoadCursorImage("cursor_default.png");
 
@@ -29,7 +32,8 @@ int main()
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.obj"); // Shared Model #1
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X") // Shared Model #2
 		.AddAnimationToModelFromFile(2, "Ezreal_Punching.X")
-		.AddAnimationToModelFromFile(2, "Ezreal_Walk.X");
+		.AddAnimationToModelFromFile(2, "Ezreal_Walk.X")
+		.BakeAnimationTextureToFile(2, SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
 	myGame.ECS().CreateSharedModelSphere(100.0f, 16, 7); // Shared Model #3
 	myGame.ECS().CreateSharedModelSquare(10.0f, XMFLOAT2(10.0f, 10.0f)); // Shared Model #4
 
@@ -40,12 +44,7 @@ int main()
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #2
 	myGame.ECS().CreateSharedResourceFromSharedModel(2); //Shared Resource #3
 
-	///myGame.ECS().CreateAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400)); //AnimationTexture #0
 	myGame.ECS().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
-
-	// TODO:
-	// CreateSharedResource(StaticMesh/RiggedMesh) add??? -> SetModel() creates an instance data
-	// SystemRender should have the instance rendering data!! (for those entities which have the same model!)
 
 	auto& jars = myGame.ECS().CreateEntity();
 	jars.CreateComponentTransform()
@@ -81,9 +80,6 @@ int main()
 		->SetModel(myGame.ECS().GetSharedModel(2))
 		->SetTexture(myGame.ECS().GetSharedResource(3))
 		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
-		///->BakeAnimationsIntoTexture(myGame.ECS().GetAnimationTexture(0))
-		///->SaveAnimationTextureToFile("baked_animation.dds")
-		///->SetAnimationTexture(myGame.ECS().GetAnimationTexture(1))
 		->SetAnimationTexture(myGame.ECS().GetAnimationTexture(0))
 		->SetAnimation(1);
 	

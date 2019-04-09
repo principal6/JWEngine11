@@ -53,8 +53,8 @@ namespace JWEngine
 		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
 
 		auto AddAnimationToModelFromFile(size_t Index, STRING FileName) noexcept->JWECS&;
+		auto BakeAnimationTextureToFile(size_t ModelIndex, SSizeInt TextureSize, STRING FileName) noexcept->JWECS&;
 
-		void CreateAnimationTexture(SSizeInt TextureSize) noexcept;
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
 		auto GetAnimationTexture(size_t Index) noexcept->SAnimationTextureData*;
 
@@ -63,6 +63,13 @@ namespace JWEngine
 		auto& SystemTransform() noexcept { return m_SystemTransform; }
 		auto& SystemRender() noexcept { return m_SystemRender; }
 		auto& SystemLight() noexcept { return m_SystemLight; }
+
+	private:
+		void SaveTPoseIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const SRiggedModelData& ModelData,
+			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
+		void SaveAnimationFrameIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const int AnimationID, const float FrameTime,
+			const SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
+		void BakeCurrentFrameIntoTexture(uint32_t StartIndex, const XMMATRIX* FrameMatrices, float*& OutData) noexcept;
 
 	private:
 		JWDX*				m_pDX{};
