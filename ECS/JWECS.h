@@ -430,6 +430,7 @@ namespace JWEngine
 
 		VECTOR<JWEntity*>	m_vpEntities;
 
+		// Shared resources(texture, model data, animation texture)
 		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;
 		VECTOR<SAnimationTextureData>		m_vAnimationTextureData;
 		VECTOR<JWModel>						m_vSharedModel;
