@@ -70,7 +70,7 @@ void JWSystemRender::DestroyComponent(SComponentRender& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
-void JWSystemRender::Update() noexcept
+void JWSystemRender::Execute() noexcept
 {
 	for (auto& iter : m_vpComponents)
 	{
@@ -446,7 +446,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 {
 	auto type = Component.RenderType;
 	auto& model = Component.PtrModel;
-	auto& image = Component.Image;
+	auto& image = Component.PtrImage;
 
 	if (Component.FlagRenderOption & JWFlagRenderOption_UseTransparency)
 	{
@@ -486,13 +486,14 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 		break;
 	case ERenderType::Image_2D:
 		// Set IA vertex buffer
-		m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &image.m_VertexBuffer, image.m_VertexData.GetPtrStride(), image.m_VertexData.GetPtrOffset());
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+			0, 1, &image->m_VertexBuffer, image->m_VertexData.GetPtrStride(), image->m_VertexData.GetPtrOffset());
 
 		// Set IA index buffer
-		m_pDX->GetDeviceContext()->IASetIndexBuffer(image.m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		m_pDX->GetDeviceContext()->IASetIndexBuffer(image->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		m_pDX->GetDeviceContext()->DrawIndexed(image.m_IndexData.GetCount(), 0, 0);
+		m_pDX->GetDeviceContext()->DrawIndexed(image->m_IndexData.GetCount(), 0, 0);
 		break;
 	default:
 		break;

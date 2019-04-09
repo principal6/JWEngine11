@@ -52,7 +52,7 @@ void JWSystemTransform::DestroyComponent(SComponentTransform& Component) noexcep
 	m_vpComponents.pop_back();
 }
 
-void JWSystemTransform::Update() noexcept
+void JWSystemTransform::Execute() noexcept
 {
 	XMMATRIX matrix_translation{};
 	XMMATRIX matrix_scaling{};

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../Core/JWAssimpLoader.h"
 #include "../Core/JWDX.h"
 #include "../Core/JWModel.h"
 #include "../Core/JWImage.h"
@@ -58,12 +57,12 @@ namespace JWEngine
 		const STRING*				PtrBaseDirectory{};
 
 		JWModel*					PtrModel{};
-		JWImage						Image{};
+		JWImage*					PtrImage{};
 
-		ID3D11ShaderResourceView*	PtrTexture;
+		ID3D11ShaderResourceView*	PtrTexture{};
 
-		SAnimationTextureData*		PtrBakedAnimationTexture;
-		SAnimationState				AnimationState;
+		SAnimationTextureData*		PtrBakedAnimationTexture{};
+		SAnimationState				AnimationState{};
 
 		EDepthStencilState			DepthStencilState{ EDepthStencilState::ZEnabled };
 		EVertexShader				VertexShader{ EVertexShader::VSBase };
@@ -113,16 +112,13 @@ namespace JWEngine
 			return this;
 		}
 
-		auto MakeImage2D(SPositionInt Position, SSizeInt Size) noexcept
+		auto SetImage2D(JWImage* pImage2D) noexcept
 		{
+			assert(pImage2D);
+
 			if (RenderType == ERenderType::Invalid)
 			{
-				Image.Create(*PtrDX, *PtrCamera);
-
-				Image.SetPosition(XMFLOAT2(static_cast<float>(Position.X), static_cast<float>(Position.Y)));
-				Image.SetSize(XMFLOAT2(static_cast<float>(Size.Width), static_cast<float>(Size.Height)));
-
-				DepthStencilState = EDepthStencilState::ZDisabled;
+				PtrImage = pImage2D;
 
 				RenderType = ERenderType::Image_2D;
 			}
@@ -433,7 +429,7 @@ namespace JWEngine
 		auto CreateComponent() noexcept->SComponentRender&;
 		void DestroyComponent(SComponentRender& Component) noexcept;
 
-		void Update() noexcept;
+		void Execute() noexcept;
 
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;

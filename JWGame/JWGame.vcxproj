@@ -174,9 +174,11 @@
     <ClCompile Include="..\Core\JWInstantText.cpp" />
     <ClCompile Include="..\Core\JWLine.cpp" />
     <ClCompile Include="..\Core\JWModel.cpp" />
+    <ClCompile Include="..\Core\JWPrimitiveMaker.cpp" />
     <ClCompile Include="..\Core\JWRawPixelSetter.cpp" />
     <ClCompile Include="..\Core\JWTimer.cpp" />
     <ClCompile Include="..\Core\JWWin32Window.cpp" />
+    <ClCompile Include="..\ECS\JWECS.cpp" />
     <ClCompile Include="..\ECS\JWEntity.cpp" />
     <ClCompile Include="..\ECS\JWSystemLight.cpp" />
     <ClCompile Include="..\ECS\JWSystemRender.cpp" />
@@ -269,6 +271,7 @@
     <ClInclude Include="..\Core\JWInstantText.h" />
     <ClInclude Include="..\Core\JWLine.h" />
     <ClInclude Include="..\Core\JWModel.h" />
+    <ClInclude Include="..\Core\JWPrimitiveMaker.h" />
     <ClInclude Include="..\Core\JWRawPixelSetter.h" />
     <ClInclude Include="..\Core\JWTimer.h" />
     <ClInclude Include="..\Core\JWWin32Window.h" />

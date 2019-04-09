@@ -62,7 +62,7 @@ void JWSystemLight::DestroyComponent(SComponentLight& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
-void JWSystemLight::Update() noexcept
+void JWSystemLight::Execute() noexcept
 {
 	if (m_ShouldUpdate)
 	{

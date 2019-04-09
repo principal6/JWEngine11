@@ -54,7 +54,7 @@ namespace JWEngine
 		auto CreateComponent() noexcept->SComponentTransform&;
 		void DestroyComponent(SComponentTransform& Component) noexcept;
 
-		void Update() noexcept;
+		void Execute() noexcept;
 
 	private:
 		VECTOR<SComponentTransform*>	m_vpComponents;

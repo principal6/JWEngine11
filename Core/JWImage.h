@@ -6,18 +6,18 @@ namespace JWEngine
 {
 	// Forward declaration
 	class JWDX;
-	class JWCamera;
 
 	class JWImage
 	{
 	public:
 		JWImage() = default;
-		~JWImage();
+		~JWImage() = default;
 
-		void Create(JWDX& DX, JWCamera& Camera) noexcept;
+		void Create(JWDX& DX) noexcept;
+		void Destroy() noexcept;
 
-		void SetPosition(XMFLOAT2 Position) noexcept;
-		void SetSize(XMFLOAT2 Size) noexcept;
+		auto SetPosition(XMFLOAT2 Position) noexcept->JWImage*;
+		auto SetSize(XMFLOAT2 Size) noexcept->JWImage*;
 
 	public:
 		ID3D11Buffer*				m_VertexBuffer{};
@@ -31,7 +31,6 @@ namespace JWEngine
 	private:
 		bool						m_IsValid{ false };
 		JWDX*						m_pDX{};
-		JWCamera*					m_pCamera{};
 		XMFLOAT2					m_Position{};
 		XMFLOAT2					m_Size{};
 	};

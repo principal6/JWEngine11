@@ -84,6 +84,12 @@
     <ClCompile Include="..\Core\JWImageCursor.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\ECS\JWECS.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\JWPrimitiveMaker.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Core\JWCommon.h">
@@ -430,6 +436,9 @@
       <Filter>ECS</Filter>
     </ClInclude>
     <ClInclude Include="..\Core\JWImageCursor.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\JWPrimitiveMaker.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

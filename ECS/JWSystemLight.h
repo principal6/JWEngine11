@@ -84,7 +84,7 @@ namespace JWEngine
 		auto CreateComponent() noexcept->SComponentLight&;
 		void DestroyComponent(SComponentLight& Component) noexcept;
 
-		void Update() noexcept;
+		void Execute() noexcept;
 
 	private:
 		VECTOR<SComponentLight*>	m_vpComponents;

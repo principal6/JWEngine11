@@ -1,22 +1,14 @@
 #include "JWImage.h"
 #include "JWDX.h"
-#include "JWCamera.h"
 
 using namespace JWEngine;
 
-JWImage::~JWImage()
-{
-	JW_RELEASE(m_VertexBuffer);
-	JW_RELEASE(m_IndexBuffer);
-}
-
-void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
+void JWImage::Create(JWDX& DX) noexcept
 {
 	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
 
 	// Set member pointers.
 	m_pDX = &DX;
-	m_pCamera = &Camera;
 
 	m_VertexData.vVertices.push_back(SStaticModelVertex(0, 0, 0, 0, 0));
 	m_VertexData.vVertices.push_back(SStaticModelVertex(1, 0, 0, 1, 0));
@@ -35,18 +27,28 @@ void JWImage::Create(JWDX& DX, JWCamera& Camera) noexcept
 	m_IsValid = true;
 }
 
-void JWImage::SetPosition(XMFLOAT2 Position) noexcept
+void JWImage::Destroy() noexcept
+{
+	JW_RELEASE(m_VertexBuffer);
+	JW_RELEASE(m_IndexBuffer);
+}
+
+auto JWImage::SetPosition(XMFLOAT2 Position) noexcept->JWImage*
 {
 	m_Position = Position;
 
 	UpdateScreenPositionAndSize();
+
+	return this;
 }
 
-void JWImage::SetSize(XMFLOAT2 Size) noexcept
+auto JWImage::SetSize(XMFLOAT2 Size) noexcept->JWImage*
 {
 	m_Size = Size;
 
 	UpdateScreenPositionAndSize();
+
+	return this;
 }
 
 PRIVATE void JWImage::UpdateScreenPositionAndSize() noexcept

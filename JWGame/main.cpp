@@ -28,10 +28,12 @@ int main()
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.obj"); // Shared Model #0
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.obj"); // Shared Model #1
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X") // Shared Model #2
-		->AddAnimationFromFile("Ezreal_Punching.X")
-		->AddAnimationFromFile("Ezreal_Walk.X");
+		.AddAnimationToModelFromFile(2, "Ezreal_Punching.X")
+		.AddAnimationToModelFromFile(2, "Ezreal_Walk.X");
 	myGame.ECS().CreateSharedModelSphere(100.0f, 16, 7); // Shared Model #3
 	myGame.ECS().CreateSharedModelSquare(10.0f, XMFLOAT2(10.0f, 10.0f)); // Shared Model #4
+
+	myGame.ECS().CreateSharedImage2D(SPositionInt(160, 10), SSizeInt(100, 40)); // Shared Image2D #0
 
 	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "grass.png"); //Shared Resource #1
@@ -39,7 +41,7 @@ int main()
 	myGame.ECS().CreateSharedResourceFromSharedModel(2); //Shared Resource #3
 
 	///myGame.ECS().CreateAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400)); //AnimationTexture #0
-	myGame.ECS().LoadAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
+	myGame.ECS().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 
 	// TODO:
 	// CreateSharedResource(StaticMesh/RiggedMesh) add??? -> SetModel() creates an instance data
@@ -105,7 +107,7 @@ int main()
 
 	auto& image_gamma = myGame.ECS().CreateEntity();
 	image_gamma.CreateComponentRender()
-		->MakeImage2D(SPositionInt(160, 10), SSizeInt(100, 40))
+		->SetImage2D(myGame.ECS().GetSharedImage2D(0))
 		->SetTexture(myGame.ECS().GetSharedResource(2));
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);

@@ -224,7 +224,7 @@ void JWGame::Terminate() noexcept
 
 void JWGame::UpdateEntities() noexcept
 {
-	m_ECS.UpdateAll();
+	m_ECS.ExecuteSystems();
 }
 
 void JWGame::DrawDesignerUI() noexcept
