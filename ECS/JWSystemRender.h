@@ -31,18 +31,16 @@ namespace JWEngine
 	struct SAnimationState
 	{
 		// If no animation is set, CurrAnimationID is 0 (TPose)
-		uint32_t CurrAnimationID{};
+		uint32_t	CurrAnimationID{};
 
 		// If SetAnimation() is called, CurrAnimationTick is reset to 0.
-		float CurrAnimationTick{};
+		float		CurrAnimationTick{};
 
-		float CurrFrameTime{};
-		float NextFrameTime{};
+		float		CurrFrameTime{};
+		float		NextFrameTime{};
+		float		TweeningTime{};
 
-		// Used for interpolation
-		float DeltaTime{};
-
-		bool ShouldRepeat{};
+		uint32_t	NextAnimationID{};
 	};
 	
 	// Every pointer is a non-owner pointer.
@@ -50,23 +48,19 @@ namespace JWEngine
 	{
 		JWEntity*					PtrEntity{};
 		uint32_t					ComponentID{};
-		ERenderType					RenderType{ ERenderType::Invalid };
 
-		JWDX*						PtrDX{};
-		JWCamera*					PtrCamera{};
-		const STRING*				PtrBaseDirectory{};
+		ERenderType					RenderType{ ERenderType::Invalid };
+		EDepthStencilState			DepthStencilState{ EDepthStencilState::ZEnabled };
+		EVertexShader				VertexShader{ EVertexShader::VSBase };
+		EPixelShader				PixelShader{ EPixelShader::PSBase };
 
 		JWModel*					PtrModel{};
 		JWImage*					PtrImage{};
 
 		ID3D11ShaderResourceView*	PtrTexture{};
 
-		SAnimationTextureData*		PtrBakedAnimationTexture{};
+		SAnimationTextureData*		PtrAnimationTexture{};
 		SAnimationState				AnimationState{};
-
-		EDepthStencilState			DepthStencilState{ EDepthStencilState::ZEnabled };
-		EVertexShader				VertexShader{ EVertexShader::VSBase };
-		EPixelShader				PixelShader{ EPixelShader::PSBase };
 
 		JWFlagRenderOption			FlagRenderOption{};
 
@@ -141,12 +135,22 @@ namespace JWEngine
 		}
 
 		// Animation ID 0 is not an animation but TPose
-		auto SetAnimation(uint32_t AnimationID, bool ShouldRepeat = true)
+		auto SetAnimation(uint32_t AnimationID, uint32_t NextAnimationID = -1)
 		{
 			if (RenderType == ERenderType::Model_Rigged)
 			{
+				if (NextAnimationID == -1)
+				{
+					NextAnimationID = AnimationID;
+				}
+
 				if (PtrModel->RiggedModelData.AnimationSet.vAnimations.size())
 				{
+					if (AnimationID == (uint32_t)-1)
+					{
+						AnimationID = 0;
+					}
+
 					AnimationID = min(AnimationID, static_cast<uint32_t>(PtrModel->RiggedModelData.AnimationSet.vAnimations.size()));
 				}
 				else
@@ -160,46 +164,31 @@ namespace JWEngine
 				{
 					AnimationState.CurrAnimationID = AnimationID;
 					AnimationState.CurrAnimationTick = 0;
-					AnimationState.ShouldRepeat = ShouldRepeat;
+					AnimationState.NextAnimationID = NextAnimationID;
 				}
 			}
 
 			return this;
 		}
 
-		auto NextAnimation(bool ShouldRepeat = true)
+		auto NextAnimation()
 		{
-			if (RenderType == ERenderType::Model_Rigged)
-			{
-				uint32_t AnimationID = AnimationState.CurrAnimationID + 1;
+			SetAnimation(AnimationState.CurrAnimationID + 1);
+			
+			return this;
+		}
 
-				if (AnimationID > PtrModel->RiggedModelData.AnimationSet.vAnimations.size())
-				{
-					AnimationID = 0;
-				}
-
-				SetAnimation(AnimationID, ShouldRepeat);
-			}
+		auto PrevAnimation()
+		{
+			SetAnimation(AnimationState.CurrAnimationID - 1);
 
 			return this;
 		}
 
-		auto PrevAnimation(bool ShouldRepeat = true)
-		{
-			if (RenderType == ERenderType::Model_Rigged)
-			{
-				uint32_t AnimationID = AnimationState.CurrAnimationID - 1;
-
-				SetAnimation(AnimationID, ShouldRepeat);
-			}
-
-			return this;
-		}
-
-		auto SetAnimationTexture(SAnimationTextureData* PtrAnimationTexture) noexcept
+		auto SetAnimationTexture(SAnimationTextureData* pAnimationTexture) noexcept
 		{
 			// Save this texture data's pointer
-			PtrBakedAnimationTexture = PtrAnimationTexture;
+			PtrAnimationTexture = pAnimationTexture;
 
 			FlagRenderOption |= JWFlagRenderOption_UseGPUAnimation;
 

@@ -38,9 +38,6 @@ auto JWSystemRender::CreateComponent() noexcept->SComponentRender&
 	// @important
 	// Save component ID & set default data
 	m_vpComponents[slot]->ComponentID = slot;
-	m_vpComponents[slot]->PtrDX = m_pDX;
-	m_vpComponents[slot]->PtrCamera = m_pCamera;
-	m_vpComponents[slot]->PtrBaseDirectory = &m_BaseDirectory;
 
 	return *m_vpComponents[slot];
 }
@@ -80,6 +77,7 @@ void JWSystemRender::Execute() noexcept
 		if (iter->FlagRenderOption & JWFlagRenderOption_UseGPUAnimation)
 		{
 			// GPU animation
+			// Real animationing occurs in vertex shader when Draw() is called.
 			AnimateOnGPU(*iter);
 		}
 		else
@@ -103,7 +101,7 @@ void JWSystemRender::AnimateOnGPU(SComponentRender& Component) noexcept
 		auto& model = Component.PtrModel;
 
 		// Set VS texture
-		m_pDX->GetDeviceContext()->VSSetShaderResources(0, 1, &Component.PtrBakedAnimationTexture->TextureSRV);
+		m_pDX->GetDeviceContext()->VSSetShaderResources(0, 1, &Component.PtrAnimationTexture->TextureSRV);
 
 		if (anim_state.CurrAnimationID > 0)
 		{
@@ -120,11 +118,7 @@ void JWSystemRender::AnimateOnGPU(SComponentRender& Component) noexcept
 			{
 				anim_state.CurrAnimationTick = 0;
 
-				if (!anim_state.ShouldRepeat)
-				{
-					// Non-repeating animation
-					anim_state.CurrAnimationID = 0;
-				}
+				Component.SetAnimation(anim_state.NextAnimationID);
 			}
 
 			// Calculate current animation time for interpolation
@@ -134,7 +128,7 @@ void JWSystemRender::AnimateOnGPU(SComponentRender& Component) noexcept
 			anim_state.NextFrameTime = anim_state.CurrFrameTime + current_anim.AnimationTicksPerGameTick;
 
 			// Interpolation factor Delta's range is [0.0, 1.0]
-			anim_state.DeltaTime = (anim_state.CurrAnimationTick - anim_state.CurrFrameTime) / current_anim.AnimationTicksPerGameTick;
+			anim_state.TweeningTime = (anim_state.CurrAnimationTick - anim_state.CurrFrameTime) / current_anim.AnimationTicksPerGameTick;
 
 			// Constrain next animation time
 			if (anim_state.NextFrameTime >= current_anim.TotalAnimationTicks)
@@ -150,7 +144,7 @@ void JWSystemRender::AnimateOnGPU(SComponentRender& Component) noexcept
 			// TPose
 			anim_state.CurrFrameTime = 0.0f;
 			anim_state.NextFrameTime = 0.0f;
-			anim_state.DeltaTime = 0;
+			anim_state.TweeningTime = 0;
 
 			m_VSCBGPUAnimation.CurrFrame = 0;
 			m_VSCBGPUAnimation.NextFrame = 0;
@@ -158,7 +152,7 @@ void JWSystemRender::AnimateOnGPU(SComponentRender& Component) noexcept
 
 		// Update constant buffer for GPU
 		m_VSCBGPUAnimation.AnimationID = anim_state.CurrAnimationID;
-		m_VSCBGPUAnimation.DeltaTime = anim_state.DeltaTime;
+		m_VSCBGPUAnimation.DeltaTime = anim_state.TweeningTime;
 	}
 }
 
@@ -176,7 +170,7 @@ void JWSystemRender::AnimateOnCPU(SComponentRender& Component) noexcept
 
 			anim_state.CurrFrameTime = 0.0f;
 			anim_state.NextFrameTime = 0.0f;
-			anim_state.DeltaTime = 0.0f;
+			anim_state.TweeningTime = 0.0f;
 
 			UpdateNodeTPoseIntoBones(anim_state.CurrAnimationTick, model->RiggedModelData, model->RiggedModelData.NodeTree.vNodes[0],
 				XMMatrixIdentity());
@@ -203,11 +197,7 @@ void JWSystemRender::AnimateOnCPU(SComponentRender& Component) noexcept
 			{
 				anim_state.CurrAnimationTick = 0;
 
-				if (!anim_state.ShouldRepeat)
-				{
-					// Non-repeating animation
-					anim_state.CurrAnimationID = 0;
-				}
+				Component.SetAnimation(anim_state.NextAnimationID);
 			}
 
 			// Update bones' transformations for the animation.
@@ -242,7 +232,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 		AnimationState.NextFrameTime = AnimationState.CurrFrameTime + current_animation.AnimationTicksPerGameTick;
 
 		// Interpolation factor DeltaTime's range is [0.0, 1.0]
-		AnimationState.DeltaTime = (AnimationState.CurrAnimationTick - AnimationState.CurrFrameTime) / current_animation.AnimationTicksPerGameTick;
+		AnimationState.TweeningTime = (AnimationState.CurrAnimationTick - AnimationState.CurrFrameTime) / current_animation.AnimationTicksPerGameTick;
 
 		// Constrain next frame time
 		if (AnimationState.NextFrameTime >= current_animation.TotalAnimationTicks)
@@ -282,7 +272,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 					}
 				}
 				// Linear interpolation
-				scaling_interpolated = scaling_key_a + (AnimationState.DeltaTime * (scaling_key_b - scaling_key_a));
+				scaling_interpolated = scaling_key_a + (AnimationState.TweeningTime * (scaling_key_b - scaling_key_a));
 
 				// #2. Find rotation keys
 				for (const auto& key : CurrentNode_animation.vKeyRotation)
@@ -297,7 +287,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 					}
 				}
 				// Spherical linear interpolation!
-				rotation_interpolated = XMQuaternionSlerp(rotation_key_a, rotation_key_b, AnimationState.DeltaTime);
+				rotation_interpolated = XMQuaternionSlerp(rotation_key_a, rotation_key_b, AnimationState.TweeningTime);
 
 				// #3. Find translation keys
 				for (const auto& key : CurrentNode_animation.vKeyPosition)
@@ -312,7 +302,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 					}
 				}
 				// Linear interpolation
-				translation_interpolated = translation_key_a + (AnimationState.DeltaTime * (translation_key_b - translation_key_a));
+				translation_interpolated = translation_key_a + (AnimationState.TweeningTime * (translation_key_b - translation_key_a));
 
 				if (!UseInterpolation)
 				{

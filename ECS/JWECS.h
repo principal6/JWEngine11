@@ -53,8 +53,8 @@ namespace JWEngine
 		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
 
 		auto AddAnimationToModelFromFile(size_t Index, STRING FileName) noexcept->JWECS&;
-		auto BakeAnimationTextureToFile(size_t ModelIndex, SSizeInt TextureSize, STRING FileName) noexcept->JWECS&;
 
+		auto BakeAnimationTextureToFile(size_t ModelIndex, SSizeInt TextureSize, STRING FileName) noexcept->JWECS&;
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
 		auto GetAnimationTexture(size_t Index) noexcept->SAnimationTextureData*;
 

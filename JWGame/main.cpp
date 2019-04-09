@@ -36,6 +36,7 @@ int main()
 		.BakeAnimationTextureToFile(2, SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
 	myGame.ECS().CreateSharedModelSphere(100.0f, 16, 7); // Shared Model #3
 	myGame.ECS().CreateSharedModelSquare(10.0f, XMFLOAT2(10.0f, 10.0f)); // Shared Model #4
+	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
 
 	myGame.ECS().CreateSharedImage2D(SPositionInt(160, 10), SSizeInt(100, 40)); // Shared Image2D #0
 
@@ -81,7 +82,7 @@ int main()
 		->SetTexture(myGame.ECS().GetSharedResource(3))
 		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
 		->SetAnimationTexture(myGame.ECS().GetAnimationTexture(0))
-		->SetAnimation(1);
+		->SetAnimation(3);
 	
 	auto& sky_sphere = myGame.ECS().CreateEntity();
 	sky_sphere.CreateComponentTransform()
@@ -105,6 +106,12 @@ int main()
 	image_gamma.CreateComponentRender()
 		->SetImage2D(myGame.ECS().GetSharedImage2D(0))
 		->SetTexture(myGame.ECS().GetSharedResource(2));
+
+	auto& cam = myGame.ECS().CreateEntity();
+	cam.CreateComponentTransform()
+		->SetPosition(XMFLOAT3(0, 5, 0));
+	cam.CreateComponentRender()
+		->SetModel(myGame.ECS().GetSharedModel(5));
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);
@@ -208,5 +215,5 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	myGame.DrawInstantText("Animation ID: " + ConvertIntToSTRING(anim_state.CurrAnimationID), XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));
 	myGame.DrawInstantText("Animation Current time	: " + ConvertFloatToSTRING(anim_state.CurrFrameTime), XMFLOAT2(10, 50), XMFLOAT3(0, 0.5f, 0.7f));
 	myGame.DrawInstantText("Animation Next time		: " + ConvertFloatToSTRING(anim_state.NextFrameTime), XMFLOAT2(10, 70), XMFLOAT3(0, 0.5f, 0.7f));
-	myGame.DrawInstantText("Animation Delta time	: " + ConvertFloatToSTRING(anim_state.DeltaTime), XMFLOAT2(10, 90), XMFLOAT3(0, 0.5f, 0.7f));
+	myGame.DrawInstantText("Animation Delta time	: " + ConvertFloatToSTRING(anim_state.TweeningTime), XMFLOAT2(10, 90), XMFLOAT3(0, 0.5f, 0.7f));
 }
