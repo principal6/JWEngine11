@@ -32,15 +32,16 @@ int main()
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.obj"); // Shared Model #1
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X") // Shared Model #2
 		.AddAnimationToModelFromFile(2, "Ezreal_Punching.X")
-		.AddAnimationToModelFromFile(2, "Ezreal_Walk.X")
-		.BakeAnimationTextureToFile(2, SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
+		.AddAnimationToModelFromFile(2, "Ezreal_Walk.X");
+		//.BakeAnimationTextureToFile(2, SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
+
 	myGame.ECS().CreateSharedModelSphere(100.0f, 16, 7); // Shared Model #3
 	myGame.ECS().CreateSharedModelSquare(10.0f, XMFLOAT2(10.0f, 10.0f)); // Shared Model #4
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
 
 	myGame.ECS().CreateSharedImage2D(SPositionInt(160, 10), SSizeInt(100, 40)); // Shared Image2D #0
 
-	myGame.ECS().CreateSharedLineModel()
+	myGame.ECS().CreateSharedLineModel() // Shared LineModel #0
 		->Make3DGrid(50.0f, 50.0f, 1.0f);
 
 	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
