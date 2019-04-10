@@ -37,10 +37,10 @@ namespace JWEngine
 		bool m_IsValid{ false };
 		HWND m_hWnd{};
 
-		LPDIRECTINPUT8 m_pDirectInput{};
-		LPDIRECTINPUTDEVICE8 m_pKeyboardDevice{};
-		LPDIRECTINPUTDEVICE8 m_pMouseDevice{};
+		LPDIRECTINPUT8			m_pDirectInput{};
+		LPDIRECTINPUTDEVICE8	m_pKeyboardDevice{};
+		LPDIRECTINPUTDEVICE8	m_pMouseDevice{};
 
-		SDirectInputDeviceState m_DeviceState{};
+		SDirectInputDeviceState	m_DeviceState{};
 	};
 };

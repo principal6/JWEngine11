@@ -69,43 +69,42 @@ namespace JWEngine
 		void Update2DCamera() noexcept;
 
 	private:
-		bool m_IsValid{ false };
+		bool					m_IsValid{ false };
+		JWDX*					m_pDX{};
 
-		JWDX* m_pDX{};
+		static constexpr float	KFOV = 0.25f;
+		static constexpr float	KNearZ = 0.1f;
+		static constexpr float	KFarZ = 1000.0f;
+		static constexpr float	KFactor = 0.01f;
+		static constexpr float	KFactor2D = 0.001f;
 
-		static constexpr float KFOV = 0.25f;
-		static constexpr float KNearZ = 0.1f;
-		static constexpr float KFarZ = 1000.0f;
-		static constexpr float KFactor = 0.01f;
-		static constexpr float KFactor2D = 0.001f;
+		mutable XMMATRIX		m_MatrixView{};
+		mutable XMMATRIX		m_MatrixProjection{};
+		mutable XMMATRIX		m_MatrixOrthographicFixed{};
+		mutable XMMATRIX		m_MatrixOrthographicTransformed{};
 
-		mutable XMMATRIX m_MatrixView{};
-		mutable XMMATRIX m_MatrixProjection{};
-		mutable XMMATRIX m_MatrixOrthographicFixed{};
-		mutable XMMATRIX m_MatrixOrthographicTransformed{};
+		ECameraType	m_CameraType{ ECameraType::Invalid };
 
-		ECameraType m_CameraType{ ECameraType::Invalid };
+		XMVECTOR	m_CameraUp{};
+		XMVECTOR	m_CameraPosition{};
+		XMVECTOR	m_CameraLookAt{};
 
-		XMVECTOR m_CameraUp{};
-		XMVECTOR m_CameraPosition{};
-		XMVECTOR m_CameraLookAt{};
-
-		XMVECTOR m_CameraDefaultForward{};
-		XMVECTOR m_CameraDefaultRight{};
-		XMVECTOR m_CameraForward{};
-		XMVECTOR m_CameraRight{};
+		XMVECTOR	m_CameraDefaultForward{};
+		XMVECTOR	m_CameraDefaultRight{};
+		XMVECTOR	m_CameraForward{};
+		XMVECTOR	m_CameraRight{};
 
 		// Y-Z rotation (nod)
-		float m_Pitch{};
+		float		m_Pitch{};
 		
 		// X-Z rotation (turn)
-		float m_Yaw{};
+		float		m_Yaw{};
 
 		// Y-X rotation (tilt)
-		float m_Roll{};
+		float		m_Roll{};
 
-		XMMATRIX m_CameraRotationMatrix{};
+		XMMATRIX	m_CameraRotationMatrix{};
 
-		XMFLOAT2 m_Camera2DPosition{};
+		XMFLOAT2	m_Camera2DPosition{};
 	};
 };

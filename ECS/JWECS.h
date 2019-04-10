@@ -49,8 +49,8 @@ namespace JWEngine
 		auto CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) noexcept->JWECS&;
 		auto GetSharedModel(size_t Index) noexcept->JWModel*;
 
-		auto CreateSharedLineModel() noexcept->JWLine*;
-		auto GetSharedLineModel(size_t Index) noexcept->JWLine*;
+		auto CreateSharedLineModel() noexcept->JWLineModel*;
+		auto GetSharedLineModel(size_t Index) noexcept->JWLineModel*;
 
 		auto CreateSharedImage2D(SPositionInt Position, SSizeInt Size) noexcept->JWImage*;
 		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
@@ -88,8 +88,8 @@ namespace JWEngine
 		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;
 		VECTOR<SAnimationTextureData>		m_vAnimationTextureData;
 		VECTOR<JWModel>						m_vSharedModel;
+		VECTOR<JWLineModel>						m_vSharedLineModel;
 		VECTOR<JWImage>						m_vSharedImage2D;
-		VECTOR<JWLine>						m_vSharedLineModel;
 	};
 };
 

@@ -5,7 +5,7 @@ using namespace JWEngine;
 
 void JWImage::Create(JWDX& DX) noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
+	assert(!m_IsValid);
 
 	// Set member pointers.
 	m_pDX = &DX;

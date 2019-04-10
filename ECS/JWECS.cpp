@@ -27,6 +27,11 @@ JWECS::~JWECS()
 			iter.Destroy();
 		}
 
+		for (auto& iter : m_vSharedLineModel)
+		{
+			iter.Destroy();
+		}
+
 		for (auto& iter : m_vSharedImage2D)
 		{
 			iter.Destroy();
@@ -322,9 +327,9 @@ auto JWECS::GetSharedModel(size_t Index) noexcept->JWModel*
 	return result;
 }
 
-auto JWECS::CreateSharedLineModel() noexcept->JWLine*
+auto JWECS::CreateSharedLineModel() noexcept->JWLineModel*
 {
-	m_vSharedLineModel.push_back(JWLine());
+	m_vSharedLineModel.push_back(JWLineModel());
 
 	auto& current_line_model = m_vSharedLineModel[m_vSharedLineModel.size() - 1];
 
@@ -333,9 +338,9 @@ auto JWECS::CreateSharedLineModel() noexcept->JWLine*
 	return &current_line_model;
 }
 
-auto JWECS::GetSharedLineModel(size_t Index) noexcept->JWLine*
+auto JWECS::GetSharedLineModel(size_t Index) noexcept->JWLineModel*
 {
-	JWLine* result{};
+	JWLineModel* result{};
 
 	if (Index < m_vSharedLineModel.size())
 	{

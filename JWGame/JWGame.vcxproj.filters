@@ -60,9 +60,6 @@
     <ClCompile Include="..\Core\JWAssimpLoader.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Core\JWLine.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="..\Core\JWRawPixelSetter.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -85,6 +82,9 @@
       <Filter>ECS</Filter>
     </ClCompile>
     <ClCompile Include="..\Core\JWPrimitiveMaker.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Core\JWLineModel.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -339,9 +339,6 @@
     <ClInclude Include="..\Core\JWAssimpLoader.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Core\JWLine.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="..\DirectXTK\Audio.h">
       <Filter>DirectXTK</Filter>
     </ClInclude>
@@ -430,6 +427,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="..\Core\JWPrimitiveMaker.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\JWLineModel.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

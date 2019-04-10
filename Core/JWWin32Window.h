@@ -27,9 +27,9 @@ namespace JWEngine
 		auto GethInstance() const noexcept->HINSTANCE;
 
 	private:
-		HINSTANCE m_hInstance{};
-		HWND m_hWnd{};
+		HINSTANCE	m_hInstance{};
+		HWND		m_hWnd{};
 
-		SSizeInt m_WindowSize;
+		SSizeInt	m_WindowSize;
 	};
 };

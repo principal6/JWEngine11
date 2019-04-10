@@ -1,6 +1,6 @@
 #include "BaseHeader.hlsl"
 
-cbuffer cbFlags
+cbuffer cbFlags : register(b0)
 {
 	bool HasTexture;
 	bool UseLighting;

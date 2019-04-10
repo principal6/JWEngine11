@@ -19,7 +19,9 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
+	
 	// Instancing!
+
 	myLogger.InitializeTime();
 
 	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "megt20all", &myLogger);
@@ -46,6 +48,10 @@ int main()
 	myGame.ECS().CreateSharedLineModel() // Shared LineModel #0
 		->Make3DGrid(50.0f, 50.0f, 1.0f);
 
+	myGame.ECS().CreateSharedLineModel() // Shared LineModel #1 (Ray-cast representation)
+		->AddLine3D(XMFLOAT3(0, 0, 0), XMFLOAT3(2, 2, 2), XMFLOAT4(1, 0, 0, 1))
+		->AddEnd();
+
 	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "grass.png"); //Shared Resource #1
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #2
@@ -54,8 +60,6 @@ int main()
 	myGame.ECS().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 
 	auto& grid = myGame.ECS().CreateEntity();
-	grid.CreateComponentTransform()
-		->SetPosition(XMFLOAT3(0, 0, 0));
 	grid.CreateComponentRender()
 		->SetLineModel(myGame.ECS().GetSharedLineModel(0));
 
@@ -124,6 +128,10 @@ int main()
 		->SetPosition(XMFLOAT3(0, 2, 0));
 	cam.CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(5));
+
+	auto& ray = myGame.ECS().CreateEntity();
+	ray.CreateComponentRender()
+		->SetLineModel(myGame.ECS().GetSharedLineModel(1));
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);

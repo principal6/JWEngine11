@@ -3,7 +3,7 @@
 #include "../Core/JWDX.h"
 #include "../Core/JWModel.h"
 #include "../Core/JWImage.h"
-#include "../Core/JWLine.h"
+#include "../Core/JWLineModel.h"
 
 namespace JWEngine
 {
@@ -58,7 +58,7 @@ namespace JWEngine
 
 		JWModel*					PtrModel{};
 		JWImage*					PtrImage{};
-		JWLine*						PtrLine{};
+		JWLineModel*						PtrLine{};
 
 		ID3D11ShaderResourceView*	PtrTexture{};
 
@@ -123,7 +123,7 @@ namespace JWEngine
 			return this;
 		}
 
-		auto SetLineModel(JWLine* pLineModel) noexcept
+		auto SetLineModel(JWLineModel* pLineModel) noexcept
 		{
 			assert(pLineModel);
 
@@ -133,7 +133,7 @@ namespace JWEngine
 
 				RenderType = PtrLine->m_RenderType;
 
-				if (RenderType == ERenderType::Image_2D)
+				if (RenderType == ERenderType::Model_Line2D)
 				{
 					DepthStencilState = EDepthStencilState::ZDisabled;
 				}

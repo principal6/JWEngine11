@@ -38,25 +38,25 @@ namespace JWEngine
 		void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
 	private:
-		bool m_IsValid{ false };
-		bool m_IsTextureCreated{ false };
+		bool						m_IsValid{ false };
+		bool						m_IsTextureCreated{ false };
 
-		JWDX* m_pDX{};
-		JWCamera* m_pCamera{};
+		JWDX*						m_pDX{};
+		JWCamera*					m_pCamera{};
 
-		STRING m_BaseDirectory{};
-		JWBMFontParser m_FontParser{};
+		STRING						m_BaseDirectory{};
+		JWBMFontParser				m_FontParser{};
 
-		ID3D11Buffer* m_VertexBuffer{};
-		ID3D11Buffer* m_IndexBuffer{};
-		SVertexDataStaticModel m_VertexData{};
-		SIndexDataTriangle m_IndexData{};
+		ID3D11Buffer*				m_VertexBuffer{};
+		ID3D11Buffer*				m_IndexBuffer{};
+		SVertexDataStaticModel		m_VertexData{};
+		SIndexDataTriangle			m_IndexData{};
 
-		SVSCBSpace	m_VSCBSpace{};
-		ID3D11PixelShader* m_PSInstantText{};
-		ID3D11Buffer* m_PSInstantTextCB{};
+		SVSCBSpace					m_VSCBSpace{};
+		ID3D11PixelShader*			m_PSInstantText{};
+		ID3D11Buffer*				m_PSInstantTextCB{};
 
-		SPSInstantTextCBData m_TextColor{};
-		ID3D11ShaderResourceView* m_TextureShaderResourceView{};
+		SPSInstantTextCBData		m_TextColor{};
+		ID3D11ShaderResourceView*	m_TextureShaderResourceView{};
 	};
 }

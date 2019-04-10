@@ -1,16 +1,10 @@
-#include "JWLine.h"
+#include "JWLineModel.h"
 #include "../Core/JWDX.h"
 #include "JWCamera.h"
 
 using namespace JWEngine;
 
-JWLine::~JWLine()
-{
-	JW_RELEASE(m_VertexBuffer);
-	JW_RELEASE(m_IndexBuffer);
-}
-
-void JWLine::Create(JWDX& DX) noexcept
+void JWLineModel::Create(JWDX& DX) noexcept
 {
 	assert(!m_IsValid);
 
@@ -20,17 +14,20 @@ void JWLine::Create(JWDX& DX) noexcept
 	m_IsValid = true;
 }
 
-void JWLine::Make3DGrid(float XSize, float ZSize, float GridInterval) noexcept
+void JWLineModel::Destroy() noexcept
+{
+	JW_RELEASE(m_VertexBuffer);
+	JW_RELEASE(m_IndexBuffer);
+}
+
+void JWLineModel::Make3DGrid(float XSize, float ZSize, float GridInterval) noexcept
 {
 	if (m_RenderType == ERenderType::Invalid)
 	{
 		m_RenderType = ERenderType::Model_Line3D;
 	}
 
-	if (m_RenderType != ERenderType::Model_Line3D)
-	{
-		return;
-	}
+	assert(m_RenderType == ERenderType::Model_Line3D);
 
 	XSize = max(XSize, 0);
 	ZSize = max(ZSize, 0);
@@ -91,35 +88,31 @@ void JWLine::Make3DGrid(float XSize, float ZSize, float GridInterval) noexcept
 	AddEnd();
 }
 
-void JWLine::AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept
+auto JWLineModel::AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept->JWLineModel*
 {
 	if (m_RenderType == ERenderType::Invalid)
 	{
 		m_RenderType = ERenderType::Model_Line3D;
 	}
 	
-	if (m_RenderType != ERenderType::Model_Line3D)
-	{
-		return;
-	}
-
+	assert(m_RenderType == ERenderType::Model_Line3D);
+	
 	m_VertexData.vVertices.push_back(SVertexStaticModel(StartPosition, KXAxisColor));
 	m_VertexData.vVertices.push_back(SVertexStaticModel(EndPosition, KXAxisColor));
 	m_IndexData.vIndices.push_back(SIndexLine(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1));
+
+	return this;
 }
 
-void JWLine::AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept
+auto JWLineModel::AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept->JWLineModel*
 {
 	if (m_RenderType == ERenderType::Invalid)
 	{
 		m_RenderType = ERenderType::Model_Line2D;
 	}
 
-	if (m_RenderType != ERenderType::Model_Line2D)
-	{
-		return;
-	}
-
+	assert(m_RenderType == ERenderType::Model_Line2D);
+	
 	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
 	float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
 
@@ -131,9 +124,11 @@ void JWLine::AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) 
 	m_VertexData.vVertices.emplace_back(position_a, Color);
 	m_VertexData.vVertices.emplace_back(position_b, Color);
 	m_IndexData.vIndices.emplace_back(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1);
+
+	return this;
 }
 
-void JWLine::AddEnd() noexcept
+void JWLineModel::AddEnd() noexcept
 {
 	// Create vertex buffer
 	m_pDX->CreateDynamicVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);
@@ -142,7 +137,7 @@ void JWLine::AddEnd() noexcept
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
-void JWLine::SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept
+void JWLineModel::SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept
 {
 	if (m_VertexData.GetCount())
 	{
@@ -159,7 +154,7 @@ void JWLine::SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndP
 	}
 }
 
-void JWLine::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept
+void JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept
 {
 	if (m_VertexData.GetCount())
 	{
@@ -184,7 +179,7 @@ void JWLine::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2 Leng
 	}
 }
 
-void JWLine::UpdateLines() noexcept
+void JWLineModel::UpdateLines() noexcept
 {
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
 	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))

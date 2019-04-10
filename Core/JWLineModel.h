@@ -7,19 +7,21 @@ namespace JWEngine
 	// Forward declaration
 	class JWDX;
 	
-	class JWLine final
+	class JWLineModel final
 	{
 	public:
-		JWLine() = default;
-		~JWLine();
+		JWLineModel() = default;
+		~JWLineModel() = default;
 
 		// Called in JWGame class
 		void Create(JWDX& DX) noexcept;
 
+		void Destroy() noexcept;
+
 		void Make3DGrid(float XSize, float ZSize, float GridInterval) noexcept;
 
-		void AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept;
-		void AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept;
+		auto AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept->JWLineModel*;
+		auto AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept->JWLineModel*;
 		void AddEnd() noexcept;
 
 		void SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept;

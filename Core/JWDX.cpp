@@ -5,52 +5,57 @@ using namespace JWEngine;
 
 JWDX::~JWDX()
 {
+	uint64_t reference_count{};
+
 	// Release the COM objects we created.
-	JW_RELEASE(m_SamplerStateMinMagMipPointWrap);
-	JW_RELEASE(m_SamplerStateMinMagMipLinearWrap);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SamplerStateMinMagMipPointWrap);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SamplerStateMinMagMipLinearWrap);
 
-	JW_RELEASE(m_BlendStateOpaque);
-	JW_RELEASE(m_BlendStateTransparent);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_BlendStateOpaque);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_BlendStateTransparent);
 
-	JW_RELEASE(m_RasterizerStateSolidBackCullCW11);
-	JW_RELEASE(m_RasterizerStateSolidBackCullCCW11);
-	JW_RELEASE(m_RasterizerStateSolidNoCull11);
-	JW_RELEASE(m_RasterizerStateWireFrame11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_RasterizerStateSolidBackCullCW11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_RasterizerStateSolidBackCullCCW11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_RasterizerStateSolidNoCull11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_RasterizerStateWireFrame11);
 
-	JW_RELEASE(m_RenderTargetView11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_RenderTargetView11);
 
-	JW_RELEASE(m_DepthStencilStateZDisabled11);
-	JW_RELEASE(m_DepthStencilStateZEnabled11);
-	JW_RELEASE(m_DepthStencilView11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DepthStencilStateZDisabled11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DepthStencilStateZEnabled11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DepthStencilView11);
 
-	JW_RELEASE(m_PSCBCamera);
-	JW_RELEASE(m_PSCBLights);
-	JW_RELEASE(m_PSCBFlags);
-	JW_RELEASE(m_VSCBGPUAnimation);
-	JW_RELEASE(m_VSCBCPUAnimation);
-	JW_RELEASE(m_VSCBFlags);
-	JW_RELEASE(m_VSCBSpace);
-	JW_RELEASE(m_PSSkyMap);
-	JW_RELEASE(m_PSSkyMapBuffer);
-	JW_RELEASE(m_PSRaw);
-	JW_RELEASE(m_PSRawBuffer);
-	JW_RELEASE(m_PSBase);
-	JW_RELEASE(m_PSBaseBuffer);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBCamera);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBLights);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBFlags);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBGPUAnimation);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBCPUAnimation);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBFlags);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBSpace);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSSkyMap);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSSkyMapBuffer);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSRaw);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSRawBuffer);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSBase);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSBaseBuffer);
 
-	JW_RELEASE(m_VSSkyMap);
-	JW_RELEASE(m_VSSkyMapBuffer);
-	JW_RELEASE(m_VSRaw);
-	JW_RELEASE(m_VSRawBuffer);
-	JW_RELEASE(m_VSAnimInputLayout);
-	JW_RELEASE(m_VSAnim);
-	JW_RELEASE(m_VSAnimBuffer);
-	JW_RELEASE(m_VSBaseInputLayout);
-	JW_RELEASE(m_VSBase);
-	JW_RELEASE(m_VSBaseBuffer);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSSkyMap);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSSkyMapBuffer);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSRaw);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSRawBuffer);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSAnimInputLayout);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSAnim);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSAnimBuffer);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBaseInputLayout);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBase);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBaseBuffer);
 
-	JW_RELEASE(m_DeviceContext11);
-	JW_RELEASE(m_Device11);
-	JW_RELEASE(m_SwapChain);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DeviceContext11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_Device11);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SwapChain);
+
+	// Reference count check!
+	assert(reference_count == 0);
 }
 
 void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept

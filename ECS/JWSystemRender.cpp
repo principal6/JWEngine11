@@ -360,39 +360,44 @@ PRIVATE void JWSystemRender::UpdateNodeTPoseIntoBones(float AnimationTime, SRigg
 
 void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 {
-	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
-	const auto& world_matrix = component_transform->WorldMatrix;
-
 	// Set PS
 	m_pDX->SetPS(Component.PixelShader);
 
+	// Update PS constant buffer (if necessary)
 	if (Component.PixelShader == EPixelShader::PSBase)
 	{
-		// Update PS constant buffer
 		m_pDX->UpdatePSCBFlags(
 			(Component.FlagRenderOption & JWFlagRenderOption_UseTexture),
 			(Component.FlagRenderOption & JWFlagRenderOption_UseLighting)
 		);
 	}
 
-	// Set PS texture
-	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &Component.PtrTexture);
+	// If it uses texture
+	if (Component.FlagRenderOption & JWFlagRenderOption_UseTexture)
+	{
+		// Set PS texture
+		m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &Component.PtrTexture);
 
-	// Set PS sampler
-	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
+		// Set PS texture sampler
+		m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
+	}
 
 	// Set VS
 	m_pDX->SetVS(Component.VertexShader);
 
-	// Update VS constant buffer
+	// @important
+	// Get transform component, if there is.
+	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
+	XMMATRIX world_matrix{ XMMatrixIdentity() };
 	XMMATRIX WVP{}, World{};
-
 	if (component_transform)
 	{
+		world_matrix = component_transform->WorldMatrix;
 		WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
 		World = XMMatrixTranspose(world_matrix);
 	}
-	
+
+	// Update VS constant buffer
 	switch (Component.RenderType)
 	{
 	case ERenderType::Model_Static:
@@ -422,10 +427,10 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 		m_VSCBSpace.WVP = m_pCamera->GetTransformedOrthographicMatrix();
 		break;
 	case ERenderType::Model_Line3D:
-		m_VSCBSpace.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
 		break;
 	case ERenderType::Model_Line2D:
-		m_VSCBSpace.WVP = XMMatrixIdentity() * m_pCamera->GetFixedOrthographicMatrix();
+		m_VSCBSpace.WVP = world_matrix * m_pCamera->GetFixedOrthographicMatrix();
 		break;
 	default:
 		break;
@@ -436,6 +441,8 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 
 PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 {
+	auto ptr_device_context = m_pDX->GetDeviceContext();
+
 	auto type = Component.RenderType;
 	auto& model = Component.PtrModel;
 	auto& image = Component.PtrImage;
@@ -449,72 +456,80 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	{
 		m_pDX->SetBlendState(EBlendState::Opaque);
 	}
-	
-	// Set IA primitive topology
-	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	if ((type == ERenderType::Model_Static) || (type == ERenderType::Model_Rigged) || (type == ERenderType::Image_2D))
+	{
+		// Set IA primitive topology
+		ptr_device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	}
+	else if ((type == ERenderType::Model_Line3D) || (type == ERenderType::Model_Line2D))
+	{
+		// Set IA primitive topology
+		ptr_device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	}
 	
 	switch (type)
 	{
 	case ERenderType::Model_Static:
 		// Set IA vertex buffer
-		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+		ptr_device_context->IASetVertexBuffers(
 			0, 1, &model->ModelVertexBuffer, model->StaticModelData.VertexData.GetPtrStride(), model->StaticModelData.VertexData.GetPtrOffset());
 
 		// Set IA index buffer
-		m_pDX->GetDeviceContext()->IASetIndexBuffer(model->ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		ptr_device_context->IASetIndexBuffer(model->ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		m_pDX->GetDeviceContext()->DrawIndexed(model->StaticModelData.IndexData.GetCount(), 0, 0);
+		ptr_device_context->DrawIndexed(model->StaticModelData.IndexData.GetCount(), 0, 0);
 		break;
 	case ERenderType::Model_Rigged:
 		// Set IA vertex buffer
-		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+		ptr_device_context->IASetVertexBuffers(
 			0, 1, &model->ModelVertexBuffer, model->RiggedModelData.VertexData.GetPtrStride(), model->RiggedModelData.VertexData.GetPtrOffset());
 
 		// Set IA index buffer
-		m_pDX->GetDeviceContext()->IASetIndexBuffer(model->ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		ptr_device_context->IASetIndexBuffer(model->ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		m_pDX->GetDeviceContext()->DrawIndexed(model->RiggedModelData.IndexData.GetCount(), 0, 0);
+		ptr_device_context->DrawIndexed(model->RiggedModelData.IndexData.GetCount(), 0, 0);
 		break;
 	case ERenderType::Image_2D:
 		// Set IA vertex buffer
-		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+		ptr_device_context->IASetVertexBuffers(
 			0, 1, &image->m_VertexBuffer, image->m_VertexData.GetPtrStride(), image->m_VertexData.GetPtrOffset());
 
 		// Set IA index buffer
-		m_pDX->GetDeviceContext()->IASetIndexBuffer(image->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		ptr_device_context->IASetIndexBuffer(image->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		m_pDX->GetDeviceContext()->DrawIndexed(image->m_IndexData.GetCount(), 0, 0);
+		ptr_device_context->DrawIndexed(image->m_IndexData.GetCount(), 0, 0);
 		break;
 	case ERenderType::Model_Line3D:
 		// Set IA primitive topology
-		m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+		ptr_device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
 		// Set IA vertex buffer
-		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+		ptr_device_context->IASetVertexBuffers(
 			0, 1, &line->m_VertexBuffer, line->m_VertexData.GetPtrStride(), line->m_VertexData.GetPtrOffset());
 
 		// Set IA index buffer
-		m_pDX->GetDeviceContext()->IASetIndexBuffer(line->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		ptr_device_context->IASetIndexBuffer(line->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		m_pDX->GetDeviceContext()->DrawIndexed(line->m_IndexData.GetCount(), 0, 0);
+		ptr_device_context->DrawIndexed(line->m_IndexData.GetCount(), 0, 0);
 		break;
 	case ERenderType::Model_Line2D:
 		// Set IA primitive topology
-		m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+		ptr_device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
 		// Set IA vertex buffer
-		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+		ptr_device_context->IASetVertexBuffers(
 			0, 1, &line->m_VertexBuffer, line->m_VertexData.GetPtrStride(), line->m_VertexData.GetPtrOffset());
 
 		// Set IA index buffer
-		m_pDX->GetDeviceContext()->IASetIndexBuffer(line->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		ptr_device_context->IASetIndexBuffer(line->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		m_pDX->GetDeviceContext()->DrawIndexed(line->m_IndexData.GetCount(), 0, 0);
+		ptr_device_context->DrawIndexed(line->m_IndexData.GetCount(), 0, 0);
 		break;
 	default:
 		break;

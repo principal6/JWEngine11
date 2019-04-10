@@ -97,11 +97,11 @@ namespace JWEngine
 	private:
 		bool m_IsValid{ false };
 
-		JWDX* m_pDX{};
+		JWDX*						m_pDX{};
 
-		SRawPixelData m_RawPixelData{};
+		SRawPixelData				m_RawPixelData{};
 
-		ID3D11Texture2D* m_RawTexture2D;
-		ID3D11ShaderResourceView* m_RawTexture2DSRV;
+		ID3D11Texture2D*			m_RawTexture2D;
+		ID3D11ShaderResourceView*	m_RawTexture2DSRV;
 	};
 };

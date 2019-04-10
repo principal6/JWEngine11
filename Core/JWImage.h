@@ -23,7 +23,7 @@ namespace JWEngine
 		ID3D11Buffer*				m_VertexBuffer{};
 		ID3D11Buffer*				m_IndexBuffer{};
 		SVertexDataStaticModel		m_VertexData{};
-		SIndexDataTriangle				m_IndexData{};
+		SIndexDataTriangle			m_IndexData{};
 
 	private:
 		void UpdateScreenPositionAndSize() noexcept;

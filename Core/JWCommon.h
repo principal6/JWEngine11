@@ -126,6 +126,7 @@ namespace JWEngine
 #define JW_DELETE(pVar) { if(pVar) {delete pVar; pVar = nullptr; }}
 #define JW_DELETE_ARRAY(pArray) { if(pArray) {delete[] pArray; pArray = nullptr; }}
 #define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
+#define JW_RELEASE_CHECK_REFERENCE_COUNT(DxObj) {if (DxObj) { reference_count = DxObj->Release(); DxObj = nullptr; }}
 	
 	using namespace DirectX;
 
@@ -221,7 +222,7 @@ namespace JWEngine
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
 		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
+		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
 		SVertexStaticModel(float x, float y, float z) :
 			Position{ x, y, z } {};
@@ -256,7 +257,7 @@ namespace JWEngine
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
 		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
+		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
 		SVertexRiggedModel(float x, float y, float z) :
 			Position{ x, y, z } {};
