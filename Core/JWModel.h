@@ -19,7 +19,6 @@ namespace JWEngine
 
 		void SetStaticModelData(SStaticModelData ModelData) noexcept;
 		void SetRiggedModelData(SRiggedModelData ModelData) noexcept;
-		void SetLineModelData(SLineModelData Model2Data) noexcept;
 
 		auto GetRenderType() const noexcept { return m_RenderType; };
 		auto GetTextureFileName() const noexcept->WSTRING

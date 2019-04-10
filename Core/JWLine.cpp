@@ -10,39 +10,126 @@ JWLine::~JWLine()
 	JW_RELEASE(m_IndexBuffer);
 }
 
-void JWLine::Create(JWDX& DX, JWCamera& Camera) noexcept
+void JWLine::Create(JWDX& DX) noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
+	assert(!m_IsValid);
 
 	// Set JWDX pointer.
 	m_pDX = &DX;
 
-	// Set JWCamera pointer.
-	m_pCamera = &Camera;
-
 	m_IsValid = true;
 }
 
-PRIVATE void JWLine::CheckValidity() const noexcept
+void JWLine::Make3DGrid(float XSize, float ZSize, float GridInterval) noexcept
 {
-	if (!m_IsValid)
+	if (m_RenderType == ERenderType::Invalid)
 	{
-		JWAbort("JWLine object not valid. You must call JWLine::Create() first");
+		m_RenderType = ERenderType::Model_Line3D;
 	}
+
+	if (m_RenderType != ERenderType::Model_Line3D)
+	{
+		return;
+	}
+
+	XSize = max(XSize, 0);
+	ZSize = max(ZSize, 0);
+
+	int grid_count_x = static_cast<int>(XSize / GridInterval) + 1;
+	int grid_count_z = static_cast<int>(ZSize / GridInterval) + 1;
+
+	int total_grid_count{};
+	float position_x{}, position_z{};
+	for (int i{}; i < grid_count_z; ++i)
+	{
+		position_z = -ZSize / 2.0f + static_cast<float>(i) * GridInterval;
+
+		if (position_z)
+		{
+			m_VertexData.vVertices.push_back(SVertexStaticModel(-XSize / 2.0f, 0, position_z));
+			m_VertexData.vVertices.push_back(SVertexStaticModel(+XSize / 2.0f, 0, position_z));
+
+			m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+
+			++total_grid_count;
+		}
+	}
+	for (int i{}; i < grid_count_x; ++i)
+	{
+		position_x = -XSize / 2.0f + static_cast<float>(i) * GridInterval;
+
+		if (position_x)
+		{
+			m_VertexData.vVertices.push_back(SVertexStaticModel(position_x, 0, -ZSize / 2.0f));
+			m_VertexData.vVertices.push_back(SVertexStaticModel(position_x, 0, +ZSize / 2.0f));
+
+			m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+
+			++total_grid_count;
+		}
+	}
+
+	// X Axis
+	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
+	m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+	++total_grid_count;
+
+	// Y Axis
+	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
+	m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+	++total_grid_count;
+
+	// Z Axis
+	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
+	m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+	++total_grid_count;
+
+	// Craete vertex & index buffer.
+	AddEnd();
 }
 
-void JWLine::AddLine(SLineRawData LineData) noexcept
+void JWLine::AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept
 {
+	if (m_RenderType == ERenderType::Invalid)
+	{
+		m_RenderType = ERenderType::Model_Line3D;
+	}
+	
+	if (m_RenderType != ERenderType::Model_Line3D)
+	{
+		return;
+	}
+
+	m_VertexData.vVertices.push_back(SVertexStaticModel(StartPosition, KXAxisColor));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(EndPosition, KXAxisColor));
+	m_IndexData.vIndices.push_back(SIndexLine(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1));
+}
+
+void JWLine::AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept
+{
+	if (m_RenderType == ERenderType::Invalid)
+	{
+		m_RenderType = ERenderType::Model_Line2D;
+	}
+
+	if (m_RenderType != ERenderType::Model_Line2D)
+	{
+		return;
+	}
+
 	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
 	float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
 
-	XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + LineData.StartPosition.x, window_height / 2 - LineData.StartPosition.y, 0);
+	XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
 	XMFLOAT3 position_b = position_a;
-	position_b.x += LineData.Length.x;
-	position_b.y += LineData.Length.y;
+	position_b.x += Length.x;
+	position_b.y += Length.y;
 	
-	m_VertexData.vVertices.emplace_back(position_a, LineData.Color);
-	m_VertexData.vVertices.emplace_back(position_b, LineData.Color);
+	m_VertexData.vVertices.emplace_back(position_a, Color);
+	m_VertexData.vVertices.emplace_back(position_b, Color);
 	m_IndexData.vIndices.emplace_back(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1);
 }
 
@@ -55,25 +142,45 @@ void JWLine::AddEnd() noexcept
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
-void JWLine::SetLine(size_t LineIndex, SLineRawData LineData) noexcept
+void JWLine::SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept
 {
 	if (m_VertexData.GetCount())
 	{
-		LineIndex = min(LineIndex, m_VertexData.GetCount() / 2 - 1);
+		if (m_RenderType == ERenderType::Model_Line3D)
+		{
+			Line3DIndex = min(Line3DIndex, m_VertexData.GetCount() / 2 - 1);
 
-		float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
-		float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
+			m_VertexData.vVertices[Line3DIndex * 2].Position = StartPosition;
+			m_VertexData.vVertices[Line3DIndex * 2].ColorDiffuse = Color;
 
-		XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + LineData.StartPosition.x, window_height / 2 - LineData.StartPosition.y, 0);
-		XMFLOAT3 position_b = position_a;
-		position_b.x += LineData.Length.x;
-		position_b.y += LineData.Length.y;
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].Position = EndPosition;
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].ColorDiffuse = Color;
+		}
+	}
+}
 
-		m_VertexData.vVertices[LineIndex * 2].Position = position_a;
-		m_VertexData.vVertices[LineIndex * 2].ColorDiffuse = LineData.Color;
+void JWLine::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept
+{
+	if (m_VertexData.GetCount())
+	{
+		if (m_RenderType == ERenderType::Model_Line2D)
+		{
+			Line2DIndex = min(Line2DIndex, m_VertexData.GetCount() / 2 - 1);
 
-		m_VertexData.vVertices[LineIndex * 2 + 1].Position = position_b;
-		m_VertexData.vVertices[LineIndex * 2 + 1].ColorDiffuse = LineData.Color;
+			float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
+			float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
+
+			XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
+			XMFLOAT3 position_b = position_a;
+			position_b.x += Length.x;
+			position_b.y += Length.y;
+
+			m_VertexData.vVertices[Line2DIndex * 2].Position = position_a;
+			m_VertexData.vVertices[Line2DIndex * 2].ColorDiffuse = Color;
+
+			m_VertexData.vVertices[Line2DIndex * 2 + 1].Position = position_b;
+			m_VertexData.vVertices[Line2DIndex * 2 + 1].ColorDiffuse = Color;
+		}
 	}
 }
 
@@ -91,40 +198,4 @@ PRIVATE void JWLine::UpdateVertexBuffer() noexcept
 
 		m_pDX->GetDeviceContext()->Unmap(m_VertexBuffer, 0);
 	}
-}
-
-PRIVATE void JWLine::Update() noexcept
-{
-	// Disable Z-buffer for 2D drawing
-	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
-
-	// Set VS & PS
-	m_pDX->SetVS(EVertexShader::VSBase);
-	m_pDX->SetPS(EPixelShader::PSBase);
-
-	// Set VS constant buffer
-	// set WVP matrix(, which in reality is WO matrix,)
-	// and send it to the constant buffer for vertex shader
-	m_VSCBSpace.WVP = XMMatrixIdentity() * m_pCamera->GetFixedOrthographicMatrix();
-	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
-
-	// Set PS constant buffer
-	m_pDX->UpdatePSCBFlags(false, false);
-}
-
-void JWLine::Draw() noexcept
-{
-	Update();
-
-	// Set primitive topology
-	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
-
-	// Set vertex buffer
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, m_VertexData.GetPtrStride(), m_VertexData.GetPtrOffset());
-	
-	// Set index buffer
-	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	// Draw
-	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
 }

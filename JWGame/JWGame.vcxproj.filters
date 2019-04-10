@@ -54,9 +54,6 @@
     <ClCompile Include="..\Core\JWTimer.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Core\JWDesignerUI.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="..\Core\JWInput.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -336,9 +333,6 @@
     <ClInclude Include="..\Core\JWTimer.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\Core\JWDesignerUI.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="..\Core\JWInput.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -470,12 +464,6 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\Shaders\VSSkyMap.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\Shaders\PSColor.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\Shaders\VSColor.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

@@ -322,6 +322,29 @@ auto JWECS::GetSharedModel(size_t Index) noexcept->JWModel*
 	return result;
 }
 
+auto JWECS::CreateSharedLineModel() noexcept->JWLine*
+{
+	m_vSharedLineModel.push_back(JWLine());
+
+	auto& current_line_model = m_vSharedLineModel[m_vSharedLineModel.size() - 1];
+
+	current_line_model.Create(*m_pDX);
+
+	return &current_line_model;
+}
+
+auto JWECS::GetSharedLineModel(size_t Index) noexcept->JWLine*
+{
+	JWLine* result{};
+
+	if (Index < m_vSharedLineModel.size())
+	{
+		result = &m_vSharedLineModel[Index];
+	}
+
+	return result;
+}
+
 auto JWECS::CreateSharedImage2D(SPositionInt Position, SSizeInt Size) noexcept->JWImage*
 {
 	m_vSharedImage2D.push_back(JWImage());

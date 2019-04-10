@@ -30,8 +30,6 @@ JWDX::~JWDX()
 	JW_RELEASE(m_VSCBCPUAnimation);
 	JW_RELEASE(m_VSCBFlags);
 	JW_RELEASE(m_VSCBSpace);
-	JW_RELEASE(m_PSColor);
-	JW_RELEASE(m_PSColorBuffer);
 	JW_RELEASE(m_PSSkyMap);
 	JW_RELEASE(m_PSSkyMapBuffer);
 	JW_RELEASE(m_PSRaw);
@@ -39,9 +37,6 @@ JWDX::~JWDX()
 	JW_RELEASE(m_PSBase);
 	JW_RELEASE(m_PSBaseBuffer);
 
-	JW_RELEASE(m_VSColorInputLayout);
-	JW_RELEASE(m_VSColor);
-	JW_RELEASE(m_VSColorBuffer);
 	JW_RELEASE(m_VSSkyMap);
 	JW_RELEASE(m_VSSkyMapBuffer);
 	JW_RELEASE(m_VSRaw);
@@ -76,14 +71,12 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
 	CreateVSAnim();
 	CreateVSRaw();
 	CreateVSSkyMap();
-	CreateVSColor();
 	CreateVSCBs();
 
 	// Create PS shaders and constant buffers
 	CreatePSBase();
 	CreatePSRaw();
 	CreatePSSkyMap();
-	CreatePSColor();
 	CreatePSCBs();
 
 	// Set default shaders
@@ -199,21 +192,6 @@ PRIVATE void JWDX::CreateVSSkyMap() noexcept
 	m_Device11->CreateVertexShader(m_VSSkyMapBuffer->GetBufferPointer(), m_VSSkyMapBuffer->GetBufferSize(), nullptr, &m_VSSkyMap);
 }
 
-PRIVATE void JWDX::CreateVSColor() noexcept
-{
-	// Compile shader from file
-	WSTRING shader_file_name;
-	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSColor.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0", 0, 0, &m_VSColorBuffer, nullptr);
-
-	// Create shader
-	m_Device11->CreateVertexShader(m_VSColorBuffer->GetBufferPointer(), m_VSColorBuffer->GetBufferSize(), nullptr, &m_VSColor);
-
-	// Create color input layout
-	m_Device11->CreateInputLayout(KInputElementDescriptionColor, ARRAYSIZE(KInputElementDescriptionColor),
-		m_VSColorBuffer->GetBufferPointer(), m_VSColorBuffer->GetBufferSize(), &m_VSColorInputLayout);
-}
-
 PRIVATE void JWDX::CreatePSBase() noexcept
 {
 	// Compile shader from file
@@ -269,17 +247,6 @@ PRIVATE void JWDX::CreateVSCBs() noexcept
 
 	constant_buffer_description.ByteWidth = sizeof(SVSCBGPUAnimation);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBGPUAnimation);
-}
-
-PRIVATE void JWDX::CreatePSColor() noexcept
-{
-	// Compile shader from file
-	WSTRING shader_file_name;
-	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSColor.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &m_PSColorBuffer, nullptr);
-
-	// Create shader
-	m_Device11->CreatePixelShader(m_PSColorBuffer->GetBufferPointer(), m_PSColorBuffer->GetBufferSize(), nullptr, &m_PSColor);
 }
 
 PRIVATE void JWDX::CreatePSCBs() noexcept
@@ -579,10 +546,6 @@ void JWDX::SetVS(EVertexShader VS) noexcept
 		m_DeviceContext11->VSSetShader(m_VSSkyMap, nullptr, 0);
 		m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
 		break;
-	case JWEngine::EVertexShader::VSColor:
-		m_DeviceContext11->VSSetShader(m_VSColor, nullptr, 0);
-		m_DeviceContext11->IASetInputLayout(m_VSColorInputLayout);
-		break;
 	default:
 		break;
 	}
@@ -600,9 +563,6 @@ void JWDX::SetPS(EPixelShader PS) noexcept
 		break;
 	case JWEngine::EPixelShader::PSSkyMap:
 		m_DeviceContext11->PSSetShader(m_PSSkyMap, nullptr, 0);
-		break;
-	case JWEngine::EPixelShader::PSColor:
-		m_DeviceContext11->PSSetShader(m_PSColor, nullptr, 0);
 		break;
 	default:
 		break;

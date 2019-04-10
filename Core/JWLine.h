@@ -6,7 +6,6 @@ namespace JWEngine
 {
 	// Forward declaration
 	class JWDX;
-	class JWCamera;
 	
 	class JWLine final
 	{
@@ -15,42 +14,40 @@ namespace JWEngine
 		~JWLine();
 
 		// Called in JWGame class
-		void Create(JWDX& DX, JWCamera& Camera) noexcept;
+		void Create(JWDX& DX) noexcept;
 
-		void AddLine(SLineRawData LineData) noexcept;
+		void Make3DGrid(float XSize, float ZSize, float GridInterval) noexcept;
+
+		void AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept;
+		void AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept;
 		void AddEnd() noexcept;
 
-		void SetLine(size_t LineIndex, SLineRawData LineData) noexcept;
+		void SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept;
+		void SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept;
 
 		void UpdateLines() noexcept;
 
-		// Called in JWGame class
-		void Draw() noexcept;
-
 	private:
-		void CheckValidity() const noexcept;
-
 		// Called by UpdateVertices()
 		void UpdateVertexBuffer() noexcept;
 
-		// Called by Draw()
-		void Update() noexcept;
+	public:
+		static constexpr float		KAxisLength = 1000.0f;
+		static constexpr XMFLOAT4	KXAxisColor = XMFLOAT4(1, 0, 0, 1); // X = R
+		static constexpr XMFLOAT4	KYAxisColor = XMFLOAT4(0, 1, 0, 1); // Y = G
+		static constexpr XMFLOAT4	KZAxisColor = XMFLOAT4(0, 0, 1, 1); // Z = B
 
-	private:
-		bool m_IsValid{ false };
+		bool					m_IsValid{ false };
 
-		JWDX* m_pDX{};
-		JWCamera* m_pCamera{};
+		JWDX*					m_pDX{};
 
-		ID3D11Buffer* m_VertexBuffer{};
-		ID3D11Buffer* m_IndexBuffer{};
+		ID3D11Buffer*			m_VertexBuffer{};
+		ID3D11Buffer*			m_IndexBuffer{};
+		SVertexDataStaticModel	m_VertexData{};
+		SIndexDataLine			m_IndexData{};
 
-		SVertexDataStaticModel m_VertexData{};
-		SIndexDataLine m_IndexData{};
+		SVSCBSpace				m_VSCBSpace{};
 
-		XMFLOAT2 m_Position{};
-		XMFLOAT2 m_Size{};
-
-		SVSCBSpace m_VSCBSpace{};
+		ERenderType				m_RenderType{ ERenderType::Invalid };
 	};
 };

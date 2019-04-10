@@ -71,6 +71,9 @@ void JWSystemRender::Execute() noexcept
 {
 	for (auto& iter : m_vpComponents)
 	{
+		// Set blend state for the component
+		m_pDX->SetBlendState(iter->BlendState);
+
 		// Set depth stencil state for the component
 		m_pDX->SetDepthStencilState(iter->DepthStencilState);
 
@@ -357,9 +360,6 @@ PRIVATE void JWSystemRender::UpdateNodeTPoseIntoBones(float AnimationTime, SRigg
 
 void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 {
-	auto type = Component.RenderType;
-	const auto& model = Component.PtrModel;
-
 	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
 	const auto& world_matrix = component_transform->WorldMatrix;
 
@@ -393,7 +393,7 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 		World = XMMatrixTranspose(world_matrix);
 	}
 	
-	switch (type)
+	switch (Component.RenderType)
 	{
 	case ERenderType::Model_Static:
 		m_VSCBSpace.WVP = WVP;
@@ -421,6 +421,12 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	case ERenderType::Image_2D:
 		m_VSCBSpace.WVP = m_pCamera->GetTransformedOrthographicMatrix();
 		break;
+	case ERenderType::Model_Line3D:
+		m_VSCBSpace.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetViewProjectionMatrix());
+		break;
+	case ERenderType::Model_Line2D:
+		m_VSCBSpace.WVP = XMMatrixIdentity() * m_pCamera->GetFixedOrthographicMatrix();
+		break;
 	default:
 		break;
 	}
@@ -433,6 +439,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	auto type = Component.RenderType;
 	auto& model = Component.PtrModel;
 	auto& image = Component.PtrImage;
+	auto& line = Component.PtrLine;
 
 	if (Component.FlagRenderOption & JWFlagRenderOption_UseTransparency)
 	{
@@ -480,6 +487,34 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 
 		// Draw indexed
 		m_pDX->GetDeviceContext()->DrawIndexed(image->m_IndexData.GetCount(), 0, 0);
+		break;
+	case ERenderType::Model_Line3D:
+		// Set IA primitive topology
+		m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+		// Set IA vertex buffer
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+			0, 1, &line->m_VertexBuffer, line->m_VertexData.GetPtrStride(), line->m_VertexData.GetPtrOffset());
+
+		// Set IA index buffer
+		m_pDX->GetDeviceContext()->IASetIndexBuffer(line->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		// Draw indexed
+		m_pDX->GetDeviceContext()->DrawIndexed(line->m_IndexData.GetCount(), 0, 0);
+		break;
+	case ERenderType::Model_Line2D:
+		// Set IA primitive topology
+		m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+		// Set IA vertex buffer
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(
+			0, 1, &line->m_VertexBuffer, line->m_VertexData.GetPtrStride(), line->m_VertexData.GetPtrOffset());
+
+		// Set IA index buffer
+		m_pDX->GetDeviceContext()->IASetIndexBuffer(line->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		// Draw indexed
+		m_pDX->GetDeviceContext()->DrawIndexed(line->m_IndexData.GetCount(), 0, 0);
 		break;
 	default:
 		break;

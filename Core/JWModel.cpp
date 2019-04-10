@@ -99,24 +99,6 @@ void JWModel::SetRiggedModelData(SRiggedModelData ModelData) noexcept
 	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
-void JWModel::SetLineModelData(SLineModelData Model2Data) noexcept
-{
-	if (m_RenderType != ERenderType::Invalid)
-	{
-		return;
-	}
-
-	m_RenderType = ERenderType::Model_Line;
-
-	NormalData = Model2Data;
-	
-	// Create vertex buffer for normals
-	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetByteSize(), NormalData.VertexData.GetPtrData(), &NormalVertexBuffer);
-
-	// Create index buffer for normals
-	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
-}
-
 PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 {
 	switch (m_RenderType)

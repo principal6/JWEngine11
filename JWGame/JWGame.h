@@ -7,7 +7,6 @@
 #include "../Core/JWImageCursor.h"
 #include "../Core/JWInstantText.h"
 #include "../Core/JWTimer.h"
-#include "../Core/JWDesignerUI.h"
 #include "../Core/JWInput.h"
 #include "../Core/JWRawPixelSetter.h"
 #include "../ECS/JWECS.h"
@@ -49,44 +48,40 @@ namespace JWEngine
 		void Run() noexcept;
 		void Terminate() noexcept;
 
-		void UpdateEntities() noexcept;
-
-		void DrawDesignerUI() noexcept;
 		void DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
 
 	private:
 		void CheckValidity() const noexcept;
 
 	private:
-		bool m_IsValid{ false };
-		bool m_IsWindowCreated{ false };
-		bool m_IsDXCreated{ false };
-		bool m_IsRunning{ false };
-		bool m_IsMouseCursorLoaded{ false };
+		bool					m_IsValid{ false };
+		bool					m_IsWindowCreated{ false };
+		bool					m_IsDXCreated{ false };
+		bool					m_IsRunning{ false };
+		bool					m_IsMouseCursorLoaded{ false };
 		
-		STRING m_BaseDirectory;
-		SClearColor m_ClearColor{};
+		STRING					m_BaseDirectory;
+		SClearColor				m_ClearColor{};
 
-		FP_ON_INPUT m_fpOnInput{};
-		FP_ON_RENDER m_fpOnRender{};
+		FP_ON_INPUT				m_fpOnInput{};
+		FP_ON_RENDER			m_fpOnRender{};
 
-		JWWin32Window m_Window{};
-		JWDX m_DX{};
-		JWInput m_Input{};
-		SDirectInputDeviceState m_InputDeviceState{};
-		JWCamera m_Camera{};
-		JWInstantText m_InstantText{};
-		JWDesignerUI m_DesignerUI{};
-		JWRawPixelSetter m_RawPixelSetter{};
-		JWECS m_ECS{};
+		JWWin32Window			m_Window{};
+		JWDX					m_DX{};
+		JWInput					m_Input{};
+		SDirectInputDeviceState	m_InputDeviceState{};
+		JWCamera				m_Camera{};
+		JWInstantText			m_InstantText{};
+		JWRawPixelSetter		m_RawPixelSetter{};
+		JWECS					m_ECS{};
 
-		JWTimer m_Timer{};
-		long long m_FPSCount{};
-		int m_FPS{};
+		JWTimer					m_Timer{};
+		long long				m_FPSCount{};
+		int						m_FPS{};
 
-		JWImageCursor m_MouseCursorImage{};
-		XMFLOAT2 m_MouseCursorPosition{};
+		JWImageCursor			m_MouseCursorImage{};
+		XMFLOAT2				m_MouseCursorPosition{};
 		
-		ERasterizerState m_RasterizerState{ ERasterizerState::SolidNoCull };
+		ERasterizerState		m_RasterizerState{ ERasterizerState::SolidNoCull };
 	};
 };

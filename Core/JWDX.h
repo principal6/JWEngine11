@@ -39,7 +39,6 @@ namespace JWEngine
 		VSAnim,
 		VSRaw,
 		VSSkyMap,
-		VSColor,
 	};
 
 	enum class EPixelShader
@@ -47,7 +46,6 @@ namespace JWEngine
 		PSBase,
 		PSRaw,
 		PSSkyMap,
-		PSColor,
 	};
 
 	class JWDX
@@ -100,14 +98,12 @@ namespace JWEngine
 		void CreateVSAnim() noexcept;
 		void CreateVSRaw() noexcept;
 		void CreateVSSkyMap() noexcept;
-		void CreateVSColor() noexcept;
 		void CreateVSCBs() noexcept;
 
 		// PS Shader creation
 		void CreatePSBase() noexcept;
 		void CreatePSRaw() noexcept;
 		void CreatePSSkyMap() noexcept;
-		void CreatePSColor() noexcept;
 		void CreatePSCBs() noexcept;
 		
 		// Called in Create()
@@ -152,17 +148,12 @@ namespace JWEngine
 		ID3D11VertexShader*	m_VSRaw{};
 		ID3D10Blob*			m_VSSkyMapBuffer{};
 		ID3D11VertexShader*	m_VSSkyMap{};
-		ID3D10Blob*			m_VSColorBuffer{};
-		ID3D11VertexShader*	m_VSColor{};
-		ID3D11InputLayout*	m_VSColorInputLayout{};
 		ID3D10Blob*			m_PSBaseBuffer{};
 		ID3D11PixelShader*	m_PSBase{};
 		ID3D10Blob*			m_PSRawBuffer{};
 		ID3D11PixelShader*	m_PSRaw{};
 		ID3D10Blob*			m_PSSkyMapBuffer{};
 		ID3D11PixelShader*	m_PSSkyMap{};
-		ID3D10Blob*			m_PSColorBuffer{};
-		ID3D11PixelShader*	m_PSColor{};
 
 		// Shader constant buffer
 		ID3D11Buffer*		m_VSCBSpace{};
@@ -180,23 +171,23 @@ namespace JWEngine
 		ID3D11Buffer*		m_PSCBCamera{};
 		SPSCBCamera			m_PSCBCameraData{};
 
-		ID3D11DepthStencilView* m_DepthStencilView11{};
-		ID3D11DepthStencilState* m_DepthStencilStateZEnabled11{};
-		ID3D11DepthStencilState* m_DepthStencilStateZDisabled11{};
+		ID3D11DepthStencilView*		m_DepthStencilView11{};
+		ID3D11DepthStencilState*	m_DepthStencilStateZEnabled11{};
+		ID3D11DepthStencilState*	m_DepthStencilStateZDisabled11{};
 
-		ID3D11RenderTargetView* m_RenderTargetView11{};
+		ID3D11RenderTargetView*		m_RenderTargetView11{};
 
-		ID3D11RasterizerState* m_RasterizerStateWireFrame11{};
-		ID3D11RasterizerState* m_RasterizerStateSolidNoCull11{};
-		ID3D11RasterizerState* m_RasterizerStateSolidBackCullCCW11{};
-		ID3D11RasterizerState* m_RasterizerStateSolidBackCullCW11{};
+		ID3D11RasterizerState*		m_RasterizerStateWireFrame11{};
+		ID3D11RasterizerState*		m_RasterizerStateSolidNoCull11{};
+		ID3D11RasterizerState*		m_RasterizerStateSolidBackCullCCW11{};
+		ID3D11RasterizerState*		m_RasterizerStateSolidBackCullCW11{};
 
-		ID3D11BlendState* m_BlendStateTransparent{};
-		ID3D11BlendState* m_BlendStateOpaque{};
+		ID3D11BlendState*			m_BlendStateTransparent{};
+		ID3D11BlendState*			m_BlendStateOpaque{};
 		
-		ID3D11SamplerState* m_SamplerStateMinMagMipLinearWrap{};
-		ID3D11SamplerState* m_SamplerStateMinMagMipPointWrap{};
+		ID3D11SamplerState*			m_SamplerStateMinMagMipLinearWrap{};
+		ID3D11SamplerState*			m_SamplerStateMinMagMipPointWrap{};
 
-		D3D11_VIEWPORT m_DefaultViewPort{};
+		D3D11_VIEWPORT				m_DefaultViewPort{};
 	};
 };

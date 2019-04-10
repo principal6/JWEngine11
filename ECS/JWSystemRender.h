@@ -3,6 +3,7 @@
 #include "../Core/JWDX.h"
 #include "../Core/JWModel.h"
 #include "../Core/JWImage.h"
+#include "../Core/JWLine.h"
 
 namespace JWEngine
 {
@@ -51,11 +52,13 @@ namespace JWEngine
 
 		ERenderType					RenderType{ ERenderType::Invalid };
 		EDepthStencilState			DepthStencilState{ EDepthStencilState::ZEnabled };
+		EBlendState					BlendState{ EBlendState::Opaque };
 		EVertexShader				VertexShader{ EVertexShader::VSBase };
 		EPixelShader				PixelShader{ EPixelShader::PSBase };
 
 		JWModel*					PtrModel{};
 		JWImage*					PtrImage{};
+		JWLine*						PtrLine{};
 
 		ID3D11ShaderResourceView*	PtrTexture{};
 
@@ -115,6 +118,25 @@ namespace JWEngine
 				PtrImage = pImage2D;
 
 				RenderType = ERenderType::Image_2D;
+			}
+
+			return this;
+		}
+
+		auto SetLineModel(JWLine* pLineModel) noexcept
+		{
+			assert(pLineModel);
+
+			if (RenderType == ERenderType::Invalid)
+			{
+				PtrLine = pLineModel;
+
+				RenderType = PtrLine->m_RenderType;
+
+				if (RenderType == ERenderType::Image_2D)
+				{
+					DepthStencilState = EDepthStencilState::ZDisabled;
+				}
 			}
 
 			return this;

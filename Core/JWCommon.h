@@ -200,12 +200,6 @@ namespace JWEngine
 		{ "BLENDWEIGHT"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 80, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // float Weight[4]
 	};
 	
-	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionColor[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT	, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-
 	struct SVertexStaticModel
 	{
 		SVertexStaticModel() {};
@@ -289,22 +283,6 @@ namespace JWEngine
 		}
 	};
 
-	struct SVertexColor
-	{
-		SVertexColor() {};
-		SVertexColor(XMFLOAT3 _Position) :
-			Position{ _Position } {};
-		SVertexColor(XMFLOAT3 _Position, XMFLOAT4 _ColorRGBA) :
-			Position{ _Position }, ColorRGBA{ _ColorRGBA } {};
-		SVertexColor(float x, float y, float z) :
-			Position{ x, y, z } {};
-		SVertexColor(float x, float y, float z, float r, float g, float b, float a) :
-			Position{ x, y, z }, ColorRGBA{ r, g, b, a } {};
-
-		XMFLOAT3 Position{};
-		XMFLOAT4 ColorRGBA{ 1.0f, 1.0f, 1.0f, 1.0f };
-	};
-	
 	struct SVertexDataStaticModel
 	{
 		VECTOR<SVertexStaticModel> vVertices;
@@ -329,21 +307,6 @@ namespace JWEngine
 		void Clear() noexcept { vVertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexRiggedModel)); };
-		auto GetPtrData() const noexcept { return &vVertices[0]; };
-		auto GetPtrStride() const noexcept { return &Stride; };
-		auto GetPtrOffset() const noexcept { return &Offset; };
-		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
-	};
-
-	struct SVertexDataColor
-	{
-		VECTOR<SVertexColor> vVertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SVertexColor)) };
-		UINT Offset{};
-
-		void Clear() noexcept { vVertices.clear(); };
-		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexColor)); };
 		auto GetPtrData() const noexcept { return &vVertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
@@ -389,23 +352,15 @@ namespace JWEngine
 		auto GetPtrData() const noexcept { return &vIndices[0]; };
 	};
 
-	struct SLineRawData
-	{
-		XMFLOAT2 StartPosition{};
-		XMFLOAT2 Length{};
-		XMFLOAT4 Color{};
-
-		SLineRawData() {};
-		SLineRawData(XMFLOAT2 _StartPosition, XMFLOAT2 _Length, XMFLOAT4 _Color) : StartPosition{ _StartPosition }, Length{ _Length }, Color{ _Color } {};
-	};
-
 	enum class ERenderType : uint8_t
 	{
 		Invalid,
 
 		Model_Static,
 		Model_Rigged,
-		Model_Line,
+
+		Model_Line3D,
+		Model_Line2D,
 
 		Image_2D,
 	};
@@ -533,6 +488,7 @@ namespace JWEngine
 		VECTOR<SModelAnimation> vAnimations;
 	};
 
+	// StaticModel & Image2D
 	struct SStaticModelData
 	{
 		SVertexDataStaticModel VertexData{};
@@ -542,6 +498,7 @@ namespace JWEngine
 		WSTRING TextureFileNameW{};
 	};
 
+	// RiggedModel
 	struct SRiggedModelData
 	{
 		SVertexDataRiggedModel VertexData{};
@@ -555,6 +512,7 @@ namespace JWEngine
 		SModelAnimationSet AnimationSet{};
 	};
 
+	// Line2D & Line3D
 	struct SLineModelData
 	{
 		SVertexDataStaticModel VertexData{};

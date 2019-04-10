@@ -23,8 +23,6 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 	m_InstantText.Create(m_DX, m_Camera, BaseDirectory, KAssetDirectory + GameFontFileName);
 
-	m_DesignerUI.Create(m_DX, m_Camera);
-
 	m_MouseCursorImage.Create(m_DX, m_Camera);
 
 	m_RawPixelSetter.Create(m_DX);
@@ -220,18 +218,6 @@ void JWGame::Run() noexcept
 void JWGame::Terminate() noexcept
 {
 	m_IsRunning = false;
-}
-
-void JWGame::UpdateEntities() noexcept
-{
-	m_ECS.ExecuteSystems();
-}
-
-void JWGame::DrawDesignerUI() noexcept
-{
-	// Draw designer UI
-	m_DesignerUI.Draw();
-	m_DesignerUI.DrawMiniAxis();
 }
 
 void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept

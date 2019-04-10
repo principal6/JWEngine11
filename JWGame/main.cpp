@@ -40,12 +40,21 @@ int main()
 
 	myGame.ECS().CreateSharedImage2D(SPositionInt(160, 10), SSizeInt(100, 40)); // Shared Image2D #0
 
+	myGame.ECS().CreateSharedLineModel()
+		->Make3DGrid(50.0f, 50.0f, 1.0f);
+
 	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "grass.png"); //Shared Resource #1
 	myGame.ECS().CreateSharedResource(ESharedResourceType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #2
 	myGame.ECS().CreateSharedResourceFromSharedModel(2); //Shared Resource #3
 
 	myGame.ECS().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
+
+	auto& grid = myGame.ECS().CreateEntity();
+	grid.CreateComponentTransform()
+		->SetPosition(XMFLOAT3(0, 0, 0));
+	grid.CreateComponentRender()
+		->SetLineModel(myGame.ECS().GetSharedLineModel(0));
 
 	auto& jars = myGame.ECS().CreateEntity();
 	jars.CreateComponentTransform()
@@ -132,14 +141,14 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 
 	if (VK == VK_F2)
 	{
-		myGame.ECS().GetEntity(0)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
-		myGame.ECS().GetEntity(3)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
+		myGame.ECS().GetEntity(1)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
+		myGame.ECS().GetEntity(4)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
 	}
 
 	if (VK == VK_F3)
 	{
-		myGame.ECS().GetEntity(0)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
-		myGame.ECS().GetEntity(3)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
+		myGame.ECS().GetEntity(1)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
+		myGame.ECS().GetEntity(4)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
 	}
 }
 
@@ -147,12 +156,12 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 {
 	if (Character == '1')
 	{
-		myGame.ECS().GetEntity(3)->GetComponentRender()->PrevAnimation();
+		myGame.ECS().GetEntity(4)->GetComponentRender()->PrevAnimation();
 	}
 
 	if (Character == '2')
 	{
-		myGame.ECS().GetEntity(3)->GetComponentRender()->NextAnimation();
+		myGame.ECS().GetEntity(4)->GetComponentRender()->NextAnimation();
 	}
 }
 
@@ -200,13 +209,13 @@ JW_FUNCTION_ON_INPUT(OnInput)
 JW_FUNCTION_ON_RENDER(OnRender)
 {
 	// Skybox
-	myGame.ECS().GetEntity(4)->GetComponentTransform()->SetPosition(XMFLOAT3(
+	myGame.ECS().GetEntity(5)->GetComponentTransform()->SetPosition(XMFLOAT3(
 		myGame.Camera().GetPositionFloat4().x, myGame.Camera().GetPositionFloat4().y, myGame.Camera().GetPositionFloat4().z));
 
-	myGame.DrawDesignerUI();
+	// ECS
+	myGame.ECS().ExecuteSystems();
 
-	myGame.UpdateEntities();
-
+	// FPS
 	myGame.DrawInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()), XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
 	
 	// Sprite info
