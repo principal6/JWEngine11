@@ -411,9 +411,6 @@
     <ClInclude Include="..\Shaders\BaseHeader.hlsl">
       <Filter>Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="..\Shaders\ColorHeader.hlsl">
-      <Filter>Shaders</Filter>
-    </ClInclude>
     <ClInclude Include="..\ECS\JWECS.h">
       <Filter>ECS</Filter>
     </ClInclude>

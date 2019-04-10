@@ -27,10 +27,6 @@ namespace JWEngine
 
 		void UpdateLines() noexcept;
 
-	private:
-		// Called by UpdateVertices()
-		void UpdateVertexBuffer() noexcept;
-
 	public:
 		static constexpr float		KAxisLength = 1000.0f;
 		static constexpr XMFLOAT4	KXAxisColor = XMFLOAT4(1, 0, 0, 1); // X = R

@@ -186,11 +186,6 @@ void JWLine::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2 Leng
 
 void JWLine::UpdateLines() noexcept
 {
-	UpdateVertexBuffer();
-}
-
-PRIVATE void JWLine::UpdateVertexBuffer() noexcept
-{
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
 	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
 	{
