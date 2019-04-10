@@ -239,35 +239,17 @@ JW_FUNCTION_ON_RENDER(OnRender)
 
 	// Sprite info
 	const auto& anim_state = myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->AnimationState;
-
-	// FPS
-	myGame.InstantText().BeginRendering();
-	myGame.InstantText().RenderInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()),
-		XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
-	myGame.InstantText().RenderInstantText("ANY 1",
-		XMFLOAT2(10, 30), XMFLOAT3(0, 0.2f, 0.8f));
-	myGame.InstantText().RenderInstantText("ANY 2 ",
-		XMFLOAT2(10, 50), XMFLOAT3(0, 0.2f, 0.8f));
-	myGame.InstantText().RenderInstantText("ANY 3",
-		XMFLOAT2(10, 70), XMFLOAT3(0, 0.2f, 0.8f));
-	myGame.InstantText().RenderInstantText("ANY 4",
-		XMFLOAT2(10, 90), XMFLOAT3(0, 0.2f, 0.8f));
-	myGame.InstantText().RenderInstantText("ANY 5",
-		XMFLOAT2(10, 110), XMFLOAT3(0, 0.2f, 0.8f));
 	
-	/*
-	myGame.InstantText().RenderInstantText("Animation ID: " + ConvertIntToSTRING(anim_state.CurrAnimationID),
-		XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));
-	myGame.InstantText().RenderInstantText("Animation Current time	: " + ConvertFloatToSTRING(anim_state.CurrFrameTime),
-		XMFLOAT2(10, 50), XMFLOAT3(0, 0.5f, 0.7f));
-	myGame.InstantText().RenderInstantText("Animation Next time		: " + ConvertFloatToSTRING(anim_state.NextFrameTime),
-		XMFLOAT2(10, 70), XMFLOAT3(0, 0.5f, 0.7f));
-	myGame.InstantText().RenderInstantText("Animation Delta time	: " + ConvertFloatToSTRING(anim_state.TweeningTime),
-		XMFLOAT2(10, 90), XMFLOAT3(0, 0.5f, 0.7f));
-	myGame.InstantText().RenderInstantText("Ray Destination: ( "
+	// Text
+	myGame.InstantText().BeginRendering();
+	myGame.InstantText().RenderText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()),
+		XMFLOAT2(10, 10), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText("Animation ID: " + ConvertIntToSTRING(anim_state.CurrAnimationID),
+		XMFLOAT2(10, 30), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText("Ray Destination: ( "
 		+ ConvertFloatToSTRING(ray_dest.x) + ", "
 		+ ConvertFloatToSTRING(ray_dest.y) + ", "
 		+ ConvertFloatToSTRING(ray_dest.z) + " )"
-		, XMFLOAT2(10, 110), XMFLOAT3(0, 0.5f, 0.7f));
-	*/
+		, XMFLOAT2(10, 50), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
+	myGame.InstantText().EndRendering();
 }

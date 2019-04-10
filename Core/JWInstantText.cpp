@@ -141,18 +141,16 @@ void JWInstantText::BeginRendering() noexcept
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
 	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
-}
-
-void JWInstantText::RenderInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
-{
-	// Update PS constant buffer (font color)
-	m_TextColor._RGBA = XMFLOAT4(FontColorRGB.x, FontColorRGB.y, FontColorRGB.z, 1);
-	m_pDX->GetDeviceContext()->UpdateSubresource(m_PSInstantTextCB, 0, nullptr, &m_TextColor, 0, 0);
-	m_pDX->GetDeviceContext()->PSSetConstantBuffers(0, 1, &m_PSInstantTextCB);
 
 	// Empty the vertex data
 	m_VertexData.EmptyData();
-	
+
+	// Initialize text length
+	m_CurrentTextLength = 0;
+}
+
+void JWInstantText::RenderText(STRING Text, XMFLOAT2 Position, XMFLOAT4 FontColorRGB) noexcept
+{
 	float window_width_half = static_cast<float>(m_pDX->GetWindowSize().Width) / 2;
 	float window_height_half = static_cast<float>(m_pDX->GetWindowSize().Height) / 2;
 	float texture_width = m_FontParser.GetFontTextureWidth();
@@ -164,7 +162,7 @@ void JWInstantText::RenderInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 F
 	BMFont::BMChar current_bm_char{};
 
 	WSTRING wide_text = StringToWstring(Text);
-	size_t iterator_index{};
+	size_t iterator_index{ m_CurrentTextLength * 4 };
 	for (auto iterator_char : wide_text)
 	{
 		current_bm_char = m_FontParser.GetBMCharFromWideCharacter(iterator_char);
@@ -183,23 +181,35 @@ void JWInstantText::RenderInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 F
 		m_VertexData.vVertices[iterator_index * 4].Position.y = y1;
 		m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.x = u1;
 		m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.y = v1;
+		m_VertexData.vVertices[iterator_index * 4].ColorDiffuse = FontColorRGB;
+
 		m_VertexData.vVertices[iterator_index * 4 + 1].Position.x = x2;
 		m_VertexData.vVertices[iterator_index * 4 + 1].Position.y = y1;
 		m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.x = u2;
 		m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.y = v1;
+		m_VertexData.vVertices[iterator_index * 4 + 1].ColorDiffuse = FontColorRGB;
+
 		m_VertexData.vVertices[iterator_index * 4 + 2].Position.x = x1;
 		m_VertexData.vVertices[iterator_index * 4 + 2].Position.y = y2;
 		m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.x = u1;
 		m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.y = v2;
+		m_VertexData.vVertices[iterator_index * 4 + 2].ColorDiffuse = FontColorRGB;
+
 		m_VertexData.vVertices[iterator_index * 4 + 3].Position.x = x2;
 		m_VertexData.vVertices[iterator_index * 4 + 3].Position.y = y2;
 		m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.x = u2;
 		m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.y = v2;
+		m_VertexData.vVertices[iterator_index * 4 + 3].ColorDiffuse = FontColorRGB;
 
 		base_x_position += current_bm_char.XAdvance;
 		++iterator_index;
 	}
-	
+
+	m_CurrentTextLength += wide_text.length();
+}
+
+void JWInstantText::EndRendering() noexcept
+{
 	// Update vertex buffer
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
 	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
@@ -208,7 +218,7 @@ void JWInstantText::RenderInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 F
 
 		m_pDX->GetDeviceContext()->Unmap(m_VertexBuffer, 0);
 	}
-	
+
 	// Set IA primitive topology
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

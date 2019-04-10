@@ -9,7 +9,7 @@ namespace JWEngine
 	class JWDX;
 	class JWCamera;
 	
-	static constexpr uint16_t KMaxInsantTextLength = 256;
+	static constexpr uint16_t KMaxInsantTextLength = 2048;
 
 	struct SPSInstantTextCBData
 	{
@@ -28,7 +28,8 @@ namespace JWEngine
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept;
 
 		void BeginRendering() noexcept;
-		void RenderInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
+		void RenderText(STRING Text, XMFLOAT2 Position, XMFLOAT4 FontColorRGB) noexcept;
+		void EndRendering() noexcept;
 
 	private:
 		void CreateInstantTextVertexBuffer() noexcept;
@@ -59,5 +60,6 @@ namespace JWEngine
 
 		SPSInstantTextCBData		m_TextColor{};
 		ID3D11ShaderResourceView*	m_TextureShaderResourceView{};
+		uint64_t					m_CurrentTextLength{};
 	};
 }
