@@ -27,7 +27,8 @@ namespace JWEngine
 
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept;
 
-		void DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
+		void BeginRendering() noexcept;
+		void RenderInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
 
 	private:
 		void CreateInstantTextVertexBuffer() noexcept;

@@ -137,7 +137,7 @@ void JWLineModel::AddEnd() noexcept
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
-void JWLineModel::SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept
+auto JWLineModel::SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept->JWLineModel*
 {
 	if (m_VertexData.GetCount())
 	{
@@ -152,9 +152,11 @@ void JWLineModel::SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3
 			m_VertexData.vVertices[Line3DIndex * 2 + 1].ColorDiffuse = Color;
 		}
 	}
+
+	return this;
 }
 
-void JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept
+auto JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Color) noexcept->JWLineModel*
 {
 	if (m_VertexData.GetCount())
 	{
@@ -177,6 +179,8 @@ void JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2
 			m_VertexData.vVertices[Line2DIndex * 2 + 1].ColorDiffuse = Color;
 		}
 	}
+
+	return this;
 }
 
 void JWLineModel::UpdateLines() noexcept

@@ -49,10 +49,28 @@ void JWECS::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
 	m_SystemLight.CreateSystem(DX);
 }
 
-auto JWECS::CreateEntity() noexcept->JWEntity&
+auto JWECS::CreateEntity(STRING EntityName) noexcept->JWEntity*
 {
-	m_vpEntities.push_back(new JWEntity(this));
-	return *m_vpEntities[m_vpEntities.size() - 1];
+	if (m_vpEntities.size())
+	{
+		for (auto& iter : m_vpEntities)
+		{
+			if (iter->GetEntityName().compare(EntityName) == 0)
+			{
+				// Duplicate name cannot be used!
+				MessageBoxA(nullptr, "엔티티 이름이 중복되었습니다. 다른 이름을 써 주세요.", "오류", MB_OK);
+
+				return nullptr;
+			}
+		}
+	}
+
+	m_vpEntities.push_back(new JWEntity(this, EntityName));
+	
+	uint64_t index = m_vpEntities.size() - 1;
+	m_mapEntityNames.insert(std::make_pair(EntityName, index));
+
+	return m_vpEntities[index];
 }
 
 auto JWECS::GetEntity(uint32_t index) noexcept->JWEntity*
@@ -64,6 +82,28 @@ auto JWECS::GetEntity(uint32_t index) noexcept->JWEntity*
 		result = m_vpEntities[index];
 	}
 
+	return result;
+}
+
+auto JWECS::GetEntityByName(STRING EntityName) noexcept->JWEntity*
+{
+	JWEntity* result{};
+
+	if (m_vpEntities.size())
+	{
+		auto find = m_mapEntityNames.find(EntityName);
+		if (find != m_mapEntityNames.end())
+		{
+			auto index = find->second;
+
+			result = m_vpEntities[index];
+		}
+		else
+		{
+			MessageBoxA(nullptr, "엔티티 이름이 잘못되었습니다.", "오류", MB_OK);
+		}
+	}
+	
 	return result;
 }
 

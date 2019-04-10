@@ -30,8 +30,9 @@ namespace JWEngine
 		// Called in JWGame class
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
 
-		auto CreateEntity() noexcept->JWEntity&;
+		auto CreateEntity(STRING EntityName) noexcept->JWEntity*;
 		auto GetEntity(uint32_t index) noexcept->JWEntity*;
+		auto GetEntityByName(STRING EntityName) noexcept->JWEntity*;
 		void DestroyEntity(uint32_t index) noexcept;
 
 		void CreateSharedResource(ESharedResourceType Type, STRING FileName) noexcept;
@@ -75,14 +76,15 @@ namespace JWEngine
 		void BakeCurrentFrameIntoTexture(uint32_t StartIndex, const XMMATRIX* FrameMatrices, float*& OutData) noexcept;
 
 	private:
-		JWDX*				m_pDX{};
-		STRING				m_BaseDirectory{};
+		JWDX*					m_pDX{};
+		STRING					m_BaseDirectory{};
 
-		JWSystemTransform	m_SystemTransform{};
-		JWSystemRender		m_SystemRender{};
-		JWSystemLight		m_SystemLight{};
+		JWSystemTransform		m_SystemTransform{};
+		JWSystemRender			m_SystemRender{};
+		JWSystemLight			m_SystemLight{};
 
-		VECTOR<JWEntity*>	m_vpEntities;
+		VECTOR<JWEntity*>		m_vpEntities;
+		MAP<STRING, uint64_t>	m_mapEntityNames;
 
 		// Shared resources(texture, model data, animation texture)
 		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;

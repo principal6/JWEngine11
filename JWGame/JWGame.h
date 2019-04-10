@@ -52,8 +52,6 @@ namespace JWEngine
 		void Run() noexcept;
 		void Terminate() noexcept;
 
-		void DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
-
 	private:
 		bool					m_IsCreated{ false };
 		bool					m_IsWindowCreated{ false };

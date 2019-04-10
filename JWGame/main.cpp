@@ -59,78 +59,78 @@ int main()
 
 	myGame.ECS().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 
-	auto& grid = myGame.ECS().CreateEntity();
-	grid.CreateComponentRender()
+	auto grid = myGame.ECS().CreateEntity("grid");
+	grid->CreateComponentRender()
 		->SetLineModel(myGame.ECS().GetSharedLineModel(0));
 
-	auto& jars = myGame.ECS().CreateEntity();
-	jars.CreateComponentTransform()
+	auto jars = myGame.ECS().CreateEntity("jars");
+	jars->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(10.0f, 0.0f, 0.0f))
 		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
-	jars.CreateComponentRender()
+	jars->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(0))
 		->SetRenderFlag(JWFlagRenderOption_UseLighting);
 
-	auto& ambient_light = myGame.ECS().CreateEntity();
-	ambient_light.CreateComponentLight()
+	auto ambient_light = myGame.ECS().CreateEntity("ambient_light");
+	ambient_light->CreateComponentLight()
 		->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
-	ambient_light.CreateComponentTransform()
+	ambient_light->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(0.0f, -5.0f, 0.0f));
-	ambient_light.CreateComponentRender()
+	ambient_light->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(1));
 
-	auto& directional_light = myGame.ECS().CreateEntity();
-	directional_light.CreateComponentLight()
+	auto directional_light = myGame.ECS().CreateEntity("directional_light");
+	directional_light->CreateComponentLight()
 		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5.0f, 5.0f, 0.0f), 0.6f);
-	directional_light.CreateComponentTransform()
+	directional_light->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(8.0f, 8.0f, 0.0f));
-	directional_light.CreateComponentRender()
+	directional_light->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(1));
 
-	auto& main_sprite = myGame.ECS().CreateEntity();
-	main_sprite.CreateComponentTransform()
+	auto main_sprite = myGame.ECS().CreateEntity("main_sprite");
+	main_sprite->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
 		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
-	main_sprite.CreateComponentRender()
+	main_sprite->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(2))
 		->SetTexture(myGame.ECS().GetSharedResource(3))
 		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
 		->SetAnimationTexture(myGame.ECS().GetAnimationTexture(0))
 		->SetAnimation(3);
 	
-	auto& sky_sphere = myGame.ECS().CreateEntity();
-	sky_sphere.CreateComponentTransform()
+	auto sky_sphere = myGame.ECS().CreateEntity("Sky");
+	sky_sphere->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	sky_sphere.CreateComponentRender()
+	sky_sphere->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(3))
 		->SetTexture(myGame.ECS().GetSharedResource(0))
 		->SetVertexShader(EVertexShader::VSSkyMap)
 		->SetPixelShader(EPixelShader::PSSkyMap);
 
-	auto& floor_plane = myGame.ECS().CreateEntity();
-	floor_plane.CreateComponentTransform()
+	auto floor_plane = myGame.ECS().CreateEntity("Floor");
+	floor_plane->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	floor_plane.CreateComponentRender()
+	floor_plane->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(4))
 		->SetTexture(myGame.ECS().GetSharedResource(1));
 
-	auto& image_gamma = myGame.ECS().CreateEntity();
-	image_gamma.CreateComponentRender()
+	auto image_gamma = myGame.ECS().CreateEntity("IMG_Gamma");
+	image_gamma->CreateComponentRender()
 		->SetImage2D(myGame.ECS().GetSharedImage2D(0))
 		->SetTexture(myGame.ECS().GetSharedResource(2));
 
-	auto& cam = myGame.ECS().CreateEntity();
-	cam.CreateComponentTransform()
+	auto cam = myGame.ECS().CreateEntity("Camera");
+	cam->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(0, 2, 0));
-	cam.CreateComponentRender()
+	cam->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(5));
 
-	auto& ray = myGame.ECS().CreateEntity();
-	ray.CreateComponentRender()
+	auto ray = myGame.ECS().CreateEntity("Ray");
+	ray->CreateComponentRender()
 		->SetLineModel(myGame.ECS().GetSharedLineModel(1));
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
@@ -152,14 +152,14 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 
 	if (VK == VK_F2)
 	{
-		myGame.ECS().GetEntity(1)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
-		myGame.ECS().GetEntity(4)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
+		myGame.ECS().GetEntityByName("jars")->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
+		myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
 	}
 
 	if (VK == VK_F3)
 	{
-		myGame.ECS().GetEntity(1)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
-		myGame.ECS().GetEntity(4)->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
+		myGame.ECS().GetEntityByName("jars")->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
+		myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
 	}
 }
 
@@ -167,12 +167,12 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 {
 	if (Character == '1')
 	{
-		myGame.ECS().GetEntity(4)->GetComponentRender()->PrevAnimation();
+		myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->PrevAnimation();
 	}
 
 	if (Character == '2')
 	{
-		myGame.ECS().GetEntity(4)->GetComponentRender()->NextAnimation();
+		myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->NextAnimation();
 	}
 }
 
@@ -220,20 +220,54 @@ JW_FUNCTION_ON_INPUT(OnInput)
 JW_FUNCTION_ON_RENDER(OnRender)
 {
 	// Skybox
-	myGame.ECS().GetEntity(5)->GetComponentTransform()->SetPosition(XMFLOAT3(
+	myGame.ECS().GetEntityByName("Sky")->GetComponentTransform()->SetPosition(XMFLOAT3(
 		myGame.Camera().GetPositionFloat4().x, myGame.Camera().GetPositionFloat4().y, myGame.Camera().GetPositionFloat4().z));
+
+	XMFLOAT3 ray_dest{};
+	auto cam_pos_vec = myGame.Camera().GetPosition();
+	XMMATRIX mat_rot = XMMatrixRotationY(XM_PIDIV4);
+	cam_pos_vec = XMVector3Transform(cam_pos_vec, mat_rot);
+	XMStoreFloat3(&ray_dest, cam_pos_vec);
+	
+	// Ray
+	myGame.ECS().GetEntityByName("Ray")->GetComponentRender()->PtrLine
+		->SetLine3D(0, XMFLOAT3(0, 0, 0), ray_dest, XMFLOAT4(1, 0, 0, 1))
+		->UpdateLines();
 
 	// ECS
 	myGame.ECS().ExecuteSystems();
 
-	// FPS
-	myGame.DrawInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()), XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
-	
 	// Sprite info
-	const auto& anim_state = myGame.ECS().GetEntity(4)->GetComponentRender()->AnimationState;
+	const auto& anim_state = myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->AnimationState;
 
-	myGame.DrawInstantText("Animation ID: " + ConvertIntToSTRING(anim_state.CurrAnimationID), XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));
-	myGame.DrawInstantText("Animation Current time	: " + ConvertFloatToSTRING(anim_state.CurrFrameTime), XMFLOAT2(10, 50), XMFLOAT3(0, 0.5f, 0.7f));
-	myGame.DrawInstantText("Animation Next time		: " + ConvertFloatToSTRING(anim_state.NextFrameTime), XMFLOAT2(10, 70), XMFLOAT3(0, 0.5f, 0.7f));
-	myGame.DrawInstantText("Animation Delta time	: " + ConvertFloatToSTRING(anim_state.TweeningTime), XMFLOAT2(10, 90), XMFLOAT3(0, 0.5f, 0.7f));
+	// FPS
+	myGame.InstantText().BeginRendering();
+	myGame.InstantText().RenderInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()),
+		XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
+	myGame.InstantText().RenderInstantText("ANY 1",
+		XMFLOAT2(10, 30), XMFLOAT3(0, 0.2f, 0.8f));
+	myGame.InstantText().RenderInstantText("ANY 2 ",
+		XMFLOAT2(10, 50), XMFLOAT3(0, 0.2f, 0.8f));
+	myGame.InstantText().RenderInstantText("ANY 3",
+		XMFLOAT2(10, 70), XMFLOAT3(0, 0.2f, 0.8f));
+	myGame.InstantText().RenderInstantText("ANY 4",
+		XMFLOAT2(10, 90), XMFLOAT3(0, 0.2f, 0.8f));
+	myGame.InstantText().RenderInstantText("ANY 5",
+		XMFLOAT2(10, 110), XMFLOAT3(0, 0.2f, 0.8f));
+	
+	/*
+	myGame.InstantText().RenderInstantText("Animation ID: " + ConvertIntToSTRING(anim_state.CurrAnimationID),
+		XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));
+	myGame.InstantText().RenderInstantText("Animation Current time	: " + ConvertFloatToSTRING(anim_state.CurrFrameTime),
+		XMFLOAT2(10, 50), XMFLOAT3(0, 0.5f, 0.7f));
+	myGame.InstantText().RenderInstantText("Animation Next time		: " + ConvertFloatToSTRING(anim_state.NextFrameTime),
+		XMFLOAT2(10, 70), XMFLOAT3(0, 0.5f, 0.7f));
+	myGame.InstantText().RenderInstantText("Animation Delta time	: " + ConvertFloatToSTRING(anim_state.TweeningTime),
+		XMFLOAT2(10, 90), XMFLOAT3(0, 0.5f, 0.7f));
+	myGame.InstantText().RenderInstantText("Ray Destination: ( "
+		+ ConvertFloatToSTRING(ray_dest.x) + ", "
+		+ ConvertFloatToSTRING(ray_dest.y) + ", "
+		+ ConvertFloatToSTRING(ray_dest.z) + " )"
+		, XMFLOAT2(10, 110), XMFLOAT3(0, 0.5f, 0.7f));
+	*/
 }

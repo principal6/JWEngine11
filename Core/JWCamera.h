@@ -48,6 +48,7 @@ namespace JWEngine
 
 		auto GetPosition() const noexcept->XMVECTOR;
 		auto GetPositionFloat4() const noexcept->XMFLOAT4;
+		auto GetPositionFloat3() const noexcept->XMFLOAT3;
 		auto GetLookAt() const noexcept->XMVECTOR;
 		auto GetForward() const noexcept->XMVECTOR;
 		auto GetRight() const noexcept->XMVECTOR;

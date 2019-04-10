@@ -117,8 +117,14 @@ PRIVATE void JWInstantText::LoadImageFromFile(STRING Directory, STRING FileName)
 	m_IsTextureCreated = true;
 }
 
-void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
+void JWInstantText::BeginRendering() noexcept
 {
+	// Set rasterizer state
+	m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
+
+	// Set blend state
+	m_pDX->SetBlendState(EBlendState::Transprent);
+
 	// Disable Z-buffer for 2D drawing
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
@@ -135,7 +141,10 @@ void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 Fon
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
 	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
+}
 
+void JWInstantText::RenderInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
+{
 	// Update PS constant buffer (font color)
 	m_TextColor._RGBA = XMFLOAT4(FontColorRGB.x, FontColorRGB.y, FontColorRGB.z, 1);
 	m_pDX->GetDeviceContext()->UpdateSubresource(m_PSInstantTextCB, 0, nullptr, &m_TextColor, 0, 0);

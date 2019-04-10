@@ -226,6 +226,13 @@ auto JWCamera::GetPositionFloat4() const noexcept->XMFLOAT4
 	return result;
 }
 
+auto JWCamera::GetPositionFloat3() const noexcept->XMFLOAT3
+{
+	XMFLOAT3 result{};
+	XMStoreFloat3(&result, m_CameraPosition);
+	return result;
+}
+
 auto JWCamera::GetLookAt() const noexcept->XMVECTOR
 {
 	return m_CameraLookAt;

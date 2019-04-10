@@ -223,21 +223,3 @@ void JWGame::Terminate() noexcept
 {
 	m_IsRunning = false;
 }
-
-void JWGame::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept
-{
-	if (m_RasterizerState == ERasterizerState::WireFrame)
-	{
-		ToggleWireFrame();
-
-		m_DX.SetBlendState(EBlendState::Transprent);
-		m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
-
-		ToggleWireFrame();
-	}
-	else
-	{
-		m_DX.SetBlendState(EBlendState::Transprent);
-		m_InstantText.DrawInstantText(Text, Position, FontColorRGB);
-	}	
-}
