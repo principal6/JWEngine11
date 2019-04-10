@@ -58,7 +58,7 @@ namespace JWEngine
 
 		JWModel*					PtrModel{};
 		JWImage*					PtrImage{};
-		JWLineModel*						PtrLine{};
+		JWLineModel*				PtrLine{};
 
 		ID3D11ShaderResourceView*	PtrTexture{};
 

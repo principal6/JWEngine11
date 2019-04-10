@@ -88,7 +88,7 @@ namespace JWEngine
 		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;
 		VECTOR<SAnimationTextureData>		m_vAnimationTextureData;
 		VECTOR<JWModel>						m_vSharedModel;
-		VECTOR<JWLineModel>						m_vSharedLineModel;
+		VECTOR<JWLineModel>					m_vSharedLineModel;
 		VECTOR<JWImage>						m_vSharedImage2D;
 	};
 };
