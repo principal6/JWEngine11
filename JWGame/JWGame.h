@@ -13,6 +13,9 @@
 
 namespace JWEngine
 {
+	static constexpr const char* KProjectName{ "JWGame" };
+	static constexpr const char* KLogFileName{ "Log.txt" };
+
 	using FP_ON_INPUT = void(*)(SDirectInputDeviceState&);
 	using FP_ON_RENDER = void(*)(void);
 
@@ -25,7 +28,7 @@ namespace JWEngine
 		JWGame() = default;
 		~JWGame() = default;
 
-		void Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING BaseDirectory, STRING GameFontFileName) noexcept;
+		void Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING GameFontFileName, JWLogger* PtrLogger = nullptr) noexcept;
 
 		void LoadCursorImage(STRING FileName) noexcept;
 
@@ -42,8 +45,9 @@ namespace JWEngine
 		auto InstantText() noexcept->JWInstantText&;
 		auto RawPixelSetter() noexcept->JWRawPixelSetter&;
 		auto ECS() noexcept->JWECS&;
-
+	
 		auto GetFPS() noexcept->int;
+		auto GetBaseDirectory() const noexcept { return m_BaseDirectory; }
 
 		void Run() noexcept;
 		void Terminate() noexcept;
@@ -51,10 +55,7 @@ namespace JWEngine
 		void DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 FontColorRGB) noexcept;
 
 	private:
-		void CheckValidity() const noexcept;
-
-	private:
-		bool					m_IsValid{ false };
+		bool					m_IsCreated{ false };
 		bool					m_IsWindowCreated{ false };
 		bool					m_IsDXCreated{ false };
 		bool					m_IsRunning{ false };
@@ -73,6 +74,7 @@ namespace JWEngine
 		JWCamera				m_Camera{};
 		JWInstantText			m_InstantText{};
 		JWRawPixelSetter		m_RawPixelSetter{};
+		JWLogger*				m_pLogger{};
 		JWECS					m_ECS{};
 
 		JWTimer					m_Timer{};

@@ -7,6 +7,7 @@
 using namespace JWEngine;
 
 static JWGame myGame;
+JWLogger myLogger;
 
 JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown);
 JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput);
@@ -19,8 +20,9 @@ int main()
 
 	// TODO:
 	// Instancing!
+	myLogger.InitializeTime();
 
-	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "C:\\Users\\JesusKim\\Documents\\GitHub\\JWEngine11\\", "megt20all");
+	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "megt20all", &myLogger);
 	//myGame.LoadCursorImage("cursor_default.png");
 
 	myGame.Camera()
@@ -129,7 +131,7 @@ int main()
 	myGame.SetFunctionOnRender(OnRender);
 
 	myGame.Run();
-
+	
 	return 0;
 }
 
@@ -220,7 +222,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	myGame.DrawInstantText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()), XMFLOAT2(10, 10), XMFLOAT3(0, 0.2f, 0.8f));
 	
 	// Sprite info
-	const auto& anim_state = myGame.ECS().GetEntity(3)->GetComponentRender()->AnimationState;
+	const auto& anim_state = myGame.ECS().GetEntity(4)->GetComponentRender()->AnimationState;
 
 	myGame.DrawInstantText("Animation ID: " + ConvertIntToSTRING(anim_state.CurrAnimationID), XMFLOAT2(10, 30), XMFLOAT3(0, 0.5f, 0.7f));
 	myGame.DrawInstantText("Animation Current time	: " + ConvertFloatToSTRING(anim_state.CurrFrameTime), XMFLOAT2(10, 50), XMFLOAT3(0, 0.5f, 0.7f));

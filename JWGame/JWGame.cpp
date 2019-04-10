@@ -2,34 +2,62 @@
 
 using namespace JWEngine;
 
-void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING BaseDirectory, STRING GameFontFileName) noexcept
+void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING GameFontFileName, JWLogger* PtrLogger) noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
+	m_pLogger = PtrLogger;
 
-	m_BaseDirectory = BaseDirectory;
+	LOG_METHOD();
+
+	assert(!m_IsCreated);
+
+	char current_directory[KMaxFileLength];
+	GetCurrentDirectory(KMaxFileLength, current_directory);
+
+	STRING base_directory = current_directory;
+	auto find_project_name = base_directory.find(KProjectName);
+	base_directory = base_directory.substr(0, find_project_name - 1);
+	base_directory += "\\";
+
+	LOG_ADD("Base directory: " + base_directory);
+
+	m_BaseDirectory = base_directory;
 
 	m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
 
 	m_Window.Create(WindowPosition, WindowSize, Title);
 	m_IsWindowCreated = true;
 
+	LOG_ADD("Window created");
+
 	m_DX.Create(m_Window, m_BaseDirectory);
 	m_DX.SetRasterizerState(ERasterizerState::SolidNoCull);
 	m_IsDXCreated = true;
+
+	LOG_ADD("DX created");
 	
 	m_Input.Create(m_Window.GethWnd(), m_Window.GethInstance());
 
+	LOG_ADD("Input created");
+
 	m_Camera.Create(m_DX);
 
-	m_InstantText.Create(m_DX, m_Camera, BaseDirectory, KAssetDirectory + GameFontFileName);
+	LOG_ADD("Camera created");
+
+	m_InstantText.Create(m_DX, m_Camera, m_BaseDirectory, KAssetDirectory + GameFontFileName);
+
+	LOG_ADD("Instant text created");
 
 	m_MouseCursorImage.Create(m_DX, m_Camera);
 
 	m_RawPixelSetter.Create(m_DX);
 
-	m_ECS.Create(m_DX, m_Camera, BaseDirectory);
+	m_ECS.Create(m_DX, m_Camera, m_BaseDirectory);
 
-	m_IsValid = true;
+	LOG_ADD("ECS created");
+
+	m_IsCreated = true;
+
+	LOG_METHOD_FINISH();
 }
 
 void JWGame::LoadCursorImage(STRING FileName) noexcept
@@ -41,41 +69,25 @@ void JWGame::LoadCursorImage(STRING FileName) noexcept
 
 void JWGame::SetFunctionOnRender(FP_ON_RENDER Function) noexcept
 {
-	if (Function == nullptr)
-	{
-		JWAbort("FP_ON_RENDER Function is nullptr.");
-	}
-
+	assert(Function);
 	m_fpOnRender = Function;
 }
 
 void JWGame::SetFunctionOnInput(FP_ON_INPUT Function) noexcept
 {
-	if (Function == nullptr)
-	{
-		JWAbort("FP_ON_INPUT Function is nullptr.");
-	}
-
+	assert(Function);
 	m_fpOnInput = Function;
 }
 
 void JWGame::SetFunctionOnWindowsKeyDown(FP_ON_WINDOWS_KEY_DOWN Function) noexcept
 {
-	if (Function == nullptr)
-	{
-		JWAbort("FP_ON_WINDOWS_KEYDOWN Function is nullptr.");
-	}
-
+	assert(Function);
 	m_Window.SetOnWindowsKeyDownFunction(Function);
 }
 
 void JWGame::SetFunctionOnWindowsCharInput(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept
 {
-	if (Function == nullptr)
-	{
-		JWAbort("FP_ON_WINDOWS_CHAR_INPUT Function is nullptr.");
-	}
-
+	assert(Function);
 	m_Window.SetOnWindowsCharInputFunction(Function);
 }
 
@@ -124,25 +136,13 @@ auto JWGame::GetFPS() noexcept->int
 	return m_FPS;
 }
 
-PRIVATE void JWGame::CheckValidity() const noexcept
-{
-	if (!m_IsWindowCreated)
-	{
-		JWAbort("Win32 window not created.\nYou must call JWGame::Create()");
-	}
-	if (!m_IsDXCreated)
-	{
-		JWAbort("DirectX objects not created.\nYou must call JWGame::Create()");
-	}
-	if (!m_fpOnRender)
-	{
-		JWAbort("m_pMainLoop is nullptr.\nYou must call JWGame::SetFunctionOnRender()");
-	}
-}
-
 void JWGame::Run() noexcept
 {
-	CheckValidity();
+	LOG_METHOD();
+
+	assert(m_IsWindowCreated);
+	assert(m_IsDXCreated);
+	assert(m_fpOnRender);
 
 	m_IsRunning = true;
 
@@ -213,6 +213,10 @@ void JWGame::Run() noexcept
 			}
 		}
 	}
+
+	LOG_METHOD_FINISH();
+
+	LOG_SAVE(m_BaseDirectory);
 }
 
 void JWGame::Terminate() noexcept

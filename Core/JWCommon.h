@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
 #include <Windows.h>
 #include <vector>
 #include <memory>
@@ -93,6 +94,13 @@
 		return STRING(temp);
 	}
 
+	inline auto ConvertLongLongToSTRING(long long value)->STRING
+	{
+		char temp[255]{};
+		sprintf_s(temp, "%lld", value);
+		return STRING(temp);
+	}
+
 	inline auto ConvertFloatToSTRING(float value)->STRING
 	{
 		char temp[255]{};
@@ -131,7 +139,7 @@ namespace JWEngine
 	static constexpr XMFLOAT4 KDefaultColorNormals{ XMFLOAT4(0.4f, 0.8f, 0.0f, 1.0f) };
 	static constexpr XMFLOAT3 KDefaultColorGrid{ XMFLOAT3(1.0f, 1.0f, 1.0f) };
 	static constexpr size_t KSizeTInvalid{ MAXSIZE_T };
-
+	
 	inline void JWAbort(const char* Content)
 	{
 		MessageBoxA(nullptr, Content, "Error", MB_OK);
@@ -589,4 +597,53 @@ namespace JWEngine
 
 		XMFLOAT4 CameraPosition{};
 	};
+
+	class JWLogger
+	{
+	public:
+		void InitializeTime() noexcept
+		{
+			m_LastTimePoint = m_Clock.now();
+		}
+
+		void LogPause(STRING Content) noexcept
+		{
+			AddLog(Content);
+			system("pause");
+		}
+
+		void AddLog(STRING Content) noexcept
+		{
+			auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_Clock.now() - m_LastTimePoint);
+			m_LastTimePoint = m_Clock.now();
+
+			STRING log = "[LOG #" + ConvertIntToSTRING(m_LogIndex) + "] " + Content 
+				+ "\t( " + ConvertLongLongToSTRING(elapsed_ms.count()) + " ms elapsed. )\n";
+
+			std::cout << log;
+			m_LogText.append(log);
+
+			++m_LogIndex;
+		}
+
+		void SaveLog(STRING Directory) noexcept
+		{
+			std::ofstream file;
+			file.open(Directory + "LOG.txt");
+			file << m_LogText;
+			file.close();
+		}
+
+	private:
+		STRING		m_LogText{};
+		uint32_t	m_LogIndex{};
+
+		std::chrono::steady_clock m_Clock{};
+		std::chrono::time_point<std::chrono::steady_clock> m_LastTimePoint{};
+	};
+
+#define LOG_METHOD() { if (m_pLogger) { m_pLogger->AddLog("===" + STRING(typeid(*this).name()) + "::" + __func__ + "() called ==="); } }
+#define LOG_ADD(Content) { if (m_pLogger) { m_pLogger->AddLog(Content); } }
+#define LOG_SAVE(BaseDirectory) { if (m_pLogger) { m_pLogger->SaveLog(BaseDirectory); } }
+#define LOG_METHOD_FINISH() { if (m_pLogger) { m_pLogger->AddLog("===" + STRING(typeid(*this).name()) + "::" + __func__ + "() finished ==="); } }
 };
