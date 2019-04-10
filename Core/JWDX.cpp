@@ -26,11 +26,10 @@ JWDX::~JWDX()
 	JW_RELEASE(m_PSCBCamera);
 	JW_RELEASE(m_PSCBLights);
 	JW_RELEASE(m_PSCBFlags);
-	JW_RELEASE(m_VSCBColor);
 	JW_RELEASE(m_VSCBGPUAnimation);
 	JW_RELEASE(m_VSCBCPUAnimation);
-	JW_RELEASE(m_VSCBRigged);
-	JW_RELEASE(m_VSCBStatic);
+	JW_RELEASE(m_VSCBFlags);
+	JW_RELEASE(m_VSCBSpace);
 	JW_RELEASE(m_PSColor);
 	JW_RELEASE(m_PSColorBuffer);
 	JW_RELEASE(m_PSSkyMap);
@@ -256,23 +255,20 @@ PRIVATE void JWDX::CreateVSCBs() noexcept
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
 	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SVSCBStatic);
+	constant_buffer_description.ByteWidth = sizeof(SVSCBSpace);
 	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	constant_buffer_description.CPUAccessFlags = 0;
 	constant_buffer_description.MiscFlags = 0;
-	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBStatic);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBSpace);
 
-	constant_buffer_description.ByteWidth = sizeof(SVSCBRigged);
-	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBRigged);
+	constant_buffer_description.ByteWidth = sizeof(SVSCBFlags);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBFlags);
 
 	constant_buffer_description.ByteWidth = sizeof(SVSCBCPUAnimation);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBCPUAnimation);
 
 	constant_buffer_description.ByteWidth = sizeof(SVSCBGPUAnimation);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBGPUAnimation);
-
-	constant_buffer_description.ByteWidth = sizeof(SVSCBColor);
-	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBColor);
 }
 
 PRIVATE void JWDX::CreatePSColor() noexcept
@@ -613,20 +609,20 @@ void JWDX::SetPS(EPixelShader PS) noexcept
 	}
 }
 
-void JWDX::UpdateVSCBStatic(SVSCBStatic& Data) noexcept
+void JWDX::UpdateVSCBSpace(SVSCBSpace& Data) noexcept
 {
-	m_VSCBStaticData = Data;
+	m_VSCBSpaceData = Data;
 
-	m_DeviceContext11->UpdateSubresource(m_VSCBStatic, 0, nullptr, &m_VSCBStaticData, 0, 0);
-	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBStatic);
+	m_DeviceContext11->UpdateSubresource(m_VSCBSpace, 0, nullptr, &m_VSCBSpaceData, 0, 0);
+	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBSpace);
 }
 
-void JWDX::UpdateVSCBRigged(SVSCBRigged& Data) noexcept
+void JWDX::UpdateVSCBFlags(SVSCBFlags& Data) noexcept
 {
-	m_VSCBRiggedData = Data;
+	m_VSCBFlagsData = Data;
 
-	m_DeviceContext11->UpdateSubresource(m_VSCBRigged, 0, nullptr, &m_VSCBRiggedData, 0, 0);
-	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBRigged);
+	m_DeviceContext11->UpdateSubresource(m_VSCBFlags, 0, nullptr, &m_VSCBFlagsData, 0, 0);
+	m_DeviceContext11->VSSetConstantBuffers(1, 1, &m_VSCBFlags);
 }
 
 void JWDX::UpdateVSCBCPUAnimation(SVSCBCPUAnimation& Data) noexcept
@@ -634,7 +630,7 @@ void JWDX::UpdateVSCBCPUAnimation(SVSCBCPUAnimation& Data) noexcept
 	m_VSCBCPUAnimationData = Data;
 
 	m_DeviceContext11->UpdateSubresource(m_VSCBCPUAnimation, 0, nullptr, &m_VSCBCPUAnimationData, 0, 0);
-	m_DeviceContext11->VSSetConstantBuffers(1, 1, &m_VSCBCPUAnimation);
+	m_DeviceContext11->VSSetConstantBuffers(2, 1, &m_VSCBCPUAnimation);
 }
 
 void JWDX::UpdateVSCBGPUAnimation(SVSCBGPUAnimation& Data) noexcept
@@ -642,7 +638,7 @@ void JWDX::UpdateVSCBGPUAnimation(SVSCBGPUAnimation& Data) noexcept
 	m_VSCBGPUAnimationData = Data;
 
 	m_DeviceContext11->UpdateSubresource(m_VSCBGPUAnimation, 0, nullptr, &m_VSCBGPUAnimationData, 0, 0);
-	m_DeviceContext11->VSSetConstantBuffers(2, 1, &m_VSCBGPUAnimation);
+	m_DeviceContext11->VSSetConstantBuffers(3, 1, &m_VSCBGPUAnimation);
 }
 
 void JWDX::UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept
@@ -683,14 +679,6 @@ void JWDX::UpdatePSCBCamera(XMFLOAT4 CameraPosition) noexcept
 
 	m_DeviceContext11->UpdateSubresource(m_PSCBCamera, 0, nullptr, &m_PSCBCameraData, 0, 0);
 	m_DeviceContext11->PSSetConstantBuffers(2, 1, &m_PSCBCamera);
-}
-
-void JWDX::UpdateColorVSCB(SVSCBColor& Data) noexcept
-{
-	m_VSCBColorData = Data;
-
-	m_DeviceContext11->UpdateSubresource(m_VSCBColor, 0, nullptr, &m_VSCBColorData, 0, 0);
-	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBColor);
 }
 
 void JWDX::BeginDrawing(const SClearColor& ClearColor) noexcept

@@ -20,13 +20,13 @@ void JWImageCursor::Create(JWDX& DX, JWCamera& Camera) noexcept
 	m_pDX = &DX;
 	m_pCamera = &Camera;
 
-	m_VertexData.vVertices.push_back(SStaticModelVertex(0, 0, 0, 0, 0));
-	m_VertexData.vVertices.push_back(SStaticModelVertex(1, 0, 0, 1, 0));
-	m_VertexData.vVertices.push_back(SStaticModelVertex(0, -1, 0, 0, 1));
-	m_VertexData.vVertices.push_back(SStaticModelVertex(1, -1, 0, 1, 1));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(0, 0, 0, 0, 0));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(1, 0, 0, 1, 0));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(0, -1, 0, 0, 1));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(1, -1, 0, 1, 1));
 
-	m_IndexData.vIndices.push_back(SIndex3(0, 1, 2));
-	m_IndexData.vIndices.push_back(SIndex3(1, 3, 2));
+	m_IndexData.vIndices.push_back(SIndexTriangle(0, 1, 2));
+	m_IndexData.vIndices.push_back(SIndexTriangle(1, 3, 2));
 
 	// Create vertex buffer
 	m_pDX->CreateDynamicVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);
@@ -121,8 +121,8 @@ void JWImageCursor::Draw() noexcept
 	m_pDX->SetPS(EPixelShader::PSBase);
 
 	// Update VS constant buffer (WVP matrix, which in reality is WO matrix.)
-	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
-	m_pDX->UpdateVSCBStatic(m_VSCBStatic);
+	m_VSCBSpace.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
+	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);

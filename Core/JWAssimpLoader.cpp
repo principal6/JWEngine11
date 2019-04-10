@@ -367,7 +367,7 @@ PRIVATE void JWAssimpLoader::ExtractBone(const aiBone* paiBone, int VertexOffset
 	}
 }
 
-PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTree, SRiggedModelVertexData& OutVertexData) noexcept
+PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTree, SVertexDataRiggedModel& OutVertexData) noexcept
 {
 	for (const auto& bone : BoneTree.vBones)
 	{

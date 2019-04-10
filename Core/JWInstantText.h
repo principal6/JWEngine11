@@ -49,10 +49,10 @@ namespace JWEngine
 
 		ID3D11Buffer* m_VertexBuffer{};
 		ID3D11Buffer* m_IndexBuffer{};
-		SStaticModelVertexData m_VertexData{};
-		SModelIndexData m_IndexData{};
+		SVertexDataStaticModel m_VertexData{};
+		SIndexDataTriangle m_IndexData{};
 
-		SVSCBStatic	m_VSCBStatic{};
+		SVSCBSpace	m_VSCBSpace{};
 		ID3D11PixelShader* m_PSInstantText{};
 		ID3D11Buffer* m_PSInstantTextCB{};
 

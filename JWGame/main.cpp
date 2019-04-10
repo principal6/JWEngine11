@@ -109,7 +109,7 @@ int main()
 
 	auto& cam = myGame.ECS().CreateEntity();
 	cam.CreateComponentTransform()
-		->SetPosition(XMFLOAT3(0, 5, 0));
+		->SetPosition(XMFLOAT3(0, 2, 0));
 	cam.CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(5));
 

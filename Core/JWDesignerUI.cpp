@@ -46,10 +46,10 @@ PRIVATE void JWDesignerUI::MakeGrid(float XSize, float ZSize, float GridInterval
 
 		if (position_z)
 		{
-			AddVertex(SColorVertex(-XSize / 2.0f, 0, position_z));
-			AddVertex(SColorVertex(+XSize / 2.0f, 0, position_z));
+			AddVertex(SVertexColor(-XSize / 2.0f, 0, position_z));
+			AddVertex(SVertexColor(+XSize / 2.0f, 0, position_z));
 
-			AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
+			AddIndex(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 
 			++total_grid_count;
 		}
@@ -60,44 +60,44 @@ PRIVATE void JWDesignerUI::MakeGrid(float XSize, float ZSize, float GridInterval
 		
 		if (position_x)
 		{
-			AddVertex(SColorVertex(position_x, 0, -ZSize / 2.0f));
-			AddVertex(SColorVertex(position_x, 0, +ZSize / 2.0f));
+			AddVertex(SVertexColor(position_x, 0, -ZSize / 2.0f));
+			AddVertex(SVertexColor(position_x, 0, +ZSize / 2.0f));
 
-			AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
+			AddIndex(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 
 			++total_grid_count;
 		}
 	}
 
 	// X Axis
-	AddVertex(SColorVertex(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
-	AddVertex(SColorVertex(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
-	AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
+	AddVertex(SVertexColor(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
+	AddVertex(SVertexColor(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
+	AddIndex(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 	++total_grid_count;
 
 	// Y Axis
-	AddVertex(SColorVertex(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
-	AddVertex(SColorVertex(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
-	AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
+	AddVertex(SVertexColor(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
+	AddVertex(SVertexColor(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
+	AddIndex(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 	++total_grid_count;
 
 	// Z Axis
-	AddVertex(SColorVertex(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
-	AddVertex(SColorVertex(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
-	AddIndex(SIndex2(total_grid_count * 2, total_grid_count * 2 + 1));
+	AddVertex(SVertexColor(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
+	AddVertex(SVertexColor(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
+	AddIndex(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 	++total_grid_count;
 
 	AddEnd();
 }
 
-PRIVATE auto JWDesignerUI::AddVertex(const SColorVertex& Vertex) noexcept->JWDesignerUI&
+PRIVATE auto JWDesignerUI::AddVertex(const SVertexColor& Vertex) noexcept->JWDesignerUI&
 {
 	m_VertexData.vVertices.push_back(Vertex);
 
 	return *this;
 }
 
-PRIVATE auto JWDesignerUI::AddIndex(const SIndex2& Index) noexcept->JWDesignerUI&
+PRIVATE auto JWDesignerUI::AddIndex(const SIndexLine& Index) noexcept->JWDesignerUI&
 {
 	m_IndexData.vIndices.push_back(Index);
 
@@ -117,9 +117,9 @@ PRIVATE void JWDesignerUI::MakeMiniAxis() noexcept
 {
 	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
 
-	m_MiniAxis.AddLine(SLineData(XMFLOAT2(window_width - 60.0f, 60.0f), XMFLOAT2(20, 0), KXAxisColor));
-	m_MiniAxis.AddLine(SLineData(XMFLOAT2(window_width - 60.0f, 60.0f), XMFLOAT2(0, 20), KYAxisColor));
-	m_MiniAxis.AddLine(SLineData(XMFLOAT2(window_width - 60.0f, 60.0f), XMFLOAT2(14, 14), KZAxisColor));
+	m_MiniAxis.AddLine(SLineRawData(XMFLOAT2(window_width - 60.0f, 60.0f), XMFLOAT2(20, 0), KXAxisColor));
+	m_MiniAxis.AddLine(SLineRawData(XMFLOAT2(window_width - 60.0f, 60.0f), XMFLOAT2(0, 20), KYAxisColor));
+	m_MiniAxis.AddLine(SLineRawData(XMFLOAT2(window_width - 60.0f, 60.0f), XMFLOAT2(14, 14), KZAxisColor));
 	m_MiniAxis.AddEnd();
 }
 
@@ -136,8 +136,8 @@ PRIVATE void JWDesignerUI::Update() noexcept
 	m_pDX->SetPS(EPixelShader::PSColor);
 
 	// Set VS constant buffer
-	m_VSCBColorData.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetViewProjectionMatrix());
-	m_pDX->UpdateColorVSCB(m_VSCBColorData);
+	m_VSCBSpaceData.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetViewProjectionMatrix());
+	m_pDX->UpdateVSCBSpace(m_VSCBSpaceData);
 }
 
 void JWDesignerUI::Draw() noexcept

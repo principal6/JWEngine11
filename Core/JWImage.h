@@ -22,8 +22,8 @@ namespace JWEngine
 	public:
 		ID3D11Buffer*				m_VertexBuffer{};
 		ID3D11Buffer*				m_IndexBuffer{};
-		SStaticModelVertexData		m_VertexData{};
-		SModelIndexData				m_IndexData{};
+		SVertexDataStaticModel		m_VertexData{};
+		SIndexDataTriangle				m_IndexData{};
 
 	private:
 		void UpdateScreenPositionAndSize() noexcept;

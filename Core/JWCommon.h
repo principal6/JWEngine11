@@ -206,32 +206,32 @@ namespace JWEngine
 		{ "COLOR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
-	struct SStaticModelVertex
+	struct SVertexStaticModel
 	{
-		SStaticModelVertex() {};
-		SStaticModelVertex(XMFLOAT3 _Position) :
+		SVertexStaticModel() {};
+		SVertexStaticModel(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
-		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SStaticModelVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
+		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
-		SStaticModelVertex(float x, float y, float z) :
+		SVertexStaticModel(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SStaticModelVertex(float x, float y, float z, float u, float v) :
+		SVertexStaticModel(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		SStaticModelVertex(float x, float y, float z, float r, float g, float b, float a) :
+		SVertexStaticModel(float x, float y, float z, float r, float g, float b, float a) :
 			Position{ x, y, z }, ColorDiffuse{ r, g, b, a } {};
-		SStaticModelVertex(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
+		SVertexStaticModel(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, ColorDiffuse{ r, g, b, a } {};
-		SStaticModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+		SVertexStaticModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
-		SStaticModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+		SVertexStaticModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
@@ -241,28 +241,28 @@ namespace JWEngine
 		XMFLOAT4 Specular{};
 	};
 	
-	struct SRiggedModelVertex
+	struct SVertexRiggedModel
 	{
-		SRiggedModelVertex() {};
-		SRiggedModelVertex(XMFLOAT3 _Position) :
+		SVertexRiggedModel() {};
+		SVertexRiggedModel(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
-		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SRiggedModelVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
+		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLine
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
-		SRiggedModelVertex(float x, float y, float z) :
+		SVertexRiggedModel(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SRiggedModelVertex(float x, float y, float z, float u, float v) :
+		SVertexRiggedModel(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		SRiggedModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+		SVertexRiggedModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
-		SRiggedModelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+		SVertexRiggedModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
@@ -289,89 +289,89 @@ namespace JWEngine
 		}
 	};
 
-	struct SColorVertex
+	struct SVertexColor
 	{
-		SColorVertex() {};
-		SColorVertex(XMFLOAT3 _Position) :
+		SVertexColor() {};
+		SVertexColor(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SColorVertex(XMFLOAT3 _Position, XMFLOAT4 _ColorRGBA) :
+		SVertexColor(XMFLOAT3 _Position, XMFLOAT4 _ColorRGBA) :
 			Position{ _Position }, ColorRGBA{ _ColorRGBA } {};
-		SColorVertex(float x, float y, float z) :
+		SVertexColor(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SColorVertex(float x, float y, float z, float r, float g, float b, float a) :
+		SVertexColor(float x, float y, float z, float r, float g, float b, float a) :
 			Position{ x, y, z }, ColorRGBA{ r, g, b, a } {};
 
 		XMFLOAT3 Position{};
 		XMFLOAT4 ColorRGBA{ 1.0f, 1.0f, 1.0f, 1.0f };
 	};
 	
-	struct SStaticModelVertexData
+	struct SVertexDataStaticModel
 	{
-		VECTOR<SStaticModelVertex> vVertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SStaticModelVertex)) };
+		VECTOR<SVertexStaticModel> vVertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SVertexStaticModel)) };
 		UINT Offset{};
 
 		void Clear() noexcept { vVertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SStaticModelVertex)); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexStaticModel)); };
 		auto GetPtrData() const noexcept { return &vVertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
 		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
 	};
 
-	struct SRiggedModelVertexData
+	struct SVertexDataRiggedModel
 	{
-		VECTOR<SRiggedModelVertex> vVertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SRiggedModelVertex)) };
+		VECTOR<SVertexRiggedModel> vVertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SVertexRiggedModel)) };
 		UINT Offset{};
 
 		void Clear() noexcept { vVertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SRiggedModelVertex)); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexRiggedModel)); };
 		auto GetPtrData() const noexcept { return &vVertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
 		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
 	};
 
-	struct SColorVertexData
+	struct SVertexDataColor
 	{
-		VECTOR<SColorVertex> vVertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SColorVertex)) };
+		VECTOR<SVertexColor> vVertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SVertexColor)) };
 		UINT Offset{};
 
 		void Clear() noexcept { vVertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SColorVertex)); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexColor)); };
 		auto GetPtrData() const noexcept { return &vVertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
 		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
 	};
 
-	struct SIndex3
+	struct SIndexTriangle
 	{
-		SIndex3() {};
-		SIndex3(DWORD __0, DWORD __1, DWORD __2) : _0{ __0 }, _1{ __1 }, _2{ __2 } {};
+		SIndexTriangle() {};
+		SIndexTriangle(DWORD __0, DWORD __1, DWORD __2) : _0{ __0 }, _1{ __1 }, _2{ __2 } {};
 
 		DWORD _0{};
 		DWORD _1{};
 		DWORD _2{};
 	};
 	
-	struct SIndex2
+	struct SIndexLine
 	{
-		SIndex2() {};
-		SIndex2(DWORD __0, DWORD __1) : _0{ __0 }, _1{ __1 } {};
+		SIndexLine() {};
+		SIndexLine(DWORD __0, DWORD __1) : _0{ __0 }, _1{ __1 } {};
 
 		DWORD _0{};
 		DWORD _1{};
 	};
 
-	struct SModelIndexData
+	struct SIndexDataTriangle
 	{
-		VECTOR<SIndex3> vIndices;
+		VECTOR<SIndexTriangle> vIndices;
 
 		void Clear() noexcept { vIndices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(vIndices.size() * 3); };
@@ -379,9 +379,9 @@ namespace JWEngine
 		auto GetPtrData() const noexcept { return &vIndices[0]; };
 	};
 
-	struct SLineIndexData
+	struct SIndexDataLine
 	{
-		VECTOR<SIndex2> vIndices;
+		VECTOR<SIndexLine> vIndices;
 
 		void Clear() noexcept { vIndices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(vIndices.size() * 2); };
@@ -389,14 +389,14 @@ namespace JWEngine
 		auto GetPtrData() const noexcept { return &vIndices[0]; };
 	};
 
-	struct SLineData
+	struct SLineRawData
 	{
 		XMFLOAT2 StartPosition{};
 		XMFLOAT2 Length{};
 		XMFLOAT4 Color{};
 
-		SLineData() {};
-		SLineData(XMFLOAT2 _StartPosition, XMFLOAT2 _Length, XMFLOAT4 _Color) : StartPosition{ _StartPosition }, Length{ _Length }, Color{ _Color } {};
+		SLineRawData() {};
+		SLineRawData(XMFLOAT2 _StartPosition, XMFLOAT2 _Length, XMFLOAT4 _Color) : StartPosition{ _StartPosition }, Length{ _Length }, Color{ _Color } {};
 	};
 
 	enum class ERenderType : uint8_t
@@ -535,8 +535,8 @@ namespace JWEngine
 
 	struct SStaticModelData
 	{
-		SStaticModelVertexData VertexData{};
-		SModelIndexData IndexData{};
+		SVertexDataStaticModel VertexData{};
+		SIndexDataTriangle IndexData{};
 
 		bool HasTexture{ false };
 		WSTRING TextureFileNameW{};
@@ -544,8 +544,8 @@ namespace JWEngine
 
 	struct SRiggedModelData
 	{
-		SRiggedModelVertexData VertexData{};
-		SModelIndexData IndexData{};
+		SVertexDataRiggedModel VertexData{};
+		SIndexDataTriangle IndexData{};
 
 		bool HasTexture{ false };
 		WSTRING TextureFileNameW{};
@@ -557,36 +557,26 @@ namespace JWEngine
 
 	struct SLineModelData
 	{
-		SStaticModelVertexData VertexData{};
-		SLineIndexData IndexData{};
+		SVertexDataStaticModel VertexData{};
+		SIndexDataLine IndexData{};
 	};
 	
-	struct SVSCBColor
+	struct SVSCBSpace
 	{
-		SVSCBColor() {};
-		SVSCBColor(XMMATRIX _WVP) : WVP{ _WVP } {};
-
-		XMMATRIX WVP{};
-	};
-	
-	struct SVSCBStatic
-	{
-		SVSCBStatic() {};
-		SVSCBStatic(XMMATRIX _WVP) : WVP{ _WVP } {};
-		SVSCBStatic(XMMATRIX _WVP, XMMATRIX _World) : WVP{ _WVP }, World{ _World } {};
+		SVSCBSpace() {};
+		SVSCBSpace(XMMATRIX _WVP) : WVP{ _WVP } {};
+		SVSCBSpace(XMMATRIX _WVP, XMMATRIX _World) : WVP{ _WVP }, World{ _World } {};
 
 		XMMATRIX	WVP{};
 		XMMATRIX	World{};
 	};
 
-	struct SVSCBRigged
+	struct SVSCBFlags
 	{
-		SVSCBRigged() {};
+		SVSCBFlags() {};
 
-		XMMATRIX	WVP{};
-		XMMATRIX	World{};
-
-		BOOL		ShouldUseGPUAnimation{ FALSE };
+		BOOL	ShouldUseGPUAnimation{ FALSE };
+		float	pad[3]{};
 	};
 	
 	struct SVSCBCPUAnimation

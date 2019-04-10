@@ -10,13 +10,13 @@ void JWImage::Create(JWDX& DX) noexcept
 	// Set member pointers.
 	m_pDX = &DX;
 
-	m_VertexData.vVertices.push_back(SStaticModelVertex(0, 0, 0, 0, 0));
-	m_VertexData.vVertices.push_back(SStaticModelVertex(1, 0, 0, 1, 0));
-	m_VertexData.vVertices.push_back(SStaticModelVertex(0, -1, 0, 0, 1));
-	m_VertexData.vVertices.push_back(SStaticModelVertex(1, -1, 0, 1, 1));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(0, 0, 0, 0, 0));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(1, 0, 0, 1, 0));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(0, -1, 0, 0, 1));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(1, -1, 0, 1, 1));
 
-	m_IndexData.vIndices.push_back(SIndex3(0, 1, 2));
-	m_IndexData.vIndices.push_back(SIndex3(1, 3, 2));
+	m_IndexData.vIndices.push_back(SIndexTriangle(0, 1, 2));
+	m_IndexData.vIndices.push_back(SIndexTriangle(1, 3, 2));
 
 	// Create vertex buffer
 	m_pDX->CreateDynamicVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);

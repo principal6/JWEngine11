@@ -56,7 +56,7 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 
 	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength * 4; ++iterator_count)
 	{
-		m_VertexData.vVertices.push_back(SStaticModelVertex());
+		m_VertexData.vVertices.push_back(SVertexStaticModel());
 	}
 
 	// Create vertex buffer
@@ -70,8 +70,8 @@ PRIVATE void JWInstantText::CreateInstantTextIndexBuffer() noexcept
 
 	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength; ++iterator_count)
 	{
-		m_IndexData.vIndices.push_back(SIndex3(iterator_count * 4,     iterator_count * 4 + 1, iterator_count * 4 + 2));
-		m_IndexData.vIndices.push_back(SIndex3(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));
+		m_IndexData.vIndices.push_back(SIndexTriangle(iterator_count * 4,     iterator_count * 4 + 1, iterator_count * 4 + 2));
+		m_IndexData.vIndices.push_back(SIndexTriangle(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));
 	}
 
 	// Create index buffer
@@ -126,8 +126,8 @@ void JWInstantText::DrawInstantText(STRING Text, XMFLOAT2 Position, XMFLOAT3 Fon
 	m_pDX->SetVS(EVertexShader::VSBase);
 
 	// Update VS constant buffer (WVP matrix, which in reality is WO matrix.)
-	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
-	m_pDX->UpdateVSCBStatic(m_VSCBStatic);
+	m_VSCBSpace.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
+	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Set PS
 	m_pDX->GetDeviceContext()->PSSetShader(m_PSInstantText, nullptr, 0);

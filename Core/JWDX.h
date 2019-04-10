@@ -72,9 +72,9 @@ namespace JWEngine
 		void SetPS(EPixelShader PS) noexcept;
 
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
-		void UpdateVSCBStatic(SVSCBStatic& Data) noexcept;
+		void UpdateVSCBSpace(SVSCBSpace& Data) noexcept;
 		// Called in each animated JWModel's Animate() function
-		void UpdateVSCBRigged(SVSCBRigged& Data) noexcept;
+		void UpdateVSCBFlags(SVSCBFlags& Data) noexcept;
 		void UpdateVSCBCPUAnimation(SVSCBCPUAnimation& Data) noexcept;
 		void UpdateVSCBGPUAnimation(SVSCBGPUAnimation& Data) noexcept;
 		// Called in each JWModel(/JWImage/JWLine)'s Draw()-Update() function
@@ -82,7 +82,6 @@ namespace JWEngine
 		void UpdatePSCBLights(SPSCBLights& Data) noexcept;
 		// Called once per game loop, which is when the camera's position would probably be changed.
 		void UpdatePSCBCamera(XMFLOAT4 CameraPosition) noexcept;
-		void UpdateColorVSCB(SVSCBColor& Data) noexcept;
 
 		void BeginDrawing(const SClearColor& ClearColor) noexcept;
 		void EndDrawing() noexcept;
@@ -166,16 +165,14 @@ namespace JWEngine
 		ID3D11PixelShader*	m_PSColor{};
 
 		// Shader constant buffer
-		ID3D11Buffer*		m_VSCBStatic{};
-		SVSCBStatic			m_VSCBStaticData{};
-		ID3D11Buffer*		m_VSCBRigged{};
-		SVSCBRigged			m_VSCBRiggedData{};
+		ID3D11Buffer*		m_VSCBSpace{};
+		SVSCBSpace			m_VSCBSpaceData{};
+		ID3D11Buffer*		m_VSCBFlags{};
+		SVSCBFlags			m_VSCBFlagsData{};
 		ID3D11Buffer*		m_VSCBCPUAnimation{};
 		SVSCBCPUAnimation	m_VSCBCPUAnimationData{};
 		ID3D11Buffer*		m_VSCBGPUAnimation{};
 		SVSCBGPUAnimation	m_VSCBGPUAnimationData{};
-		ID3D11Buffer*		m_VSCBColor{};
-		SVSCBColor			m_VSCBColorData{};
 		ID3D11Buffer*		m_PSCBFlags{};
 		SPSCBFlags			m_PSCBFlagsData{};
 		ID3D11Buffer*		m_PSCBLights{};

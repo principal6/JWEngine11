@@ -47,9 +47,9 @@ void JWModel::SetStaticModelData(SStaticModelData ModelData) noexcept
 		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
 		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
 
-		NormalData.VertexData.vVertices.push_back(SStaticModelVertex(vertex.Position, KDefaultColorNormals));
-		NormalData.VertexData.vVertices.push_back(SStaticModelVertex(second_vertex_position, KDefaultColorNormals));
-		NormalData.IndexData.vIndices.push_back(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+		NormalData.VertexData.vVertices.push_back(SVertexStaticModel(vertex.Position, KDefaultColorNormals));
+		NormalData.VertexData.vVertices.push_back(SVertexStaticModel(second_vertex_position, KDefaultColorNormals));
+		NormalData.IndexData.vIndices.push_back(SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
 		++iterator_vertex;
 	}
 	
@@ -86,9 +86,9 @@ void JWModel::SetRiggedModelData(SRiggedModelData ModelData) noexcept
 		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
 		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
 
-		NormalData.VertexData.vVertices.push_back(SStaticModelVertex(vertex.Position, KDefaultColorNormals));
-		NormalData.VertexData.vVertices.push_back(SStaticModelVertex(second_vertex_position, KDefaultColorNormals));
-		NormalData.IndexData.vIndices.push_back(SIndex2(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+		NormalData.VertexData.vVertices.push_back(SVertexStaticModel(vertex.Position, KDefaultColorNormals));
+		NormalData.VertexData.vVertices.push_back(SVertexStaticModel(second_vertex_position, KDefaultColorNormals));
+		NormalData.IndexData.vIndices.push_back(SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
 		++iterator_vertex;
 	}
 

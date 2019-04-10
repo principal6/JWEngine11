@@ -229,8 +229,8 @@ namespace JWEngine
 		JWDX*						m_pDX{};
 		JWCamera*					m_pCamera{};
 		STRING						m_BaseDirectory{};
-		SVSCBStatic					m_VSCBStatic{};
-		SVSCBRigged					m_VSCBRigged{};
+		SVSCBSpace					m_VSCBSpace{};
+		SVSCBFlags					m_VSCBFlags{};
 		SVSCBCPUAnimation			m_VSCBCPUAnimation{};
 		SVSCBGPUAnimation			m_VSCBGPUAnimation{};
 	};

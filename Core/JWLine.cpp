@@ -31,7 +31,7 @@ PRIVATE void JWLine::CheckValidity() const noexcept
 	}
 }
 
-void JWLine::AddLine(SLineData LineData) noexcept
+void JWLine::AddLine(SLineRawData LineData) noexcept
 {
 	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
 	float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
@@ -55,7 +55,7 @@ void JWLine::AddEnd() noexcept
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
-void JWLine::SetLine(size_t LineIndex, SLineData LineData) noexcept
+void JWLine::SetLine(size_t LineIndex, SLineRawData LineData) noexcept
 {
 	if (m_VertexData.GetCount())
 	{
@@ -105,8 +105,8 @@ PRIVATE void JWLine::Update() noexcept
 	// Set VS constant buffer
 	// set WVP matrix(, which in reality is WO matrix,)
 	// and send it to the constant buffer for vertex shader
-	m_VSCBStatic.WVP = XMMatrixIdentity() * m_pCamera->GetFixedOrthographicMatrix();
-	m_pDX->UpdateVSCBStatic(m_VSCBStatic);
+	m_VSCBSpace.WVP = XMMatrixIdentity() * m_pCamera->GetFixedOrthographicMatrix();
+	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Set PS constant buffer
 	m_pDX->UpdatePSCBFlags(false, false);

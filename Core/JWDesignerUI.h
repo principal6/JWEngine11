@@ -31,8 +31,8 @@ namespace JWEngine
 
 		void MakeMiniAxis() noexcept;
 
-		auto AddVertex(const SColorVertex& Vertex) noexcept->JWDesignerUI&;
-		auto AddIndex(const SIndex2& Index) noexcept->JWDesignerUI&;
+		auto AddVertex(const SVertexColor& Vertex) noexcept->JWDesignerUI&;
+		auto AddIndex(const SIndexLine& Index) noexcept->JWDesignerUI&;
 		void AddEnd() noexcept;
 
 		void Update() noexcept;
@@ -49,10 +49,10 @@ namespace JWEngine
 
 		ID3D11Buffer*		m_VertexBuffer{};
 		ID3D11Buffer*		m_IndexBuffer{};
-		SColorVertexData	m_VertexData{};
-		SLineIndexData		m_IndexData{};
+		SVertexDataColor	m_VertexData{};
+		SIndexDataLine		m_IndexData{};
 		
-		SVSCBColor			m_VSCBColorData{};
+		SVSCBSpace			m_VSCBSpaceData{};
 
 		JWLine				m_MiniAxis;
 	};

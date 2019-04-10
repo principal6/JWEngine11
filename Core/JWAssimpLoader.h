@@ -48,7 +48,7 @@ namespace JWEngine
 
 		void ExtractBone(const aiBone* paiBone, int VertexOffset, SModelBoneTree& OutBoneTree) noexcept;
 
-		void MatchBonesAndVertices(const SModelBoneTree& BoneTree, SRiggedModelVertexData& OutVertexData) noexcept;
+		void MatchBonesAndVertices(const SModelBoneTree& BoneTree, SVertexDataRiggedModel& OutVertexData) noexcept;
 
 		void MatchBonesAndNodes(const SModelBoneTree& BoneTree, SModelNodeTree& OutNodeTree) noexcept;
 

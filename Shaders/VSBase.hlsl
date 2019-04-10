@@ -1,6 +1,6 @@
 #include "BaseHeader.hlsl"
 
-cbuffer cbWorld
+cbuffer cbSpace : register(b0)
 {
 	float4x4 WVP;
 	float4x4 World;

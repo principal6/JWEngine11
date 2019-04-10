@@ -396,40 +396,36 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	switch (type)
 	{
 	case ERenderType::Model_Static:
-		m_VSCBStatic.WVP = WVP;
-		m_VSCBStatic.World = World;
-		m_pDX->UpdateVSCBStatic(m_VSCBStatic);
+		m_VSCBSpace.WVP = WVP;
+		m_VSCBSpace.World = World;
 		break;
-
 	case ERenderType::Model_Rigged:
 		if (Component.FlagRenderOption & JWFlagRenderOption_UseGPUAnimation)
 		{
-			m_VSCBRigged.ShouldUseGPUAnimation = TRUE;
+			m_VSCBFlags.ShouldUseGPUAnimation = TRUE;
 			
 			m_pDX->UpdateVSCBGPUAnimation(m_VSCBGPUAnimation);
+			m_pDX->UpdateVSCBFlags(m_VSCBFlags);
 		}
 		else
 		{
-			m_VSCBRigged.ShouldUseGPUAnimation = FALSE;
+			m_VSCBFlags.ShouldUseGPUAnimation = FALSE;
 			
 			m_pDX->UpdateVSCBCPUAnimation(m_VSCBCPUAnimation);
+			m_pDX->UpdateVSCBFlags(m_VSCBFlags);
 		}
 
-		m_VSCBRigged.WVP = WVP;
-		m_VSCBRigged.World = World;
-		m_pDX->UpdateVSCBRigged(m_VSCBRigged);
-		
+		m_VSCBSpace.WVP = WVP;
+		m_VSCBSpace.World = World;
 		break;
-
 	case ERenderType::Image_2D:
-		WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
-
-		m_VSCBStatic.WVP = WVP;
-		m_pDX->UpdateVSCBStatic(m_VSCBStatic);
-
+		m_VSCBSpace.WVP = m_pCamera->GetTransformedOrthographicMatrix();
+		break;
 	default:
 		break;
 	}
+
+	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 }
 
 PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
@@ -508,9 +504,9 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 	m_pDX->SetVS(EVertexShader::VSBase);
 
 	// Update VS constant buffer
-	m_VSCBStatic.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
-	m_VSCBStatic.World = XMMatrixTranspose(world_matrix);
-	m_pDX->UpdateVSCBStatic(m_VSCBStatic);
+	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+	m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
+	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Set PS Base
 	m_pDX->SetPS(EPixelShader::PSBase);

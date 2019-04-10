@@ -17,10 +17,10 @@ namespace JWEngine
 		// Called in JWGame class
 		void Create(JWDX& DX, JWCamera& Camera) noexcept;
 
-		void AddLine(SLineData LineData) noexcept;
+		void AddLine(SLineRawData LineData) noexcept;
 		void AddEnd() noexcept;
 
-		void SetLine(size_t LineIndex, SLineData LineData) noexcept;
+		void SetLine(size_t LineIndex, SLineRawData LineData) noexcept;
 
 		void UpdateLines() noexcept;
 
@@ -45,12 +45,12 @@ namespace JWEngine
 		ID3D11Buffer* m_VertexBuffer{};
 		ID3D11Buffer* m_IndexBuffer{};
 
-		SStaticModelVertexData m_VertexData{};
-		SLineIndexData m_IndexData{};
+		SVertexDataStaticModel m_VertexData{};
+		SIndexDataLine m_IndexData{};
 
 		XMFLOAT2 m_Position{};
 		XMFLOAT2 m_Size{};
 
-		SVSCBStatic m_VSCBStatic{};
+		SVSCBSpace m_VSCBSpace{};
 	};
 };

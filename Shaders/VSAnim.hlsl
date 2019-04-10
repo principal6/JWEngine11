@@ -2,20 +2,23 @@
 
 #define MAX_BONE_COUNT 50
 
-cbuffer cbWorld : register(b0)
+cbuffer cbSpace : register(b0)
 {
 	matrix	WVP;
 	matrix	World;
+};
 
+cbuffer cbRigged : register(b1)
+{
 	bool	UseGPUAnimation;
 };
 
-cbuffer cbCPUAnimation : register(b1)
+cbuffer cbCPUAnimation : register(b2)
 {
 	matrix	Bone[MAX_BONE_COUNT];
 };
 
-cbuffer cbGPUAnimation : register(b2)
+cbuffer cbGPUAnimation : register(b3)
 {
 	uint	AnimationID;
 	uint	CurrFrame;
