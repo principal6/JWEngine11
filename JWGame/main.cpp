@@ -204,14 +204,23 @@ JW_FUNCTION_ON_INPUT(OnInput)
 		myGame.Camera().MoveCamera(ECameraMoveDirection::Right, 1.0f);
 	}
 
+	// Mouse left button pressed
+	if (DeviceState.CurrentMouse.rgbButtons[0])
+	{
+		
+	}
+
+	// Mouse cursor moved
 	if ((DeviceState.CurrentMouse.lX != DeviceState.PreviousMouse.lX) || (DeviceState.CurrentMouse.lY != DeviceState.PreviousMouse.lY))
 	{
+		// Mouse right button pressed
 		if (DeviceState.CurrentMouse.rgbButtons[1])
 		{
 			myGame.Camera().RotateCamera(static_cast<float>(DeviceState.CurrentMouse.lY), static_cast<float>(DeviceState.CurrentMouse.lX), 0);
 		}
 	}
 	
+	// Mouse wheel scrolled
 	if ((DeviceState.CurrentMouse.lZ))
 	{
 		myGame.Camera().ZoomCamera(static_cast<float>(DeviceState.CurrentMouse.lZ));
