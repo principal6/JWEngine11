@@ -87,39 +87,52 @@
 		return Result;
 	}
 
-	inline auto ConvertIntToWSTRING(int value)->WSTRING
+	inline auto ConvertIntToWSTRING(int value, WSTRING& string)->WSTRING&
 	{
 		wchar_t temp[255]{};
 		swprintf_s(temp, L"%d", value);
-		return WSTRING(temp);
+		string = temp;
+		return string;
 	}
 
-	inline auto ConvertFloatToWSTRING(float value)->WSTRING
+	inline auto ConvertLongLongToWSTRING(long long value, WSTRING& string)->WSTRING&
+	{
+		wchar_t temp[255]{};
+		swprintf_s(temp, L"%lld", value);
+		string = temp;
+		return string;
+	}
+
+	inline auto ConvertFloatToWSTRING(float value, WSTRING& string)->WSTRING&
 	{
 		wchar_t temp[255]{};
 		swprintf_s(temp, L"%f", value);
-		return WSTRING(temp);
+		string = temp;
+		return string;
 	}
 
-	inline auto ConvertIntToSTRING(int value)->STRING
+	inline auto ConvertIntToSTRING(int value, STRING& string)->STRING&
 	{
 		char temp[255]{};
 		sprintf_s(temp, "%d", value);
-		return STRING(temp);
+		string = temp;
+		return string;
 	}
 
-	inline auto ConvertLongLongToSTRING(long long value)->STRING
+	inline auto ConvertLongLongToSTRING(long long value, STRING& string)->STRING&
 	{
 		char temp[255]{};
 		sprintf_s(temp, "%lld", value);
-		return STRING(temp);
+		string = temp;
+		return string;
 	}
 
-	inline auto ConvertFloatToSTRING(float value)->STRING
+	inline auto ConvertFloatToSTRING(float value, STRING& string)->STRING&
 	{
 		char temp[255]{};
 		sprintf_s(temp, "%f", value);
-		return STRING(temp);
+		string = temp;
+		return string;
 	}
 
 #endif
@@ -675,8 +688,10 @@ namespace JWEngine
 			auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(m_Clock.now() - m_LastTimePoint);
 			m_LastTimePoint = m_Clock.now();
 
-			STRING log = "[LOG #" + ConvertIntToSTRING(m_LogIndex) + "] " + Content 
-				+ "\t( " + ConvertLongLongToSTRING(elapsed_ms.count()) + " ms elapsed. )\n";
+			STRING temp{};
+			STRING log{};
+			log = "[LOG #" + ConvertIntToSTRING(m_LogIndex, temp) + "] " + Content;
+			log += "\t( " + ConvertLongLongToSTRING(elapsed_ms.count(), temp) + " ms elapsed. )\n";
 
 			std::cout << log;
 			m_LogText.append(log);
