@@ -58,15 +58,22 @@ JWDX::~JWDX()
 	assert(reference_count == 0);
 }
 
-void JWDX::Create(const JWWin32Window& Window, STRING Directory) noexcept
+void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearColor& ClearColor) noexcept
 {
 	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
-
+	
+	// Set base directory
 	m_BaseDirectory = Directory;
 
 	// Set window size
 	m_WindowSize.Width = Window.GetWidth();
 	m_WindowSize.Height = Window.GetHeight();
+
+	// Set clear color
+	m_ClearColor[0] = ClearColor.R;
+	m_ClearColor[1] = ClearColor.G;
+	m_ClearColor[2] = ClearColor.B;
+	m_ClearColor[3] = 1.0f;
 
 	// Create device and swap chain
 	CreateDeviceAndSwapChain(Window.GethWnd());
@@ -637,13 +644,10 @@ void JWDX::UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept
 	m_DeviceContext11->PSSetConstantBuffers(2, 1, &m_PSCBCamera);
 }
 
-void JWDX::BeginDrawing(const SClearColor& ClearColor) noexcept
+void JWDX::BeginDrawing() noexcept
 {
-	// Set clear color
-	FLOAT clear_color[]{ ClearColor.R, ClearColor.G, ClearColor.B, 1.0f };
-
 	// Clear render target view
-	m_DeviceContext11->ClearRenderTargetView(m_RenderTargetView11, clear_color);
+	m_DeviceContext11->ClearRenderTargetView(m_RenderTargetView11, m_ClearColor);
 
 	// Clear depth-stencil view
 	m_DeviceContext11->ClearDepthStencilView(m_DepthStencilView11, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);

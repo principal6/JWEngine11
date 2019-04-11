@@ -54,7 +54,7 @@ namespace JWEngine
 		JWDX() = default;
 		~JWDX();
 
-		void Create(const JWWin32Window& Window, STRING Directory) noexcept;
+		void Create(const JWWin32Window& Window, STRING Directory, const SClearColor& ClearColor) noexcept;
 
 		// Factory functions
 		void CreateDynamicVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
@@ -81,7 +81,7 @@ namespace JWEngine
 		// Called once per game loop, which is when the camera's position would probably be changed.
 		void UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept;
 
-		void BeginDrawing(const SClearColor& ClearColor) noexcept;
+		void BeginDrawing() noexcept;
 		void EndDrawing() noexcept;
 
 		auto GetDevice() const noexcept->ID3D11Device*;
@@ -132,6 +132,7 @@ namespace JWEngine
 
 		STRING		m_BaseDirectory;
 		SSizeInt	m_WindowSize{};
+		FLOAT		m_ClearColor[4]{};
 
 		IDXGISwapChain*			m_SwapChain{};
 		ID3D11Device*			m_Device11{};

@@ -22,14 +22,13 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 	m_BaseDirectory = base_directory;
 
-	m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
-
 	m_Window.Create(WindowPosition, WindowSize, Title);
 	m_IsWindowCreated = true;
 
 	LOG_ADD("Window created");
 
-	m_DX.Create(m_Window, m_BaseDirectory);
+	m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
+	m_DX.Create(m_Window, m_BaseDirectory, m_ClearColor);
 	m_DX.SetRasterizerState(ERasterizerState::SolidNoCull);
 	m_IsDXCreated = true;
 
@@ -185,7 +184,7 @@ void JWGame::Run() noexcept
 			m_DX.UpdatePSCBCamera(m_Camera.GetPositionFloat4());
 
 			// Begin the drawing process
-			m_DX.BeginDrawing(m_ClearColor);
+			m_DX.BeginDrawing();
 
 			// Call the outter OnRender function.
 			m_fpOnRender();
