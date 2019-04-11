@@ -212,7 +212,8 @@ namespace JWEngine
 
 	protected:
 		virtual auto ParseComma(const STRING& Data, UINT ID) noexcept->UINT;
-		virtual auto GetCharsIDFromWideCharacter(wchar_t WideCharacter) const noexcept->size_t;
+
+		inline auto GetCharsIDFromWideCharacter(wchar_t WideCharacter) const noexcept->size_t;
 
 	protected:
 		static BMFont ms_FontData;

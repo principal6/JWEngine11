@@ -6,7 +6,7 @@ using namespace JWEngine;
 // Static member variable declaration
 BMFont JWBMFontParser::ms_FontData;
 
-auto JWBMFontParser::ParseComma(const STRING& Data, UINT ID) noexcept->UINT
+PROTECTED auto JWBMFontParser::ParseComma(const STRING& Data, UINT ID) noexcept->UINT
 {
 	UINT Result = 0;
 	STRING tempString = Data;
@@ -267,7 +267,7 @@ auto JWBMFontParser::GetBMCharFromWideCharacter(wchar_t WideCharacter) const noe
 	return ms_FontData.vChars[GetCharsIDFromWideCharacter(WideCharacter)];
 }
 
-PRIVATE auto JWBMFontParser::GetCharsIDFromWideCharacter(wchar_t WideCharacter) const noexcept->size_t
+PROTECTED inline auto JWBMFontParser::GetCharsIDFromWideCharacter(wchar_t WideCharacter) const noexcept->size_t
 {
 	WideCharacter = static_cast<wchar_t>(min(WideCharacter, KMaxWcharIndex));
 
