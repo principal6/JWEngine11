@@ -1,4 +1,4 @@
-Texture2D<uint4> CurrentTexture;
+Texture2D<uint4> CurrentTexture : register(t0);
 
 uint4 main(float4 Position : SV_POSITION) : SV_TARGET
 {

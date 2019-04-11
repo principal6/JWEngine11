@@ -90,7 +90,7 @@ void JWRawPixelSetter::Draw() noexcept
 	m_pDX->SetVS(EVertexShader::VSRaw);
 	m_pDX->SetPS(EPixelShader::PSRaw);
 
-	// Set texture and sampler for pixel shader
+	// Set texture and sampler for pixel shader (RawPixelSetter = t0)
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_RawTexture2DSRV);
 	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipPointWrap);
 

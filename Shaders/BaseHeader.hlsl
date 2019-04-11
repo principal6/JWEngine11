@@ -43,3 +43,5 @@ struct SPointlight
 	float3 Attenuation;
 	float pad;
 };
+
+SamplerState	CurrentSampler	: register(s0);

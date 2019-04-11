@@ -10,14 +10,6 @@ namespace JWEngine
 	class JWCamera;
 	
 	static constexpr uint16_t KMaxInsantTextLength = 2048;
-
-	struct SPSInstantTextCBData
-	{
-		SPSInstantTextCBData() {};
-		SPSInstantTextCBData(XMFLOAT4 __RGBA) : _RGBA(__RGBA) {};
-
-		XMFLOAT4 _RGBA{};
-	};
 	
 	class JWInstantText
 	{
@@ -35,7 +27,6 @@ namespace JWEngine
 		void CreateInstantTextVertexBuffer() noexcept;
 		void CreateInstantTextIndexBuffer() noexcept;
 		void CreateInstantTextPS() noexcept;
-		void CreatePSConstantBuffer() noexcept;
 
 		void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
@@ -56,10 +47,8 @@ namespace JWEngine
 
 		SVSCBSpace					m_VSCBSpace{};
 		ID3D11PixelShader*			m_PSInstantText{};
-		ID3D11Buffer*				m_PSInstantTextCB{};
 
-		SPSInstantTextCBData		m_TextColor{};
-		ID3D11ShaderResourceView*	m_TextureShaderResourceView{};
+		ID3D11ShaderResourceView*	m_FontTextureSRV{};
 		uint64_t					m_CurrentTextLength{};
 	};
 }

@@ -24,9 +24,7 @@ cbuffer cbPointlight
 	SPointlight Pointlight;
 };
 
-Texture2D CurrentTexture;
-TextureCube SkyMapTexture;
-SamplerState CurrentSamplerState;
+Texture2D	CurrentTexture	: register(t0);
 
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
@@ -34,7 +32,7 @@ float4 main(VS_OUTPUT input) : SV_TARGET
 
 	if (HasTexture == true)
 	{
-		final_color = CurrentTexture.Sample(CurrentSamplerState, input.TexCoord);
+		final_color = CurrentTexture.Sample(CurrentSampler, input.TexCoord);
 
 		// clip if alpha is less than 0.1
 		clip(final_color.a - 0.1);

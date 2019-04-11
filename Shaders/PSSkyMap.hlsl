@@ -1,9 +1,8 @@
 #include "BaseHeader.hlsl"
 
-TextureCube SkyMapTexture;
-SamplerState CurrentSamplerState;
+TextureCube	SkyMapTexture	: register(t0);
 
 float4 main(SKY_MAP_OUTPUT input) : SV_Target
 {
-	return SkyMapTexture.Sample(CurrentSamplerState, input.TexCoord);
+	return SkyMapTexture.Sample(CurrentSampler, input.TexCoord);
 }

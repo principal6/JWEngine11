@@ -6,9 +6,8 @@ using namespace JWEngine;
 
 JWInstantText::~JWInstantText()
 {
-	JW_RELEASE(m_TextureShaderResourceView);
+	JW_RELEASE(m_FontTextureSRV);
 
-	JW_RELEASE(m_PSInstantTextCB);
 	JW_RELEASE(m_PSInstantText);
 	
 	JW_RELEASE(m_IndexBuffer);
@@ -42,7 +41,6 @@ void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STR
 	CreateInstantTextVertexBuffer();
 	CreateInstantTextIndexBuffer();
 	CreateInstantTextPS();
-	CreatePSConstantBuffer();
 
 	m_IsValid = true;
 
@@ -92,19 +90,6 @@ PRIVATE void JWInstantText::CreateInstantTextPS() noexcept
 	JW_RELEASE(buffer_ps);
 }
 
-PRIVATE void JWInstantText::CreatePSConstantBuffer() noexcept
-{
-	// Create buffer to send to constant buffer in HLSL
-	D3D11_BUFFER_DESC constant_buffer_description{};
-	constant_buffer_description.Usage = D3D11_USAGE_DEFAULT;
-	constant_buffer_description.ByteWidth = sizeof(SPSInstantTextCBData);
-	constant_buffer_description.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	constant_buffer_description.CPUAccessFlags = 0;
-	constant_buffer_description.MiscFlags = 0;
-
-	m_pDX->GetDevice()->CreateBuffer(&constant_buffer_description, nullptr, &m_PSInstantTextCB);
-}
-
 PRIVATE void JWInstantText::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 {
 	JW_AVOID_DUPLICATE_CREATION(m_IsTextureCreated);
@@ -112,7 +97,7 @@ PRIVATE void JWInstantText::LoadImageFromFile(STRING Directory, STRING FileName)
 	STRING path_string = Directory + FileName;
 	WSTRING w_path = StringToWstring(path_string);
 
-	CreateWICTextureFromFile(m_pDX->GetDevice(), w_path.c_str(), nullptr, &m_TextureShaderResourceView, 0);
+	CreateWICTextureFromFile(m_pDX->GetDevice(), w_path.c_str(), nullptr, &m_FontTextureSRV, 0);
 
 	m_IsTextureCreated = true;
 }
@@ -139,7 +124,7 @@ void JWInstantText::BeginRendering() noexcept
 	m_pDX->GetDeviceContext()->PSSetShader(m_PSInstantText, nullptr, 0);
 
 	// Set PS texture and sampler
-	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_TextureShaderResourceView);
+	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_FontTextureSRV);
 	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
 
 	// Empty the vertex data
