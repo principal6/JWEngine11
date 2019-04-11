@@ -104,13 +104,13 @@ void JWCamera::MoveCamera(ECameraMoveDirection Direction, float Stride) noexcept
 	UpdateCamera();
 }
 
-PRIVATE auto JWCamera::GetFirstPersonForward() noexcept->XMVECTOR
+PRIVATE inline auto JWCamera::GetFirstPersonForward() noexcept->XMVECTOR
 {
 	XMMATRIX camera_rotation_matrix = XMMatrixRotationRollPitchYaw(0, m_Yaw, 0);
 	return XMVector3TransformCoord(m_CameraDefaultForward, camera_rotation_matrix);
 }
 
-PRIVATE auto JWCamera::GetFirstPersonRight() noexcept->XMVECTOR
+PRIVATE inline auto JWCamera::GetFirstPersonRight() noexcept->XMVECTOR
 {
 	XMMATRIX camera_rotation_matrix = XMMatrixRotationRollPitchYaw(0, m_Yaw, 0);
 	return XMVector3TransformCoord(m_CameraDefaultRight, camera_rotation_matrix);
@@ -145,6 +145,8 @@ void JWCamera::ZoomCamera(float Factor) noexcept
 		XMVECTOR LookDistance = XMVector3Length(m_CameraPosition - m_CameraLookAt);
 		LookDistance *= (1.0f + Factor);
 		m_CameraPosition = XMVector3Normalize(m_CameraForward) * LookDistance;
+
+		UpdateCamera();
 	}
 }
 
@@ -167,6 +169,10 @@ PRIVATE void JWCamera::UpdateCamera() noexcept
 	default:
 		break;
 	}
+
+	// Update float3, float4 CameraPosition as well
+	XMStoreFloat4(&m_CameraPosition4, m_CameraPosition);
+	XMStoreFloat3(&m_CameraPosition3, m_CameraPosition);
 }
 
 PRIVATE void JWCamera::UpdateFirstPersonOrFreeLookCamera() noexcept
@@ -214,56 +220,27 @@ auto JWCamera::SetLookAt(XMFLOAT3 LookAt) noexcept->JWCamera&
 	return *this;
 }
 
-auto JWCamera::GetPosition() const noexcept->XMVECTOR
+auto JWCamera::GetPosition() const noexcept->const XMVECTOR&
 {
 	return m_CameraPosition;
 }
 
-auto JWCamera::GetPositionFloat4() const noexcept->XMFLOAT4
+auto JWCamera::GetPositionFloat4() const noexcept->const XMFLOAT4&
 {
-	XMFLOAT4 result{};
-	XMStoreFloat4(&result, m_CameraPosition);
-	return result;
+	return m_CameraPosition4;
 }
 
-auto JWCamera::GetPositionFloat3() const noexcept->XMFLOAT3
+auto JWCamera::GetPositionFloat3() const noexcept->const XMFLOAT3&
 {
-	XMFLOAT3 result{};
-	XMStoreFloat3(&result, m_CameraPosition);
-	return result;
-}
-
-auto JWCamera::GetLookAt() const noexcept->XMVECTOR
-{
-	return m_CameraLookAt;
-}
-
-auto JWCamera::GetForward() const noexcept->XMVECTOR
-{
-	return m_CameraForward;
-}
-
-auto JWCamera::GetRight() const noexcept->XMVECTOR
-{
-	return m_CameraRight;
-}
-
-auto JWCamera::GetViewMatrix() const noexcept->XMMATRIX
-{
-	// Update view matrix
-	m_MatrixView = XMMatrixLookAtLH(m_CameraPosition, m_CameraLookAt, m_CameraUp);
-
-	return m_MatrixView;
-}
-
-auto JWCamera::GetProjectionMatrix() const noexcept->XMMATRIX
-{
-	return m_MatrixProjection;
+	return m_CameraPosition3;
 }
 
 auto JWCamera::GetViewProjectionMatrix() const noexcept->XMMATRIX
 {
-	return GetViewMatrix() * m_MatrixProjection;
+	// Update view matrix
+	m_MatrixView = XMMatrixLookAtLH(m_CameraPosition, m_CameraLookAt, m_CameraUp);
+
+	return m_MatrixView * m_MatrixProjection;
 }
 
 auto JWCamera::GetFixedOrthographicMatrix() const noexcept->XMMATRIX

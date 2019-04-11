@@ -70,16 +70,16 @@ namespace JWEngine
 		void SetPS(EPixelShader PS) noexcept;
 
 		// Called in each JWModel(/JWImage/JWLineModel)'s Draw()-Update() function
-		void UpdateVSCBSpace(SVSCBSpace& Data) noexcept;
+		void UpdateVSCBSpace(const SVSCBSpace& Data) noexcept;
 		// Called in each animated JWModel's Animate() function
-		void UpdateVSCBFlags(SVSCBFlags& Data) noexcept;
-		void UpdateVSCBCPUAnimation(SVSCBCPUAnimation& Data) noexcept;
-		void UpdateVSCBGPUAnimation(SVSCBGPUAnimation& Data) noexcept;
+		void UpdateVSCBFlags(const SVSCBFlags& Data) noexcept;
+		void UpdateVSCBCPUAnimation(const SVSCBCPUAnimation& Data) noexcept;
+		void UpdateVSCBGPUAnimation(const SVSCBGPUAnimation& Data) noexcept;
 		// Called in each JWModel(/JWImage/JWLineModel)'s Draw()-Update() function
 		void UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept;
-		void UpdatePSCBLights(SPSCBLights& Data) noexcept;
+		void UpdatePSCBLights(const SPSCBLights& Data) noexcept;
 		// Called once per game loop, which is when the camera's position would probably be changed.
-		void UpdatePSCBCamera(XMFLOAT4 CameraPosition) noexcept;
+		void UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept;
 
 		void BeginDrawing(const SClearColor& ClearColor) noexcept;
 		void EndDrawing() noexcept;

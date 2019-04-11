@@ -7,14 +7,14 @@ cbuffer cbFlags : register(b0)
 	float2 pad;
 };
 
-cbuffer cbLights
+cbuffer cbLights : register(b1)
 {
 	float4 AmbientColor;
 	float4 DirectionalColor;
 	float4 DirectionalDirection;
 };
 
-cbuffer cbCamera
+cbuffer cbCamera : register(b2)
 {
 	float4 CameraPosition;
 };

@@ -46,22 +46,17 @@ namespace JWEngine
 		auto SetPosition(XMFLOAT3 Position) noexcept->JWCamera&;
 		auto SetLookAt(XMFLOAT3 LookAt) noexcept->JWCamera&;
 
-		auto GetPosition() const noexcept->XMVECTOR;
-		auto GetPositionFloat4() const noexcept->XMFLOAT4;
-		auto GetPositionFloat3() const noexcept->XMFLOAT3;
-		auto GetLookAt() const noexcept->XMVECTOR;
-		auto GetForward() const noexcept->XMVECTOR;
-		auto GetRight() const noexcept->XMVECTOR;
+		auto GetPosition() const noexcept->const XMVECTOR&;
+		auto GetPositionFloat4() const noexcept->const XMFLOAT4&;
+		auto GetPositionFloat3() const noexcept->const XMFLOAT3&;
 
-		auto GetViewMatrix() const noexcept->XMMATRIX;
-		auto GetProjectionMatrix() const noexcept->XMMATRIX;
 		auto GetViewProjectionMatrix() const noexcept->XMMATRIX;
 		auto GetFixedOrthographicMatrix() const noexcept->XMMATRIX;
 		auto GetTransformedOrthographicMatrix() const noexcept->XMMATRIX;
 
 	private:
-		auto GetFirstPersonForward() noexcept->XMVECTOR;
-		auto GetFirstPersonRight() noexcept->XMVECTOR;
+		inline auto GetFirstPersonForward() noexcept->XMVECTOR;
+		inline auto GetFirstPersonRight() noexcept->XMVECTOR;
 
 		void UpdateCamera() noexcept;
 
@@ -106,6 +101,8 @@ namespace JWEngine
 
 		XMMATRIX	m_CameraRotationMatrix{};
 
+		XMFLOAT4	m_CameraPosition4{};
+		XMFLOAT3	m_CameraPosition3{};
 		XMFLOAT2	m_Camera2DPosition{};
 	};
 };

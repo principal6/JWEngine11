@@ -72,22 +72,22 @@ void JWSystemLight::Execute() noexcept
 
 			if (light_data.LightType == ELightType::AmbientLight)
 			{
-				m_PSCSLights.AmbientColor.x = light_data.LightColor.x;
-				m_PSCSLights.AmbientColor.y = light_data.LightColor.y;
-				m_PSCSLights.AmbientColor.z = light_data.LightColor.z;
-				m_PSCSLights.AmbientColor.w = light_data.Intensity;
+				m_PSCBLights.AmbientColor.x = light_data.LightColor.x;
+				m_PSCBLights.AmbientColor.y = light_data.LightColor.y;
+				m_PSCBLights.AmbientColor.z = light_data.LightColor.z;
+				m_PSCBLights.AmbientColor.w = light_data.Intensity;
 			}
 			else if (light_data.LightType == ELightType::DirectionalLight)
 			{
-				m_PSCSLights.DirectionalColor.x = light_data.LightColor.x;
-				m_PSCSLights.DirectionalColor.y = light_data.LightColor.y;
-				m_PSCSLights.DirectionalColor.z = light_data.LightColor.z;
-				m_PSCSLights.DirectionalColor.w = light_data.Intensity;
-				m_PSCSLights.DirectionalDirection = XMFLOAT4(light_data.Direction.x, light_data.Direction.y, light_data.Direction.z, 0.0f);
+				m_PSCBLights.DirectionalColor.x = light_data.LightColor.x;
+				m_PSCBLights.DirectionalColor.y = light_data.LightColor.y;
+				m_PSCBLights.DirectionalColor.z = light_data.LightColor.z;
+				m_PSCBLights.DirectionalColor.w = light_data.Intensity;
+				m_PSCBLights.DirectionalDirection = XMFLOAT4(light_data.Direction.x, light_data.Direction.y, light_data.Direction.z, 0.0f);
 			}
 		}
 
-		m_pDX->UpdatePSCBLights(m_PSCSLights);
+		m_pDX->UpdatePSCBLights(m_PSCBLights);
 
 		m_ShouldUpdate = false;
 	}

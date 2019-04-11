@@ -575,25 +575,25 @@ void JWDX::SetPS(EPixelShader PS) noexcept
 	}
 }
 
-void JWDX::UpdateVSCBSpace(SVSCBSpace& Data) noexcept
+void JWDX::UpdateVSCBSpace(const SVSCBSpace& Data) noexcept
 {
 	m_DeviceContext11->UpdateSubresource(m_VSCBSpace, 0, nullptr, &Data, 0, 0);
 	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBSpace);
 }
 
-void JWDX::UpdateVSCBFlags(SVSCBFlags& Data) noexcept
+void JWDX::UpdateVSCBFlags(const SVSCBFlags& Data) noexcept
 {
 	m_DeviceContext11->UpdateSubresource(m_VSCBFlags, 0, nullptr, &Data, 0, 0);
 	m_DeviceContext11->VSSetConstantBuffers(1, 1, &m_VSCBFlags);
 }
 
-void JWDX::UpdateVSCBCPUAnimation(SVSCBCPUAnimation& Data) noexcept
+void JWDX::UpdateVSCBCPUAnimation(const SVSCBCPUAnimation& Data) noexcept
 {
 	m_DeviceContext11->UpdateSubresource(m_VSCBCPUAnimation, 0, nullptr, &Data, 0, 0);
 	m_DeviceContext11->VSSetConstantBuffers(2, 1, &m_VSCBCPUAnimation);
 }
 
-void JWDX::UpdateVSCBGPUAnimation(SVSCBGPUAnimation& Data) noexcept
+void JWDX::UpdateVSCBGPUAnimation(const SVSCBGPUAnimation& Data) noexcept
 {
 	m_DeviceContext11->UpdateSubresource(m_VSCBGPUAnimation, 0, nullptr, &Data, 0, 0);
 	m_DeviceContext11->VSSetConstantBuffers(3, 1, &m_VSCBGPUAnimation);
@@ -623,13 +623,13 @@ void JWDX::UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept
 	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBFlags);
 }
 
-void JWDX::UpdatePSCBLights(SPSCBLights& Data) noexcept
+void JWDX::UpdatePSCBLights(const SPSCBLights& Data) noexcept
 {
 	m_DeviceContext11->UpdateSubresource(m_PSCBLights, 0, nullptr, &Data, 0, 0);
 	m_DeviceContext11->PSSetConstantBuffers(1, 1, &m_PSCBLights);
 }
 
-void JWDX::UpdatePSCBCamera(XMFLOAT4 CameraPosition) noexcept
+void JWDX::UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept
 {
 	m_PSCBCameraData.CameraPosition = CameraPosition;
 

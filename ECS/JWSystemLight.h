@@ -90,6 +90,6 @@ namespace JWEngine
 		VECTOR<SComponentLight*>	m_vpComponents;
 		JWDX*						m_pDX{};
 		bool						m_ShouldUpdate{ false };
-		SPSCBLights					m_PSCSLights{};
+		SPSCBLights					m_PSCBLights{};
 	};
 };
