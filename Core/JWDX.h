@@ -157,17 +157,12 @@ namespace JWEngine
 
 		// Shader constant buffer
 		ID3D11Buffer*		m_VSCBSpace{};
-		SVSCBSpace			m_VSCBSpaceData{};
 		ID3D11Buffer*		m_VSCBFlags{};
-		SVSCBFlags			m_VSCBFlagsData{};
 		ID3D11Buffer*		m_VSCBCPUAnimation{};
-		SVSCBCPUAnimation	m_VSCBCPUAnimationData{};
 		ID3D11Buffer*		m_VSCBGPUAnimation{};
-		SVSCBGPUAnimation	m_VSCBGPUAnimationData{};
 		ID3D11Buffer*		m_PSCBFlags{};
 		SPSCBFlags			m_PSCBFlagsData{};
 		ID3D11Buffer*		m_PSCBLights{};
-		SPSCBLights			m_PSCBLightsData{};
 		ID3D11Buffer*		m_PSCBCamera{};
 		SPSCBCamera			m_PSCBCameraData{};
 
