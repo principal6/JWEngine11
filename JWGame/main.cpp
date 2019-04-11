@@ -247,10 +247,10 @@ JW_FUNCTION_ON_RENDER(OnRender)
 
 	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
 	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID, s_temp);
-	s_ray = L"Ray Destination: ( "
-		+ ConvertFloatToWSTRING(ray_dest.x, s_temp) + L", "
-		+ ConvertFloatToWSTRING(ray_dest.y, s_temp) + L", "
-		+ ConvertFloatToWSTRING(ray_dest.z, s_temp) + L" )";
+	s_ray = L"Ray Destination: ( ";
+	s_ray += ConvertFloatToWSTRING(ray_dest.x, s_temp) + L", ";
+	s_ray += ConvertFloatToWSTRING(ray_dest.y, s_temp) + L", ";
+	s_ray += ConvertFloatToWSTRING(ray_dest.z, s_temp) + L" )";
 
 	myGame.InstantText().BeginRendering();
 
