@@ -87,6 +87,20 @@
 		return Result;
 	}
 
+	inline auto ConvertIntToWSTRING(int value)->WSTRING
+	{
+		wchar_t temp[255]{};
+		swprintf_s(temp, L"%d", value);
+		return WSTRING(temp);
+	}
+
+	inline auto ConvertFloatToWSTRING(float value)->WSTRING
+	{
+		wchar_t temp[255]{};
+		swprintf_s(temp, L"%f", value);
+		return WSTRING(temp);
+	}
+
 	inline auto ConvertIntToSTRING(int value)->STRING
 	{
 		char temp[255]{};
@@ -188,6 +202,13 @@ namespace JWEngine
 		float B{};
 	};
 
+	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionText[] =
+	{
+		{ "POSITION"	, 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD"	, 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	};
+
 	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionBase[] =
 	{
 		{ "POSITION"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -207,6 +228,27 @@ namespace JWEngine
 
 		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT	, 0, 64, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // int BoneID[4]
 		{ "BLENDWEIGHT"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 80, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // float Weight[4]
+	};
+	
+	struct SVertexText
+	{
+		SVertexText() {};
+		SVertexText(XMFLOAT2 _Position) :
+			Position{ _Position } {};
+		SVertexText(XMFLOAT2 _Position, XMFLOAT2 _TextureCoordinates) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
+		SVertexText(XMFLOAT2 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT4 _Color) :
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Color{ _Color } {};
+		SVertexText(float x, float y) :
+			Position{ x, y } {};
+		SVertexText(float x, float y, float u, float v) :
+			Position{ x, y }, TextureCoordinates{ u, v } {};
+		SVertexText(float x, float y, float u, float v, float r, float g, float b, float a) :
+			Position{ x, y }, TextureCoordinates{ u, v }, Color{ r, g, b, a } {};
+
+		XMFLOAT2 Position{};
+		XMFLOAT2 TextureCoordinates{};
+		XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
 	};
 	
 	struct SVertexStaticModel
@@ -290,6 +332,21 @@ namespace JWEngine
 				++BoneCount;
 			}
 		}
+	};
+
+	struct SVertexDataText
+	{
+		VECTOR<SVertexText> vVertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SVertexText)) };
+		UINT Offset{};
+
+		void Clear() noexcept { vVertices.clear(); };
+		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexText)); };
+		auto GetPtrData() const noexcept { return &vVertices[0]; };
+		auto GetPtrStride() const noexcept { return &Stride; };
+		auto GetPtrOffset() const noexcept { return &Offset; };
+		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
 	};
 
 	struct SVertexDataStaticModel

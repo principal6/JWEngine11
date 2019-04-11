@@ -9,7 +9,7 @@ namespace JWEngine
 	class JWDX;
 	class JWCamera;
 	
-	static constexpr uint16_t KMaxInsantTextLength = 2048;
+	static constexpr uint32_t KMaxInsantTextLength = 2048;
 	
 	class JWInstantText
 	{
@@ -20,19 +20,19 @@ namespace JWEngine
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept;
 
 		void BeginRendering() noexcept;
-		void RenderText(STRING Text, XMFLOAT2 Position, XMFLOAT4 FontColorRGB) noexcept;
+		void RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 FontColorRGB) noexcept;
 		void EndRendering() noexcept;
 
 	private:
 		void CreateInstantTextVertexBuffer() noexcept;
 		void CreateInstantTextIndexBuffer() noexcept;
+		void CreateInstantTextVS() noexcept;
 		void CreateInstantTextPS() noexcept;
 
-		void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
+		inline void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
 	private:
 		bool						m_IsValid{ false };
-		bool						m_IsTextureCreated{ false };
 
 		JWDX*						m_pDX{};
 		JWCamera*					m_pCamera{};
@@ -42,13 +42,17 @@ namespace JWEngine
 
 		ID3D11Buffer*				m_VertexBuffer{};
 		ID3D11Buffer*				m_IndexBuffer{};
-		SVertexDataStaticModel		m_VertexData{};
+		SVertexDataText				m_VertexData{};
 		SIndexDataTriangle			m_IndexData{};
 
 		SVSCBSpace					m_VSCBSpace{};
+		ID3D11InputLayout*			m_IAInputLayoutText{};
+		ID3D10Blob*					m_VSInstantTextBlob{};
+		ID3D11VertexShader*			m_VSInstantText{};
+		ID3D10Blob*					m_PSInstantTextBlob{};
 		ID3D11PixelShader*			m_PSInstantText{};
 
 		ID3D11ShaderResourceView*	m_FontTextureSRV{};
-		uint64_t					m_CurrentTextLength{};
+		uint32_t					m_TotalTextLength{};
 	};
 }

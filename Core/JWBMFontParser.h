@@ -164,6 +164,15 @@ namespace JWEngine
 			UINT XAdvance{}; // Position advanced after drawing the character
 			UINT Page{}; // Texture page for the current character image
 			UINT Chnl{}; // Texture channel (1 = blue, 2 = green, 4 = red, 8 = alpha, 15 = all channels)
+
+			// Pre conversion data
+			float X_f{};
+			float Y_f{};
+			float Width_f{};
+			float Height_f{};
+			float XOffset_f{};
+			float YOffset_f{};
+			float XAdvance_f{};
 		};
 
 		struct BMKerning

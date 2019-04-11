@@ -172,6 +172,16 @@ auto JWBMFontParser::Parse(const WSTRING& FileName) noexcept->bool
 			tempChar.Page = tempAttr->UnsignedValue();
 			tempAttr = tempAttr->Next();
 			tempChar.Chnl = tempAttr->UnsignedValue();
+
+			tempChar.X_f = static_cast<float>(tempChar.X);
+			tempChar.Y_f = static_cast<float>(tempChar.Y);
+			tempChar.Width_f = static_cast<float>(tempChar.Width);
+			tempChar.Height_f = static_cast<float>(tempChar.Height);
+			tempChar.XOffset_f = static_cast<float>(tempChar.XOffset);
+			tempChar.YOffset_f = static_cast<float>(tempChar.YOffset);
+			tempChar.XAdvance_f = static_cast<float>(tempChar.XAdvance);
+
+			// Save tempChar to vChars
 			ms_FontData.vChars.push_back(tempChar);
 
 			// map Chars

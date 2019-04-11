@@ -43,12 +43,12 @@ JWDX::~JWDX()
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSSkyMapBuffer);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSRaw);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSRawBuffer);
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSAnimInputLayout);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSAnim);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSAnimBuffer);
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBaseInputLayout);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBase);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBaseBuffer);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_IAInputLayoutAnim);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_IAInputLayoutBase);
 
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DeviceContext11);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_Device11);
@@ -162,7 +162,7 @@ PRIVATE void JWDX::CreateVSBase() noexcept
 
 	// Create input layout
 	m_Device11->CreateInputLayout(KInputElementDescriptionBase, ARRAYSIZE(KInputElementDescriptionBase),
-		m_VSBaseBuffer->GetBufferPointer(), m_VSBaseBuffer->GetBufferSize(), &m_VSBaseInputLayout);
+		m_VSBaseBuffer->GetBufferPointer(), m_VSBaseBuffer->GetBufferSize(), &m_IAInputLayoutBase);
 }
 
 PRIVATE void JWDX::CreateVSAnim() noexcept
@@ -178,7 +178,7 @@ PRIVATE void JWDX::CreateVSAnim() noexcept
 
 	// Create input layout
 	m_Device11->CreateInputLayout(KInputElementDescriptionAnim, ARRAYSIZE(KInputElementDescriptionAnim),
-		m_VSAnimBuffer->GetBufferPointer(), m_VSAnimBuffer->GetBufferSize(), &m_VSAnimInputLayout);
+		m_VSAnimBuffer->GetBufferPointer(), m_VSAnimBuffer->GetBufferSize(), &m_IAInputLayoutAnim);
 }
 
 PRIVATE void JWDX::CreateVSRaw() noexcept
@@ -544,20 +544,20 @@ void JWDX::SetVS(EVertexShader VS) noexcept
 	switch (VS)
 	{
 	case JWEngine::EVertexShader::VSBase:
+		m_DeviceContext11->IASetInputLayout(m_IAInputLayoutBase);
 		m_DeviceContext11->VSSetShader(m_VSBase, nullptr, 0);
-		m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
 		break;
 	case JWEngine::EVertexShader::VSAnim:
+		m_DeviceContext11->IASetInputLayout(m_IAInputLayoutAnim);
 		m_DeviceContext11->VSSetShader(m_VSAnim, nullptr, 0);
-		m_DeviceContext11->IASetInputLayout(m_VSAnimInputLayout);
 		break;
 	case JWEngine::EVertexShader::VSRaw:
-		m_DeviceContext11->VSSetShader(m_VSRaw, nullptr, 0);
 		m_DeviceContext11->IASetInputLayout(nullptr);
+		m_DeviceContext11->VSSetShader(m_VSRaw, nullptr, 0);
 		break;
 	case JWEngine::EVertexShader::VSSkyMap:
+		m_DeviceContext11->IASetInputLayout(m_IAInputLayoutBase);
 		m_DeviceContext11->VSSetShader(m_VSSkyMap, nullptr, 0);
-		m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
 		break;
 	default:
 		break;

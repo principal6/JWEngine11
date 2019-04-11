@@ -1,3 +1,10 @@
+struct VS_INPUT_TEXT
+{
+	float4 Position : POSITION;
+	float2 TexCoord : TEXCOORD;
+	float4 Color	: COLOR;
+};
+
 struct VS_INPUT_STATIC
 {
 	float4 Position : POSITION;
@@ -16,6 +23,13 @@ struct VS_INPUT_SKINNED
 	float4 Specular	: COLOR1;
 	uint4  BoneID	: BLENDINDICES;
 	float4 Weight	: BLENDWEIGHT;
+};
+
+struct VS_OUTPUT_TEXT
+{
+	float4 Position	: SV_POSITION;
+	float2 TexCoord	: TEXCOORD;
+	float4 Color	: COLOR;
 };
 
 struct VS_OUTPUT

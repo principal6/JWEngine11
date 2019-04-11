@@ -240,15 +240,22 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	const auto& anim_state = myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->AnimationState;
 	
 	// Text
+	static WSTRING s_fps{};
+	static WSTRING s_anim_id{};
+	static WSTRING s_ray{};
+
+	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS());
+	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID);
+	s_ray = L"Ray Destination: ( "
+		+ ConvertFloatToWSTRING(ray_dest.x) + L", "
+		+ ConvertFloatToWSTRING(ray_dest.y) + L", "
+		+ ConvertFloatToWSTRING(ray_dest.z) + L" )";
+
 	myGame.InstantText().BeginRendering();
-	myGame.InstantText().RenderText("FPS: " + ConvertIntToSTRING(myGame.GetFPS()),
-		XMFLOAT2(10, 10), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
-	myGame.InstantText().RenderText("Animation ID: " + ConvertIntToSTRING(anim_state.CurrAnimationID),
-		XMFLOAT2(10, 30), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
-	myGame.InstantText().RenderText("Ray Destination: ( "
-		+ ConvertFloatToSTRING(ray_dest.x) + ", "
-		+ ConvertFloatToSTRING(ray_dest.y) + ", "
-		+ ConvertFloatToSTRING(ray_dest.z) + " )"
-		, XMFLOAT2(10, 50), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
+
+	myGame.InstantText().RenderText(s_fps, XMFLOAT2(10, 10), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_anim_id, XMFLOAT2(10, 30), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_ray, XMFLOAT2(10, 50), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
+
 	myGame.InstantText().EndRendering();
 }

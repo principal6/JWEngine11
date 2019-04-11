@@ -8,7 +8,12 @@ JWInstantText::~JWInstantText()
 {
 	JW_RELEASE(m_FontTextureSRV);
 
+	JW_RELEASE(m_PSInstantTextBlob);
 	JW_RELEASE(m_PSInstantText);
+
+	JW_RELEASE(m_VSInstantTextBlob);
+	JW_RELEASE(m_VSInstantText);
+	JW_RELEASE(m_IAInputLayoutText);
 	
 	JW_RELEASE(m_IndexBuffer);
 	JW_RELEASE(m_VertexBuffer);
@@ -40,11 +45,12 @@ void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STR
 
 	CreateInstantTextVertexBuffer();
 	CreateInstantTextIndexBuffer();
+	CreateInstantTextVS();
 	CreateInstantTextPS();
 
-	m_IsValid = true;
-
 	LoadImageFromFile(BaseDirectory, FontFileName + "_0.png");
+
+	m_IsValid = true;
 }
 
 PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
@@ -54,7 +60,7 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 
 	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength * 4; ++iterator_count)
 	{
-		m_VertexData.vVertices.push_back(SVertexStaticModel());
+		m_VertexData.vVertices.push_back(SVertexText());
 	}
 
 	// Create vertex buffer
@@ -76,30 +82,38 @@ PRIVATE void JWInstantText::CreateInstantTextIndexBuffer() noexcept
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
-PRIVATE void JWInstantText::CreateInstantTextPS() noexcept
+PRIVATE void JWInstantText::CreateInstantTextVS() noexcept
 {
-	ID3D10Blob* buffer_ps{};
-
 	// Compile Shaders from shader file
-	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSInstantText.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0", 0, 0, &buffer_ps, nullptr);
+	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSInstantText.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSInstantTextBlob, nullptr);
 
 	// Create the shader
-	m_pDX->GetDevice()->CreatePixelShader(buffer_ps->GetBufferPointer(), buffer_ps->GetBufferSize(), nullptr, &m_PSInstantText);
+	m_pDX->GetDevice()->CreateVertexShader(m_VSInstantTextBlob->GetBufferPointer(), m_VSInstantTextBlob->GetBufferSize(), nullptr, &m_VSInstantText);
 
-	JW_RELEASE(buffer_ps);
+	// Create input layout
+	m_pDX->GetDevice()->CreateInputLayout(KInputElementDescriptionText, ARRAYSIZE(KInputElementDescriptionText),
+		m_VSInstantTextBlob->GetBufferPointer(), m_VSInstantTextBlob->GetBufferSize(), &m_IAInputLayoutText);
 }
 
-PRIVATE void JWInstantText::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
+PRIVATE void JWInstantText::CreateInstantTextPS() noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsTextureCreated);
+	// Compile Shaders from shader file
+	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSInstantText.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSInstantTextBlob, nullptr);
 
+	// Create the shader
+	m_pDX->GetDevice()->CreatePixelShader(m_PSInstantTextBlob->GetBufferPointer(), m_PSInstantTextBlob->GetBufferSize(), nullptr, &m_PSInstantText);
+}
+
+PRIVATE inline void JWInstantText::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
+{
 	STRING path_string = Directory + FileName;
 	WSTRING w_path = StringToWstring(path_string);
 
 	CreateWICTextureFromFile(m_pDX->GetDevice(), w_path.c_str(), nullptr, &m_FontTextureSRV, 0);
-
-	m_IsTextureCreated = true;
 }
 
 void JWInstantText::BeginRendering() noexcept
@@ -113,8 +127,11 @@ void JWInstantText::BeginRendering() noexcept
 	// Disable Z-buffer for 2D drawing
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
+	// Set IA input layout
+	m_pDX->GetDeviceContext()->IASetInputLayout(m_IAInputLayoutText);
+
 	// Set VS
-	m_pDX->SetVS(EVertexShader::VSBase);
+	m_pDX->GetDeviceContext()->VSSetShader(m_VSInstantText, nullptr, 0);
 
 	// Update VS constant buffer (WVP matrix, which in reality is WO matrix.)
 	m_VSCBSpace.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
@@ -131,11 +148,15 @@ void JWInstantText::BeginRendering() noexcept
 	m_VertexData.EmptyData();
 
 	// Initialize text length
-	m_CurrentTextLength = 0;
+	m_TotalTextLength = 0;
 }
 
-void JWInstantText::RenderText(STRING Text, XMFLOAT2 Position, XMFLOAT4 FontColorRGB) noexcept
+void JWInstantText::RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 FontColorRGB) noexcept
 {
+	// Throw if total text length is larger than the limit
+	uint32_t text_length = static_cast<uint32_t>(Text.length());
+	assert((m_TotalTextLength + text_length) < KMaxInsantTextLength);
+
 	float window_width_half = static_cast<float>(m_pDX->GetWindowSize().Width) / 2;
 	float window_height_half = static_cast<float>(m_pDX->GetWindowSize().Height) / 2;
 	float texture_width = m_FontParser.GetFontTextureWidth();
@@ -146,51 +167,52 @@ void JWInstantText::RenderText(STRING Text, XMFLOAT2 Position, XMFLOAT4 FontColo
 	float u1{}, u2{}, v1{}, v2{};
 	BMFont::BMChar current_bm_char{};
 
-	WSTRING wide_text = StringToWstring(Text);
-	size_t iterator_index{ m_CurrentTextLength * 4 };
-	for (auto iterator_char : wide_text)
+	size_t iterator_index{ m_TotalTextLength * 4 };
+	for (auto iterator_char : Text)
 	{
 		current_bm_char = m_FontParser.GetBMCharFromWideCharacter(iterator_char);
 
-		u1 = static_cast<float>(current_bm_char.X) / texture_width;
-		v1 = static_cast<float>(current_bm_char.Y) / texture_height;
-		u2 = u1 + static_cast<float>(current_bm_char.Width) / texture_width;
-		v2 = v1 + static_cast<float>(current_bm_char.Height) / texture_height;
+		u1 = current_bm_char.X_f / texture_width;
+		v1 = current_bm_char.Y_f / texture_height;
+		u2 = u1 + current_bm_char.Width_f / texture_width;
+		v2 = v1 + current_bm_char.Height_f / texture_height;
 
-		x1 = base_x_position + static_cast<float>(current_bm_char.XOffset);
-		y1 = base_y_position - static_cast<float>(current_bm_char.YOffset);
-		x2 = x1 + static_cast<float>(current_bm_char.Width);
-		y2 = y1 - static_cast<float>(current_bm_char.Height);
+		x1 = base_x_position + current_bm_char.XOffset_f;
+		y1 = base_y_position - current_bm_char.YOffset_f;
+		x2 = x1 + current_bm_char.Width_f;
+		y2 = y1 - current_bm_char.Height_f;
 
 		m_VertexData.vVertices[iterator_index * 4].Position.x = x1;
 		m_VertexData.vVertices[iterator_index * 4].Position.y = y1;
 		m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.x = u1;
 		m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.y = v1;
-		m_VertexData.vVertices[iterator_index * 4].ColorDiffuse = FontColorRGB;
+		m_VertexData.vVertices[iterator_index * 4].Color = FontColorRGB;
 
 		m_VertexData.vVertices[iterator_index * 4 + 1].Position.x = x2;
 		m_VertexData.vVertices[iterator_index * 4 + 1].Position.y = y1;
 		m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.x = u2;
 		m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.y = v1;
-		m_VertexData.vVertices[iterator_index * 4 + 1].ColorDiffuse = FontColorRGB;
+		m_VertexData.vVertices[iterator_index * 4 + 1].Color = FontColorRGB;
 
 		m_VertexData.vVertices[iterator_index * 4 + 2].Position.x = x1;
 		m_VertexData.vVertices[iterator_index * 4 + 2].Position.y = y2;
 		m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.x = u1;
 		m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.y = v2;
-		m_VertexData.vVertices[iterator_index * 4 + 2].ColorDiffuse = FontColorRGB;
+		m_VertexData.vVertices[iterator_index * 4 + 2].Color = FontColorRGB;
 
 		m_VertexData.vVertices[iterator_index * 4 + 3].Position.x = x2;
 		m_VertexData.vVertices[iterator_index * 4 + 3].Position.y = y2;
 		m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.x = u2;
 		m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.y = v2;
-		m_VertexData.vVertices[iterator_index * 4 + 3].ColorDiffuse = FontColorRGB;
+		m_VertexData.vVertices[iterator_index * 4 + 3].Color = FontColorRGB;
 
 		base_x_position += current_bm_char.XAdvance;
+
 		++iterator_index;
 	}
 
-	m_CurrentTextLength += wide_text.length();
+	// Increase total text length
+	m_TotalTextLength += text_length;
 }
 
 void JWInstantText::EndRendering() noexcept
@@ -213,6 +235,7 @@ void JWInstantText::EndRendering() noexcept
 	// Set IA index buffer
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-	// Draw indexed
-	m_pDX->GetDeviceContext()->DrawIndexed(m_IndexData.GetCount(), 0, 0);
+	// @important for performance (Draw ONLY the visible vertices)
+	// Draw indexed 
+	m_pDX->GetDeviceContext()->DrawIndexed(3 * m_TotalTextLength * 4, 0, 0);
 }

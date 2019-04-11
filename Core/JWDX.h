@@ -139,12 +139,12 @@ namespace JWEngine
 		ID3D11DeviceContext*	m_DeviceContext11{};
 
 		// Shader and input layout
+		ID3D11InputLayout*	m_IAInputLayoutBase{};
+		ID3D11InputLayout*	m_IAInputLayoutAnim{};
 		ID3D10Blob*			m_VSBaseBuffer{};
 		ID3D11VertexShader*	m_VSBase{};
-		ID3D11InputLayout*	m_VSBaseInputLayout{};
 		ID3D10Blob*			m_VSAnimBuffer{};
 		ID3D11VertexShader*	m_VSAnim{};
-		ID3D11InputLayout*	m_VSAnimInputLayout{};
 		ID3D10Blob*			m_VSRawBuffer{};
 		ID3D11VertexShader*	m_VSRaw{};
 		ID3D10Blob*			m_VSSkyMapBuffer{};
