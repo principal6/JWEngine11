@@ -134,7 +134,7 @@ void JWInstantText::BeginRendering() noexcept
 	m_pDX->GetDeviceContext()->VSSetShader(m_VSInstantText, nullptr, 0);
 
 	// Update VS constant buffer (WVP matrix, which in reality is WO matrix.)
-	m_VSCBSpace.WVP = XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix();
+	m_VSCBSpace.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix());
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Set PS

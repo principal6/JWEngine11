@@ -388,23 +388,24 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	// @important
 	// Get transform component, if there is.
 	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
-	XMMATRIX world_matrix{ XMMatrixIdentity() };
-	XMMATRIX WVP{}, World{};
+	XMMATRIX component_world_matrix{ XMMatrixIdentity() };
 	if (component_transform)
 	{
-		world_matrix = component_transform->WorldMatrix;
-		WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
-		World = XMMatrixTranspose(world_matrix);
+		component_world_matrix = component_transform->WorldMatrix;
 	}
 
 	// Update VS constant buffer
+	XMMATRIX WVP{}, World{};
 	switch (Component.RenderType)
 	{
 	case ERenderType::Model_Static:
-		m_VSCBSpace.WVP = WVP;
-		m_VSCBSpace.World = World;
+		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
+		World = XMMatrixTranspose(component_world_matrix);
 		break;
 	case ERenderType::Model_Rigged:
+		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
+		World = XMMatrixTranspose(component_world_matrix);
+
 		if (Component.FlagRenderOption & JWFlagRenderOption_UseGPUAnimation)
 		{
 			m_VSCBFlags.ShouldUseGPUAnimation = TRUE;
@@ -419,22 +420,22 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 			m_pDX->UpdateVSCBCPUAnimation(m_VSCBCPUAnimation);
 			m_pDX->UpdateVSCBFlags(m_VSCBFlags);
 		}
-
-		m_VSCBSpace.WVP = WVP;
-		m_VSCBSpace.World = World;
 		break;
 	case ERenderType::Image_2D:
-		m_VSCBSpace.WVP = m_pCamera->GetTransformedOrthographicMatrix();
+		WVP = XMMatrixTranspose(m_pCamera->GetTransformedOrthographicMatrix());
 		break;
 	case ERenderType::Model_Line3D:
-		m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
 		break;
 	case ERenderType::Model_Line2D:
-		m_VSCBSpace.WVP = world_matrix * m_pCamera->GetFixedOrthographicMatrix();
+		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetFixedOrthographicMatrix());
 		break;
 	default:
 		break;
 	}
+
+	m_VSCBSpace.WVP = WVP;
+	m_VSCBSpace.World = World;
 
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 }

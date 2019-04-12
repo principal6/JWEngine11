@@ -25,6 +25,8 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 	m_Window.Create(WindowPosition, WindowSize, Title);
 	m_IsWindowCreated = true;
 
+	m_hWnd = m_Window.GethWnd();
+
 	LOG_ADD("Window created");
 
 	m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
@@ -133,6 +135,42 @@ auto JWGame::ECS() noexcept->JWECS&
 auto JWGame::GetFPS() noexcept->int
 {
 	return m_FPS;
+}
+
+void JWGame::CastPickingRay() noexcept
+{
+	// Get mouse cursor position in screen space (in client rect)
+	GetCursorPos(&m_MouseClientPosition);
+	ScreenToClient(m_hWnd, &m_MouseClientPosition);
+	
+	// Normalize mouse cursor position
+	m_NormalizedMousePosition.x = (static_cast<float>(m_MouseClientPosition.x) / m_Window.GetWidth()) * 2.0f - 1.0f;
+	m_NormalizedMousePosition.y = (static_cast<float>(m_MouseClientPosition.y) / m_Window.GetHeight()) * 2.0f - 1.0f;
+
+	auto MatrixView = m_Camera.GetViewMatrix();
+	auto MatrixProjection = m_Camera.GetProjectionMatrix();
+
+	m_PickingRayViewSpacePosition = XMVectorSet(0, 0, 0.001f, 0);
+	m_PickingRayViewSpaceDirection = XMVectorSet(
+		+m_NormalizedMousePosition.x / XMVectorGetX(MatrixProjection.r[0]),
+		-m_NormalizedMousePosition.y / XMVectorGetY(MatrixProjection.r[1]),
+		1.0f,
+		0.0f
+	);
+
+	auto MatrixViewInverse = XMMatrixInverse(nullptr, MatrixView);
+	m_PickingRayOrigin = XMVector3TransformCoord(m_PickingRayViewSpacePosition, MatrixViewInverse);
+	m_PickingRayDirection = XMVector3TransformNormal(m_PickingRayViewSpaceDirection, MatrixViewInverse);
+}
+
+auto JWGame::GetPickingRayOrigin() const noexcept->const XMVECTOR&
+{
+	return m_PickingRayOrigin;
+}
+
+auto JWGame::GetPickingRayDirection() const noexcept->const XMVECTOR&
+{
+	return m_PickingRayDirection;
 }
 
 void JWGame::Run() noexcept

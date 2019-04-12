@@ -50,9 +50,11 @@ namespace JWEngine
 		auto GetPositionFloat4() const noexcept->const XMFLOAT4&;
 		auto GetPositionFloat3() const noexcept->const XMFLOAT3&;
 
-		auto GetViewProjectionMatrix() const noexcept->XMMATRIX;
-		auto GetFixedOrthographicMatrix() const noexcept->XMMATRIX;
-		auto GetTransformedOrthographicMatrix() const noexcept->XMMATRIX;
+		auto GetViewMatrix() const noexcept->const XMMATRIX&;
+		auto GetProjectionMatrix() const noexcept->const XMMATRIX&;
+		auto GetViewProjectionMatrix() const noexcept->const XMMATRIX&;
+		auto GetFixedOrthographicMatrix() const noexcept->const XMMATRIX&;
+		auto GetTransformedOrthographicMatrix() const noexcept->const XMMATRIX&;
 
 	private:
 		inline auto GetFirstPersonForward() noexcept->XMVECTOR;
@@ -76,6 +78,7 @@ namespace JWEngine
 
 		mutable XMMATRIX		m_MatrixView{};
 		mutable XMMATRIX		m_MatrixProjection{};
+		mutable XMMATRIX		m_MatrixViewProjection{};
 		mutable XMMATRIX		m_MatrixOrthographicFixed{};
 		mutable XMMATRIX		m_MatrixOrthographicTransformed{};
 

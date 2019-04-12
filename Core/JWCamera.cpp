@@ -235,22 +235,32 @@ auto JWCamera::GetPositionFloat3() const noexcept->const XMFLOAT3&
 	return m_CameraPosition3;
 }
 
-auto JWCamera::GetViewProjectionMatrix() const noexcept->XMMATRIX
+auto JWCamera::GetViewMatrix() const noexcept->const XMMATRIX&
 {
 	// Update view matrix
 	m_MatrixView = XMMatrixLookAtLH(m_CameraPosition, m_CameraLookAt, m_CameraUp);
 
-	return m_MatrixView * m_MatrixProjection;
+	return m_MatrixView;
 }
 
-auto JWCamera::GetFixedOrthographicMatrix() const noexcept->XMMATRIX
+auto JWCamera::GetProjectionMatrix() const noexcept->const XMMATRIX&
 {
-	// @important: Must transpose the matrix
-	return XMMatrixTranspose(m_MatrixOrthographicFixed);
+	return m_MatrixProjection;
 }
 
-auto JWCamera::GetTransformedOrthographicMatrix() const noexcept->XMMATRIX
+auto JWCamera::GetViewProjectionMatrix() const noexcept->const XMMATRIX&
 {
-	// @important: Must transpose the matrix
-	return XMMatrixTranspose(m_MatrixOrthographicTransformed);
+	m_MatrixViewProjection = GetViewMatrix() * m_MatrixProjection;
+
+	return m_MatrixViewProjection;
+}
+
+auto JWCamera::GetFixedOrthographicMatrix() const noexcept->const XMMATRIX&
+{
+	return m_MatrixOrthographicFixed;
+}
+
+auto JWCamera::GetTransformedOrthographicMatrix() const noexcept->const XMMATRIX&
+{
+	return m_MatrixOrthographicTransformed;
 }

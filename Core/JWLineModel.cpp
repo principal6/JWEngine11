@@ -97,8 +97,8 @@ auto JWLineModel::AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOA
 	
 	assert(m_RenderType == ERenderType::Model_Line3D);
 	
-	m_VertexData.vVertices.push_back(SVertexStaticModel(StartPosition, KXAxisColor));
-	m_VertexData.vVertices.push_back(SVertexStaticModel(EndPosition, KXAxisColor));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(StartPosition, Color));
+	m_VertexData.vVertices.push_back(SVertexStaticModel(EndPosition, Color));
 	m_IndexData.vIndices.push_back(SIndexLine(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1));
 
 	return this;
@@ -137,7 +137,24 @@ void JWLineModel::AddEnd() noexcept
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
-auto JWLineModel::SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept->JWLineModel*
+auto JWLineModel::SetLine3DPosition(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition) noexcept->JWLineModel*
+{
+	if (m_VertexData.GetCount())
+	{
+		if (m_RenderType == ERenderType::Model_Line3D)
+		{
+			Line3DIndex = min(Line3DIndex, m_VertexData.GetCount() / 2 - 1);
+
+			m_VertexData.vVertices[Line3DIndex * 2].Position = StartPosition;
+
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].Position = EndPosition;
+		}
+	}
+
+	return this;
+}
+
+auto JWLineModel::SetLine3DPosition(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept->JWLineModel*
 {
 	if (m_VertexData.GetCount())
 	{
@@ -150,6 +167,85 @@ auto JWLineModel::SetLine3D(size_t Line3DIndex, XMFLOAT3 StartPosition, XMFLOAT3
 
 			m_VertexData.vVertices[Line3DIndex * 2 + 1].Position = EndPosition;
 			m_VertexData.vVertices[Line3DIndex * 2 + 1].ColorDiffuse = Color;
+		}
+	}
+
+	return this;
+}
+
+auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, XMVECTOR Direction) noexcept->JWLineModel*
+{
+	if (m_VertexData.GetCount())
+	{
+		if (m_RenderType == ERenderType::Model_Line3D)
+		{
+			constexpr float line_length = 100.0f;
+
+			Line3DIndex = min(Line3DIndex, m_VertexData.GetCount() / 2 - 1);
+
+			m_VertexData.vVertices[Line3DIndex * 2].Position.x = XMVectorGetX(Origin);
+			m_VertexData.vVertices[Line3DIndex * 2].Position.y = XMVectorGetY(Origin);
+			m_VertexData.vVertices[Line3DIndex * 2].Position.z = XMVectorGetZ(Origin);
+
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].Position.x =
+				m_VertexData.vVertices[Line3DIndex * 2].Position.x + XMVectorGetX(Direction) * line_length;
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].Position.y =
+				m_VertexData.vVertices[Line3DIndex * 2].Position.y + XMVectorGetY(Direction) * line_length;
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].Position.z =
+				m_VertexData.vVertices[Line3DIndex * 2].Position.z + XMVectorGetZ(Direction) * line_length;
+		}
+	}
+
+	return this;
+}
+
+auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, XMVECTOR Direction, XMFLOAT4 Color) noexcept->JWLineModel*
+{
+	if (m_VertexData.GetCount())
+	{
+		if (m_RenderType == ERenderType::Model_Line3D)
+		{
+			constexpr float line_length = 100.0f;
+
+			Line3DIndex = min(Line3DIndex, m_VertexData.GetCount() / 2 - 1);
+
+			m_VertexData.vVertices[Line3DIndex * 2].Position.x = XMVectorGetX(Origin);
+			m_VertexData.vVertices[Line3DIndex * 2].Position.y = XMVectorGetY(Origin);
+			m_VertexData.vVertices[Line3DIndex * 2].Position.z = XMVectorGetZ(Origin);
+			m_VertexData.vVertices[Line3DIndex * 2].ColorDiffuse = Color;
+
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].Position.x =
+				m_VertexData.vVertices[Line3DIndex * 2].Position.x + XMVectorGetX(Direction) * line_length;
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].Position.y = 
+				m_VertexData.vVertices[Line3DIndex * 2].Position.y + XMVectorGetY(Direction) * line_length;
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].Position.z = 
+				m_VertexData.vVertices[Line3DIndex * 2].Position.z + XMVectorGetZ(Direction) * line_length;
+			m_VertexData.vVertices[Line3DIndex * 2 + 1].ColorDiffuse = Color;
+		}
+	}
+
+	return this;
+}
+
+auto JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2 Length) noexcept->JWLineModel*
+{
+	if (m_VertexData.GetCount())
+	{
+		if (m_RenderType == ERenderType::Model_Line2D)
+		{
+			Line2DIndex = min(Line2DIndex, m_VertexData.GetCount() / 2 - 1);
+
+			float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
+			float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
+
+			XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
+			XMFLOAT3 position_b = position_a;
+			position_b.x += Length.x;
+			position_b.y += Length.y;
+
+			m_VertexData.vVertices[Line2DIndex * 2].Position = position_a;
+
+			m_VertexData.vVertices[Line2DIndex * 2 + 1].Position = position_b;
 		}
 	}
 

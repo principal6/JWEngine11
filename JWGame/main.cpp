@@ -49,8 +49,8 @@ int main()
 	myGame.ECS().CreateSharedLineModel() // Shared LineModel #0
 		->Make3DGrid(50.0f, 50.0f, 1.0f);
 
-	myGame.ECS().CreateSharedLineModel() // Shared LineModel #1 (Ray-cast representation)
-		->AddLine3D(XMFLOAT3(0, 0, 0), XMFLOAT3(2, 2, 2), XMFLOAT4(1, 0, 0, 1))
+	myGame.ECS().CreateSharedLineModel() // Shared LineModel #1 (Picking ray casting representation)
+		->AddLine3D(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT4(1, 0, 1, 1))
 		->AddEnd();
 
 	myGame.ECS().CreateSharedResource(ESharedResourceType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
@@ -207,7 +207,12 @@ JW_FUNCTION_ON_INPUT(OnInput)
 	// Mouse left button pressed
 	if (DeviceState.CurrentMouse.rgbButtons[0])
 	{
-		
+		myGame.CastPickingRay();
+
+		// ECS entity Ray
+		myGame.ECS().GetEntityByName("Ray")->GetComponentRender()->PtrLine
+			->SetLine3DOriginDirection(0, myGame.GetPickingRayOrigin(), myGame.GetPickingRayDirection())
+			->UpdateLines();
 	}
 
 	// Mouse cursor moved
@@ -229,25 +234,14 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 JW_FUNCTION_ON_RENDER(OnRender)
 {
-	// Skybox
+	// ECS entity Skybox
 	myGame.ECS().GetEntityByName("Sky")->GetComponentTransform()->SetPosition(XMFLOAT3(
 		myGame.Camera().GetPositionFloat4().x, myGame.Camera().GetPositionFloat4().y, myGame.Camera().GetPositionFloat4().z));
 
-	XMFLOAT3 ray_dest{};
-	auto cam_pos_vec = myGame.Camera().GetPosition();
-	XMMATRIX mat_rot = XMMatrixRotationY(XM_PIDIV4);
-	cam_pos_vec = XMVector3Transform(cam_pos_vec, mat_rot);
-	XMStoreFloat3(&ray_dest, cam_pos_vec);
-	
-	// Ray
-	myGame.ECS().GetEntityByName("Ray")->GetComponentRender()->PtrLine
-		->SetLine3D(0, XMFLOAT3(0, 0, 0), ray_dest, XMFLOAT4(1, 0, 0, 1))
-		->UpdateLines();
-
-	// ECS
+	// ECS execute systems
 	myGame.ECS().ExecuteSystems();
 
-	// Sprite info
+	// ECS entity Sprite info
 	const auto& anim_state = myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->AnimationState;
 	
 	// Text
@@ -258,10 +252,10 @@ JW_FUNCTION_ON_RENDER(OnRender)
 
 	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
 	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID, s_temp);
-	s_ray = L"Ray Destination: ( ";
-	s_ray += ConvertFloatToWSTRING(ray_dest.x, s_temp) + L", ";
-	s_ray += ConvertFloatToWSTRING(ray_dest.y, s_temp) + L", ";
-	s_ray += ConvertFloatToWSTRING(ray_dest.z, s_temp) + L" )";
+	s_ray = L"Ray Direction: ( ";
+	s_ray += ConvertFloatToWSTRING(XMVectorGetX(myGame.GetPickingRayDirection()), s_temp) + L", ";
+	s_ray += ConvertFloatToWSTRING(XMVectorGetY(myGame.GetPickingRayDirection()), s_temp) + L", ";
+	s_ray += ConvertFloatToWSTRING(XMVectorGetZ(myGame.GetPickingRayDirection()), s_temp) + L" )";
 
 	myGame.InstantText().BeginRendering();
 
