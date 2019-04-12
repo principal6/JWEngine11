@@ -17,15 +17,22 @@ namespace JWEngine
 		// Release all resources
 		void Destroy() noexcept;
 
-		void SetStaticModelData(SStaticModelData ModelData) noexcept;
+		void SetNonRiggedModelData(SNonRiggedModelData ModelData) noexcept;
+		void SetDynamicModelData(SNonRiggedModelData ModelData) noexcept;
 		void SetRiggedModelData(SRiggedModelData ModelData) noexcept;
+
+		// Only available when it's dynamic model
+		auto SetVertex(uint32_t VertexIndex, XMFLOAT3 Position, XMFLOAT4 Color) noexcept->JWModel*;
+
+		// Only available when it's dynamic model
+		void UpdateModel() noexcept;
 
 		auto GetRenderType() const noexcept { return m_RenderType; };
 		auto GetTextureFileName() const noexcept->WSTRING
 		{
 			if (m_RenderType == ERenderType::Model_Static)
 			{
-				return StaticModelData.TextureFileNameW;
+				return NonRiggedModelData.TextureFileNameW;
 			}
 			else if (m_RenderType == ERenderType::Model_Rigged)
 			{
@@ -38,7 +45,7 @@ namespace JWEngine
 	public:
 		ID3D11Buffer*		ModelVertexBuffer{};
 		ID3D11Buffer*		ModelIndexBuffer{};
-		SStaticModelData	StaticModelData{};
+		SNonRiggedModelData	NonRiggedModelData{};
 		SRiggedModelData	RiggedModelData{};
 
 		ID3D11Buffer*		NormalVertexBuffer{};

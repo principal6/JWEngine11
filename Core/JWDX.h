@@ -61,8 +61,12 @@ namespace JWEngine
 		void CreateStaticVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
 		void CreateIndexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
 
-		void SetDepthStencilState(EDepthStencilState State) noexcept;
+		// Rasterizer state
+		auto GetRasterizerState() const noexcept { return m_eRasterizerState; }
 		void SetRasterizerState(ERasterizerState State) noexcept;
+		void ToggleWireFrame() noexcept;
+
+		void SetDepthStencilState(EDepthStencilState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
 		void SetPSSamplerState(ESamplerState State) noexcept;
 
@@ -173,6 +177,7 @@ namespace JWEngine
 
 		ID3D11RenderTargetView*		m_RenderTargetView11{};
 
+		ERasterizerState			m_eRasterizerState{};
 		ID3D11RasterizerState*		m_RasterizerStateWireFrame11{};
 		ID3D11RasterizerState*		m_RasterizerStateSolidNoCull11{};
 		ID3D11RasterizerState*		m_RasterizerStateSolidBackCullCCW11{};

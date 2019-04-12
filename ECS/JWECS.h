@@ -39,6 +39,7 @@ namespace JWEngine
 		void CreateSharedResourceFromSharedModel(size_t ModelIndex) noexcept;
 		auto GetSharedResource(size_t Index) noexcept->ID3D11ShaderResourceView*;
 
+		auto CreateSharedModelTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C, bool IsDynamicModel = false) noexcept->JWModel*;
 		auto CreateSharedModelSquare(float Size, XMFLOAT2 UVMap) noexcept->JWModel*;
 		auto CreateSharedModelCircle(float Radius, uint8_t Detail) noexcept->JWModel*;
 		auto CreateSharedModelCube(float Size) noexcept->JWModel*;

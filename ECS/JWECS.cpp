@@ -216,6 +216,27 @@ auto JWECS::GetSharedResource(size_t Index) noexcept->ID3D11ShaderResourceView*
 	return result;
 }
 
+auto JWECS::CreateSharedModelTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C, bool IsDynamicModel) noexcept->JWModel*
+{
+	m_vSharedModel.push_back(JWModel());
+
+	auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
+
+	current_model.Create(*m_pDX, m_BaseDirectory);
+
+	JWPrimitiveMaker maker{};
+	if (IsDynamicModel)
+	{
+		current_model.SetDynamicModelData(maker.MakeTriangle(A, B, C));
+	}
+	else
+	{
+		current_model.SetNonRiggedModelData(maker.MakeTriangle(A, B, C));
+	}
+
+	return &current_model;
+}
+
 auto JWECS::CreateSharedModelSquare(float Size, XMFLOAT2 UVMap) noexcept->JWModel*
 {
 	m_vSharedModel.push_back(JWModel());
@@ -225,7 +246,7 @@ auto JWECS::CreateSharedModelSquare(float Size, XMFLOAT2 UVMap) noexcept->JWMode
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetStaticModelData(maker.MakeSquare(Size, UVMap));
+	current_model.SetNonRiggedModelData(maker.MakeSquare(Size, UVMap));
 
 	return &current_model;
 }
@@ -239,7 +260,7 @@ auto JWECS::CreateSharedModelCircle(float Radius, uint8_t Detail) noexcept->JWMo
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetStaticModelData(maker.MakeCircle(Radius, Detail));
+	current_model.SetNonRiggedModelData(maker.MakeCircle(Radius, Detail));
 
 	return &current_model;
 }
@@ -253,7 +274,7 @@ auto JWECS::CreateSharedModelCube(float Size) noexcept->JWModel*
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetStaticModelData(maker.MakeCube(Size));
+	current_model.SetNonRiggedModelData(maker.MakeCube(Size));
 
 	return &current_model;
 }
@@ -267,7 +288,7 @@ auto JWECS::CreateSharedModelPyramid(float Height, float Width) noexcept->JWMode
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetStaticModelData(maker.MakePyramid(Height, Width));
+	current_model.SetNonRiggedModelData(maker.MakePyramid(Height, Width));
 
 	return &current_model;
 }
@@ -281,7 +302,7 @@ auto JWECS::CreateSharedModelCone(float Height, float Radius, uint8_t Detail) no
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetStaticModelData(maker.MakeCone(Height, Radius, Detail));
+	current_model.SetNonRiggedModelData(maker.MakeCone(Height, Radius, Detail));
 
 	return &current_model;
 }
@@ -295,7 +316,7 @@ auto JWECS::CreateSharedModelCylinder(float Height, float Radius, uint8_t Detail
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetStaticModelData(maker.MakeCylinder(Height, Radius, Detail));
+	current_model.SetNonRiggedModelData(maker.MakeCylinder(Height, Radius, Detail));
 
 	return &current_model;
 }
@@ -309,7 +330,7 @@ auto JWECS::CreateSharedModelSphere(float Radius, uint8_t VerticalDetail, uint8_
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetStaticModelData(maker.MakeSphere(Radius, VerticalDetail, HorizontalDetail));
+	current_model.SetNonRiggedModelData(maker.MakeSphere(Radius, VerticalDetail, HorizontalDetail));
 
 	return &current_model;
 }
@@ -323,7 +344,7 @@ auto JWECS::CreateSharedModelCapsule(float Height, float Radius, uint8_t Vertica
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetStaticModelData(maker.MakeCapsule(Height, Radius, VerticalDetail, HorizontalDetail));
+	current_model.SetNonRiggedModelData(maker.MakeCapsule(Height, Radius, VerticalDetail, HorizontalDetail));
 	
 	return &current_model;
 }
@@ -341,7 +362,7 @@ auto JWECS::CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) no
 	switch (Type)
 	{
 	case JWEngine::ESharedModelType::StaticModel:
-		current_model.SetStaticModelData(loader.LoadStaticModel(m_BaseDirectory + KAssetDirectory, FileName));
+		current_model.SetNonRiggedModelData(loader.LoadNonRiggedModel(m_BaseDirectory + KAssetDirectory, FileName));
 
 		break;
 	case JWEngine::ESharedModelType::RiggedModel:

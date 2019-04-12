@@ -264,32 +264,32 @@ namespace JWEngine
 		XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
 	};
 	
-	struct SVertexStaticModel
+	struct SVertexNonRiggedModel
 	{
-		SVertexStaticModel() {};
-		SVertexStaticModel(XMFLOAT3 _Position) :
+		SVertexNonRiggedModel() {};
+		SVertexNonRiggedModel(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
-		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SVertexStaticModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
+		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
-		SVertexStaticModel(float x, float y, float z) :
+		SVertexNonRiggedModel(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SVertexStaticModel(float x, float y, float z, float u, float v) :
+		SVertexNonRiggedModel(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		SVertexStaticModel(float x, float y, float z, float r, float g, float b, float a) :
+		SVertexNonRiggedModel(float x, float y, float z, float r, float g, float b, float a) :
 			Position{ x, y, z }, ColorDiffuse{ r, g, b, a } {};
-		SVertexStaticModel(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
+		SVertexNonRiggedModel(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, ColorDiffuse{ r, g, b, a } {};
-		SVertexStaticModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+		SVertexNonRiggedModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
-		SVertexStaticModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+		SVertexNonRiggedModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
@@ -362,15 +362,15 @@ namespace JWEngine
 		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
 	};
 
-	struct SVertexDataStaticModel
+	struct SVertexDataNonRiggedModel
 	{
-		VECTOR<SVertexStaticModel> vVertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SVertexStaticModel)) };
+		VECTOR<SVertexNonRiggedModel> vVertices;
+		UINT Stride{ static_cast<UINT>(sizeof(SVertexNonRiggedModel)) };
 		UINT Offset{};
 
 		void Clear() noexcept { vVertices.clear(); };
 		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexStaticModel)); };
+		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexNonRiggedModel)); };
 		auto GetPtrData() const noexcept { return &vVertices[0]; };
 		auto GetPtrStride() const noexcept { return &Stride; };
 		auto GetPtrOffset() const noexcept { return &Offset; };
@@ -430,12 +430,13 @@ namespace JWEngine
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(DWORD)); };
 		auto GetPtrData() const noexcept { return &vIndices[0]; };
 	};
-
+	
 	enum class ERenderType : uint8_t
 	{
 		Invalid,
 
 		Model_Static,
+		Model_Dynamic,
 		Model_Rigged,
 
 		Model_Line3D,
@@ -568,9 +569,9 @@ namespace JWEngine
 	};
 
 	// StaticModel & Image2D
-	struct SStaticModelData
+	struct SNonRiggedModelData
 	{
-		SVertexDataStaticModel VertexData{};
+		SVertexDataNonRiggedModel VertexData{};
 		SIndexDataTriangle IndexData{};
 
 		bool HasTexture{ false };
@@ -594,7 +595,7 @@ namespace JWEngine
 	// Line2D & Line3D
 	struct SLineModelData
 	{
-		SVertexDataStaticModel VertexData{};
+		SVertexDataNonRiggedModel VertexData{};
 		SIndexDataLine IndexData{};
 	};
 	

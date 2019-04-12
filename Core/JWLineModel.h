@@ -45,7 +45,7 @@ namespace JWEngine
 
 		ID3D11Buffer*			m_VertexBuffer{};
 		ID3D11Buffer*			m_IndexBuffer{};
-		SVertexDataStaticModel	m_VertexData{};
+		SVertexDataNonRiggedModel	m_VertexData{};
 		SIndexDataLine			m_IndexData{};
 
 		SVSCBSpace				m_VSCBSpace{};

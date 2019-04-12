@@ -119,8 +119,12 @@ PRIVATE inline void JWInstantText::LoadImageFromFile(STRING Directory, STRING Fi
 void JWInstantText::BeginRendering() noexcept
 {
 	// Set rasterizer state
-	m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
-
+	if (m_pDX->GetRasterizerState() == ERasterizerState::WireFrame)
+	{
+		m_ShouldToggleWireFrame = true;
+		m_pDX->ToggleWireFrame();
+	}
+	
 	// Set blend state
 	m_pDX->SetBlendState(EBlendState::Transprent);
 
@@ -238,4 +242,11 @@ void JWInstantText::EndRendering() noexcept
 	// @important for performance (Draw ONLY the visible vertices)
 	// Draw indexed 
 	m_pDX->GetDeviceContext()->DrawIndexed(3 * m_TotalTextLength * 4, 0, 0);
+
+	// Restore rasterizer state
+	if (m_ShouldToggleWireFrame)
+	{
+		m_pDX->ToggleWireFrame();
+		m_ShouldToggleWireFrame = false;
+	}	
 }

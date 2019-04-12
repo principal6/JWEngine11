@@ -94,16 +94,7 @@ void JWGame::SetFunctionOnWindowsCharInput(FP_ON_WINDOWS_CHAR_INPUT Function) no
 
 void JWGame::ToggleWireFrame() noexcept
 {
-	if (m_RasterizerState == ERasterizerState::WireFrame)
-	{
-		m_RasterizerState = ERasterizerState::SolidNoCull;
-	}
-	else
-	{
-		m_RasterizerState = ERasterizerState::WireFrame;
-	}
-	
-	m_DX.SetRasterizerState(m_RasterizerState);
+	m_DX.ToggleWireFrame();
 }
 
 void JWGame::SetRasterizerState(ERasterizerState State) noexcept

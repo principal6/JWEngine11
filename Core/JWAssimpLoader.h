@@ -35,7 +35,7 @@ namespace JWEngine
 	class JWAssimpLoader final
 	{
 	public:
-		auto LoadStaticModel(STRING Directory, STRING ModelFileName) noexcept->SStaticModelData;
+		auto LoadNonRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SNonRiggedModelData;
 
 		auto LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SRiggedModelData;
 

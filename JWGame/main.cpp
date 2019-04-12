@@ -19,6 +19,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
+	// Add dynamic Primitive Triangle
 	// Picking!
 	// Collision!
 	// Instancing!
@@ -43,6 +44,7 @@ int main()
 	myGame.ECS().CreateSharedModelSphere(100.0f, 16, 7); // Shared Model #3
 	myGame.ECS().CreateSharedModelSquare(10.0f, XMFLOAT2(10.0f, 10.0f)); // Shared Model #4
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
+	myGame.ECS().CreateSharedModelTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(1, -1, 0), XMFLOAT3(-1, -1, 0), true); // Shared Model #6
 
 	myGame.ECS().CreateSharedImage2D(SPositionInt(160, 10), SSizeInt(100, 40)); // Shared Image2D #0
 
@@ -134,6 +136,10 @@ int main()
 	ray->CreateComponentRender()
 		->SetLineModel(myGame.ECS().GetSharedLineModel(1));
 
+	auto picked_tri = myGame.ECS().CreateEntity("PickedTri");
+	picked_tri->CreateComponentRender()
+		->SetModel(myGame.ECS().GetSharedModel(6));
+
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);
 	myGame.SetFunctionOnInput(OnInput);
@@ -213,6 +219,16 @@ JW_FUNCTION_ON_INPUT(OnInput)
 		myGame.ECS().GetEntityByName("Ray")->GetComponentRender()->PtrLine
 			->SetLine3DOriginDirection(0, myGame.GetPickingRayOrigin(), myGame.GetPickingRayDirection())
 			->UpdateLines();
+		
+		XMFLOAT3 a{}, b{};
+		XMStoreFloat3(&a, myGame.GetPickingRayOrigin());
+		b = a;
+		b.x += 1.0f;
+		myGame.ECS().GetEntityByName("PickedTri")->GetComponentRender()->PtrModel
+			->SetVertex(0, XMFLOAT3(0, 10, 0), XMFLOAT4(1, 1, 1, 1))
+			->SetVertex(1, a, XMFLOAT4(1, 0, 0, 1))
+			->SetVertex(2, b, XMFLOAT4(0, 1, 0, 1))
+			->UpdateModel();
 	}
 
 	// Mouse cursor moved

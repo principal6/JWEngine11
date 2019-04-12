@@ -402,6 +402,10 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
 		World = XMMatrixTranspose(component_world_matrix);
 		break;
+	case ERenderType::Model_Dynamic:
+		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
+		World = XMMatrixTranspose(component_world_matrix);
+		break;
 	case ERenderType::Model_Rigged:
 		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
 		World = XMMatrixTranspose(component_world_matrix);
@@ -458,7 +462,8 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 		m_pDX->SetBlendState(EBlendState::Opaque);
 	}
 
-	if ((type == ERenderType::Model_Static) || (type == ERenderType::Model_Rigged) || (type == ERenderType::Image_2D))
+	if ((type == ERenderType::Model_Static) || (type == ERenderType::Model_Dynamic) ||
+		(type == ERenderType::Model_Rigged) || (type == ERenderType::Image_2D))
 	{
 		// Set IA primitive topology
 		ptr_device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -474,13 +479,24 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	case ERenderType::Model_Static:
 		// Set IA vertex buffer
 		ptr_device_context->IASetVertexBuffers(
-			0, 1, &model->ModelVertexBuffer, model->StaticModelData.VertexData.GetPtrStride(), model->StaticModelData.VertexData.GetPtrOffset());
+			0, 1, &model->ModelVertexBuffer, model->NonRiggedModelData.VertexData.GetPtrStride(), model->NonRiggedModelData.VertexData.GetPtrOffset());
 
 		// Set IA index buffer
 		ptr_device_context->IASetIndexBuffer(model->ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		ptr_device_context->DrawIndexed(model->StaticModelData.IndexData.GetCount(), 0, 0);
+		ptr_device_context->DrawIndexed(model->NonRiggedModelData.IndexData.GetCount(), 0, 0);
+		break;
+	case ERenderType::Model_Dynamic:
+		// Set IA vertex buffer
+		ptr_device_context->IASetVertexBuffers(
+			0, 1, &model->ModelVertexBuffer, model->NonRiggedModelData.VertexData.GetPtrStride(), model->NonRiggedModelData.VertexData.GetPtrOffset());
+
+		// Set IA index buffer
+		ptr_device_context->IASetIndexBuffer(model->ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		// Draw indexed
+		ptr_device_context->DrawIndexed(model->NonRiggedModelData.IndexData.GetCount(), 0, 0);
 		break;
 	case ERenderType::Model_Rigged:
 		// Set IA vertex buffer

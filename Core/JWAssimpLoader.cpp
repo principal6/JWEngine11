@@ -2,9 +2,9 @@
 
 using namespace JWEngine;
 
-auto JWAssimpLoader::LoadStaticModel(STRING Directory, STRING ModelFileName) noexcept->SStaticModelData
+auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SNonRiggedModelData
 {
-	SStaticModelData result{};
+	SNonRiggedModelData result{};
 
 	Assimp::Importer importer{};
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_NORMALS);

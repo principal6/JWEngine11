@@ -54,5 +54,7 @@ namespace JWEngine
 
 		ID3D11ShaderResourceView*	m_FontTextureSRV{};
 		uint32_t					m_TotalTextLength{};
+
+		bool						m_ShouldToggleWireFrame{ false };
 	};
 }

@@ -475,6 +475,8 @@ void JWDX::CreateIndexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** pp
 
 void JWDX::SetRasterizerState(ERasterizerState State) noexcept
 {
+	m_eRasterizerState = State;
+
 	switch (State)
 	{
 	case JWEngine::ERasterizerState::WireFrame:
@@ -492,6 +494,20 @@ void JWDX::SetRasterizerState(ERasterizerState State) noexcept
 	default:
 		break;
 	}
+}
+
+void JWDX::ToggleWireFrame() noexcept
+{
+	if (m_eRasterizerState == ERasterizerState::WireFrame)
+	{
+		m_eRasterizerState = ERasterizerState::SolidNoCull;
+	}
+	else
+	{
+		m_eRasterizerState = ERasterizerState::WireFrame;
+	}
+
+	SetRasterizerState(m_eRasterizerState);
 }
 
 void JWDX::SetBlendState(EBlendState State) noexcept

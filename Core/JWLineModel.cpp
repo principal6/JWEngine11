@@ -43,8 +43,8 @@ void JWLineModel::Make3DGrid(float XSize, float ZSize, float GridInterval) noexc
 
 		if (position_z)
 		{
-			m_VertexData.vVertices.push_back(SVertexStaticModel(-XSize / 2.0f, 0, position_z));
-			m_VertexData.vVertices.push_back(SVertexStaticModel(+XSize / 2.0f, 0, position_z));
+			m_VertexData.vVertices.push_back(SVertexNonRiggedModel(-XSize / 2.0f, 0, position_z));
+			m_VertexData.vVertices.push_back(SVertexNonRiggedModel(+XSize / 2.0f, 0, position_z));
 
 			m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 
@@ -57,8 +57,8 @@ void JWLineModel::Make3DGrid(float XSize, float ZSize, float GridInterval) noexc
 
 		if (position_x)
 		{
-			m_VertexData.vVertices.push_back(SVertexStaticModel(position_x, 0, -ZSize / 2.0f));
-			m_VertexData.vVertices.push_back(SVertexStaticModel(position_x, 0, +ZSize / 2.0f));
+			m_VertexData.vVertices.push_back(SVertexNonRiggedModel(position_x, 0, -ZSize / 2.0f));
+			m_VertexData.vVertices.push_back(SVertexNonRiggedModel(position_x, 0, +ZSize / 2.0f));
 
 			m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 
@@ -67,20 +67,20 @@ void JWLineModel::Make3DGrid(float XSize, float ZSize, float GridInterval) noexc
 	}
 
 	// X Axis
-	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
-	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
+	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
+	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
 	m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 	++total_grid_count;
 
 	// Y Axis
-	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
-	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
+	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
+	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
 	m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 	++total_grid_count;
 
 	// Z Axis
-	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
-	m_VertexData.vVertices.push_back(SVertexStaticModel(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
+	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
+	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
 	m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 	++total_grid_count;
 
@@ -97,8 +97,8 @@ auto JWLineModel::AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOA
 	
 	assert(m_RenderType == ERenderType::Model_Line3D);
 	
-	m_VertexData.vVertices.push_back(SVertexStaticModel(StartPosition, Color));
-	m_VertexData.vVertices.push_back(SVertexStaticModel(EndPosition, Color));
+	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(StartPosition, Color));
+	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(EndPosition, Color));
 	m_IndexData.vIndices.push_back(SIndexLine(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1));
 
 	return this;
