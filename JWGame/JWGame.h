@@ -38,7 +38,7 @@ namespace JWEngine
 		void SetFunctionOnWindowsCharInput(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept;
 
 		void ToggleWireFrame() noexcept;
-		void SetRasterizerState(ERasterizerState State) noexcept;
+		void SetUniversalRasterizerState(ERasterizerState State) noexcept;
 
 		// Object getter
 		auto Camera() noexcept->JWCamera&;
@@ -51,6 +51,7 @@ namespace JWEngine
 
 		// Picking ray
 		void CastPickingRay() noexcept;
+		void PickEntityTriangle() noexcept;
 		auto GetPickingRayOrigin() const noexcept->const XMVECTOR&;
 		auto GetPickingRayDirection() const noexcept->const XMVECTOR&;
 
@@ -86,8 +87,6 @@ namespace JWEngine
 
 		JWImageCursor			m_MouseCursorImage{};
 		XMFLOAT2				m_MouseCursorPosition{};
-		
-		ERasterizerState		m_RasterizerState{ ERasterizerState::SolidNoCull };
 		
 		HWND					m_hWnd{};
 		POINT					m_MouseClientPosition{};

@@ -63,8 +63,9 @@ namespace JWEngine
 
 		// Rasterizer state
 		auto GetRasterizerState() const noexcept { return m_eRasterizerState; }
+		auto GetPreviousRasterizerState() const noexcept { return m_ePreviousRasterizerState; }
 		void SetRasterizerState(ERasterizerState State) noexcept;
-		void ToggleWireFrame() noexcept;
+		void SwitchRasterizerState() noexcept;
 
 		void SetDepthStencilState(EDepthStencilState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
@@ -178,6 +179,7 @@ namespace JWEngine
 		ID3D11RenderTargetView*		m_RenderTargetView11{};
 
 		ERasterizerState			m_eRasterizerState{};
+		ERasterizerState			m_ePreviousRasterizerState{};
 		ID3D11RasterizerState*		m_RasterizerStateWireFrame11{};
 		ID3D11RasterizerState*		m_RasterizerStateSolidNoCull11{};
 		ID3D11RasterizerState*		m_RasterizerStateSolidBackCullCCW11{};

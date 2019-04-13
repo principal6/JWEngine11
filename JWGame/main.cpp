@@ -19,8 +19,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// Add dynamic Primitive Triangle
-	// Picking!
+	// Picking the bounding sphere!
 	// Collision!
 	// Instancing!
 
@@ -44,7 +43,7 @@ int main()
 	myGame.ECS().CreateSharedModelSphere(100.0f, 16, 7); // Shared Model #3
 	myGame.ECS().CreateSharedModelSquare(10.0f, XMFLOAT2(10.0f, 10.0f)); // Shared Model #4
 	myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
-	myGame.ECS().CreateSharedModelTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(1, -1, 0), XMFLOAT3(-1, -1, 0), true); // Shared Model #6
+	myGame.ECS().CreateSharedModelTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0), true); // Shared Model #6
 
 	myGame.ECS().CreateSharedImage2D(SPositionInt(160, 10), SSizeInt(100, 40)); // Shared Image2D #0
 
@@ -63,6 +62,7 @@ int main()
 	myGame.ECS().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 
 	auto grid = myGame.ECS().CreateEntity("grid");
+	grid->SetEntityType(EEntityType::Grid);
 	grid->CreateComponentRender()
 		->SetLineModel(myGame.ECS().GetSharedLineModel(0));
 
@@ -76,6 +76,7 @@ int main()
 		->SetRenderFlag(JWFlagRenderOption_UseLighting);
 
 	auto ambient_light = myGame.ECS().CreateEntity("ambient_light");
+	ambient_light->SetEntityType(EEntityType::Light);
 	ambient_light->CreateComponentLight()
 		->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
 	ambient_light->CreateComponentTransform()
@@ -84,6 +85,7 @@ int main()
 		->SetModel(myGame.ECS().GetSharedModel(1));
 
 	auto directional_light = myGame.ECS().CreateEntity("directional_light");
+	directional_light->SetEntityType(EEntityType::Light);
 	directional_light->CreateComponentLight()
 		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5.0f, 5.0f, 0.0f), 0.6f);
 	directional_light->CreateComponentTransform()
@@ -104,6 +106,7 @@ int main()
 		->SetAnimation(3);
 	
 	auto sky_sphere = myGame.ECS().CreateEntity("Sky");
+	sky_sphere->SetEntityType(EEntityType::Sky);
 	sky_sphere->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
@@ -127,18 +130,23 @@ int main()
 		->SetTexture(myGame.ECS().GetSharedResource(2));
 
 	auto cam = myGame.ECS().CreateEntity("Camera");
+	cam->SetEntityType(EEntityType::Camera);
 	cam->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(0, 2, 0));
 	cam->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(5));
 
 	auto ray = myGame.ECS().CreateEntity("Ray");
+	ray->SetEntityType(EEntityType::PickingRay);
 	ray->CreateComponentRender()
 		->SetLineModel(myGame.ECS().GetSharedLineModel(1));
 
 	auto picked_tri = myGame.ECS().CreateEntity("PickedTri");
+	picked_tri->SetEntityType(EEntityType::PickedTriangle);
 	picked_tri->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(6));
+		->SetModel(myGame.ECS().GetSharedModel(6))
+		->SetDepthStencilState(EDepthStencilState::ZDisabled)
+		->SetRenderFlag(JWFlagRenderOption_AlwaysSolidNoCull);
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);
@@ -214,20 +222,22 @@ JW_FUNCTION_ON_INPUT(OnInput)
 	if (DeviceState.CurrentMouse.rgbButtons[0])
 	{
 		myGame.CastPickingRay();
+		myGame.PickEntityTriangle();
 
 		// ECS entity Ray
 		myGame.ECS().GetEntityByName("Ray")->GetComponentRender()->PtrLine
 			->SetLine3DOriginDirection(0, myGame.GetPickingRayOrigin(), myGame.GetPickingRayDirection())
 			->UpdateLines();
+
+		XMFLOAT3 tri_a{}, tri_b{}, tri_c{};
+		XMStoreFloat3(&tri_a, myGame.ECS().GetPickedTrianglePosition(0));
+		XMStoreFloat3(&tri_b, myGame.ECS().GetPickedTrianglePosition(1));
+		XMStoreFloat3(&tri_c, myGame.ECS().GetPickedTrianglePosition(2));
 		
-		XMFLOAT3 a{}, b{};
-		XMStoreFloat3(&a, myGame.GetPickingRayOrigin());
-		b = a;
-		b.x += 1.0f;
 		myGame.ECS().GetEntityByName("PickedTri")->GetComponentRender()->PtrModel
-			->SetVertex(0, XMFLOAT3(0, 10, 0), XMFLOAT4(1, 1, 1, 1))
-			->SetVertex(1, a, XMFLOAT4(1, 0, 0, 1))
-			->SetVertex(2, b, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(0, tri_a, XMFLOAT4(1, 1, 1, 1))
+			->SetVertex(1, tri_b, XMFLOAT4(1, 0, 0, 1))
+			->SetVertex(2, tri_c, XMFLOAT4(0, 1, 0, 1))
 			->UpdateModel();
 	}
 

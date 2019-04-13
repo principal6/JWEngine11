@@ -8,7 +8,7 @@ namespace JWEngine
 {
 	class JWDX;
 	class JWCamera;
-	
+
 	enum class ESharedResourceType
 	{
 		Texture2D,
@@ -34,6 +34,11 @@ namespace JWEngine
 		auto GetEntity(uint32_t index) noexcept->JWEntity*;
 		auto GetEntityByName(STRING EntityName) noexcept->JWEntity*;
 		void DestroyEntity(uint32_t index) noexcept;
+
+		// Picking
+		void PickEntityTriangle(XMVECTOR& RayOrigin, XMVECTOR& RayDirection) noexcept;
+		// PositionIndex = { 0, 1, 2 }
+		auto GetPickedTrianglePosition(uint32_t PositionIndex) const noexcept->const XMVECTOR&;
 
 		void CreateSharedResource(ESharedResourceType Type, STRING FileName) noexcept;
 		void CreateSharedResourceFromSharedModel(size_t ModelIndex) noexcept;
@@ -76,6 +81,8 @@ namespace JWEngine
 			const SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
 		void BakeCurrentFrameIntoTexture(uint32_t StartIndex, const XMMATRIX* FrameMatrices, float*& OutData) noexcept;
 
+		auto IsPointInTriangle(XMVECTOR& Point, XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2) noexcept->bool;
+
 	private:
 		JWDX*					m_pDX{};
 		STRING					m_BaseDirectory{};
@@ -93,6 +100,8 @@ namespace JWEngine
 		VECTOR<JWModel>						m_vSharedModel;
 		VECTOR<JWLineModel>					m_vSharedLineModel;
 		VECTOR<JWImage>						m_vSharedImage2D;
+
+		XMVECTOR							m_PickedTriangle[3]{};
 	};
 };
 

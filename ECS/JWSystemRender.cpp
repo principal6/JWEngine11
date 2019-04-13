@@ -71,6 +71,15 @@ void JWSystemRender::Execute() noexcept
 {
 	for (auto& iter : m_vpComponents)
 	{
+		if (iter->FlagRenderOption & JWFlagRenderOption_AlwaysSolidNoCull)
+		{
+			m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
+		}
+		else
+		{
+			m_pDX->SetRasterizerState(m_UniversalRasterizerState);
+		}
+
 		// Set blend state for the component
 		m_pDX->SetBlendState(iter->BlendState);
 
@@ -593,4 +602,23 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 
 	// Draw
 	m_pDX->GetDeviceContext()->DrawIndexed(model->NormalData.IndexData.GetCount(), 0, 0);
+}
+
+void JWSystemRender::SetUniversalRasterizerState(ERasterizerState State) noexcept
+{
+	m_UniversalRasterizerState = State;
+}
+
+void JWSystemRender::ToggleWireFrame() noexcept
+{
+	if (m_UniversalRasterizerState == ERasterizerState::WireFrame)
+	{
+		m_UniversalRasterizerState = m_OldUniversalRasterizerState;
+		m_OldUniversalRasterizerState = ERasterizerState::WireFrame;
+	}
+	else
+	{
+		m_OldUniversalRasterizerState = m_UniversalRasterizerState;
+		m_UniversalRasterizerState = ERasterizerState::WireFrame;
+	}
 }

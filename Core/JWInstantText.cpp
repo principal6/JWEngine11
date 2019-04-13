@@ -122,7 +122,7 @@ void JWInstantText::BeginRendering() noexcept
 	if (m_pDX->GetRasterizerState() == ERasterizerState::WireFrame)
 	{
 		m_ShouldToggleWireFrame = true;
-		m_pDX->ToggleWireFrame();
+		m_pDX->SwitchRasterizerState();
 	}
 	
 	// Set blend state
@@ -246,7 +246,7 @@ void JWInstantText::EndRendering() noexcept
 	// Restore rasterizer state
 	if (m_ShouldToggleWireFrame)
 	{
-		m_pDX->ToggleWireFrame();
+		m_pDX->SwitchRasterizerState();
 		m_ShouldToggleWireFrame = false;
 	}	
 }

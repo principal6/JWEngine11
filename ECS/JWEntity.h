@@ -8,6 +8,17 @@ namespace JWEngine
 {
 	class JWECS;
 
+	enum class EEntityType
+	{
+		UserDefined,
+		Sky,
+		Camera,
+		Light,
+		Grid,
+		PickingRay,
+		PickedTriangle,
+	};
+
 	class JWEntity
 	{
 	public:
@@ -25,12 +36,17 @@ namespace JWEngine
 
 		auto CreateComponentLight() noexcept->SComponentLight*;
 		auto GetComponentLight() noexcept { return m_pComponentLight; };
+		
+		// Default entity type is EEntityType::UserDefined
+		void SetEntityType(EEntityType Type) noexcept;
+		auto GetEntityType() const noexcept { return m_EntityType; };
 
 		auto GetEntityName() const noexcept { return m_EntityName; };
 
 	private:
 		JWECS*					m_pECS{};
 		STRING					m_EntityName{};
+		EEntityType				m_EntityType{ EEntityType::UserDefined };
 
 		SComponentTransform*	m_pComponentTransform{};
 		SComponentRender*		m_pComponentRender{};

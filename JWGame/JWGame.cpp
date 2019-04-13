@@ -94,13 +94,12 @@ void JWGame::SetFunctionOnWindowsCharInput(FP_ON_WINDOWS_CHAR_INPUT Function) no
 
 void JWGame::ToggleWireFrame() noexcept
 {
-	m_DX.ToggleWireFrame();
+	m_ECS.SystemRender().ToggleWireFrame();
 }
 
-void JWGame::SetRasterizerState(ERasterizerState State) noexcept
+void JWGame::SetUniversalRasterizerState(ERasterizerState State) noexcept
 {
-	m_RasterizerState = State;
-	m_DX.SetRasterizerState(m_RasterizerState);
+	m_ECS.SystemRender().SetUniversalRasterizerState(State);
 }
 
 auto JWGame::Camera() noexcept->JWCamera&
@@ -152,6 +151,11 @@ void JWGame::CastPickingRay() noexcept
 	auto MatrixViewInverse = XMMatrixInverse(nullptr, MatrixView);
 	m_PickingRayOrigin = XMVector3TransformCoord(m_PickingRayViewSpacePosition, MatrixViewInverse);
 	m_PickingRayDirection = XMVector3TransformNormal(m_PickingRayViewSpaceDirection, MatrixViewInverse);
+}
+
+void JWGame::PickEntityTriangle() noexcept
+{
+	m_ECS.PickEntityTriangle(m_PickingRayOrigin, m_PickingRayDirection);
 }
 
 auto JWGame::GetPickingRayOrigin() const noexcept->const XMVECTOR&

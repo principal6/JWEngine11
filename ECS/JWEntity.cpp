@@ -44,3 +44,8 @@ auto JWEntity::CreateComponentLight() noexcept->SComponentLight*
 
 	return m_pComponentLight;
 }
+
+void JWEntity::SetEntityType(EEntityType Type) noexcept
+{
+	m_EntityType = Type;
+}

@@ -12,13 +12,14 @@ namespace JWEngine
 
 	enum EFLAGRenderOption : uint16_t
 	{
-		JWFlagRenderOption_UseTexture = 0b1,
-		JWFlagRenderOption_UseLighting = 0b10,
-		JWFlagRenderOption_UseGPUAnimation = 0b100,
-		JWFlagRenderOption_UseAnimationInterpolation = 0b1000,
-		JWFlagRenderOption_UseTransparency = 0b10000,
-		JWFlagRenderOption_DrawNormals = 0b100000,
-		JWFlagRenderOption_DrawTPose = 0b1000000,
+		JWFlagRenderOption_UseTexture					= 0x01,
+		JWFlagRenderOption_UseLighting					= 0x02,
+		JWFlagRenderOption_UseGPUAnimation				= 0x04,
+		JWFlagRenderOption_UseAnimationInterpolation	= 0x08,
+		JWFlagRenderOption_UseTransparency				= 0x10,
+		JWFlagRenderOption_DrawNormals					= 0x20,
+		JWFlagRenderOption_DrawTPose					= 0x40,
+		JWFlagRenderOption_AlwaysSolidNoCull			= 0x80,
 	};
 	using JWFlagRenderOption = uint16_t;
 
@@ -156,6 +157,13 @@ namespace JWEngine
 			return this;
 		}
 
+		auto SetDepthStencilState(EDepthStencilState State)
+		{
+			DepthStencilState = State;
+
+			return this;
+		}
+
 		// Animation ID 0 is not an animation but TPose
 		auto SetAnimation(uint32_t AnimationID, uint32_t NextAnimationID = -1)
 		{
@@ -232,6 +240,9 @@ namespace JWEngine
 
 		void Execute() noexcept;
 
+		void SetUniversalRasterizerState(ERasterizerState State) noexcept;
+		void ToggleWireFrame() noexcept;
+
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;
 
@@ -255,5 +266,8 @@ namespace JWEngine
 		SVSCBFlags					m_VSCBFlags{};
 		SVSCBCPUAnimation			m_VSCBCPUAnimation{};
 		SVSCBGPUAnimation			m_VSCBGPUAnimation{};
+
+		ERasterizerState			m_UniversalRasterizerState{ ERasterizerState::SolidNoCull };
+		ERasterizerState			m_OldUniversalRasterizerState{ ERasterizerState::SolidNoCull };
 	};
 };

@@ -124,6 +124,193 @@ void JWECS::DestroyEntity(uint32_t index) noexcept
 	}
 }
 
+void JWECS::PickEntityTriangle(XMVECTOR& RayOrigin, XMVECTOR& RayDirection) noexcept
+{
+	if (m_vpEntities.size())
+	{
+		XMVECTOR t_cmp{ XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0) };
+
+		for (auto iter : m_vpEntities)
+		{
+			auto transform{ iter->GetComponentTransform() };
+			auto render{ iter->GetComponentRender() };
+			auto type{ iter->GetEntityType() };
+			
+			if ((type == EEntityType::Sky) || (type == EEntityType::Grid) ||
+				(type == EEntityType::PickingRay) || (type == EEntityType::PickedTriangle))
+			{
+				continue;
+			}
+
+			if (transform)
+			{
+				auto model_type = render->PtrModel->GetRenderType();
+				if ((model_type == ERenderType::Model_Dynamic) || (model_type == ERenderType::Model_Static))
+				{
+					auto indices = render->PtrModel->NonRiggedModelData.IndexData.vIndices;
+					auto vertices = render->PtrModel->NonRiggedModelData.VertexData.vVertices;
+
+					// Iterate all the triangles in the model
+					for (auto triangle : indices)
+					{
+						auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
+						auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
+						auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
+
+						// Move vertices from local space to world space!
+						v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
+						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
+						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
+
+						// Calculate edge vectors from positions
+						auto edge0 = v1 - v0;
+						auto edge1 = v2 - v0;
+
+						// Calculate face normal from edge vectors,
+						// using cross product of vectors
+						auto normal = XMVector3Normalize(XMVector3Cross(edge0, edge1));
+
+						// Calculate plane equation  # Ax + By + Cz + D = 0
+						// # A, B, C = Face normal's xyz coord
+						// # x, y, z = Any point in the plane, so we use v0 
+						// # D = -(Ax + By + Cz) = -Dot(normal, v0)
+						auto D = -XMVector3Dot(normal, v0);
+
+						// Get ray's equation (which is a parametric equation of a line)
+						// Line = P_0 + tP_1 (t = [0, 1])
+						//      = ray_origin + t * ray_direction (t = [0, 1])
+						auto p_0 = XMVector3Dot(RayOrigin, normal);
+						auto p_1 = XMVector3Dot(RayDirection, normal);
+						XMVECTOR t{};
+
+						// for vectorization...
+						XMVECTOR zero = XMVectorZero();
+						if (XMVector3NotEqual(p_1, zero))
+						{
+							t = -(p_0 + D) / p_1;
+						}
+
+						// 't' should be positive for the picking to be in front of the camera!
+						// and we will store the minimum t, which is the closest to the camera.
+						if ((XMVector3Greater(t, zero)) && (XMVector3Less(t, t_cmp)))
+						{
+							auto point_on_plane = RayOrigin + t * RayDirection;
+
+							// Check if the point is in the triangle
+							if (IsPointInTriangle(point_on_plane, v0, v1, v2))
+							{
+								m_PickedTriangle[0] = v0;
+								m_PickedTriangle[1] = v1;
+								m_PickedTriangle[2] = v2;
+
+								t_cmp = t;
+							}
+						}
+					}
+				}
+				else if (model_type == ERenderType::Model_Rigged)
+				{
+					auto indices = render->PtrModel->RiggedModelData.IndexData.vIndices;
+					auto vertices = render->PtrModel->RiggedModelData.VertexData.vVertices;
+
+					// Iterate all the triangles in the model
+					for (auto triangle : indices)
+					{
+						auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
+						auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
+						auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
+
+						// Move vertices from local space to world space!
+						v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
+						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
+						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
+
+						// Calculate edge vectors from positions
+						auto edge0 = v1 - v0;
+						auto edge1 = v2 - v0;
+
+						// Calculate face normal from edge vectors,
+						// using cross product of vectors
+						auto normal = XMVector3Normalize(XMVector3Cross(edge0, edge1));
+
+						// Calculate plane equation  # Ax + By + Cz + D = 0
+						// # A, B, C = Face normal's xyz coord
+						// # x, y, z = Any point in the plane, so we use v0 
+						// # D = -(Ax + By + Cz) = -Dot(normal, v0)
+						auto D = -XMVector3Dot(normal, v0);
+
+						// Get ray's equation (which is a parametric equation of a line)
+						// Line = P_0 + tP_1 (t = [0, 1])
+						//      = ray_origin + t * ray_direction (t = [0, 1])
+						auto p_0 = XMVector3Dot(RayOrigin, normal);
+						auto p_1 = XMVector3Dot(RayDirection, normal);
+						XMVECTOR t{};
+
+						// for vectorization...
+						XMVECTOR zero = XMVectorZero();
+						if (XMVector3NotEqual(p_1, zero))
+						{
+							t = -(p_0 + D) / p_1;
+						}
+
+						// 't' should be positive for the picking to be in front of the camera!
+						// and we will store the minimum t, which is the closest to the camera.
+						if ((XMVector3Greater(t, zero)) && (XMVector3Less(t, t_cmp)))
+						{
+							auto point_on_plane = RayOrigin + t * RayDirection;
+
+							// Check if the point is in the triangle
+							if (IsPointInTriangle(point_on_plane, v0, v1, v2))
+							{
+								m_PickedTriangle[0] = v0;
+								m_PickedTriangle[1] = v1;
+								m_PickedTriangle[2] = v2;
+
+								t_cmp = t;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+PRIVATE auto JWECS::IsPointInTriangle(XMVECTOR& Point, XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2) noexcept->bool
+{
+	bool result{ false };
+	auto zero = XMVectorZero();
+	auto check_0 = XMVector3Cross((V2 - V1), (Point - V1));
+	auto check_1 = XMVector3Cross((V2 - V1), (V0 - V1));
+
+	if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
+	{
+		check_0 = XMVector3Cross((V2 - V0), (Point - V0));
+		check_1 = XMVector3Cross((V2 - V0), (V1 - V0));
+
+		if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
+		{
+			check_0 = XMVector3Cross((V1 - V0), (Point - V0));
+			check_1 = XMVector3Cross((V1 - V0), (V2 - V0));
+
+			if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
+			{
+				// In triangle!
+				result = true;
+			}
+		}
+	}
+
+	return result;
+}
+
+auto JWECS::GetPickedTrianglePosition(uint32_t PositionIndex) const noexcept->const XMVECTOR&
+{
+	PositionIndex = min(PositionIndex, 2);
+
+	return m_PickedTriangle[PositionIndex];
+}
+
 void JWECS::CreateSharedResource(ESharedResourceType Type, STRING FileName) noexcept
 {
 	m_vpSharedSRV.push_back(nullptr);
