@@ -190,50 +190,7 @@ void JWECS::PickEntityTriangle(XMVECTOR& RayOrigin, XMVECTOR& RayDirection) noex
 						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
 						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
 
-						// Calculate edge vectors from positions
-						auto edge0 = v1 - v0;
-						auto edge1 = v2 - v0;
-
-						// Calculate face normal from edge vectors,
-						// using cross product of vectors
-						auto normal = XMVector3Normalize(XMVector3Cross(edge0, edge1));
-
-						// Calculate plane equation  # Ax + By + Cz + D = 0
-						// # A, B, C = Face normal's xyz coord
-						// # x, y, z = Any point in the plane, so we use v0 
-						// # D = -(Ax + By + Cz) = -Dot(normal, v0)
-						auto D = -XMVector3Dot(normal, v0);
-
-						// Get ray's equation (which is a parametric equation of a line)
-						// Line = P_0 + tP_1 (t = [0, 1])
-						//      = ray_origin + t * ray_direction (t = [0, 1])
-						auto p_0 = XMVector3Dot(RayOrigin, normal);
-						auto p_1 = XMVector3Dot(RayDirection, normal);
-						XMVECTOR t{};
-
-						// for vectorization...
-						XMVECTOR zero = XMVectorZero();
-						if (XMVector3NotEqual(p_1, zero))
-						{
-							t = -(p_0 + D) / p_1;
-						}
-
-						// 't' should be positive for the picking to be in front of the camera!
-						// and we will store the minimum t, which is the closest to the camera.
-						if ((XMVector3Greater(t, zero)) && (XMVector3Less(t, t_cmp)))
-						{
-							auto point_on_plane = RayOrigin + t * RayDirection;
-
-							// Check if the point is in the triangle
-							if (IsPointInTriangle(point_on_plane, v0, v1, v2))
-							{
-								m_PickedTriangle[0] = v0;
-								m_PickedTriangle[1] = v1;
-								m_PickedTriangle[2] = v2;
-
-								t_cmp = t;
-							}
-						}
+						auto t = PickTriangle(v0, v1, v2, RayOrigin, RayDirection, t_cmp);
 					}
 				}
 				else if (model_type == ERenderType::Model_Rigged)
@@ -253,55 +210,84 @@ void JWECS::PickEntityTriangle(XMVECTOR& RayOrigin, XMVECTOR& RayDirection) noex
 						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
 						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
 
-						// Calculate edge vectors from positions
-						auto edge0 = v1 - v0;
-						auto edge1 = v2 - v0;
-
-						// Calculate face normal from edge vectors,
-						// using cross product of vectors
-						auto normal = XMVector3Normalize(XMVector3Cross(edge0, edge1));
-
-						// Calculate plane equation  # Ax + By + Cz + D = 0
-						// # A, B, C = Face normal's xyz coord
-						// # x, y, z = Any point in the plane, so we use v0 
-						// # D = -(Ax + By + Cz) = -Dot(normal, v0)
-						auto D = -XMVector3Dot(normal, v0);
-
-						// Get ray's equation (which is a parametric equation of a line)
-						// Line = P_0 + tP_1 (t = [0, 1])
-						//      = ray_origin + t * ray_direction (t = [0, 1])
-						auto p_0 = XMVector3Dot(RayOrigin, normal);
-						auto p_1 = XMVector3Dot(RayDirection, normal);
-						XMVECTOR t{};
-
-						// for vectorization...
-						XMVECTOR zero = XMVectorZero();
-						if (XMVector3NotEqual(p_1, zero))
-						{
-							t = -(p_0 + D) / p_1;
-						}
-
-						// 't' should be positive for the picking to be in front of the camera!
-						// and we will store the minimum t, which is the closest to the camera.
-						if ((XMVector3Greater(t, zero)) && (XMVector3Less(t, t_cmp)))
-						{
-							auto point_on_plane = RayOrigin + t * RayDirection;
-
-							// Check if the point is in the triangle
-							if (IsPointInTriangle(point_on_plane, v0, v1, v2))
-							{
-								m_PickedTriangle[0] = v0;
-								m_PickedTriangle[1] = v1;
-								m_PickedTriangle[2] = v2;
-
-								t_cmp = t;
-							}
-						}
+						auto t = PickTriangle(v0, v1, v2, RayOrigin, RayDirection, t_cmp);
 					}
 				}
 			}
 		}
 	}
+}
+
+PRIVATE auto JWECS::PickTriangle(XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2,
+	XMVECTOR& RayOrigin, XMVECTOR& RayDirection, XMVECTOR& t_cmp) noexcept->XMVECTOR
+{
+	// Calculate edge vectors from vertex positions
+	auto edge0 = V1 - V0;
+	auto edge1 = V2 - V0;
+
+	// Calculate face normal from edge vectors,
+	// using cross product of vectors
+	auto normal = XMVector3Normalize(XMVector3Cross(edge0, edge1));
+
+	// Calculate plane equation  # Ax + By + Cz + D = 0
+	// # A, B, C = Face normal's xyz coord
+	// # x, y, z = Any point in the plane, so we can just use V0
+	// # Ax + By + Cz = Dot(normal, point) = Dot(N, P)
+	// # D = -(Ax + By + Cz) = -Dot(normal, v0) = -Dot(N, V0)
+	//
+	// @ Plane equation for a point P
+	// Dot(N, P) = Dot(N, V0)
+	auto D = -XMVector3Dot(normal, V0);
+
+	// Get ray's equation (which is a parametric equation of a line)
+	//
+	// Line = P0 + t * P1
+	//      = ray_origin + t * ray_direction
+	//
+	// @ N: plane normal  @ V = given vertex in the plane  @ L = line vector
+	//
+	// L = (P0x + P1x * t, P0y + P1y * t, P0z + P1z * t)
+	//
+	// Dot(N, L) = Dot(N, V)
+	// => (P0x + P1x * t) * Nx + (P0y + P1y * t) * Ny + (P0z + P1z * t) * Nz = (Vx) * Nx + (Vy) * Ny + (Vz) * Nz
+	// => (P1x * t) * Nx + (P1y * t) * Ny + (P1z * t) * Nz = (Vx - P0x) * Nx + (Vy - P0y) * Ny + (Vz - P0z) * Nz
+	// => (P1x * Nx) * t + (P1y * Ny) * t + (P1z * Nz) * t = (Vx - P0x) * Nx + (Vy - P0y) * Ny + (Vz - P0z) * Nz
+	// => Dot(P1, N) * t = Dot(V, N) - Dot(P0, N)
+	//
+	//           Dot(V, N) - Dot(P0, N)
+	// =>  t  = ------------------------
+	//                 Dot(P1, N)
+	//
+	auto p0_norm = XMVector3Dot(RayOrigin, normal);
+	auto p1_norm = XMVector3Dot(RayDirection, normal);
+	XMVECTOR zero{ XMVectorZero() };
+	XMVECTOR t{};
+
+	// For vectorization we use vectors to compare values
+	if (XMVector3NotEqual(p1_norm, zero))
+	{
+		t = (-D - p0_norm) / p1_norm;
+	}
+
+	// 't' should be positive for the picking to be in front of the camera!
+	// (if it's negative, the picking is occuring behind the camera)
+	// We will store the minimum of t values, which means that it's the closest picking to the camera.
+	if ((XMVector3Greater(t, zero)) && (XMVector3Less(t, t_cmp)))
+	{
+		auto point_on_plane = RayOrigin + t * RayDirection;
+
+		// Check if the point is in the triangle
+		if (IsPointInTriangle(point_on_plane, V0, V1, V2))
+		{
+			m_PickedTriangle[0] = V0;
+			m_PickedTriangle[1] = V1;
+			m_PickedTriangle[2] = V2;
+
+			t_cmp = t;
+		}
+	}
+
+	return t;
 }
 
 PRIVATE auto JWECS::IsPointInTriangle(XMVECTOR& Point, XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2) noexcept->bool
