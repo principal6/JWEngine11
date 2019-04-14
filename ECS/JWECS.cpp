@@ -89,22 +89,50 @@ auto JWECS::GetEntityByName(STRING EntityName) noexcept->JWEntity*
 {
 	JWEntity* result{};
 
-	if (m_vpEntities.size())
-	{
-		auto find = m_mapEntityNames.find(EntityName);
-		if (find != m_mapEntityNames.end())
-		{
-			auto index = find->second;
+	assert(m_vpEntities.size());
 
-			result = m_vpEntities[index];
-		}
-		else
-		{
-			MessageBoxA(nullptr, "엔티티 이름이 잘못되었습니다.", "오류", MB_OK);
-		}
+	auto find = m_mapEntityNames.find(EntityName);
+	if (find != m_mapEntityNames.end())
+	{
+		auto index = find->second;
+
+		result = m_vpEntities[index];
 	}
-	
+	else
+	{
+		MessageBoxA(nullptr, "엔티티 이름이 잘못되었습니다.", "오류", MB_OK);
+	}
+
 	return result;
+}
+
+auto JWECS::GetUniqueEntity(EEntityType Type) noexcept->JWEntity*
+{
+	JWEntity* result{};
+
+	assert(m_vpEntities.size());
+	
+	if (JW_IS_UNIQUE_ENTITY_TYPE(Type))
+	{
+		uint32_t index_of_type = static_cast<uint32_t>(Type);
+
+		result = m_pUniqueEntities[index_of_type];
+	}
+
+	return result;
+}
+
+void JWECS::SetUniqueEntity(JWEntity* PtrEntity, EEntityType Type) noexcept
+{
+	assert(JW_IS_UNIQUE_ENTITY_TYPE(Type));
+
+	uint32_t index_of_type = static_cast<uint32_t>(Type);
+
+	// Avoid duplicate setting! It must be UNIQUE!
+	if (m_pUniqueEntities[index_of_type] == nullptr)
+	{
+		m_pUniqueEntities[index_of_type] = PtrEntity;
+	}
 }
 
 void JWECS::DestroyEntity(uint32_t index) noexcept

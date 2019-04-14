@@ -8,16 +8,29 @@ namespace JWEngine
 {
 	class JWECS;
 
+	// @warning
+	// I must update these values carefully!
+	static constexpr uint32_t KUniquePredefinedEntityCount = 5;
 	enum class EEntityType
 	{
-		UserDefined,
+		// UNIQUE predefined entity types
 		Sky,
-		Camera,
-		Light,
 		Grid,
 		PickingRay,
 		PickedTriangle,
+		MainSprite,
+
+		// NOT unique predefined entity type
+		Light,
+		Camera,
+
+		// User-defined entity type
+		UserDefined,
 	};
+
+#define JW_IS_UNIQUE_ENTITY_TYPE(type) ((type == EEntityType::Sky) || (type == EEntityType::Grid) || \
+	(type == EEntityType::PickingRay) || (type == EEntityType::PickedTriangle) || \
+	(type == EEntityType::MainSprite))
 
 	class JWEntity
 	{

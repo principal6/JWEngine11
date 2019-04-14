@@ -94,6 +94,7 @@ int main()
 		->SetModel(myGame.ECS().GetSharedModel(1));
 
 	auto main_sprite = myGame.ECS().CreateEntity("main_sprite");
+	main_sprite->SetEntityType(EEntityType::MainSprite);
 	main_sprite->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
@@ -182,12 +183,12 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 {
 	if (Character == '1')
 	{
-		myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->PrevAnimation();
+		myGame.ECS().GetUniqueEntity(EEntityType::MainSprite)->GetComponentRender()->PrevAnimation();
 	}
 
 	if (Character == '2')
 	{
-		myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->NextAnimation();
+		myGame.ECS().GetUniqueEntity(EEntityType::MainSprite)->GetComponentRender()->NextAnimation();
 	}
 }
 
@@ -225,7 +226,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 		myGame.PickEntityTriangle();
 
 		// ECS entity Ray
-		myGame.ECS().GetEntityByName("Ray")->GetComponentRender()->PtrLine
+		myGame.ECS().GetUniqueEntity(EEntityType::PickingRay)->GetComponentRender()->PtrLine
 			->SetLine3DOriginDirection(0, myGame.GetPickingRayOrigin(), myGame.GetPickingRayDirection())
 			->UpdateLines();
 
@@ -234,7 +235,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 		XMStoreFloat3(&tri_b, myGame.ECS().GetPickedTrianglePosition(1));
 		XMStoreFloat3(&tri_c, myGame.ECS().GetPickedTrianglePosition(2));
 		
-		myGame.ECS().GetEntityByName("PickedTri")->GetComponentRender()->PtrModel
+		myGame.ECS().GetUniqueEntity(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
 			->SetVertex(0, tri_a, XMFLOAT4(1, 1, 1, 1))
 			->SetVertex(1, tri_b, XMFLOAT4(1, 0, 0, 1))
 			->SetVertex(2, tri_c, XMFLOAT4(0, 1, 0, 1))
@@ -261,14 +262,14 @@ JW_FUNCTION_ON_INPUT(OnInput)
 JW_FUNCTION_ON_RENDER(OnRender)
 {
 	// ECS entity Skybox
-	myGame.ECS().GetEntityByName("Sky")->GetComponentTransform()->SetPosition(XMFLOAT3(
+	myGame.ECS().GetUniqueEntity(EEntityType::Sky)->GetComponentTransform()->SetPosition(XMFLOAT3(
 		myGame.Camera().GetPositionFloat4().x, myGame.Camera().GetPositionFloat4().y, myGame.Camera().GetPositionFloat4().z));
 
 	// ECS execute systems
 	myGame.ECS().ExecuteSystems();
 
 	// ECS entity Sprite info
-	const auto& anim_state = myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->AnimationState;
+	const auto& anim_state = myGame.ECS().GetUniqueEntity(EEntityType::MainSprite)->GetComponentRender()->AnimationState;
 	
 	// Text
 	static WSTRING s_temp{};
