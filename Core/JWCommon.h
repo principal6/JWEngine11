@@ -149,7 +149,6 @@ namespace JWEngine
 	// Forward declaration
 	struct SDirectInputDeviceState;
 
-#define JW_AVOID_DUPLICATE_CREATION(Bool) {if (Bool) { return; }}
 #define JW_DELETE(pVar) { if(pVar) {delete pVar; pVar = nullptr; }}
 #define JW_DELETE_ARRAY(pArray) { if(pArray) {delete[] pArray; pArray = nullptr; }}
 #define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
@@ -167,15 +166,6 @@ namespace JWEngine
 	static constexpr XMFLOAT4 KDefaultColorNormals{ XMFLOAT4(0.4f, 0.8f, 0.0f, 1.0f) };
 	static constexpr XMFLOAT3 KDefaultColorGrid{ XMFLOAT3(1.0f, 1.0f, 1.0f) };
 	static constexpr size_t KSizeTInvalid{ MAXSIZE_T };
-	
-	inline void JWAbort(const char* Content)
-	{
-		MessageBoxA(nullptr, Content, "Error", MB_OK);
-
-		std::cout << "[ERROR] " << Content << std::endl << std::endl;
-
-		assert(false);
-	}
 
 	enum class EWorldMatrixCalculationOrder
 	{
@@ -494,7 +484,7 @@ namespace JWEngine
 	struct SModelBone
 	{
 		// Current bone's index in SModelBoneTree.vBones
-		int ID;
+		int ID{};
 		STRING Name;
 		VECTOR<SModelWeight> vWeights;
 
@@ -533,7 +523,7 @@ namespace JWEngine
 
 	struct SModelNodeAnimation
 	{
-		size_t NodeID;
+		size_t NodeID{};
 		VECTOR<SModelAnimationKeyPosition> vKeyPosition;
 		VECTOR<SModelAnimationKeyRotation> vKeyRotation;
 		VECTOR<SModelAnimationKeyScaling> vKeyScaling;

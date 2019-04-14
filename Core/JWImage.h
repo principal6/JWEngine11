@@ -29,7 +29,7 @@ namespace JWEngine
 		void UpdateScreenPositionAndSize() noexcept;
 
 	private:
-		bool						m_IsValid{ false };
+		bool						m_IsCreated{ false };
 		JWDX*						m_pDX{};
 		XMFLOAT2					m_Position{};
 		XMFLOAT2					m_Size{};

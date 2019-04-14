@@ -87,6 +87,9 @@
     <ClCompile Include="..\Core\JWLineModel.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\ECS\JWSystemPhysics.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Core\JWCommon.h">
@@ -431,6 +434,9 @@
     </ClInclude>
     <ClInclude Include="..\Core\JWLineModel.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWSystemPhysics.h">
+      <Filter>ECS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

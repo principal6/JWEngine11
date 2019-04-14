@@ -39,7 +39,7 @@ namespace JWEngine
 		static constexpr XMFLOAT4	KYAxisColor = XMFLOAT4(0, 1, 0, 1); // Y = G
 		static constexpr XMFLOAT4	KZAxisColor = XMFLOAT4(0, 0, 1, 1); // Z = B
 
-		bool					m_IsValid{ false };
+		bool					m_IsCreated{ false };
 
 		JWDX*					m_pDX{};
 

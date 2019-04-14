@@ -22,33 +22,33 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{237669B7-79F0-4AA0-9B11-B340DE1E3E63}</ProjectGuid>
     <RootNamespace>JWGame</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>JWGame</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -180,6 +180,7 @@
     <ClCompile Include="..\ECS\JWECS.cpp" />
     <ClCompile Include="..\ECS\JWEntity.cpp" />
     <ClCompile Include="..\ECS\JWSystemLight.cpp" />
+    <ClCompile Include="..\ECS\JWSystemPhysics.cpp" />
     <ClCompile Include="..\ECS\JWSystemRender.cpp" />
     <ClCompile Include="..\ECS\JWSystemTransform.cpp" />
     <ClCompile Include="..\TinyXml2\tinyxml2.cpp" />
@@ -297,6 +298,7 @@
     <ClInclude Include="..\ECS\JWECS.h" />
     <ClInclude Include="..\ECS\JWEntity.h" />
     <ClInclude Include="..\ECS\JWSystemLight.h" />
+    <ClInclude Include="..\ECS\JWSystemPhysics.h" />
     <ClInclude Include="..\ECS\JWSystemRender.h" />
     <ClInclude Include="..\ECS\JWSystemTransform.h" />
     <ClInclude Include="..\TinyXml2\tinyxml2.h" />

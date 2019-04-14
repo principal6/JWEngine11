@@ -21,7 +21,7 @@ JWInstantText::~JWInstantText()
 
 void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
+	assert(!m_IsCreated);
 
 	m_BaseDirectory = BaseDirectory;
 
@@ -31,10 +31,7 @@ void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STR
 		// The font data(ms_FontData) is static, so we can run this code only once per process,
 		// no matter how many JWInstantTexts or windows are made.
 
-		if (!m_FontParser.Parse(StringToWstring(BaseDirectory + FontFileName + ".fnt")))
-		{
-			JWAbort("Unable to parse the font data from file. Please check the file name.");
-		}
+		assert(m_FontParser.Parse(StringToWstring(BaseDirectory + FontFileName + ".fnt")));
 	}
 
 	// Set JWDX pointer.
@@ -50,7 +47,7 @@ void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STR
 
 	LoadImageFromFile(BaseDirectory, FontFileName + "_0.png");
 
-	m_IsValid = true;
+	m_IsCreated = true;
 }
 
 PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
@@ -171,7 +168,8 @@ void JWInstantText::RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 
 	float u1{}, u2{}, v1{}, v2{};
 	BMFont::BMChar current_bm_char{};
 
-	size_t iterator_index{ m_TotalTextLength * 4 };
+	uint64_t iterator_index{ static_cast<uint64_t>(m_TotalTextLength) * 4 };
+
 	for (auto iterator_char : Text)
 	{
 		current_bm_char = m_FontParser.GetBMCharFromWideCharacter(iterator_char);

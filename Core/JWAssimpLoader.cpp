@@ -14,106 +14,86 @@ auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) 
 		| aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices
 		| aiProcess_RemoveComponent | aiProcess_GenSmoothNormals) };
 
-	if (assimp_scene && assimp_scene->HasMeshes())
+	// #0 Model must have meshes
+	assert(assimp_scene && assimp_scene->HasMeshes());
+	auto mesh_count{ assimp_scene->mNumMeshes };
+	unsigned int indices_offset{};
+
+	for (unsigned int mesh_index{}; mesh_index < mesh_count; ++mesh_index)
 	{
-		auto mesh_count{ assimp_scene->mNumMeshes };
-		unsigned int indices_offset{};
+		auto material = assimp_scene->mMaterials[assimp_scene->mMeshes[mesh_index]->mMaterialIndex];
+		aiColor4D ai_diffuse{};
+		aiColor4D ai_specular{};
+		aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
+		aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &ai_specular);
 
-		for (unsigned int mesh_index{}; mesh_index < mesh_count; ++mesh_index)
+		// Load the texture only once per model (not per mesh).
+		// i.e. multi-texture not supported.
+		if (!result.HasTexture)
 		{
-			auto material = assimp_scene->mMaterials[assimp_scene->mMeshes[mesh_index]->mMaterialIndex];
-			aiColor4D ai_diffuse{};
-			aiColor4D ai_specular{};
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &ai_specular);
-
-			// Load the texture only once per model (not per mesh).
-			// i.e. multi-texture not supported.
-			if (!result.HasTexture)
+			aiString path{};
+			aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &path);
+			STRING path_string{ Directory + path.C_Str() };
+			if (path.length)
 			{
-				aiString path{};
-				aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &path);
-				STRING path_string{ Directory + path.C_Str() };
-				if (path.length)
-				{
-					result.HasTexture = true;
-					result.TextureFileNameW = StringToWstring(path_string);
-				}
-			}
-
-			if (assimp_scene->mMeshes[mesh_index]->HasPositions())
-			{
-				size_t mesh_vertices_count{ assimp_scene->mMeshes[mesh_index]->mNumVertices };
-
-				XMFLOAT3 position{};
-				XMFLOAT2 texcoord{};
-				XMFLOAT3 normal{};
-				
-				XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
-				XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
-
-				for (size_t iterator_vertices{}; iterator_vertices < mesh_vertices_count; ++iterator_vertices)
-				{
-					position = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
-					
-					if (assimp_scene->mMeshes[mesh_index]->mTextureCoords[0] == nullptr)
-					{
-						// No texture coordinates in model file
-						texcoord = XMFLOAT2(0, 0);
-					}
-					else
-					{
-						texcoord = ConvertaiVector3DToXMFLOAT2(assimp_scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
-					}
-
-					normal = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
-
-					result.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
-				}
-			}
-			else
-			{
-				JWAbort("Loaded model doesn't have positions");
-			}
-
-			if (assimp_scene->mMeshes[mesh_index]->HasFaces())
-			{
-				size_t faces_count{ assimp_scene->mMeshes[mesh_index]->mNumFaces };
-				unsigned int last_index{};
-
-				for (size_t iterator_faces{}; iterator_faces < faces_count; ++iterator_faces)
-				{
-					auto& indices_count = assimp_scene->mMeshes[mesh_index]->mFaces[iterator_faces].mNumIndices;
-					auto& indices = assimp_scene->mMeshes[mesh_index]->mFaces[iterator_faces].mIndices;
-
-					if (indices_count == 3)
-					{
-						result.IndexData.vIndices.emplace_back(
-							indices_offset + indices[0],
-							indices_offset + indices[1],
-							indices_offset + indices[2]);
-					}
-					else
-					{
-						//JWAbort("Index count is not 3");
-					}
-
-					last_index = max(last_index, indices[0]);
-					last_index = max(last_index, indices[1]);
-					last_index = max(last_index, indices[2]);
-				}
-
-				indices_offset += last_index + 1;
-			}
-			else
-			{
-				JWAbort("Loaded model doesn't have faces");
+				result.HasTexture = true;
+				result.TextureFileNameW = StringToWstring(path_string);
 			}
 		}
-	}
-	else
-	{
-		JWAbort("Model file not found.");
+
+		// #1 Model must have positions
+		assert(assimp_scene->mMeshes[mesh_index]->HasPositions());
+		size_t mesh_vertices_count{ assimp_scene->mMeshes[mesh_index]->mNumVertices };
+
+		XMFLOAT3 position{};
+		XMFLOAT2 texcoord{};
+		XMFLOAT3 normal{};
+				
+		XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
+		XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
+
+		for (size_t iterator_vertices{}; iterator_vertices < mesh_vertices_count; ++iterator_vertices)
+		{
+			position = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
+					
+			if (assimp_scene->mMeshes[mesh_index]->mTextureCoords[0] == nullptr)
+			{
+				// No texture coordinates in model file
+				texcoord = XMFLOAT2(0, 0);
+			}
+			else
+			{
+				texcoord = ConvertaiVector3DToXMFLOAT2(assimp_scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
+			}
+
+			normal = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
+
+			result.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
+		}
+
+		// #2 Model must have faces
+		assert(assimp_scene->mMeshes[mesh_index]->HasFaces());
+		size_t faces_count{ assimp_scene->mMeshes[mesh_index]->mNumFaces };
+		unsigned int last_index{};
+
+		for (size_t iterator_faces{}; iterator_faces < faces_count; ++iterator_faces)
+		{
+			auto& indices_count = assimp_scene->mMeshes[mesh_index]->mFaces[iterator_faces].mNumIndices;
+			auto& indices = assimp_scene->mMeshes[mesh_index]->mFaces[iterator_faces].mIndices;
+
+			assert(indices_count == 3);
+			result.IndexData.vIndices.emplace_back(
+				indices_offset + indices[0],
+				indices_offset + indices[1],
+				indices_offset + indices[2]
+			);
+					
+			last_index = max(last_index, indices[0]);
+			last_index = max(last_index, indices[1]);
+			last_index = max(last_index, indices[2]);
+		}
+
+		indices_offset += last_index + 1;
 	}
 
 	return result;
@@ -131,15 +111,10 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 		| aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality | aiProcess_FixInfacingNormals 
 		| aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices
 		| aiProcess_RemoveComponent | aiProcess_GenSmoothNormals) };
-		
-	if (scene == nullptr)
-	{
-		JWAbort("Model not imported. Check out the model file.");
-	}
-	else if (scene->mRootNode == nullptr)
-	{
-		JWAbort("Model not imported. Check out the model file.");
-	}
+	
+	assert(scene);
+
+	assert(scene->mRootNode);
 
 	// Extract node hierarchy from model file.
 	ExtractNodeTree(scene, scene->mRootNode, -1, result.NodeTree);
@@ -244,60 +219,45 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const STRING Directory
 				}
 			}
 
-			if (ai_mesh->HasPositions())
+			// #1 Model must have positions
+			assert(ai_mesh->HasPositions());
+			XMFLOAT3 position{};
+			XMFLOAT3 normal{};
+			XMFLOAT2 texcoord{};
+
+			XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
+			XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
+
+			for (unsigned int vertex_id = 0; vertex_id < ai_mesh->mNumVertices; ++vertex_id)
 			{
-				XMFLOAT3 position{};
-				XMFLOAT3 normal{};
-				XMFLOAT2 texcoord{};
+				position = ConvertaiVector3DToXMFLOAT3(ai_mesh->mVertices[vertex_id]);
+				normal = ConvertaiVector3DToXMFLOAT3(ai_mesh->mNormals[vertex_id]);
+				texcoord = ConvertaiVector3DToXMFLOAT2(ai_mesh->mTextureCoords[0][vertex_id]);
 
-				XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
-				XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
-
-				for (unsigned int vertex_id = 0; vertex_id < ai_mesh->mNumVertices; ++vertex_id)
-				{
-					position = ConvertaiVector3DToXMFLOAT3(ai_mesh->mVertices[vertex_id]);
-					normal = ConvertaiVector3DToXMFLOAT3(ai_mesh->mNormals[vertex_id]);
-					texcoord = ConvertaiVector3DToXMFLOAT2(ai_mesh->mTextureCoords[0][vertex_id]);
-
-					OutModelData.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
-				}
-			}
-			else
-			{
-				JWAbort("Loaded model doesn't have positions");
+				OutModelData.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
 			}
 
-			if (ai_mesh->HasFaces())
+			// #2 Model must have faces
+			assert(ai_mesh->HasFaces());
+			unsigned int last_index{};
+			for (unsigned int iterator_faces{}; iterator_faces < ai_mesh->mNumFaces; ++iterator_faces)
 			{
-				unsigned int last_index{};
-				for (unsigned int iterator_faces{}; iterator_faces < ai_mesh->mNumFaces; ++iterator_faces)
-				{
-					auto& indices_count = ai_mesh->mFaces[iterator_faces].mNumIndices;
-					auto& indices = ai_mesh->mFaces[iterator_faces].mIndices;
+				auto& indices_count = ai_mesh->mFaces[iterator_faces].mNumIndices;
+				auto& indices = ai_mesh->mFaces[iterator_faces].mIndices;
 
-					if (indices_count == 3)
-					{
-						OutModelData.IndexData.vIndices.emplace_back(
-							indices_offset + indices[0],
-							indices_offset + indices[1],
-							indices_offset + indices[2]);
-					}
-					else
-					{
-						JWAbort("Index count is not 3");
-					}
+				assert(indices_count == 3);
+				OutModelData.IndexData.vIndices.emplace_back(
+					indices_offset + indices[0],
+					indices_offset + indices[1],
+					indices_offset + indices[2]
+				);
 
-					last_index = max(last_index, indices[0]);
-					last_index = max(last_index, indices[1]);
-					last_index = max(last_index, indices[2]);
-				}
-
-				indices_offset += last_index + 1;
+				last_index = max(last_index, indices[0]);
+				last_index = max(last_index, indices[1]);
+				last_index = max(last_index, indices[2]);
 			}
-			else
-			{
-				JWAbort("Loaded model doesn't have faces");
-			}
+
+			indices_offset += last_index + 1;
 
 			// If this mesh refers to bones
 			if (ai_mesh->mNumBones)
@@ -492,14 +452,9 @@ void JWAssimpLoader::LoadAdditionalAnimationIntoRiggedModel(SRiggedModelData& Mo
 		aiProcess_SplitLargeMeshes | aiProcess_ImproveCacheLocality | aiProcess_FixInfacingNormals |
 		aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices) };
 
-	if (scene == nullptr)
-	{
-		JWAbort("Model not imported. Check out the model file.");
-	}
-	else if (scene->mRootNode == nullptr)
-	{
-		JWAbort("Model not imported. Check out the model file.");
-	}
+	assert(scene);
+
+	assert(scene->mRootNode);
 
 	// Extract node hierarchy from model file.
 	ExtractNodeTree(scene, scene->mRootNode, -1, new_animation_model.NodeTree);
@@ -507,7 +462,8 @@ void JWAssimpLoader::LoadAdditionalAnimationIntoRiggedModel(SRiggedModelData& Mo
 	if (new_animation_model.NodeTree.vNodes.size() != ModelData.NodeTree.vNodes.size())
 	{
 		// New model must have the same nodes as the existing one.
-		JWAbort("This new model file does not match the existing one.");
+		MessageBoxA(nullptr, "This new model file does not match the existing one.", "Error", MB_OK);
+		return;
 	}
 
 	// Extract animation set into the existing model data.

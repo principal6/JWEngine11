@@ -46,7 +46,8 @@ namespace JWEngine
 
 		void SetPixel(int X, int Y, SRawPixelColor Color)
 		{
-			vPixels[X + (Y * Width)] = Color;
+			int index = X + Y * Width;
+			vPixels[index] = Color;
 		}
 
 		void FillRect(SPositionInt Position, SSizeInt Size, SRawPixelColor Color)
@@ -57,10 +58,12 @@ namespace JWEngine
 			{
 				uint32_t start_id = Position.X + (y + Position.Y) * Width;
 				uint32_t copy_byte_size = 4;
+				uint32_t index{};
 
 				for (uint32_t x = 0; x < Size.Width; ++x)
 				{
-					memcpy(&vPixels[start_id + x], &color_byte4, copy_byte_size);
+					index = start_id + x;
+					memcpy(&vPixels[index], &color_byte4, copy_byte_size);
 				}
 			}
 		}
@@ -95,13 +98,13 @@ namespace JWEngine
 		void UpdateRawTexture() noexcept;
 
 	private:
-		bool m_IsValid{ false };
+		bool m_IsCreated{ false };
 
 		JWDX*						m_pDX{};
 
 		SRawPixelData				m_RawPixelData{};
 
-		ID3D11Texture2D*			m_RawTexture2D;
-		ID3D11ShaderResourceView*	m_RawTexture2DSRV;
+		ID3D11Texture2D*			m_RawTexture2D{};
+		ID3D11ShaderResourceView*	m_RawTexture2DSRV{};
 	};
 };

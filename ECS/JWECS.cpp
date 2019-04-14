@@ -674,6 +674,8 @@ auto JWECS::BakeAnimationTextureToFile(size_t ModelIndex, SSizeInt TextureSize, 
 			// Create the texture.
 			m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &current_tex);
 
+			assert(current_tex);
+
 			// Describe the shader resource view.
 			D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
 			srv_description.Format = texture_format;
@@ -683,8 +685,6 @@ auto JWECS::BakeAnimationTextureToFile(size_t ModelIndex, SSizeInt TextureSize, 
 
 			// Create the shader resource view.
 			m_pDX->GetDevice()->CreateShaderResourceView(current_tex, &srv_description, &current_srv);
-
-
 
 			auto& vec_animations{ model->RiggedModelData.AnimationSet.vAnimations };
 

@@ -14,7 +14,7 @@ JWImageCursor::~JWImageCursor()
 
 void JWImageCursor::Create(JWDX& DX, JWCamera& Camera) noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
+	assert(!m_IsCreated);
 
 	// Set member pointers.
 	m_pDX = &DX;
@@ -34,22 +34,14 @@ void JWImageCursor::Create(JWDX& DX, JWCamera& Camera) noexcept
 	// Create index buffer
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 
-	m_IsValid = true;
-}
-
-PROTECTED void JWImageCursor::CheckValidity() const noexcept
-{
-	if (!m_IsValid)
-	{
-		JWAbort("JWImageCursor object not valid. You must call JWImageCursor::Create() first");
-	}
+	m_IsCreated = true;
 }
 
 void JWImageCursor::LoadImageCursorFromFile(STRING Directory, STRING FileName) noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsTextureCreated);
+	assert(m_IsCreated);
 
-	CheckValidity();
+	assert(!m_IsTextureCreated);
 
 	STRING path_string = Directory + FileName;
 	WSTRING w_path = StringToWstring(path_string);
@@ -76,7 +68,7 @@ void JWImageCursor::LoadImageCursorFromFile(STRING Directory, STRING FileName) n
 
 auto JWImageCursor::SetPosition(XMFLOAT2 Position) noexcept->JWImageCursor&
 {
-	CheckValidity();
+	assert(m_IsCreated);
 
 	m_Position = Position;
 

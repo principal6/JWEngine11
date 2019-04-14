@@ -133,7 +133,7 @@ namespace JWEngine
 		void CreateDefaultViewport() noexcept;
 
 	private:
-		bool		m_IsValid{ false };
+		bool		m_IsCreated{ false };
 
 		STRING		m_BaseDirectory;
 		SSizeInt	m_WindowSize{};

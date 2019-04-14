@@ -29,6 +29,7 @@ namespace JWEngine
 	private:
 		HINSTANCE	m_hInstance{};
 		HWND		m_hWnd{};
+		WNDCLASSEXA	m_WindowClass{};
 
 		SSizeInt	m_WindowSize;
 	};

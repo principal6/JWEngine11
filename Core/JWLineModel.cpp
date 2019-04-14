@@ -6,12 +6,12 @@ using namespace JWEngine;
 
 void JWLineModel::Create(JWDX& DX) noexcept
 {
-	assert(!m_IsValid);
+	assert(!m_IsCreated);
 
 	// Set JWDX pointer.
 	m_pDX = &DX;
 
-	m_IsValid = true;
+	m_IsCreated = true;
 }
 
 void JWLineModel::Destroy() noexcept

@@ -32,7 +32,7 @@ namespace JWEngine
 		inline void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
 	private:
-		bool						m_IsValid{ false };
+		bool						m_IsCreated{ false };
 
 		JWDX*						m_pDX{};
 		JWCamera*					m_pCamera{};

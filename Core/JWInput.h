@@ -34,7 +34,7 @@ namespace JWEngine
 		void UpdateDeviceState() noexcept;
 
 	private:
-		bool m_IsValid{ false };
+		bool m_IsCreated{ false };
 		HWND m_hWnd{};
 
 		LPDIRECTINPUT8			m_pDirectInput{};

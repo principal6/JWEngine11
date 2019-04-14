@@ -23,13 +23,11 @@ namespace JWEngine
 		void Draw() noexcept;
 
 	protected:
-		void CheckValidity() const noexcept;
-
 		// Called by SetPosition()
 		void UpdateVertices() noexcept;
 
 	protected:
-		bool		m_IsValid{ false };
+		bool		m_IsCreated{ false };
 		bool		m_IsTextureCreated{ false };
 
 		JWDX*		m_pDX{};

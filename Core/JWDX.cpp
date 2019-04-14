@@ -60,7 +60,7 @@ JWDX::~JWDX()
 
 void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearColor& ClearColor) noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
+	assert(!m_IsCreated);
 	
 	// Set base directory
 	m_BaseDirectory = Directory;
@@ -116,7 +116,7 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearCol
 	// Create viewport
 	CreateDefaultViewport();
 
-	m_IsValid = true;
+	m_IsCreated = true;
 }
 
 PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
@@ -300,6 +300,8 @@ PRIVATE void JWDX::CreateDepthStencilView() noexcept
 	ID3D11Texture2D* depth_stencil_buffer{};
 	m_Device11->CreateTexture2D(&depth_stencil_texture_descrption, nullptr, &depth_stencil_buffer);
 
+	assert(depth_stencil_buffer);
+
 	// Create the depth-stencil View
 	m_Device11->CreateDepthStencilView(depth_stencil_buffer, nullptr, &m_DepthStencilView11);
 	
@@ -339,6 +341,8 @@ PRIVATE void JWDX::CreateRenderTargetView() noexcept
 	// Create buffer for render target view
 	ID3D11Texture2D* back_buffer{};
 	m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&back_buffer);
+
+	assert(back_buffer);
 
 	// Create render target view
 	m_Device11->CreateRenderTargetView(back_buffer, nullptr, &m_RenderTargetView11);

@@ -39,24 +39,20 @@ void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& T
 	m_WindowSize.Width = Size.Width;
 	m_WindowSize.Height = Size.Height;
 
-	WNDCLASSEXA wc{};
-	wc.cbSize = sizeof(WNDCLASSEXA);
-	wc.style = CS_HREDRAW | CS_VREDRAW;
-	wc.lpfnWndProc = WndProc;
-	wc.cbClsExtra = 0;
-	wc.cbWndExtra = 0;
-	wc.hInstance = m_hInstance;
-	wc.hIcon = LoadIconA(nullptr, IDI_APPLICATION);
-	wc.hCursor = nullptr; //LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = nullptr; //(HBRUSH)(COLOR_WINDOW + 2);
-	wc.lpszMenuName = nullptr;
-	wc.lpszClassName = "JWEngine";
-	wc.hIconSm = LoadIconA(nullptr, IDI_APPLICATION);
+	m_WindowClass.cbSize = sizeof(WNDCLASSEXA);
+	m_WindowClass.style = CS_HREDRAW | CS_VREDRAW;
+	m_WindowClass.lpfnWndProc = WndProc;
+	m_WindowClass.cbClsExtra = 0;
+	m_WindowClass.cbWndExtra = 0;
+	m_WindowClass.hInstance = m_hInstance;
+	m_WindowClass.hIcon = LoadIconA(nullptr, IDI_APPLICATION);
+	m_WindowClass.hCursor = nullptr; //LoadCursor(NULL, IDC_ARROW);
+	m_WindowClass.hbrBackground = nullptr; //(HBRUSH)(COLOR_WINDOW + 2);
+	m_WindowClass.lpszMenuName = nullptr;
+	m_WindowClass.lpszClassName = "JWEngine";
+	m_WindowClass.hIconSm = LoadIconA(nullptr, IDI_APPLICATION);
 
-	if (!RegisterClassExA(&wc))
-	{
-		JWAbort("RegisterClassExA() failed.");
-	}
+	assert(RegisterClassExA(&m_WindowClass));	
 	
 	RECT rect{};
 	rect.left = Position.X;
@@ -66,14 +62,11 @@ void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& T
 
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
-	m_hWnd = CreateWindowExA(0, wc.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, rect.left, rect.top,
+	m_hWnd = CreateWindowExA(0, m_WindowClass.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, rect.left, rect.top,
 		rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, m_hInstance, nullptr);
-
-	if (!m_hWnd)
-	{
-		JWAbort("CreateWindowExA() failed.");
-	}
-
+	
+	assert(m_hWnd);
+	
 	ShowWindow(m_hWnd, SW_SHOW);
 	UpdateWindow(m_hWnd);
 }

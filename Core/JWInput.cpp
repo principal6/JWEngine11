@@ -20,51 +20,39 @@ JWInput::~JWInput()
 
 void JWInput::Create(const HWND hWnd, const HINSTANCE hInstance)
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
+	assert(!m_IsCreated);
 
 	m_hWnd = hWnd;
 
-	if (FAILED(DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void **)&m_pDirectInput, nullptr)))
-	{
-		JWAbort("JWInput not created. DirectInput8Create() failed");
-	}
-
+	assert(SUCCEEDED(DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)& m_pDirectInput, nullptr)));
 	
 	//CreateMouseDevice(DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
 	CreateMouseDevice(DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
 	CreateKeyboardDevice(DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
 
-	m_IsValid = true;
+	m_IsCreated = true;
 }
 
 PRIVATE void JWInput::CreateMouseDevice(DWORD dwFlags)
 {
-	if (FAILED(m_pDirectInput->CreateDevice(GUID_SysMouse, &m_pMouseDevice, nullptr)))
-		JWAbort("CreateMouseDevice() failed.");
+	assert(SUCCEEDED(m_pDirectInput->CreateDevice(GUID_SysMouse, &m_pMouseDevice, nullptr)));
 	
-	if (FAILED(m_pMouseDevice->SetDataFormat(&c_dfDIMouse)))
-		JWAbort("CreateMouseDevice() failed.");
+	assert(SUCCEEDED(m_pMouseDevice->SetDataFormat(&c_dfDIMouse)));
 
-	if (FAILED(m_pMouseDevice->SetCooperativeLevel(m_hWnd, dwFlags)))
-		JWAbort("CreateMouseDevice() failed.");
+	assert(SUCCEEDED(m_pMouseDevice->SetCooperativeLevel(m_hWnd, dwFlags)));
 
-	if (FAILED(m_pMouseDevice->Acquire()))
-		JWAbort("CreateMouseDevice() failed.");
+	assert(SUCCEEDED(m_pMouseDevice->Acquire()));
 }
 
 PRIVATE void JWInput::CreateKeyboardDevice(DWORD dwFlags)
 {
-	if (FAILED(m_pDirectInput->CreateDevice(GUID_SysKeyboard, &m_pKeyboardDevice, nullptr)))
-		JWAbort("CreateKeyboardDevice() failed.");
+	assert(SUCCEEDED(m_pDirectInput->CreateDevice(GUID_SysKeyboard, &m_pKeyboardDevice, nullptr)));
 
-	if (FAILED(m_pKeyboardDevice->SetDataFormat(&c_dfDIKeyboard)))
-		JWAbort("CreateKeyboardDevice() failed.");
+	assert(SUCCEEDED(m_pKeyboardDevice->SetDataFormat(&c_dfDIKeyboard)));
 
-	if (FAILED(m_pKeyboardDevice->SetCooperativeLevel(m_hWnd, dwFlags)))
-		JWAbort("CreateKeyboardDevice() failed.");
+	assert(SUCCEEDED(m_pKeyboardDevice->SetCooperativeLevel(m_hWnd, dwFlags)));
 
-	if (FAILED(m_pKeyboardDevice->Acquire()))
-		JWAbort("CreateKeyboardDevice() failed.");
+	assert(SUCCEEDED(m_pKeyboardDevice->Acquire()));
 }
 
 PRIVATE void JWInput::UpdateDeviceState() noexcept

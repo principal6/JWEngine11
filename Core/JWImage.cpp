@@ -5,7 +5,7 @@ using namespace JWEngine;
 
 void JWImage::Create(JWDX& DX) noexcept
 {
-	assert(!m_IsValid);
+	assert(!m_IsCreated);
 
 	// Set member pointers.
 	m_pDX = &DX;
@@ -24,7 +24,7 @@ void JWImage::Create(JWDX& DX) noexcept
 	// Create index buffer
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 
-	m_IsValid = true;
+	m_IsCreated = true;
 }
 
 void JWImage::Destroy() noexcept

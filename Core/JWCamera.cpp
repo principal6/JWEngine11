@@ -5,7 +5,7 @@ using namespace JWEngine;
 
 void JWCamera::Create(JWDX& DX) noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
+	assert(!m_IsCreated);
 
 	m_pDX = &DX;
 
@@ -28,7 +28,7 @@ void JWCamera::Create(JWDX& DX) noexcept
 	m_MatrixOrthographicFixed = XMMatrixOrthographicLH(width, height, KNearZ, KFarZ);
 	m_MatrixOrthographicTransformed = m_MatrixOrthographicFixed;
 
-	m_IsValid = true;
+	m_IsCreated = true;
 }
 
 void JWCamera::MoveCamera(ECameraMoveDirection Direction, float Stride) noexcept

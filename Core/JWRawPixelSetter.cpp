@@ -11,7 +11,7 @@ JWRawPixelSetter::~JWRawPixelSetter()
 
 void JWRawPixelSetter::Create(JWDX& DX) noexcept
 {
-	JW_AVOID_DUPLICATE_CREATION(m_IsValid);
+	assert(!m_IsCreated);
 
 	// Set JWDX pointer.
 	m_pDX = &DX;
@@ -30,7 +30,7 @@ void JWRawPixelSetter::Create(JWDX& DX) noexcept
 
 	CreateRawTexture();
 
-	m_IsValid = true;
+	m_IsCreated = true;
 }
 
 void JWRawPixelSetter::CreateRawTexture() noexcept
@@ -51,6 +51,8 @@ void JWRawPixelSetter::CreateRawTexture() noexcept
 
 	// Create the texture
 	m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &m_RawTexture2D);
+
+	assert(m_RawTexture2D);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
 	srv_description.Format = texture_format;

@@ -67,7 +67,7 @@ namespace JWEngine
 		void Update2DCamera() noexcept;
 
 	private:
-		bool					m_IsValid{ false };
+		bool					m_IsCreated{ false };
 		JWDX*					m_pDX{};
 
 		static constexpr float	KFOV = 0.25f;
