@@ -52,23 +52,33 @@ void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& T
 	m_WindowClass.lpszClassName = "JWEngine";
 	m_WindowClass.hIconSm = LoadIconA(nullptr, IDI_APPLICATION);
 
-	assert(RegisterClassExA(&m_WindowClass));	
-	
-	RECT rect{};
-	rect.left = Position.X;
-	rect.top = Position.Y;
-	rect.right = Position.X + Size.Width;
-	rect.bottom = Position.Y + Size.Height;
+	if (RegisterClassExA(&m_WindowClass))
+	{
+		RECT rect{};
+		rect.left = Position.X;
+		rect.top = Position.Y;
+		rect.right = Position.X + Size.Width;
+		rect.bottom = Position.Y + Size.Height;
 
-	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
+		AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
-	m_hWnd = CreateWindowExA(0, m_WindowClass.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, rect.left, rect.top,
-		rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, m_hInstance, nullptr);
-	
-	assert(m_hWnd);
-	
-	ShowWindow(m_hWnd, SW_SHOW);
-	UpdateWindow(m_hWnd);
+		m_hWnd = CreateWindowExA(0, m_WindowClass.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, rect.left, rect.top,
+			rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, m_hInstance, nullptr);
+
+		if (m_hWnd)
+		{
+			ShowWindow(m_hWnd, SW_SHOW);
+			UpdateWindow(m_hWnd);
+		}
+		else
+		{
+			JW_ERROR_ABORT("CreateWindowExA() failed.");
+		}	
+	}
+	else
+	{
+		JW_ERROR_ABORT("RegisterClassExA() failed.");
+	}
 }
 
 void JWWin32Window::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexcept

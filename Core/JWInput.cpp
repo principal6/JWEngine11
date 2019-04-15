@@ -2,7 +2,30 @@
 
 using namespace JWEngine;
 
-JWInput::~JWInput()
+void JWInput::Create(const HWND hWnd, const HINSTANCE hInstance) noexcept
+{
+	if (!m_IsCreated)
+	{
+		m_hWnd = hWnd;
+
+		if (SUCCEEDED(DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)& m_pDirectInput, nullptr)))
+		{
+			// @ see
+			// #0 (DISCL_BACKGROUND | DISCL_NONEXCLUSIVE)
+			// #1 (DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND)
+			CreateMouseDevice(DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
+			CreateKeyboardDevice(DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
+
+			m_IsCreated = true;
+		}
+		else
+		{
+			JW_ERROR_ABORT("DirectInput8Create() Failed");
+		}
+	}
+}
+
+void JWInput::Destroy() noexcept
 {
 	if (m_pMouseDevice)
 	{
@@ -18,41 +41,50 @@ JWInput::~JWInput()
 	JW_RELEASE(m_pDirectInput);
 }
 
-void JWInput::Create(const HWND hWnd, const HINSTANCE hInstance)
-{
-	assert(!m_IsCreated);
-
-	m_hWnd = hWnd;
-
-	assert(SUCCEEDED(DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)& m_pDirectInput, nullptr)));
-	
-	//CreateMouseDevice(DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
-	CreateMouseDevice(DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
-	CreateKeyboardDevice(DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
-
-	m_IsCreated = true;
-}
-
 PRIVATE void JWInput::CreateMouseDevice(DWORD dwFlags)
 {
-	assert(SUCCEEDED(m_pDirectInput->CreateDevice(GUID_SysMouse, &m_pMouseDevice, nullptr)));
+	if (FAILED(m_pDirectInput->CreateDevice(GUID_SysMouse, &m_pMouseDevice, nullptr)))
+	{
+		JW_ERROR_ABORT("CreateDevice() failed.");
+	}
 	
-	assert(SUCCEEDED(m_pMouseDevice->SetDataFormat(&c_dfDIMouse)));
+	if (FAILED(m_pMouseDevice->SetDataFormat(&c_dfDIMouse)))
+	{
+		JW_ERROR_ABORT("SetDataFormat() failed.");
+	}
 
-	assert(SUCCEEDED(m_pMouseDevice->SetCooperativeLevel(m_hWnd, dwFlags)));
+	if (FAILED(m_pMouseDevice->SetCooperativeLevel(m_hWnd, dwFlags)))
+	{
+		JW_ERROR_ABORT("SetCooperativeLevel() failed.");
+	}
 
-	assert(SUCCEEDED(m_pMouseDevice->Acquire()));
+	if (FAILED(m_pMouseDevice->Acquire()))
+	{
+		JW_ERROR_ABORT("Acquire() failed.");
+	}
 }
 
 PRIVATE void JWInput::CreateKeyboardDevice(DWORD dwFlags)
 {
-	assert(SUCCEEDED(m_pDirectInput->CreateDevice(GUID_SysKeyboard, &m_pKeyboardDevice, nullptr)));
+	if (FAILED(m_pDirectInput->CreateDevice(GUID_SysKeyboard, &m_pKeyboardDevice, nullptr)))
+	{
+		JW_ERROR_ABORT("CreateDevice() failed.");
+	}
 
-	assert(SUCCEEDED(m_pKeyboardDevice->SetDataFormat(&c_dfDIKeyboard)));
+	if (FAILED(m_pKeyboardDevice->SetDataFormat(&c_dfDIKeyboard)))
+	{
+		JW_ERROR_ABORT("SetDataFormat() failed.");
+	}
 
-	assert(SUCCEEDED(m_pKeyboardDevice->SetCooperativeLevel(m_hWnd, dwFlags)));
+	if (FAILED(m_pKeyboardDevice->SetCooperativeLevel(m_hWnd, dwFlags)))
+	{
+		JW_ERROR_ABORT("SetCooperativeLevel() failed.");
+	}
 
-	assert(SUCCEEDED(m_pKeyboardDevice->Acquire()));
+	if (FAILED(m_pKeyboardDevice->Acquire()))
+	{
+		JW_ERROR_ABORT("Acquire() failed.");
+	}
 }
 
 PRIVATE void JWInput::UpdateDeviceState() noexcept

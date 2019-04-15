@@ -6,7 +6,6 @@
 #include "../Core/JWImage.h"
 #include "../Core/JWImageCursor.h"
 #include "../Core/JWInstantText.h"
-#include "../Core/JWTimer.h"
 #include "../Core/JWInput.h"
 #include "../Core/JWRawPixelSetter.h"
 #include "../ECS/JWECS.h"
@@ -40,16 +39,21 @@ namespace JWEngine
 		void ToggleWireFrame() noexcept;
 		void SetUniversalRasterizerState(ERasterizerState State) noexcept;
 
-		// Object getter
-		auto Camera() noexcept->JWCamera&;
-		auto InstantText() noexcept->JWInstantText&;
-		auto RawPixelSetter() noexcept->JWRawPixelSetter&;
-		auto ECS() noexcept->JWECS&;
+		// ---------------------
+		// --- Object getter ---
+		auto& Camera() noexcept { return m_Camera; }
+		auto& InstantText() noexcept { return m_InstantText; }
+		auto& RawPixelSetter() noexcept { return m_RawPixelSetter; }
+		auto& ECS() noexcept { return m_ECS; }
 	
-		auto GetFPS() noexcept->int;
+		// FPS
+		auto GetFPS() noexcept { return m_FPS; };
+
+		// Base directory
 		auto GetBaseDirectory() const noexcept { return m_BaseDirectory; }
 
-		// Picking ray
+		// -------------------
+		// --- Picking ray ---
 		void CastPickingRay() noexcept;
 		void PickEntityTriangle() noexcept;
 		auto GetPickingRayOrigin() const noexcept->const XMVECTOR&;
@@ -78,12 +82,16 @@ namespace JWEngine
 		JWCamera				m_Camera{};
 		JWInstantText			m_InstantText{};
 		JWRawPixelSetter		m_RawPixelSetter{};
-		JWLogger*				m_pLogger{};
 		JWECS					m_ECS{};
 
-		JWTimer					m_Timer{};
-		long long				m_FPSCount{};
-		int						m_FPS{};
+		JWLogger*				m_pLogger{};
+		
+		STEADY_CLOCK			m_Clock{};
+		TIME_UNIT_MS			m_ElapsedTime{};
+		TIME_POINT				m_TimeNow{};
+		TIME_POINT				m_TimePrev{};
+		uint32_t				m_FrameCount{};
+		uint32_t				m_FPS{};
 
 		JWImageCursor			m_MouseCursorImage{};
 		XMFLOAT2				m_MouseCursorPosition{};

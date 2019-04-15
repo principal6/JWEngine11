@@ -15,85 +15,110 @@ auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) 
 		| aiProcess_RemoveComponent | aiProcess_GenSmoothNormals) };
 
 	// #0 Model must have meshes
-	assert(scene && scene->HasMeshes());
-	auto mesh_count{ scene->mNumMeshes };
-	unsigned int indices_offset{};
-
-	for (unsigned int mesh_index{}; mesh_index < mesh_count; ++mesh_index)
+	if (scene && scene->HasMeshes())
 	{
-		auto material = scene->mMaterials[scene->mMeshes[mesh_index]->mMaterialIndex];
-		aiColor4D ai_diffuse{};
-		aiColor4D ai_specular{};
-		aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
-		aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &ai_specular);
+		auto mesh_count{ scene->mNumMeshes };
+		unsigned int indices_offset{};
 
-		// Load the texture only once per model (not per mesh).
-		// i.e. multi-texture not supported.
-		if (!result.HasTexture)
+		for (unsigned int mesh_index{}; mesh_index < mesh_count; ++mesh_index)
 		{
-			aiString path{};
-			aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &path);
-			STRING path_string{ Directory + path.C_Str() };
-			if (path.length)
+			auto material = scene->mMaterials[scene->mMeshes[mesh_index]->mMaterialIndex];
+			aiColor4D ai_diffuse{};
+			aiColor4D ai_specular{};
+			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
+			aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &ai_specular);
+
+			// Load the texture only once per model (not per mesh).
+			// i.e. multi-texture not supported.
+			if (!result.HasTexture)
 			{
-				result.HasTexture = true;
-				result.TextureFileNameW = StringToWstring(path_string);
+				aiString path{};
+				aiGetMaterialTexture(material, aiTextureType_DIFFUSE, 0, &path);
+				STRING path_string{ Directory + path.C_Str() };
+				if (path.length)
+				{
+					result.HasTexture = true;
+					result.TextureFileNameW = StringToWstring(path_string);
+				}
 			}
-		}
 
-		// #1 Model must have positions
-		assert(scene->mMeshes[mesh_index]->HasPositions());
-		size_t mesh_vertices_count{ scene->mMeshes[mesh_index]->mNumVertices };
-
-		XMFLOAT3 position{};
-		XMFLOAT2 texcoord{};
-		XMFLOAT3 normal{};
-				
-		XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
-		XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
-
-		for (size_t iterator_vertices{}; iterator_vertices < mesh_vertices_count; ++iterator_vertices)
-		{
-			position = ConvertaiVector3DToXMFLOAT3(scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
-					
-			if (scene->mMeshes[mesh_index]->mTextureCoords[0] == nullptr)
+			// #1 Model must have positions
+			if (scene->mMeshes[mesh_index]->HasPositions())
 			{
-				// No texture coordinates in model file
-				texcoord = XMFLOAT2(0, 0);
+				size_t mesh_vertices_count{ scene->mMeshes[mesh_index]->mNumVertices };
+
+				XMFLOAT3 position{};
+				XMFLOAT2 texcoord{};
+				XMFLOAT3 normal{};
+
+				XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
+				XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
+
+				for (size_t iterator_vertices{}; iterator_vertices < mesh_vertices_count; ++iterator_vertices)
+				{
+					position = ConvertaiVector3DToXMFLOAT3(scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
+
+					if (scene->mMeshes[mesh_index]->mTextureCoords[0] == nullptr)
+					{
+						// No texture coordinates in model file
+						texcoord = XMFLOAT2(0, 0);
+					}
+					else
+					{
+						texcoord = ConvertaiVector3DToXMFLOAT2(scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
+					}
+
+					normal = ConvertaiVector3DToXMFLOAT3(scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
+
+					result.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
+				}
 			}
 			else
 			{
-				texcoord = ConvertaiVector3DToXMFLOAT2(scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
+				JW_ERROR_ABORT("No positions in model.");
+			}
+			
+
+			// #2 Model must have faces
+			unsigned int last_index{};
+			if (scene->mMeshes[mesh_index]->HasFaces())
+			{
+				size_t faces_count{ scene->mMeshes[mesh_index]->mNumFaces };
+
+				for (size_t iterator_faces{}; iterator_faces < faces_count; ++iterator_faces)
+				{
+					auto& indices_count = scene->mMeshes[mesh_index]->mFaces[iterator_faces].mNumIndices;
+					auto& indices = scene->mMeshes[mesh_index]->mFaces[iterator_faces].mIndices;
+
+					if (indices_count == 3)
+					{
+						result.IndexData.vIndices.emplace_back(
+							indices_offset + indices[0],
+							indices_offset + indices[1],
+							indices_offset + indices[2]
+						);
+
+						last_index = max(last_index, indices[0]);
+						last_index = max(last_index, indices[1]);
+						last_index = max(last_index, indices[2]);
+					}
+					else
+					{
+						JW_ERROR_ABORT("Model's index count is not 3.");
+					}
+				}
+			}
+			else
+			{
+				JW_ERROR_ABORT("No faces in model.");
 			}
 
-			normal = ConvertaiVector3DToXMFLOAT3(scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
-
-			result.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
+			indices_offset += last_index + 1;
 		}
-
-		// #2 Model must have faces
-		assert(scene->mMeshes[mesh_index]->HasFaces());
-		size_t faces_count{ scene->mMeshes[mesh_index]->mNumFaces };
-		unsigned int last_index{};
-
-		for (size_t iterator_faces{}; iterator_faces < faces_count; ++iterator_faces)
-		{
-			auto& indices_count = scene->mMeshes[mesh_index]->mFaces[iterator_faces].mNumIndices;
-			auto& indices = scene->mMeshes[mesh_index]->mFaces[iterator_faces].mIndices;
-
-			assert(indices_count == 3);
-			result.IndexData.vIndices.emplace_back(
-				indices_offset + indices[0],
-				indices_offset + indices[1],
-				indices_offset + indices[2]
-			);
-					
-			last_index = max(last_index, indices[0]);
-			last_index = max(last_index, indices[1]);
-			last_index = max(last_index, indices[2]);
-		}
-
-		indices_offset += last_index + 1;
+	}
+	else
+	{
+		JW_ERROR_ABORT("Failed to open the model file. (" + ModelFileName + ")");
 	}
 
 	return result;
@@ -112,24 +137,23 @@ auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noe
 		| aiProcess_Triangulate | aiProcess_SplitByBoneCount | aiProcess_JoinIdenticalVertices
 		| aiProcess_RemoveComponent | aiProcess_GenSmoothNormals) };
 	
-	assert(scene);
+	if ((scene) && (scene->mRootNode))
+	{
+		// Extract node hierarchy from model file.
+		ExtractNodeTree(scene, scene->mRootNode, -1, result.NodeTree);
 
-	assert(scene->mRootNode);
+		// Build meshes and bones from nodes into extracted node hierarchy.
+		BuildMeshesAndBonesFromNodes(Directory, scene, result);
 
-	// Extract node hierarchy from model file.
-	ExtractNodeTree(scene, scene->mRootNode, -1, result.NodeTree);
-	
-	// Build meshes and bones from nodes into extracted node hierarchy.
-	BuildMeshesAndBonesFromNodes(Directory, scene, result);
+		// Match bones and vertices
+		MatchBonesAndVertices(result.BoneTree, result.VertexData);
 
-	// Match bones and vertices
-	MatchBonesAndVertices(result.BoneTree, result.VertexData);
+		// Match bones and nodes
+		MatchBonesAndNodes(result.BoneTree, result.NodeTree);
 
-	// Match bones and nodes
-	MatchBonesAndNodes(result.BoneTree, result.NodeTree);
-
-	// Extract animations
-	ExtractAnimationSet(scene, result.NodeTree, result.AnimationSet);
+		// Extract animations
+		ExtractAnimationSet(scene, result.NodeTree, result.AnimationSet);
+	}
 
 	return result;
 }

@@ -4,7 +4,42 @@
 
 using namespace JWEngine;
 
-JWInstantText::~JWInstantText()
+void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept
+{
+	if (!m_IsCreated)
+	{
+		m_BaseDirectory = BaseDirectory;
+
+		if (!m_FontParser.IsParsed())
+		{
+			// Font is not yet parsed, then parse it.
+			// The font data(ms_FontData) is static, so we can run this code only once per process,
+			// no matter how many JWInstantTexts or windows are made.
+
+			if (!m_FontParser.Parse(StringToWstring(BaseDirectory + FontFileName + ".fnt")))
+			{
+				JW_ERROR_ABORT("Failed to parse the font file.");
+			}
+		}
+
+		// Set JWDX pointer.
+		m_pDX = &DX;
+
+		// Set JWCamera pointer.
+		m_pCamera = &Camera;
+
+		CreateInstantTextVertexBuffer();
+		CreateInstantTextIndexBuffer();
+		CreateInstantTextVS();
+		CreateInstantTextPS();
+
+		LoadImageFromFile(BaseDirectory, FontFileName + "_0.png");
+
+		m_IsCreated = true;
+	}
+}
+
+void JWInstantText::Destroy() noexcept
 {
 	JW_RELEASE(m_FontTextureSRV);
 
@@ -14,40 +49,9 @@ JWInstantText::~JWInstantText()
 	JW_RELEASE(m_VSInstantTextBlob);
 	JW_RELEASE(m_VSInstantText);
 	JW_RELEASE(m_IAInputLayoutText);
-	
+
 	JW_RELEASE(m_IndexBuffer);
 	JW_RELEASE(m_VertexBuffer);
-}
-
-void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept
-{
-	assert(!m_IsCreated);
-
-	m_BaseDirectory = BaseDirectory;
-
-	if (!m_FontParser.IsParsed())
-	{
-		// Font is not yet parsed, then parse it.
-		// The font data(ms_FontData) is static, so we can run this code only once per process,
-		// no matter how many JWInstantTexts or windows are made.
-
-		assert(m_FontParser.Parse(StringToWstring(BaseDirectory + FontFileName + ".fnt")));
-	}
-
-	// Set JWDX pointer.
-	m_pDX = &DX;
-
-	// Set JWCamera pointer.
-	m_pCamera = &Camera;
-
-	CreateInstantTextVertexBuffer();
-	CreateInstantTextIndexBuffer();
-	CreateInstantTextVS();
-	CreateInstantTextPS();
-
-	LoadImageFromFile(BaseDirectory, FontFileName + "_0.png");
-
-	m_IsCreated = true;
 }
 
 PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
@@ -156,65 +160,66 @@ void JWInstantText::RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 
 {
 	// Throw if total text length is larger than the limit
 	uint32_t text_length = static_cast<uint32_t>(Text.length());
-	assert((m_TotalTextLength + text_length) < KMaxInsantTextLength);
-
-	float window_width_half = static_cast<float>(m_pDX->GetWindowSize().Width) / 2;
-	float window_height_half = static_cast<float>(m_pDX->GetWindowSize().Height) / 2;
-	float texture_width = m_FontParser.GetFontTextureWidth();
-	float texture_height = m_FontParser.GetFontTextureHeight();
-	float base_x_position = -window_width_half + Position.x;
-	float base_y_position = window_height_half - Position.y;
-	float x1{}, x2{}, y1{}, y2{};
-	float u1{}, u2{}, v1{}, v2{};
-	BMFont::BMChar current_bm_char{};
-
-	uint64_t iterator_index{ static_cast<uint64_t>(m_TotalTextLength) * 4 };
-
-	for (auto iterator_char : Text)
+	if ((m_TotalTextLength + text_length) < KMaxInsantTextLength)
 	{
-		current_bm_char = m_FontParser.GetBMCharFromWideCharacter(iterator_char);
+		float window_width_half = static_cast<float>(m_pDX->GetWindowSize().Width) / 2;
+		float window_height_half = static_cast<float>(m_pDX->GetWindowSize().Height) / 2;
+		float texture_width = m_FontParser.GetFontTextureWidth();
+		float texture_height = m_FontParser.GetFontTextureHeight();
+		float base_x_position = -window_width_half + Position.x;
+		float base_y_position = window_height_half - Position.y;
+		float x1{}, x2{}, y1{}, y2{};
+		float u1{}, u2{}, v1{}, v2{};
+		BMFont::BMChar current_bm_char{};
 
-		u1 = current_bm_char.X_f / texture_width;
-		v1 = current_bm_char.Y_f / texture_height;
-		u2 = u1 + current_bm_char.Width_f / texture_width;
-		v2 = v1 + current_bm_char.Height_f / texture_height;
+		uint64_t iterator_index{ static_cast<uint64_t>(m_TotalTextLength) * 4 };
 
-		x1 = base_x_position + current_bm_char.XOffset_f;
-		y1 = base_y_position - current_bm_char.YOffset_f;
-		x2 = x1 + current_bm_char.Width_f;
-		y2 = y1 - current_bm_char.Height_f;
+		for (auto iterator_char : Text)
+		{
+			current_bm_char = m_FontParser.GetBMCharFromWideCharacter(iterator_char);
 
-		m_VertexData.vVertices[iterator_index * 4].Position.x = x1;
-		m_VertexData.vVertices[iterator_index * 4].Position.y = y1;
-		m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.x = u1;
-		m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.y = v1;
-		m_VertexData.vVertices[iterator_index * 4].Color = FontColorRGB;
+			u1 = current_bm_char.X_f / texture_width;
+			v1 = current_bm_char.Y_f / texture_height;
+			u2 = u1 + current_bm_char.Width_f / texture_width;
+			v2 = v1 + current_bm_char.Height_f / texture_height;
 
-		m_VertexData.vVertices[iterator_index * 4 + 1].Position.x = x2;
-		m_VertexData.vVertices[iterator_index * 4 + 1].Position.y = y1;
-		m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.x = u2;
-		m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.y = v1;
-		m_VertexData.vVertices[iterator_index * 4 + 1].Color = FontColorRGB;
+			x1 = base_x_position + current_bm_char.XOffset_f;
+			y1 = base_y_position - current_bm_char.YOffset_f;
+			x2 = x1 + current_bm_char.Width_f;
+			y2 = y1 - current_bm_char.Height_f;
 
-		m_VertexData.vVertices[iterator_index * 4 + 2].Position.x = x1;
-		m_VertexData.vVertices[iterator_index * 4 + 2].Position.y = y2;
-		m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.x = u1;
-		m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.y = v2;
-		m_VertexData.vVertices[iterator_index * 4 + 2].Color = FontColorRGB;
+			m_VertexData.vVertices[iterator_index * 4].Position.x = x1;
+			m_VertexData.vVertices[iterator_index * 4].Position.y = y1;
+			m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.x = u1;
+			m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.y = v1;
+			m_VertexData.vVertices[iterator_index * 4].Color = FontColorRGB;
 
-		m_VertexData.vVertices[iterator_index * 4 + 3].Position.x = x2;
-		m_VertexData.vVertices[iterator_index * 4 + 3].Position.y = y2;
-		m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.x = u2;
-		m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.y = v2;
-		m_VertexData.vVertices[iterator_index * 4 + 3].Color = FontColorRGB;
+			m_VertexData.vVertices[iterator_index * 4 + 1].Position.x = x2;
+			m_VertexData.vVertices[iterator_index * 4 + 1].Position.y = y1;
+			m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.x = u2;
+			m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.y = v1;
+			m_VertexData.vVertices[iterator_index * 4 + 1].Color = FontColorRGB;
 
-		base_x_position += current_bm_char.XAdvance;
+			m_VertexData.vVertices[iterator_index * 4 + 2].Position.x = x1;
+			m_VertexData.vVertices[iterator_index * 4 + 2].Position.y = y2;
+			m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.x = u1;
+			m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.y = v2;
+			m_VertexData.vVertices[iterator_index * 4 + 2].Color = FontColorRGB;
 
-		++iterator_index;
+			m_VertexData.vVertices[iterator_index * 4 + 3].Position.x = x2;
+			m_VertexData.vVertices[iterator_index * 4 + 3].Position.y = y2;
+			m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.x = u2;
+			m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.y = v2;
+			m_VertexData.vVertices[iterator_index * 4 + 3].Color = FontColorRGB;
+
+			base_x_position += current_bm_char.XAdvance;
+
+			++iterator_index;
+		}
+
+		// Increase total text length
+		m_TotalTextLength += text_length;
 	}
-
-	// Increase total text length
-	m_TotalTextLength += text_length;
 }
 
 void JWInstantText::EndRendering() noexcept

@@ -175,7 +175,6 @@
     <ClCompile Include="..\Core\JWModel.cpp" />
     <ClCompile Include="..\Core\JWPrimitiveMaker.cpp" />
     <ClCompile Include="..\Core\JWRawPixelSetter.cpp" />
-    <ClCompile Include="..\Core\JWTimer.cpp" />
     <ClCompile Include="..\Core\JWWin32Window.cpp" />
     <ClCompile Include="..\ECS\JWECS.cpp" />
     <ClCompile Include="..\ECS\JWEntity.cpp" />
@@ -272,7 +271,6 @@
     <ClInclude Include="..\Core\JWModel.h" />
     <ClInclude Include="..\Core\JWPrimitiveMaker.h" />
     <ClInclude Include="..\Core\JWRawPixelSetter.h" />
-    <ClInclude Include="..\Core\JWTimer.h" />
     <ClInclude Include="..\Core\JWWin32Window.h" />
     <ClInclude Include="..\DirectXTK\Audio.h" />
     <ClInclude Include="..\DirectXTK\CommonStates.h" />

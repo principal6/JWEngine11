@@ -29,6 +29,10 @@
 	using STRING = std::string;
 	using WSTRING = std::wstring;
 
+	using STEADY_CLOCK = std::chrono::steady_clock;
+	using TIME_POINT = std::chrono::time_point<STEADY_CLOCK>;
+	using TIME_UNIT_MS = std::chrono::milliseconds;
+
 	template <typename T>
 	using VECTOR = std::vector<T>;
 
@@ -150,6 +154,8 @@ namespace JWEngine
 #define JW_DELETE_ARRAY(pArray) { if(pArray) {delete[] pArray; pArray = nullptr; }}
 #define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
 #define JW_RELEASE_CHECK_REFERENCE_COUNT(DxObj) {if (DxObj) { reference_count = DxObj->Release(); DxObj = nullptr; }}
+#define JW_ERROR_ABORT(text) { MessageBoxA(nullptr, \
+	(STRING(typeid(*this).name()) + "::" + __func__ + "() " + text).c_str(), "Error", MB_OK); abort(); }
 	
 	using namespace DirectX;
 

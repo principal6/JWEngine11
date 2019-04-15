@@ -5,26 +5,26 @@ using namespace JWEngine;
 
 void JWImage::Create(JWDX& DX) noexcept
 {
-	assert(!m_IsCreated);
+	if (!m_IsCreated)
+	{
+		m_pDX = &DX;
 
-	// Set member pointers.
-	m_pDX = &DX;
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(0, 0, 0, 0, 0));
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(1, 0, 0, 1, 0));
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(0, -1, 0, 0, 1));
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(1, -1, 0, 1, 1));
 
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(0, 0, 0, 0, 0));
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(1, 0, 0, 1, 0));
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(0, -1, 0, 0, 1));
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(1, -1, 0, 1, 1));
+		m_IndexData.vIndices.push_back(SIndexTriangle(0, 1, 2));
+		m_IndexData.vIndices.push_back(SIndexTriangle(1, 3, 2));
 
-	m_IndexData.vIndices.push_back(SIndexTriangle(0, 1, 2));
-	m_IndexData.vIndices.push_back(SIndexTriangle(1, 3, 2));
+		// Create vertex buffer
+		m_pDX->CreateDynamicVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);
 
-	// Create vertex buffer
-	m_pDX->CreateDynamicVertexBuffer(m_VertexData.GetByteSize(), m_VertexData.GetPtrData(), &m_VertexBuffer);
+		// Create index buffer
+		m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 
-	// Create index buffer
-	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
-
-	m_IsCreated = true;
+		m_IsCreated = true;
+	}
 }
 
 void JWImage::Destroy() noexcept

@@ -52,9 +52,10 @@ namespace JWEngine
 	{
 	public:
 		JWDX() = default;
-		~JWDX();
+		~JWDX() = default;
 
 		void Create(const JWWin32Window& Window, STRING Directory, const SClearColor& ClearColor) noexcept;
+		void Destroy() noexcept;
 
 		// Factory functions
 		void CreateDynamicVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;

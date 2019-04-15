@@ -1,39 +1,34 @@
 #include "JWRawPixelSetter.h"
-#include "../Core/JWDX.h"
+#include "JWDX.h"
 
 using namespace JWEngine;
 
-JWRawPixelSetter::~JWRawPixelSetter()
-{
-	JW_RELEASE(m_RawTexture2DSRV);
-	JW_RELEASE(m_RawTexture2D);
-}
-
 void JWRawPixelSetter::Create(JWDX& DX) noexcept
 {
-	assert(!m_IsCreated);
-
-	// Set JWDX pointer.
-	m_pDX = &DX;
-
-	// Create raw pixel data
-	m_RawPixelData.CreatePixelData(m_pDX->GetWindowSize().Width, m_pDX->GetWindowSize().Height);
-
-	// Set default color
-	for (int y = 0; y < m_RawPixelData.GetHeight(); ++y)
+	if (!m_IsCreated)
 	{
-		for (int x = 0; x < m_RawPixelData.GetWidth(); ++x)
+		// Set JWDX pointer.
+		m_pDX = &DX;
+
+		// Create raw pixel data
+		m_RawPixelData.CreatePixelData(m_pDX->GetWindowSize().Width, m_pDX->GetWindowSize().Height);
+
+		// Set default color
+		for (int y = 0; y < m_RawPixelData.GetHeight(); ++y)
 		{
-			m_RawPixelData.SetPixel(x, y, SRawPixelColor(255, 255, 0, 255));
+			for (int x = 0; x < m_RawPixelData.GetWidth(); ++x)
+			{
+				m_RawPixelData.SetPixel(x, y, SRawPixelColor(255, 255, 0, 255));
+			}
 		}
+
+		CreateRawTexture();
+
+		m_IsCreated = true;
 	}
-
-	CreateRawTexture();
-
-	m_IsCreated = true;
 }
 
-void JWRawPixelSetter::CreateRawTexture() noexcept
+PRIVATE void JWRawPixelSetter::CreateRawTexture() noexcept
 {
 	DXGI_FORMAT texture_format = DXGI_FORMAT_B8G8R8A8_UNORM; // DXGI_FORMAT_B8G8R8A8_UNORM?? DXGI_FORMAT_R32G32B32A32_FLOAT??
 
@@ -50,34 +45,28 @@ void JWRawPixelSetter::CreateRawTexture() noexcept
 	texture_descrption.MiscFlags = 0;
 
 	// Create the texture
-	m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &m_RawTexture2D);
+	if (SUCCEEDED(m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &m_RawTexture2D)))
+	{
+		D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
+		srv_description.Format = texture_format;
+		srv_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srv_description.Texture2D.MostDetailedMip = 0;
+		srv_description.Texture2D.MipLevels = 1;
 
-	assert(m_RawTexture2D);
+		// Create the shader resource view.
+		m_pDX->GetDevice()->CreateShaderResourceView(m_RawTexture2D, &srv_description, &m_RawTexture2DSRV);
+	}
+}
 
-	D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
-	srv_description.Format = texture_format;
-	srv_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srv_description.Texture2D.MostDetailedMip = 0;
-	srv_description.Texture2D.MipLevels = 1;
-
-	// Create the shader resource view.
-	m_pDX->GetDevice()->CreateShaderResourceView(m_RawTexture2D, &srv_description, &m_RawTexture2DSRV);
+void JWRawPixelSetter::Destroy() noexcept
+{
+	JW_RELEASE(m_RawTexture2DSRV);
+	JW_RELEASE(m_RawTexture2D);
 }
 
 auto JWRawPixelSetter::GetRawPixelData() noexcept->SRawPixelData&
 {
 	return m_RawPixelData;
-}
-
-void JWRawPixelSetter::UpdateRawTexture() noexcept
-{
-	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
-	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_RawTexture2D, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
-	{
-		memcpy(mapped_subresource.pData, m_RawPixelData.GetPtrData(), m_RawPixelData.GetByteSize());
-
-		m_pDX->GetDeviceContext()->Unmap(m_RawTexture2D, 0);
-	}
 }
 
 void JWRawPixelSetter::Draw() noexcept
@@ -103,4 +92,15 @@ void JWRawPixelSetter::Draw() noexcept
 	m_pDX->GetDeviceContext()->IASetInputLayout(nullptr);
 	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
 	m_pDX->GetDeviceContext()->Draw(4, 0);
+}
+
+PRIVATE void JWRawPixelSetter::UpdateRawTexture() noexcept
+{
+	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
+	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_RawTexture2D, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
+	{
+		memcpy(mapped_subresource.pData, m_RawPixelData.GetPtrData(), m_RawPixelData.GetByteSize());
+
+		m_pDX->GetDeviceContext()->Unmap(m_RawTexture2D, 0);
+	}
 }

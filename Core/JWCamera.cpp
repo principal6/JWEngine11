@@ -1,34 +1,35 @@
 #include "JWCamera.h"
-#include "../Core/JWDX.h"
+#include "JWDX.h"
 
 using namespace JWEngine;
 
 void JWCamera::Create(JWDX& DX) noexcept
 {
-	assert(!m_IsCreated);
+	if (!m_IsCreated)
+	{
+		m_pDX = &DX;
 
-	m_pDX = &DX;
+		// Set default camera information
+		m_CameraUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		m_CameraPosition = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		m_CameraLookAt = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 
-	// Set default camera information
-	m_CameraUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	m_CameraPosition = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	m_CameraLookAt = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+		m_CameraDefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+		m_CameraDefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 
-	m_CameraDefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	m_CameraDefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	
-	// Get window size in float
-	float width = static_cast<float>(m_pDX->GetWindowSize().Width);
-	float height = static_cast<float>(m_pDX->GetWindowSize().Height);
-	
-	// Get projection matrix
-	m_MatrixProjection = XMMatrixPerspectiveFovLH(KFOV * XM_PI, width / height, KNearZ, KFarZ);
+		// Get window size in float
+		float width = static_cast<float>(m_pDX->GetWindowSize().Width);
+		float height = static_cast<float>(m_pDX->GetWindowSize().Height);
 
-	// Get orthographic matrix
-	m_MatrixOrthographicFixed = XMMatrixOrthographicLH(width, height, KNearZ, KFarZ);
-	m_MatrixOrthographicTransformed = m_MatrixOrthographicFixed;
+		// Get projection matrix
+		m_MatrixProjection = XMMatrixPerspectiveFovLH(KFOV * XM_PI, width / height, KNearZ, KFarZ);
 
-	m_IsCreated = true;
+		// Get orthographic matrix
+		m_MatrixOrthographicFixed = XMMatrixOrthographicLH(width, height, KNearZ, KFarZ);
+		m_MatrixOrthographicTransformed = m_MatrixOrthographicFixed;
+
+		m_IsCreated = true;
+	}
 }
 
 void JWCamera::MoveCamera(ECameraMoveDirection Direction, float Stride) noexcept

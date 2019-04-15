@@ -6,12 +6,13 @@ using namespace JWEngine;
 
 void JWLineModel::Create(JWDX& DX) noexcept
 {
-	assert(!m_IsCreated);
+	if (!m_IsCreated)
+	{
+		// Set JWDX pointer.
+		m_pDX = &DX;
 
-	// Set JWDX pointer.
-	m_pDX = &DX;
-
-	m_IsCreated = true;
+		m_IsCreated = true;
+	}
 }
 
 void JWLineModel::Destroy() noexcept
@@ -27,65 +28,66 @@ void JWLineModel::Make3DGrid(float XSize, float ZSize, float GridInterval) noexc
 		m_RenderType = ERenderType::Model_Line3D;
 	}
 
-	assert(m_RenderType == ERenderType::Model_Line3D);
-
-	XSize = max(XSize, 0);
-	ZSize = max(ZSize, 0);
-
-	int grid_count_x = static_cast<int>(XSize / GridInterval) + 1;
-	int grid_count_z = static_cast<int>(ZSize / GridInterval) + 1;
-
-	int total_grid_count{};
-	float position_x{}, position_z{};
-	for (int i{}; i < grid_count_z; ++i)
+	if (m_RenderType == ERenderType::Model_Line3D)
 	{
-		position_z = -ZSize / 2.0f + static_cast<float>(i) * GridInterval;
+		XSize = max(XSize, 0);
+		ZSize = max(ZSize, 0);
 
-		if (position_z)
+		int grid_count_x = static_cast<int>(XSize / GridInterval) + 1;
+		int grid_count_z = static_cast<int>(ZSize / GridInterval) + 1;
+
+		int total_grid_count{};
+		float position_x{}, position_z{};
+		for (int i{}; i < grid_count_z; ++i)
 		{
-			m_VertexData.vVertices.push_back(SVertexNonRiggedModel(-XSize / 2.0f, 0, position_z));
-			m_VertexData.vVertices.push_back(SVertexNonRiggedModel(+XSize / 2.0f, 0, position_z));
+			position_z = -ZSize / 2.0f + static_cast<float>(i) * GridInterval;
 
-			m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+			if (position_z)
+			{
+				m_VertexData.vVertices.push_back(SVertexNonRiggedModel(-XSize / 2.0f, 0, position_z));
+				m_VertexData.vVertices.push_back(SVertexNonRiggedModel(+XSize / 2.0f, 0, position_z));
 
-			++total_grid_count;
+				m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+
+				++total_grid_count;
+			}
 		}
-	}
-	for (int i{}; i < grid_count_x; ++i)
-	{
-		position_x = -XSize / 2.0f + static_cast<float>(i) * GridInterval;
-
-		if (position_x)
+		for (int i{}; i < grid_count_x; ++i)
 		{
-			m_VertexData.vVertices.push_back(SVertexNonRiggedModel(position_x, 0, -ZSize / 2.0f));
-			m_VertexData.vVertices.push_back(SVertexNonRiggedModel(position_x, 0, +ZSize / 2.0f));
+			position_x = -XSize / 2.0f + static_cast<float>(i) * GridInterval;
 
-			m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+			if (position_x)
+			{
+				m_VertexData.vVertices.push_back(SVertexNonRiggedModel(position_x, 0, -ZSize / 2.0f));
+				m_VertexData.vVertices.push_back(SVertexNonRiggedModel(position_x, 0, +ZSize / 2.0f));
 
-			++total_grid_count;
+				m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+
+				++total_grid_count;
+			}
 		}
+
+		// X Axis
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
+		m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+		++total_grid_count;
+
+		// Y Axis
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
+		m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+		++total_grid_count;
+
+		// Z Axis
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
+		m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
+		++total_grid_count;
+
+		// Craete vertex & index buffer.
+		AddEnd();
 	}
-
-	// X Axis
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
-	m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
-	++total_grid_count;
-
-	// Y Axis
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
-	m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
-	++total_grid_count;
-
-	// Z Axis
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
-	m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
-	++total_grid_count;
-
-	// Craete vertex & index buffer.
-	AddEnd();
 }
 
 auto JWLineModel::AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOAT4 Color) noexcept->JWLineModel*
@@ -95,11 +97,12 @@ auto JWLineModel::AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOA
 		m_RenderType = ERenderType::Model_Line3D;
 	}
 	
-	assert(m_RenderType == ERenderType::Model_Line3D);
-	
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(StartPosition, Color));
-	m_VertexData.vVertices.push_back(SVertexNonRiggedModel(EndPosition, Color));
-	m_IndexData.vIndices.push_back(SIndexLine(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1));
+	if (m_RenderType == ERenderType::Model_Line3D)
+	{
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(StartPosition, Color));
+		m_VertexData.vVertices.push_back(SVertexNonRiggedModel(EndPosition, Color));
+		m_IndexData.vIndices.push_back(SIndexLine(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1));
+	}
 
 	return this;
 }
@@ -111,19 +114,20 @@ auto JWLineModel::AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Co
 		m_RenderType = ERenderType::Model_Line2D;
 	}
 
-	assert(m_RenderType == ERenderType::Model_Line2D);
-	
-	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
-	float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
+	if (m_RenderType == ERenderType::Model_Line2D)
+	{
+		float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
+		float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
 
-	XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
-	XMFLOAT3 position_b = position_a;
-	position_b.x += Length.x;
-	position_b.y += Length.y;
-	
-	m_VertexData.vVertices.emplace_back(position_a, Color);
-	m_VertexData.vVertices.emplace_back(position_b, Color);
-	m_IndexData.vIndices.emplace_back(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1);
+		XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
+		XMFLOAT3 position_b = position_a;
+		position_b.x += Length.x;
+		position_b.y += Length.y;
+
+		m_VertexData.vVertices.emplace_back(position_a, Color);
+		m_VertexData.vVertices.emplace_back(position_b, Color);
+		m_IndexData.vIndices.emplace_back(m_VertexData.GetCount() - 2, m_VertexData.GetCount() - 1);
+	}
 
 	return this;
 }

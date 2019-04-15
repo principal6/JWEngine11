@@ -17,6 +17,7 @@ namespace JWEngine
 		~JWWin32Window() = default;
 
 		void Create(SPositionInt Position, SSizeInt Size, const STRING& Title) noexcept;
+		void Destroy() noexcept {};
 
 		void SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexcept;
 		void SetOnWindowsCharInputFunction(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept;

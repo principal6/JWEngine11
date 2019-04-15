@@ -15,9 +15,10 @@ namespace JWEngine
 	{
 	public:
 		JWInstantText() = default;
-		~JWInstantText();
+		~JWInstantText() = default;
 
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept;
+		void Destroy() noexcept;
 
 		void BeginRendering() noexcept;
 		void RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 FontColorRGB) noexcept;

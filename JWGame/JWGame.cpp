@@ -4,59 +4,62 @@ using namespace JWEngine;
 
 void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING GameFontFileName, JWLogger* PtrLogger) noexcept
 {
+	assert(PtrLogger);
+
 	m_pLogger = PtrLogger;
 
 	LOG_METHOD();
 
-	assert(!m_IsCreated);
+	if (!m_IsCreated)
+	{
+		char current_directory[KMaxFileLength];
+		GetCurrentDirectory(KMaxFileLength, current_directory);
 
-	char current_directory[KMaxFileLength];
-	GetCurrentDirectory(KMaxFileLength, current_directory);
+		STRING base_directory = current_directory;
+		auto find_project_name = base_directory.find(KProjectName);
+		base_directory = base_directory.substr(0, find_project_name - 1);
+		base_directory += "\\";
 
-	STRING base_directory = current_directory;
-	auto find_project_name = base_directory.find(KProjectName);
-	base_directory = base_directory.substr(0, find_project_name - 1);
-	base_directory += "\\";
+		LOG_ADD("Base directory: " + base_directory);
 
-	LOG_ADD("Base directory: " + base_directory);
+		m_BaseDirectory = base_directory;
 
-	m_BaseDirectory = base_directory;
+		m_Window.Create(WindowPosition, WindowSize, Title);
+		m_IsWindowCreated = true;
 
-	m_Window.Create(WindowPosition, WindowSize, Title);
-	m_IsWindowCreated = true;
+		m_hWnd = m_Window.GethWnd();
 
-	m_hWnd = m_Window.GethWnd();
+		LOG_ADD("Window created");
 
-	LOG_ADD("Window created");
+		m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
+		m_DX.Create(m_Window, m_BaseDirectory, m_ClearColor);
+		m_DX.SetRasterizerState(ERasterizerState::SolidNoCull);
+		m_IsDXCreated = true;
 
-	m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
-	m_DX.Create(m_Window, m_BaseDirectory, m_ClearColor);
-	m_DX.SetRasterizerState(ERasterizerState::SolidNoCull);
-	m_IsDXCreated = true;
+		LOG_ADD("DX created");
 
-	LOG_ADD("DX created");
-	
-	m_Input.Create(m_Window.GethWnd(), m_Window.GethInstance());
+		m_Input.Create(m_Window.GethWnd(), m_Window.GethInstance());
 
-	LOG_ADD("Input created");
+		LOG_ADD("Input created");
 
-	m_Camera.Create(m_DX);
+		m_Camera.Create(m_DX);
 
-	LOG_ADD("Camera created");
+		LOG_ADD("Camera created");
 
-	m_InstantText.Create(m_DX, m_Camera, m_BaseDirectory, KAssetDirectory + GameFontFileName);
+		m_InstantText.Create(m_DX, m_Camera, m_BaseDirectory, KAssetDirectory + GameFontFileName);
 
-	LOG_ADD("Instant text created");
+		LOG_ADD("Instant text created");
 
-	m_MouseCursorImage.Create(m_DX, m_Camera);
+		m_MouseCursorImage.Create(m_DX, m_Camera);
 
-	m_RawPixelSetter.Create(m_DX);
+		m_RawPixelSetter.Create(m_DX);
 
-	m_ECS.Create(m_DX, m_Camera, m_BaseDirectory);
+		m_ECS.Create(m_DX, m_Camera, m_BaseDirectory);
 
-	LOG_ADD("ECS created");
+		LOG_ADD("ECS created");
 
-	m_IsCreated = true;
+		m_IsCreated = true;
+	}
 
 	LOG_METHOD_FINISH();
 }
@@ -100,31 +103,6 @@ void JWGame::ToggleWireFrame() noexcept
 void JWGame::SetUniversalRasterizerState(ERasterizerState State) noexcept
 {
 	m_ECS.SystemRender().SetUniversalRasterizerState(State);
-}
-
-auto JWGame::Camera() noexcept->JWCamera&
-{
-	return m_Camera;
-}
-
-auto JWGame::InstantText() noexcept->JWInstantText&
-{
-	return m_InstantText;
-}
-
-auto JWGame::RawPixelSetter() noexcept->JWRawPixelSetter&
-{
-	return m_RawPixelSetter;
-}
-
-auto JWGame::ECS() noexcept->JWECS&
-{
-	return m_ECS;
-}
-
-auto JWGame::GetFPS() noexcept->int
-{
-	return m_FPS;
 }
 
 void JWGame::CastPickingRay() noexcept
@@ -194,9 +172,6 @@ void JWGame::Run() noexcept
 		}
 		else
 		{
-			// Advance FPSCount
-			++m_FPSCount;
-
 			// Update input device state
 			m_InputDeviceState = m_Input.GetDeviceState();
 
@@ -232,23 +207,33 @@ void JWGame::Run() noexcept
 			// End the drawing process
 			m_DX.EndDrawing();
 
-			if (m_Timer.GetElapsedTimeMilliSec() >= 1000)
+			// Advance frame count
+			++m_FrameCount;
+
+			m_TimeNow = m_Clock.now();
+			m_ElapsedTime = std::chrono::duration_cast<TIME_UNIT_MS>(m_TimeNow - m_TimePrev);
+			if (m_ElapsedTime.count() >= 1000)
 			{
 				// Save FPS
-				m_FPS = static_cast<int>(m_FPSCount);
+				m_FPS = m_FrameCount;
 
 				// Reset FPSCount
-				m_FPSCount = 0;
+				m_FrameCount = 0;
 
 				// Reset timer
-				m_Timer.ResetTimer();
+				m_TimePrev = m_TimeNow;
 			}
 		}
 	}
 
 	// Destroy all the objects
-
 	m_ECS.Destroy();
+	m_RawPixelSetter.Destroy();
+	m_InstantText.Destroy();
+	m_Camera.Destroy();
+	m_Input.Destroy();
+	m_DX.Destroy();
+	m_Window.Destroy();
 
 	LOG_METHOD_FINISH();
 

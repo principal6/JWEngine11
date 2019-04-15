@@ -3,7 +3,69 @@
 
 using namespace JWEngine;
 
-JWDX::~JWDX()
+void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearColor& ClearColor) noexcept
+{
+	if (!m_IsCreated)
+	{
+		// Set base directory
+		m_BaseDirectory = Directory;
+
+		// Set window size
+		m_WindowSize.Width = Window.GetWidth();
+		m_WindowSize.Height = Window.GetHeight();
+
+		// Set clear color
+		m_ClearColor[0] = ClearColor.R;
+		m_ClearColor[1] = ClearColor.G;
+		m_ClearColor[2] = ClearColor.B;
+		m_ClearColor[3] = 1.0f;
+
+		// Create device and swap chain
+		CreateDeviceAndSwapChain(Window.GethWnd());
+
+		// Create VS shaders, input layout and constant buffers
+		CreateVSBase();
+		CreateVSAnim();
+		CreateVSRaw();
+		CreateVSSkyMap();
+		CreateVSCBs();
+
+		// Create PS shaders and constant buffers
+		CreatePSBase();
+		CreatePSRaw();
+		CreatePSSkyMap();
+		CreatePSCBs();
+
+		// Set default shaders
+		SetVS(EVertexShader::VSBase);
+		SetPS(EPixelShader::PSBase);
+
+		// Create depth-stencil view
+		CreateDepthStencilView();
+
+		// Create depth-stencil states
+		CreateDepthStencilStates();
+
+		// Create render target view
+		CreateRenderTargetView();
+
+		// Create rasterizer states
+		CreateRasterizerStates();
+
+		// Create sampler states
+		CreateSamplerStates();
+
+		// Create blend states
+		CreateBlendStates();
+
+		// Create viewport
+		CreateDefaultViewport();
+
+		m_IsCreated = true;
+	}
+}
+
+void JWDX::Destroy() noexcept
 {
 	uint64_t reference_count{};
 
@@ -56,67 +118,6 @@ JWDX::~JWDX()
 
 	// Reference count check!
 	assert(reference_count == 0);
-}
-
-void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearColor& ClearColor) noexcept
-{
-	assert(!m_IsCreated);
-	
-	// Set base directory
-	m_BaseDirectory = Directory;
-
-	// Set window size
-	m_WindowSize.Width = Window.GetWidth();
-	m_WindowSize.Height = Window.GetHeight();
-
-	// Set clear color
-	m_ClearColor[0] = ClearColor.R;
-	m_ClearColor[1] = ClearColor.G;
-	m_ClearColor[2] = ClearColor.B;
-	m_ClearColor[3] = 1.0f;
-
-	// Create device and swap chain
-	CreateDeviceAndSwapChain(Window.GethWnd());
-
-	// Create VS shaders, input layout and constant buffers
-	CreateVSBase();
-	CreateVSAnim();
-	CreateVSRaw();
-	CreateVSSkyMap();
-	CreateVSCBs();
-
-	// Create PS shaders and constant buffers
-	CreatePSBase();
-	CreatePSRaw();
-	CreatePSSkyMap();
-	CreatePSCBs();
-
-	// Set default shaders
-	SetVS(EVertexShader::VSBase);
-	SetPS(EPixelShader::PSBase);
-
-	// Create depth-stencil view
-	CreateDepthStencilView();
-
-	// Create depth-stencil states
-	CreateDepthStencilStates();
-
-	// Create render target view
-	CreateRenderTargetView();
-
-	// Create rasterizer states
-	CreateRasterizerStates();
-
-	// Create sampler states
-	CreateSamplerStates();
-
-	// Create blend states
-	CreateBlendStates();
-
-	// Create viewport
-	CreateDefaultViewport();
-
-	m_IsCreated = true;
 }
 
 PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
@@ -298,14 +299,17 @@ PRIVATE void JWDX::CreateDepthStencilView() noexcept
 	
 	// Create buffer for depth-stencil view
 	ID3D11Texture2D* depth_stencil_buffer{};
-	m_Device11->CreateTexture2D(&depth_stencil_texture_descrption, nullptr, &depth_stencil_buffer);
+	if (SUCCEEDED(m_Device11->CreateTexture2D(&depth_stencil_texture_descrption, nullptr, &depth_stencil_buffer)))
+	{
+		// Create the depth-stencil View
+		m_Device11->CreateDepthStencilView(depth_stencil_buffer, nullptr, &m_DepthStencilView11);
 
-	assert(depth_stencil_buffer);
-
-	// Create the depth-stencil View
-	m_Device11->CreateDepthStencilView(depth_stencil_buffer, nullptr, &m_DepthStencilView11);
-	
-	JW_RELEASE(depth_stencil_buffer);
+		JW_RELEASE(depth_stencil_buffer);
+	}
+	else
+	{
+		JW_ERROR_ABORT("Failed to create texture.");
+	}
 }
 
 PRIVATE void JWDX::CreateDepthStencilStates() noexcept
@@ -329,7 +333,6 @@ PRIVATE void JWDX::CreateDepthStencilStates() noexcept
 
 	m_Device11->CreateDepthStencilState(&depth_stencil_description, &m_DepthStencilStateZEnabled11);
 
-
 	depth_stencil_description.DepthEnable = FALSE;
 	depth_stencil_description.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; // Read-only
 
@@ -340,17 +343,20 @@ PRIVATE void JWDX::CreateRenderTargetView() noexcept
 {
 	// Create buffer for render target view
 	ID3D11Texture2D* back_buffer{};
-	m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&back_buffer);
+	if (SUCCEEDED(m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)& back_buffer)))
+	{
+		// Create render target view
+		m_Device11->CreateRenderTargetView(back_buffer, nullptr, &m_RenderTargetView11);
 
-	assert(back_buffer);
+		// Set render target view & depth-stencil view
+		m_DeviceContext11->OMSetRenderTargets(1, &m_RenderTargetView11, m_DepthStencilView11);
 
-	// Create render target view
-	m_Device11->CreateRenderTargetView(back_buffer, nullptr, &m_RenderTargetView11);
-	
-	// Set render target view & depth-stencil view
-	m_DeviceContext11->OMSetRenderTargets(1, &m_RenderTargetView11, m_DepthStencilView11);
-
-	JW_RELEASE(back_buffer);
+		JW_RELEASE(back_buffer);
+	}
+	else
+	{
+		JW_ERROR_ABORT("Failed to get back buffer.");
+	}
 }
 
 PRIVATE void JWDX::CreateRasterizerStates() noexcept

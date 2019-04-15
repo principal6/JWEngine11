@@ -79,10 +79,11 @@ namespace JWEngine
 	{
 	public:
 		JWRawPixelSetter() = default;
-		~JWRawPixelSetter();
+		~JWRawPixelSetter() = default;
 
 		// Called in JWGame class
 		void Create(JWDX& DX) noexcept;
+		void Destroy() noexcept;
 
 		// Called in JWGame class
 		auto GetRawPixelData() noexcept->SRawPixelData&;

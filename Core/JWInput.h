@@ -21,9 +21,10 @@ namespace JWEngine
 	{
 	public:
 		JWInput() = default;
-		~JWInput();
+		~JWInput() = default;
 
-		void Create(const HWND hWnd, const HINSTANCE hInstance);
+		void Create(const HWND hWnd, const HINSTANCE hInstance) noexcept;
+		void Destroy() noexcept;
 
 		auto GetDeviceState() noexcept->SDirectInputDeviceState&;
 

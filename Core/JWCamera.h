@@ -35,6 +35,7 @@ namespace JWEngine
 
 		// Called in JWGame class
 		void Create(JWDX& DX) noexcept;
+		void Destroy() noexcept {};
 
 		void MoveCamera(ECameraMoveDirection Direction, float Stride = 1.0f) noexcept;
 		void RotateCamera(float PitchStride, float YawStride, float RollStride) noexcept;

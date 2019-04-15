@@ -176,108 +176,107 @@ auto JWModel::BakeAnimationTexture(SSizeInt TextureSize, STRING FileName) noexce
 			texture_descrption.MiscFlags = 0;
 
 			// Create the texture.
-			m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &current_tex);
-
-			assert(current_tex);
-
-			// Describe the shader resource view.
-			D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
-			srv_description.Format = texture_format;
-			srv_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-			srv_description.Texture2D.MostDetailedMip = 0;
-			srv_description.Texture2D.MipLevels = 1;
-
-			// Create the shader resource view.
-			m_pDX->GetDevice()->CreateShaderResourceView(current_tex, &srv_description, &current_srv);
-
-			auto& vec_animations{ RiggedModelData.AnimationSet.vAnimations };
-
-			uint32_t texel_count{ TextureSize.Width * TextureSize.Height };
-			uint32_t texel_y_advance{ TextureSize.Width * KColorCountPerTexel };
-			uint32_t data_size{ texel_count * KColorCountPerTexel };
-			float* data = new float[data_size] {};
-
-			//
-			// Set animation set's info
-			// (with maximum bone count = KMaxBoneCount)
-			// data[0 ~ 3] = Animation ID 0 = TPose
-			//
-			// TPose frame count(=texel line count)
-			data[0] = 1;
-			// TPose texel start y index
-			data[1] = 1;
-			// Reserved
-			data[2] = 0;
-			// Reserved
-			data[3] = 0;
-
-			for (uint16_t iter_anim = 0; iter_anim < vec_animations.size(); iter_anim++)
+			if (SUCCEEDED(m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &current_tex)))
 			{
-				// current animation's frame count(=texel line count)
-				data[4 + iter_anim * 4] = static_cast<float>(vec_animations[iter_anim].TotalFrameCount);
+				// Describe the shader resource view.
+				D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
+				srv_description.Format = texture_format;
+				srv_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+				srv_description.Texture2D.MostDetailedMip = 0;
+				srv_description.Texture2D.MipLevels = 1;
 
-				// current animation's texel start y index
-				data[4 + iter_anim * 4 + 1] = data[iter_anim * 4] + data[1 + iter_anim * 4];
+				// Create the shader resource view.
+				m_pDX->GetDevice()->CreateShaderResourceView(current_tex, &srv_description, &current_srv);
 
+				auto& vec_animations{ RiggedModelData.AnimationSet.vAnimations };
+
+				uint32_t texel_count{ TextureSize.Width * TextureSize.Height };
+				uint32_t texel_y_advance{ TextureSize.Width * KColorCountPerTexel };
+				uint32_t data_size{ texel_count * KColorCountPerTexel };
+				float* data = new float[data_size] {};
+
+				//
+				// Set animation set's info
+				// (with maximum bone count = KMaxBoneCount)
+				// data[0 ~ 3] = Animation ID 0 = TPose
+				//
+				// TPose frame count(=texel line count)
+				data[0] = 1;
+				// TPose texel start y index
+				data[1] = 1;
 				// Reserved
-				//data[4 + iter_anim * 4 + 2] = 0;
-
+				data[2] = 0;
 				// Reserved
-				//data[4 + iter_anim * 4 + 3] = 0;
-			}
+				data[3] = 0;
 
-			// Bake animations into the texture
-			uint32_t start_index{ texel_y_advance };
-			XMMATRIX frame_matrices[KMaxBoneCount]{};
-
-			// TPose into FrameMatrices
-			SaveTPoseIntoFrameMatrices(frame_matrices, RiggedModelData, RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
-
-			// Bake FrameMatrices into Texture
-			BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
-
-			// Update start index
-			start_index += texel_y_advance;
-
-			for (uint16_t anim_index = 0; anim_index < vec_animations.size(); anim_index++)
-			{
-				// This loop iterates each animation, starting from vec_animations[0]
-
-				float frame_time{};
-
-				for (uint16_t frame_index = 0; frame_index < vec_animations[anim_index].TotalFrameCount; frame_index++)
+				for (uint16_t iter_anim = 0; iter_anim < vec_animations.size(); iter_anim++)
 				{
-					frame_time = static_cast<float>(frame_index) * vec_animations[anim_index].AnimationTicksPerGameTick;
+					// current animation's frame count(=texel line count)
+					data[4 + iter_anim * 4] = static_cast<float>(vec_animations[iter_anim].TotalFrameCount);
 
-					// Current frame into FrameMatrices
-					SaveAnimationFrameIntoFrameMatrices(frame_matrices, anim_index, frame_time,
-						RiggedModelData, RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+					// current animation's texel start y index
+					data[4 + iter_anim * 4 + 1] = data[iter_anim * 4] + data[1 + iter_anim * 4];
 
-					// Bake FrameMatrices into Texture
-					BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
+					// Reserved
+					//data[4 + iter_anim * 4 + 2] = 0;
 
-					// Update start index
-					start_index += texel_y_advance;
+					// Reserved
+					//data[4 + iter_anim * 4 + 3] = 0;
 				}
+
+				// Bake animations into the texture
+				uint32_t start_index{ texel_y_advance };
+				XMMATRIX frame_matrices[KMaxBoneCount]{};
+
+				// TPose into FrameMatrices
+				SaveTPoseIntoFrameMatrices(frame_matrices, RiggedModelData, RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+
+				// Bake FrameMatrices into Texture
+				BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
+
+				// Update start index
+				start_index += texel_y_advance;
+
+				for (uint16_t anim_index = 0; anim_index < vec_animations.size(); anim_index++)
+				{
+					// This loop iterates each animation, starting from vec_animations[0]
+
+					float frame_time{};
+
+					for (uint16_t frame_index = 0; frame_index < vec_animations[anim_index].TotalFrameCount; frame_index++)
+					{
+						frame_time = static_cast<float>(frame_index) * vec_animations[anim_index].AnimationTicksPerGameTick;
+
+						// Current frame into FrameMatrices
+						SaveAnimationFrameIntoFrameMatrices(frame_matrices, anim_index, frame_time,
+							RiggedModelData, RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+
+						// Bake FrameMatrices into Texture
+						BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
+
+						// Update start index
+						start_index += texel_y_advance;
+					}
+				}
+
+				// Map data into texture
+				D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
+				if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(current_tex, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
+				{
+					memcpy(mapped_subresource.pData, data, sizeof(float) * data_size);
+
+					m_pDX->GetDeviceContext()->Unmap(current_tex, 0);
+				}
+
+				JW_DELETE_ARRAY(data);
+
+				// Save texture into file
+				WSTRING w_fn = StringToWstring(*m_pBaseDirectory + KAssetDirectory + FileName);
+				SaveDDSTextureToFile(m_pDX->GetDeviceContext(), current_tex, w_fn.c_str());
+
+				JW_RELEASE(current_tex);
+				JW_RELEASE(current_srv);
 			}
-
-			// Map data into texture
-			D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
-			if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(current_tex, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
-			{
-				memcpy(mapped_subresource.pData, data, sizeof(float) * data_size);
-
-				m_pDX->GetDeviceContext()->Unmap(current_tex, 0);
-			}
-
-			JW_DELETE_ARRAY(data);
-
-			// Save texture into file
-			WSTRING w_fn = StringToWstring(*m_pBaseDirectory + KAssetDirectory + FileName);
-			SaveDDSTextureToFile(m_pDX->GetDeviceContext(), current_tex, w_fn.c_str());
-
-			JW_RELEASE(current_tex);
-			JW_RELEASE(current_srv);
 		}
 
 
