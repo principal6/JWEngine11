@@ -274,7 +274,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 JW_FUNCTION_ON_RENDER(OnRender)
 {
 	// ECS entity Skybox
-	myGame.ECS().GetUniqueEntity(EEntityType::Sky)->GetComponentTransform()->SetPosition(myGame.Camera().GetPositionFloat3());
+	myGame.ECS().GetUniqueEntity(EEntityType::Sky)->GetComponentTransform()->SetPosition(myGame.Camera().GetPosition());
 
 	// ECS execute systems
 	myGame.ECS().ExecuteSystems();

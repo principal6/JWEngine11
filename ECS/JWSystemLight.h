@@ -39,7 +39,7 @@ namespace JWEngine
 		SLightData	LightData;
 
 		// Make AMBIENT light
-		void MakeAmbientLight(XMFLOAT3 _Color, float _Intensity)
+		void MakeAmbientLight(const XMFLOAT3& _Color, float _Intensity)
 		{
 			LightData.LightType = ELightType::AmbientLight;
 			LightData.LightColor = _Color;
@@ -48,7 +48,7 @@ namespace JWEngine
 
 		// Make DIRECTIONAL light
 		// @warning: '_Position' data WILL be used to calculate the DIRECTION of directional light.
-		void MakeDirectionalLight(XMFLOAT3 _Color, XMFLOAT3 _Position, float _Intensity)
+		void MakeDirectionalLight(const XMFLOAT3& _Color, const XMFLOAT3& _Position, float _Intensity)
 		{
 			LightData.LightType = ELightType::DirectionalLight;
 			LightData.LightColor = _Color;
@@ -62,7 +62,7 @@ namespace JWEngine
 		}
 
 		// Make POINT light
-		void MakePointLight(XMFLOAT3 _Color, XMFLOAT3 _Position, float _Intensity, float _Range, XMFLOAT3 _Attenuation)
+		void MakePointLight(const XMFLOAT3& _Color, const XMFLOAT3& _Position, float _Intensity, float _Range, const XMFLOAT3& _Attenuation)
 		{
 			LightData.LightType = ELightType::Pointlight;
 			LightData.LightColor = _Color;
