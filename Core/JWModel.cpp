@@ -21,7 +21,7 @@ void JWModel::Destroy() noexcept
 	JW_RELEASE(NormalIndexBuffer);
 }
 
-void JWModel::SetNonRiggedModelData(SNonRiggedModelData ModelData) noexcept
+void JWModel::SetNonRiggedModelData(const SNonRiggedModelData& ModelData) noexcept
 {
 	if (m_RenderType != ERenderType::Invalid)
 	{
@@ -60,7 +60,7 @@ void JWModel::SetNonRiggedModelData(SNonRiggedModelData ModelData) noexcept
 	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
-void JWModel::SetDynamicModelData(SNonRiggedModelData ModelData) noexcept
+void JWModel::SetDynamicModelData(const SNonRiggedModelData& ModelData) noexcept
 {
 	if (m_RenderType != ERenderType::Invalid)
 	{
@@ -99,7 +99,7 @@ void JWModel::SetDynamicModelData(SNonRiggedModelData ModelData) noexcept
 	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
-void JWModel::SetRiggedModelData(SRiggedModelData ModelData) noexcept
+void JWModel::SetRiggedModelData(const SRiggedModelData& ModelData) noexcept
 {
 	if (m_RenderType != ERenderType::Invalid)
 	{

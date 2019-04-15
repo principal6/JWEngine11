@@ -17,9 +17,9 @@ namespace JWEngine
 		// Release all resources
 		void Destroy() noexcept;
 
-		void SetNonRiggedModelData(SNonRiggedModelData ModelData) noexcept;
-		void SetDynamicModelData(SNonRiggedModelData ModelData) noexcept;
-		void SetRiggedModelData(SRiggedModelData ModelData) noexcept;
+		void SetNonRiggedModelData(const SNonRiggedModelData& ModelData) noexcept;
+		void SetDynamicModelData(const SNonRiggedModelData& ModelData) noexcept;
+		void SetRiggedModelData(const SRiggedModelData& ModelData) noexcept;
 
 		// Only available when it's dynamic model
 		auto SetVertex(uint32_t VertexIndex, XMFLOAT3 Position, XMFLOAT4 Color) noexcept->JWModel*;

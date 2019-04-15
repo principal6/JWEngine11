@@ -9,19 +9,19 @@ auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) 
 	Assimp::Importer importer{};
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_NORMALS);
 
-	const aiScene* assimp_scene{ importer.ReadFile(Directory + ModelFileName, aiProcess_ConvertToLeftHanded
+	const aiScene* scene{ importer.ReadFile(Directory + ModelFileName, aiProcess_ConvertToLeftHanded
 		| aiProcess_ValidateDataStructure | aiProcess_OptimizeMeshes | aiProcess_FixInfacingNormals
 		| aiProcess_PreTransformVertices | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices
 		| aiProcess_RemoveComponent | aiProcess_GenSmoothNormals) };
 
 	// #0 Model must have meshes
-	assert(assimp_scene && assimp_scene->HasMeshes());
-	auto mesh_count{ assimp_scene->mNumMeshes };
+	assert(scene && scene->HasMeshes());
+	auto mesh_count{ scene->mNumMeshes };
 	unsigned int indices_offset{};
 
 	for (unsigned int mesh_index{}; mesh_index < mesh_count; ++mesh_index)
 	{
-		auto material = assimp_scene->mMaterials[assimp_scene->mMeshes[mesh_index]->mMaterialIndex];
+		auto material = scene->mMaterials[scene->mMeshes[mesh_index]->mMaterialIndex];
 		aiColor4D ai_diffuse{};
 		aiColor4D ai_specular{};
 		aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &ai_diffuse);
@@ -42,8 +42,8 @@ auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) 
 		}
 
 		// #1 Model must have positions
-		assert(assimp_scene->mMeshes[mesh_index]->HasPositions());
-		size_t mesh_vertices_count{ assimp_scene->mMeshes[mesh_index]->mNumVertices };
+		assert(scene->mMeshes[mesh_index]->HasPositions());
+		size_t mesh_vertices_count{ scene->mMeshes[mesh_index]->mNumVertices };
 
 		XMFLOAT3 position{};
 		XMFLOAT2 texcoord{};
@@ -54,32 +54,32 @@ auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) 
 
 		for (size_t iterator_vertices{}; iterator_vertices < mesh_vertices_count; ++iterator_vertices)
 		{
-			position = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
+			position = ConvertaiVector3DToXMFLOAT3(scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
 					
-			if (assimp_scene->mMeshes[mesh_index]->mTextureCoords[0] == nullptr)
+			if (scene->mMeshes[mesh_index]->mTextureCoords[0] == nullptr)
 			{
 				// No texture coordinates in model file
 				texcoord = XMFLOAT2(0, 0);
 			}
 			else
 			{
-				texcoord = ConvertaiVector3DToXMFLOAT2(assimp_scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
+				texcoord = ConvertaiVector3DToXMFLOAT2(scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
 			}
 
-			normal = ConvertaiVector3DToXMFLOAT3(assimp_scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
+			normal = ConvertaiVector3DToXMFLOAT3(scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
 
 			result.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
 		}
 
 		// #2 Model must have faces
-		assert(assimp_scene->mMeshes[mesh_index]->HasFaces());
-		size_t faces_count{ assimp_scene->mMeshes[mesh_index]->mNumFaces };
+		assert(scene->mMeshes[mesh_index]->HasFaces());
+		size_t faces_count{ scene->mMeshes[mesh_index]->mNumFaces };
 		unsigned int last_index{};
 
 		for (size_t iterator_faces{}; iterator_faces < faces_count; ++iterator_faces)
 		{
-			auto& indices_count = assimp_scene->mMeshes[mesh_index]->mFaces[iterator_faces].mNumIndices;
-			auto& indices = assimp_scene->mMeshes[mesh_index]->mFaces[iterator_faces].mIndices;
+			auto& indices_count = scene->mMeshes[mesh_index]->mFaces[iterator_faces].mNumIndices;
+			auto& indices = scene->mMeshes[mesh_index]->mFaces[iterator_faces].mIndices;
 
 			assert(indices_count == 3);
 			result.IndexData.vIndices.emplace_back(
