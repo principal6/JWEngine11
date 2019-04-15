@@ -73,8 +73,7 @@ int main()
 		myGame.ECS().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 	}
 
-	auto grid = myGame.ECS().CreateEntity("grid");
-	grid->SetEntityType(EEntityType::Grid);
+	auto grid = myGame.ECS().CreateEntity(EEntityType::Grid);
 	grid->CreateComponentRender()
 		->SetLineModel(myGame.ECS().GetSharedLineModel(0));
 
@@ -88,7 +87,6 @@ int main()
 		->SetRenderFlag(JWFlagRenderOption_UseLighting);
 
 	auto ambient_light = myGame.ECS().CreateEntity("ambient_light");
-	ambient_light->SetEntityType(EEntityType::Light);
 	ambient_light->CreateComponentLight()
 		->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
 	ambient_light->CreateComponentTransform()
@@ -97,7 +95,6 @@ int main()
 		->SetModel(myGame.ECS().GetSharedModel(1));
 
 	auto directional_light = myGame.ECS().CreateEntity("directional_light");
-	directional_light->SetEntityType(EEntityType::Light);
 	directional_light->CreateComponentLight()
 		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5.0f, 5.0f, 0.0f), 0.6f);
 	directional_light->CreateComponentTransform()
@@ -105,8 +102,7 @@ int main()
 	directional_light->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(1));
 
-	auto main_sprite = myGame.ECS().CreateEntity("main_sprite");
-	main_sprite->SetEntityType(EEntityType::MainSprite);
+	auto main_sprite = myGame.ECS().CreateEntity(EEntityType::MainSprite);
 	main_sprite->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
@@ -118,8 +114,7 @@ int main()
 		->SetAnimationTexture(myGame.ECS().GetAnimationTexture(0))
 		->SetAnimation(3);
 	
-	auto sky_sphere = myGame.ECS().CreateEntity("Sky");
-	sky_sphere->SetEntityType(EEntityType::Sky);
+	auto sky_sphere = myGame.ECS().CreateEntity(EEntityType::Sky);
 	sky_sphere->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
@@ -143,19 +138,16 @@ int main()
 		->SetTexture(myGame.ECS().GetSharedTexture(2));
 
 	auto cam = myGame.ECS().CreateEntity("Camera");
-	cam->SetEntityType(EEntityType::Camera);
 	cam->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(0, 2, 0));
 	cam->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(5));
 
-	auto ray = myGame.ECS().CreateEntity("Ray");
-	ray->SetEntityType(EEntityType::PickingRay);
+	auto ray = myGame.ECS().CreateEntity(EEntityType::PickingRay);
 	ray->CreateComponentRender()
 		->SetLineModel(myGame.ECS().GetSharedLineModel(1));
 
-	auto picked_tri = myGame.ECS().CreateEntity("PickedTri");
-	picked_tri->SetEntityType(EEntityType::PickedTriangle);
+	auto picked_tri = myGame.ECS().CreateEntity(EEntityType::PickedTriangle);
 	picked_tri->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(6))
 		->SetDepthStencilState(EDepthStencilState::ZDisabled)
@@ -195,12 +187,12 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 {
 	if (Character == '1')
 	{
-		myGame.ECS().GetUniqueEntity(EEntityType::MainSprite)->GetComponentRender()->PrevAnimation();
+		myGame.ECS().GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->PrevAnimation();
 	}
 
 	if (Character == '2')
 	{
-		myGame.ECS().GetUniqueEntity(EEntityType::MainSprite)->GetComponentRender()->NextAnimation();
+		myGame.ECS().GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->NextAnimation();
 	}
 }
 
@@ -238,7 +230,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 		myGame.PickEntityTriangle();
 
 		// ECS entity Ray
-		myGame.ECS().GetUniqueEntity(EEntityType::PickingRay)->GetComponentRender()->PtrLine
+		myGame.ECS().GetEntityByType(EEntityType::PickingRay)->GetComponentRender()->PtrLine
 			->SetLine3DOriginDirection(0, myGame.GetPickingRayOrigin(), myGame.GetPickingRayDirection())
 			->UpdateLines();
 
@@ -247,7 +239,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 		XMStoreFloat3(&tri_b, myGame.ECS().GetPickedTrianglePosition(1));
 		XMStoreFloat3(&tri_c, myGame.ECS().GetPickedTrianglePosition(2));
 		
-		myGame.ECS().GetUniqueEntity(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
+		myGame.ECS().GetEntityByType(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
 			->SetVertex(0, tri_a, XMFLOAT4(1, 1, 1, 1))
 			->SetVertex(1, tri_b, XMFLOAT4(1, 0, 0, 1))
 			->SetVertex(2, tri_c, XMFLOAT4(0, 1, 0, 1))
@@ -274,13 +266,13 @@ JW_FUNCTION_ON_INPUT(OnInput)
 JW_FUNCTION_ON_RENDER(OnRender)
 {
 	// ECS entity Skybox
-	myGame.ECS().GetUniqueEntity(EEntityType::Sky)->GetComponentTransform()->SetPosition(myGame.Camera().GetPosition());
+	myGame.ECS().GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(myGame.Camera().GetPosition());
 
 	// ECS execute systems
 	myGame.ECS().ExecuteSystems();
 
 	// ECS entity Sprite info
-	const auto& anim_state = myGame.ECS().GetUniqueEntity(EEntityType::MainSprite)->GetComponentRender()->AnimationState;
+	const auto& anim_state = myGame.ECS().GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->AnimationState;
 	
 	// Text
 	static WSTRING s_temp{};

@@ -44,14 +44,3 @@ auto JWEntity::CreateComponentLight() noexcept->SComponentLight*
 
 	return m_pComponentLight;
 }
-
-void JWEntity::SetEntityType(EEntityType Type) noexcept
-{
-	m_EntityType = Type;
-
-	if (JW_IS_UNIQUE_ENTITY_TYPE(m_EntityType))
-	{
-		// This is unique entity type
-		m_pECS->SetUniqueEntity(this, m_EntityType);
-	}
-}

@@ -58,9 +58,7 @@ auto JWECS::CreateEntity(STRING EntityName) noexcept->JWEntity*
 			if (iter->GetEntityName().compare(EntityName) == 0)
 			{
 				// Duplicate name cannot be used!
-				MessageBoxA(nullptr, "엔티티 이름이 중복되었습니다. 다른 이름을 써 주세요.", "오류", MB_OK);
-
-				return nullptr;
+				JW_ERROR_ABORT("This entity name is duplicated. (" + EntityName + ")");
 			}
 		}
 	}
@@ -69,6 +67,37 @@ auto JWECS::CreateEntity(STRING EntityName) noexcept->JWEntity*
 	
 	uint64_t index = m_vpEntities.size() - 1;
 	m_mapEntityNames.insert(std::make_pair(EntityName, index));
+
+	return m_vpEntities[index];
+}
+
+auto JWECS::CreateEntity(EEntityType Type) noexcept->JWEntity*
+{
+	if (Type == EEntityType::UserDefined)
+	{
+		JW_ERROR_ABORT("You can't make a user-defined entity by this method.");
+	}
+
+	if (m_vpEntities.size())
+	{
+		for (auto& iter : m_vpEntities)
+		{
+			if (iter->GetEntityType() == Type)
+			{
+				// It must be unique
+				JW_ERROR_ABORT("The entity of the type already exists.");
+			}
+		}
+	}
+
+	STRING temp{};
+	STRING entity_name{ "UniqueEntity" };
+	uint32_t type_id = static_cast<uint32_t>(Type);
+	entity_name += ConvertIntToSTRING(type_id, temp);
+	m_vpEntities.push_back(new JWEntity(this, entity_name, Type));
+
+	uint64_t index = m_vpEntities.size() - 1;
+	m_mapEntityNames.insert(std::make_pair(entity_name, index));
 
 	return m_vpEntities[index];
 }
@@ -89,50 +118,45 @@ auto JWECS::GetEntityByName(STRING EntityName) noexcept->JWEntity*
 {
 	JWEntity* result{};
 
-	assert(m_vpEntities.size());
-
-	auto find = m_mapEntityNames.find(EntityName);
-	if (find != m_mapEntityNames.end())
+	if (m_vpEntities.size())
 	{
-		auto index = find->second;
+		auto find = m_mapEntityNames.find(EntityName);
+		if (find != m_mapEntityNames.end())
+		{
+			auto index = find->second;
 
-		result = m_vpEntities[index];
-	}
-	else
-	{
-		MessageBoxA(nullptr, "엔티티 이름이 잘못되었습니다.", "오류", MB_OK);
+			result = m_vpEntities[index];
+		}
+		else
+		{
+			JW_ERROR_ABORT("Unable to fine the entity of name (" + EntityName + ")");
+		}
 	}
 
 	return result;
 }
 
-auto JWECS::GetUniqueEntity(EEntityType Type) noexcept->JWEntity*
+auto JWECS::GetEntityByType(EEntityType Type) noexcept->JWEntity*
 {
 	JWEntity* result{};
 
-	assert(m_vpEntities.size());
-	
-	if (JW_IS_UNIQUE_ENTITY_TYPE(Type))
+	if (Type == EEntityType::UserDefined)
 	{
-		uint32_t index_of_type = static_cast<uint32_t>(Type);
+		JW_ERROR_ABORT("Impossible to get the entity of user defined type by calling this method.");
+	}
 
-		result = m_pUniqueEntities[index_of_type];
+	if (m_vpEntities.size())
+	{
+		for (auto& iter : m_vpEntities)
+		{
+			if (iter->GetEntityType() == Type)
+			{
+				result = iter;
+			}
+		}
 	}
 
 	return result;
-}
-
-void JWECS::SetUniqueEntity(JWEntity* PtrEntity, EEntityType Type) noexcept
-{
-	assert(JW_IS_UNIQUE_ENTITY_TYPE(Type));
-
-	uint32_t index_of_type = static_cast<uint32_t>(Type);
-
-	// Avoid duplicate setting! It must be UNIQUE!
-	if (m_pUniqueEntities[index_of_type] == nullptr)
-	{
-		m_pUniqueEntities[index_of_type] = PtrEntity;
-	}
 }
 
 void JWECS::DestroyEntity(uint32_t index) noexcept
@@ -164,8 +188,7 @@ void JWECS::PickEntityTriangle(XMVECTOR& RayOrigin, XMVECTOR& RayDirection) noex
 			auto render{ iter->GetComponentRender() };
 			auto type{ iter->GetEntityType() };
 			
-			if ((type == EEntityType::Sky) || (type == EEntityType::Grid) ||
-				(type == EEntityType::PickingRay) || (type == EEntityType::PickedTriangle))
+			if (type != EEntityType::UserDefined)
 			{
 				continue;
 			}

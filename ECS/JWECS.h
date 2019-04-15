@@ -33,12 +33,15 @@ namespace JWEngine
 		
 		// -------------------------
 		// --- Entity management ---
+		
+		// Creates user-defined entity
 		auto CreateEntity(STRING EntityName) noexcept->JWEntity*;
+
+		// Creates unique entity
+		auto CreateEntity(EEntityType Type) noexcept->JWEntity*;
 		auto GetEntity(uint32_t index) noexcept->JWEntity*;
 		auto GetEntityByName(STRING EntityName) noexcept->JWEntity*;
-		auto GetUniqueEntity(EEntityType Type) noexcept->JWEntity*;
-		// Called by JWEntity::SetEntityType()
-		void SetUniqueEntity(JWEntity* PtrEntity, EEntityType Type) noexcept;
+		auto GetEntityByType(EEntityType Type) noexcept->JWEntity*;
 		void DestroyEntity(uint32_t index) noexcept;
 
 		// Picking
@@ -93,7 +96,6 @@ namespace JWEngine
 
 		VECTOR<JWEntity*>		m_vpEntities;
 		MAP<STRING, uint64_t>	m_mapEntityNames;
-		JWEntity*				m_pUniqueEntities[KUniquePredefinedEntityCount]{};
 
 		// Shared resources(texture, model data, animation texture)
 		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;
