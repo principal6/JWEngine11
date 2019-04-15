@@ -23,13 +23,6 @@ namespace JWEngine
 	};
 	using JWFlagRenderOption = uint16_t;
 
-	struct SAnimationTextureData
-	{
-		ID3D11Texture2D*			Texture{};
-		ID3D11ShaderResourceView*	TextureSRV{};
-		SSizeInt					TextureSize{};
-	};
-
 	struct SAnimationState
 	{
 		// If no animation is set, CurrAnimationID is 0 (TPose)

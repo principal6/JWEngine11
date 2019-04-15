@@ -579,6 +579,13 @@ namespace JWEngine
 		SModelAnimationSet AnimationSet{};
 	};
 
+	struct SAnimationTextureData
+	{
+		ID3D11Texture2D* Texture{};
+		ID3D11ShaderResourceView* TextureSRV{};
+		SSizeInt					TextureSize{};
+	};
+
 	// Line2D & Line3D
 	struct SLineModelData
 	{

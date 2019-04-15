@@ -13,13 +13,16 @@ namespace JWEngine
 		~JWModel() = default;
 
 		void Create(JWDX& DX, STRING& BaseDirectory) noexcept;
-		
-		// Release all resources
 		void Destroy() noexcept;
 
 		void SetNonRiggedModelData(const SNonRiggedModelData& ModelData) noexcept;
 		void SetDynamicModelData(const SNonRiggedModelData& ModelData) noexcept;
 		void SetRiggedModelData(const SRiggedModelData& ModelData) noexcept;
+
+		// ---------------------------------
+		// --- Animation related methods ---
+		auto AddAnimationFromFile(STRING FileName) noexcept->JWModel*;
+		auto BakeAnimationTexture(SSizeInt TextureSize, STRING FileName) noexcept->JWModel*;
 
 		// Only available when it's dynamic model
 		auto SetVertex(uint32_t VertexIndex, XMFLOAT3 Position, XMFLOAT4 Color) noexcept->JWModel*;
@@ -30,16 +33,10 @@ namespace JWEngine
 		auto GetRenderType() const noexcept { return m_RenderType; };
 		auto GetTextureFileName() const noexcept->WSTRING
 		{
-			if (m_RenderType == ERenderType::Model_Static)
-			{
-				return NonRiggedModelData.TextureFileNameW;
-			}
-			else if (m_RenderType == ERenderType::Model_Rigged)
-			{
-				return RiggedModelData.TextureFileNameW;
-			}
-
-			return L"";
+			if (m_RenderType == ERenderType::Model_Rigged)
+			{ return RiggedModelData.TextureFileNameW; }
+			else 
+			{ return NonRiggedModelData.TextureFileNameW; }
 		}
 
 	public:
@@ -54,6 +51,14 @@ namespace JWEngine
 
 	private:
 		void CreateModelVertexIndexBuffers() noexcept;
+
+		// ---------------------------------
+		// --- Animation related methods ---
+		void SaveTPoseIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const SRiggedModelData& ModelData,
+			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
+		void SaveAnimationFrameIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const int AnimationID, const float FrameTime,
+			const SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
+		void BakeCurrentFrameIntoTexture(uint32_t StartIndex, const XMMATRIX* FrameMatrices, float*& OutData) noexcept;
 
 	private:
 		JWDX*			m_pDX{};

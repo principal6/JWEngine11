@@ -56,7 +56,7 @@ namespace JWEngine
 		auto GetPickingRayDirection() const noexcept->const XMVECTOR&;
 
 		void Run() noexcept;
-		void Terminate() noexcept;
+		void Halt() noexcept;
 
 	private:
 		bool					m_IsCreated{ false };

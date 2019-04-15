@@ -246,12 +246,16 @@ void JWGame::Run() noexcept
 		}
 	}
 
+	// Destroy all the objects
+
+	m_ECS.Destroy();
+
 	LOG_METHOD_FINISH();
 
 	LOG_SAVE(m_BaseDirectory);
 }
 
-void JWGame::Terminate() noexcept
+void JWGame::Halt() noexcept
 {
 	m_IsRunning = false;
 }

@@ -9,7 +9,7 @@ namespace JWEngine
 	class JWDX;
 	class JWCamera;
 
-	enum class ESharedResourceType
+	enum class ESharedTextureType
 	{
 		Texture2D,
 		TextureCubeMap,
@@ -25,11 +25,14 @@ namespace JWEngine
 	{
 	public:
 		JWECS() = default;
-		~JWECS();
+		~JWECS() = default;
 
 		// Called in JWGame class
 		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
-
+		void Destroy() noexcept;
+		
+		// -------------------------
+		// --- Entity management ---
 		auto CreateEntity(STRING EntityName) noexcept->JWEntity*;
 		auto GetEntity(uint32_t index) noexcept->JWEntity*;
 		auto GetEntityByName(STRING EntityName) noexcept->JWEntity*;
@@ -43,20 +46,15 @@ namespace JWEngine
 		// PositionIndex = { 0, 1, 2 }
 		auto GetPickedTrianglePosition(uint32_t PositionIndex) const noexcept->const XMVECTOR&;
 
-		void CreateSharedResource(ESharedResourceType Type, STRING FileName) noexcept;
-		void CreateSharedResourceFromSharedModel(size_t ModelIndex) noexcept;
-		auto GetSharedResource(size_t Index) noexcept->ID3D11ShaderResourceView*;
+		// ------------------------
+		// --- Shared resources ---
+		void CreateSharedTexture(ESharedTextureType Type, STRING FileName) noexcept;
+		void CreateSharedTextureFromSharedModel(size_t ModelIndex) noexcept;
+		auto GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*;
 
-		auto CreateSharedModelTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C, bool IsDynamicModel = false) noexcept->JWModel*;
-		auto CreateSharedModelSquare(float Size, XMFLOAT2 UVMap) noexcept->JWModel*;
-		auto CreateSharedModelCircle(float Radius, uint8_t Detail) noexcept->JWModel*;
-		auto CreateSharedModelCube(float Size) noexcept->JWModel*;
-		auto CreateSharedModelPyramid(float Height, float Width) noexcept->JWModel*;
-		auto CreateSharedModelCone(float Height, float Radius, uint8_t Detail) noexcept->JWModel*;
-		auto CreateSharedModelCylinder(float Height, float Radius, uint8_t Detail) noexcept->JWModel*;
-		auto CreateSharedModelSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->JWModel*;
-		auto CreateSharedModelCapsule(float Height, float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->JWModel*;
-		auto CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) noexcept->JWECS&;
+		auto CreateSharedModelPrimitive(const SNonRiggedModelData& ModelData) noexcept->JWModel*;
+		auto CreateSharedModelDynamicPrimitive(const SNonRiggedModelData& ModelData) noexcept->JWModel*;
+		auto CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) noexcept->JWModel*;
 		auto GetSharedModel(size_t Index) noexcept->JWModel*;
 
 		auto CreateSharedLineModel() noexcept->JWLineModel*;
@@ -65,25 +63,21 @@ namespace JWEngine
 		auto CreateSharedImage2D(SPositionInt Position, SSizeInt Size) noexcept->JWImage*;
 		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
 
-		auto AddAnimationToModelFromFile(size_t Index, STRING FileName) noexcept->JWECS&;
-
-		auto BakeAnimationTextureToFile(size_t ModelIndex, SSizeInt TextureSize, STRING FileName) noexcept->JWECS&;
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
 		auto GetAnimationTexture(size_t Index) noexcept->SAnimationTextureData*;
 
+		// ---------------
+		// --- Execute ---
 		void ExecuteSystems() noexcept;
 
+		// ---------------
+		// --- Getters ---
 		auto& SystemTransform() noexcept { return m_SystemTransform; }
 		auto& SystemRender() noexcept { return m_SystemRender; }
 		auto& SystemLight() noexcept { return m_SystemLight; }
+		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
 
 	private:
-		void SaveTPoseIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const SRiggedModelData& ModelData,
-			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
-		void SaveAnimationFrameIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const int AnimationID, const float FrameTime,
-			const SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
-		void BakeCurrentFrameIntoTexture(uint32_t StartIndex, const XMMATRIX* FrameMatrices, float*& OutData) noexcept;
-
 		// Returns t value
 		__forceinline auto PickTriangle(XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2,
 			XMVECTOR& RayOrigin, XMVECTOR& RayDirection, XMVECTOR& t_cmp) noexcept->XMVECTOR;
@@ -107,6 +101,8 @@ namespace JWEngine
 		VECTOR<JWModel>						m_vSharedModel;
 		VECTOR<JWLineModel>					m_vSharedLineModel;
 		VECTOR<JWImage>						m_vSharedImage2D;
+
+		JWPrimitiveMaker					m_PrimitiveMaker{};
 
 		XMVECTOR							m_PickedTriangle[3]{};
 	};
