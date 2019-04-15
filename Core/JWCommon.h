@@ -2,21 +2,18 @@
 
 #include <iostream>
 #include <fstream>
-#include <Windows.h>
 #include <vector>
 #include <memory>
 #include <map>
 #include <cassert>
-#include <crtdbg.h>
 #include <chrono>
 #include <cstdint>
+#include <Windows.h>
+#include <crtdbg.h>
 
 #include <d3d11.h>
-#include <DirectXMath.h> // @IMPORTANT not <xnamath.h> prefix:XM
-#include <DirectXPackedVector.h>
 #include <d3dcompiler.h>
 #include <DirectXTK/pch.h>
-#include <wincodec.h> // For GUID formats
 
 #include <assimp\Importer.hpp>
 #include <assimp\scene.h>
