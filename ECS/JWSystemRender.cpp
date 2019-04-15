@@ -375,9 +375,15 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	// Update PS constant buffer (if necessary)
 	if (Component.PixelShader == EPixelShader::PSBase)
 	{
+		bool use_lighting = Component.FlagRenderOption & JWFlagRenderOption_UseLighting;
+		if (!m_ShouldLight)
+		{
+			use_lighting = false;
+		}
+
 		m_pDX->UpdatePSCBFlags(
 			(Component.FlagRenderOption & JWFlagRenderOption_UseTexture),
-			(Component.FlagRenderOption & JWFlagRenderOption_UseLighting)
+			(use_lighting)
 		);
 	}
 
@@ -562,7 +568,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	}
 
 	// Draw normals
-	if (Component.FlagRenderOption & JWFlagRenderOption_DrawNormals)
+	if (m_ShouldDrawNormals)
 	{
 		DrawNormals(Component);
 	}
@@ -571,11 +577,13 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 {
 	auto& model = Component.PtrModel;
+	if (model == nullptr) { return; }
+
 	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
-	const auto& world_matrix = component_transform->WorldMatrix;
-
-	assert(model);
-
+	if (component_transform == nullptr) { return; }
+	
+	const auto& world_matrix{ component_transform->WorldMatrix };
+	
 	// Set VS Base
 	m_pDX->SetVS(EVertexShader::VSBase);
 
@@ -621,4 +629,14 @@ void JWSystemRender::ToggleWireFrame() noexcept
 		m_OldUniversalRasterizerState = m_UniversalRasterizerState;
 		m_UniversalRasterizerState = ERasterizerState::WireFrame;
 	}
+}
+
+void JWSystemRender::ToggleNormalDrawing() noexcept
+{
+	m_ShouldDrawNormals = !m_ShouldDrawNormals;
+}
+
+void JWSystemRender::ToggleLighting() noexcept
+{
+	m_ShouldLight = !m_ShouldLight;
 }

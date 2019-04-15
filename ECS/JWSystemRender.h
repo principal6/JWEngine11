@@ -17,9 +17,8 @@ namespace JWEngine
 		JWFlagRenderOption_UseGPUAnimation				= 0x04,
 		JWFlagRenderOption_UseAnimationInterpolation	= 0x08,
 		JWFlagRenderOption_UseTransparency				= 0x10,
-		JWFlagRenderOption_DrawNormals					= 0x20,
-		JWFlagRenderOption_DrawTPose					= 0x40,
-		JWFlagRenderOption_AlwaysSolidNoCull			= 0x80,
+		JWFlagRenderOption_DrawTPose					= 0x20,
+		JWFlagRenderOption_AlwaysSolidNoCull			= 0x40,
 	};
 	using JWFlagRenderOption = uint16_t;
 
@@ -61,24 +60,13 @@ namespace JWEngine
 
 		JWFlagRenderOption			FlagRenderOption{};
 
+		auto SetVertexShader(EVertexShader Shader) noexcept { VertexShader = Shader; return this; }
+		auto SetPixelShader(EPixelShader Shader) noexcept { PixelShader = Shader; return this; }
+
 		auto SetTexture(ID3D11ShaderResourceView* pShaderResourceView) noexcept
-		{
+		{ 
 			PtrTexture = pShaderResourceView;
-
 			FlagRenderOption |= JWFlagRenderOption_UseTexture;
-
-			return this;
-		}
-
-		auto SetVertexShader(EVertexShader Shader) noexcept
-		{
-			VertexShader = Shader;
-			return this;
-		}
-
-		auto SetPixelShader(EPixelShader Shader) noexcept
-		{
-			PixelShader = Shader;
 			return this;
 		}
 
@@ -92,12 +80,24 @@ namespace JWEngine
 
 				RenderType = PtrModel->GetRenderType();
 
-				
-				if (RenderType == ERenderType::Model_Rigged)
-				{
-					// @important
-					VertexShader = EVertexShader::VSAnim;
-				}
+				// @important!!
+				if (RenderType == ERenderType::Model_Rigged) { VertexShader = EVertexShader::VSAnim; }
+			}
+
+			return this;
+		}
+
+		auto SetLineModel(JWLineModel* pLineModel) noexcept
+		{
+			assert(pLineModel);
+
+			if (RenderType == ERenderType::Invalid)
+			{
+				PtrLine = pLineModel;
+
+				RenderType = PtrLine->m_RenderType;
+
+				if (RenderType == ERenderType::Model_Line2D) { DepthStencilState = EDepthStencilState::ZDisabled; }
 			}
 
 			return this;
@@ -117,62 +117,20 @@ namespace JWEngine
 			return this;
 		}
 
-		auto SetLineModel(JWLineModel* pLineModel) noexcept
-		{
-			assert(pLineModel);
-
-			if (RenderType == ERenderType::Invalid)
-			{
-				PtrLine = pLineModel;
-
-				RenderType = PtrLine->m_RenderType;
-
-				if (RenderType == ERenderType::Model_Line2D)
-				{
-					DepthStencilState = EDepthStencilState::ZDisabled;
-				}
-			}
-
-			return this;
-		}
-
-		auto SetRenderFlag(JWFlagRenderOption Flag)
-		{
-			FlagRenderOption = Flag;
-
-			return this;
-		}
-
-		auto ToggleRenderFlag(JWFlagRenderOption Flag)
-		{
-			FlagRenderOption ^= Flag;
-
-			return this;
-		}
-
-		auto SetDepthStencilState(EDepthStencilState State)
-		{
-			DepthStencilState = State;
-
-			return this;
-		}
+		auto SetRenderFlag(JWFlagRenderOption Flag) { FlagRenderOption = Flag; return this; }
+		auto ToggleRenderFlag(JWFlagRenderOption Flag) { FlagRenderOption ^= Flag; return this; }
+		auto SetDepthStencilState(EDepthStencilState State) { DepthStencilState = State; return this; }
 
 		// Animation ID 0 is not an animation but TPose
 		auto SetAnimation(uint32_t AnimationID, uint32_t NextAnimationID = -1)
 		{
 			if (RenderType == ERenderType::Model_Rigged)
 			{
-				if (NextAnimationID == -1)
-				{
-					NextAnimationID = AnimationID;
-				}
+				if (NextAnimationID == -1) { NextAnimationID = AnimationID; }
 
 				if (PtrModel->RiggedModelData.AnimationSet.vAnimations.size())
 				{
-					if (AnimationID == (uint32_t)-1)
-					{
-						AnimationID = 0;
-					}
+					if (AnimationID == (uint32_t)-1) { AnimationID = 0; }
 
 					AnimationID = min(AnimationID, static_cast<uint32_t>(PtrModel->RiggedModelData.AnimationSet.vAnimations.size()));
 				}
@@ -194,27 +152,14 @@ namespace JWEngine
 			return this;
 		}
 
-		auto NextAnimation()
-		{
-			SetAnimation(AnimationState.CurrAnimationID + 1);
-			
-			return this;
-		}
-
-		auto PrevAnimation()
-		{
-			SetAnimation(AnimationState.CurrAnimationID - 1);
-
-			return this;
-		}
+		auto NextAnimation() { SetAnimation(AnimationState.CurrAnimationID + 1); return this; }
+		auto PrevAnimation() { SetAnimation(AnimationState.CurrAnimationID - 1); return this; }
 
 		auto SetAnimationTexture(SAnimationTextureData* pAnimationTexture) noexcept
 		{
 			// Save this texture data's pointer
 			PtrAnimationTexture = pAnimationTexture;
-
 			FlagRenderOption |= JWFlagRenderOption_UseGPUAnimation;
-
 			return this;
 		}
 	};
@@ -235,6 +180,8 @@ namespace JWEngine
 
 		void SetUniversalRasterizerState(ERasterizerState State) noexcept;
 		void ToggleWireFrame() noexcept;
+		void ToggleNormalDrawing() noexcept;
+		void ToggleLighting() noexcept;
 
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;
@@ -262,5 +209,7 @@ namespace JWEngine
 
 		ERasterizerState			m_UniversalRasterizerState{ ERasterizerState::SolidNoCull };
 		ERasterizerState			m_OldUniversalRasterizerState{ ERasterizerState::SolidNoCull };
+		bool						m_ShouldDrawNormals{ false };
+		bool						m_ShouldLight{ true };
 	};
 };

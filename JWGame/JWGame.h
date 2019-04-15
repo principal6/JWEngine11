@@ -36,9 +36,6 @@ namespace JWEngine
 		void SetFunctionOnWindowsKeyDown(FP_ON_WINDOWS_KEY_DOWN Function) noexcept;
 		void SetFunctionOnWindowsCharInput(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept;
 
-		void ToggleWireFrame() noexcept;
-		void SetUniversalRasterizerState(ERasterizerState State) noexcept;
-
 		// ---------------------
 		// --- Object getter ---
 		auto& Camera() noexcept { return m_Camera; }

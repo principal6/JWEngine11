@@ -516,9 +516,7 @@ void JWDX::SetRasterizerState(ERasterizerState State) noexcept
 
 void JWDX::SwitchRasterizerState() noexcept
 {
-	ERasterizerState temp = m_eRasterizerState;
-	m_eRasterizerState = m_ePreviousRasterizerState;
-	m_ePreviousRasterizerState = temp;
+	SetRasterizerState(m_ePreviousRasterizerState);
 }
 
 void JWDX::SetBlendState(EBlendState State) noexcept

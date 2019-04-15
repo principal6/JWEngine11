@@ -77,6 +77,28 @@ int main()
 	grid->CreateComponentRender()
 		->SetLineModel(myGame.ECS().GetSharedLineModel(0));
 
+	auto main_sprite = myGame.ECS().CreateEntity(EEntityType::MainSprite);
+	main_sprite->CreateComponentTransform()
+		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+		->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
+		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
+	main_sprite->CreateComponentRender()
+		->SetModel(myGame.ECS().GetSharedModel(2))
+		->SetTexture(myGame.ECS().GetSharedTexture(3))
+		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
+		->SetAnimationTexture(myGame.ECS().GetAnimationTexture(0))
+		->SetAnimation(3);
+
+	auto sky_sphere = myGame.ECS().CreateEntity(EEntityType::Sky);
+	sky_sphere->CreateComponentTransform()
+		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	sky_sphere->CreateComponentRender()
+		->SetModel(myGame.ECS().GetSharedModel(3))
+		->SetTexture(myGame.ECS().GetSharedTexture(0))
+		->SetVertexShader(EVertexShader::VSSkyMap)
+		->SetPixelShader(EPixelShader::PSSkyMap);
+
 	auto jars = myGame.ECS().CreateEntity("jars");
 	jars->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
@@ -102,28 +124,6 @@ int main()
 	directional_light->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(1));
 
-	auto main_sprite = myGame.ECS().CreateEntity(EEntityType::MainSprite);
-	main_sprite->CreateComponentTransform()
-		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
-		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
-	main_sprite->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(2))
-		->SetTexture(myGame.ECS().GetSharedTexture(3))
-		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
-		->SetAnimationTexture(myGame.ECS().GetAnimationTexture(0))
-		->SetAnimation(3);
-	
-	auto sky_sphere = myGame.ECS().CreateEntity(EEntityType::Sky);
-	sky_sphere->CreateComponentTransform()
-		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	sky_sphere->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(3))
-		->SetTexture(myGame.ECS().GetSharedTexture(0))
-		->SetVertexShader(EVertexShader::VSSkyMap)
-		->SetPixelShader(EPixelShader::PSSkyMap);
-
 	auto floor_plane = myGame.ECS().CreateEntity("Floor");
 	floor_plane->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
@@ -143,15 +143,15 @@ int main()
 	cam->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(5));
 
-	auto ray = myGame.ECS().CreateEntity(EEntityType::PickingRay);
-	ray->CreateComponentRender()
-		->SetLineModel(myGame.ECS().GetSharedLineModel(1));
-
 	auto picked_tri = myGame.ECS().CreateEntity(EEntityType::PickedTriangle);
 	picked_tri->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(6))
 		->SetDepthStencilState(EDepthStencilState::ZDisabled)
 		->SetRenderFlag(JWFlagRenderOption_AlwaysSolidNoCull);
+
+	auto ray = myGame.ECS().CreateEntity(EEntityType::PickingRay);
+	ray->CreateComponentRender()
+		->SetLineModel(myGame.ECS().GetSharedLineModel(1));
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);
@@ -167,19 +167,17 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 {
 	if (VK == VK_F1)
 	{
-		myGame.ToggleWireFrame();
+		myGame.ECS().SystemRender().ToggleWireFrame();
 	}
 
 	if (VK == VK_F2)
 	{
-		myGame.ECS().GetEntityByName("jars")->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
-		myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_DrawNormals);
+		myGame.ECS().SystemRender().ToggleNormalDrawing();
 	}
 
 	if (VK == VK_F3)
 	{
-		myGame.ECS().GetEntityByName("jars")->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
-		myGame.ECS().GetEntityByName("main_sprite")->GetComponentRender()->ToggleRenderFlag(JWFlagRenderOption_UseLighting);
+		myGame.ECS().SystemRender().ToggleLighting();
 	}
 }
 

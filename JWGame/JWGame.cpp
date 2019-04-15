@@ -95,16 +95,6 @@ void JWGame::SetFunctionOnWindowsCharInput(FP_ON_WINDOWS_CHAR_INPUT Function) no
 	m_Window.SetOnWindowsCharInputFunction(Function);
 }
 
-void JWGame::ToggleWireFrame() noexcept
-{
-	m_ECS.SystemRender().ToggleWireFrame();
-}
-
-void JWGame::SetUniversalRasterizerState(ERasterizerState State) noexcept
-{
-	m_ECS.SystemRender().SetUniversalRasterizerState(State);
-}
-
 void JWGame::CastPickingRay() noexcept
 {
 	// Get mouse cursor position in screen space (in client rect)
