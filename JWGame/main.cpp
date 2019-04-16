@@ -132,6 +132,7 @@ int main()
 	floor_plane->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(4))
 		->SetTexture(myGame.ECS().GetSharedTexture(1));
+	floor_plane->CreateComponentPhysics();
 
 	auto image_gamma = myGame.ECS().CreateEntity("IMG_Gamma");
 	image_gamma->CreateComponentRender()
@@ -147,7 +148,6 @@ int main()
 	auto picked_tri = myGame.ECS().CreateEntity(EEntityType::PickedTriangle);
 	picked_tri->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(6))
-		->SetDepthStencilState(EDepthStencilState::ZDisabled)
 		->SetRenderFlag(JWFlagRenderOption_AlwaysSolidNoCull);
 
 	auto ray = myGame.ECS().CreateEntity(EEntityType::PickingRay);
@@ -277,6 +277,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	static WSTRING s_fps{};
 	static WSTRING s_anim_id{};
 	static WSTRING s_ray{};
+	static WSTRING s_picked_entity{};
 
 	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
 	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID, s_temp);
@@ -287,11 +288,14 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	s_ray += ConvertFloatToWSTRING(XMVectorGetY(ray_dir), s_temp) + L", ";
 	s_ray += ConvertFloatToWSTRING(XMVectorGetZ(ray_dir), s_temp) + L" )";
 
+	s_picked_entity = L"Picked Entity = " + StringToWstring(myGame.ECS().SystemPhysics().GetPickedEntityName());
+
 	myGame.InstantText().BeginRendering();
 
 	myGame.InstantText().RenderText(s_fps, XMFLOAT2(10, 10), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_anim_id, XMFLOAT2(10, 30), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_ray, XMFLOAT2(10, 50), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_picked_entity, XMFLOAT2(10, 70), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
 
 	myGame.InstantText().EndRendering();
 }
