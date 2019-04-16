@@ -168,10 +168,11 @@ namespace JWEngine
 	class JWSystemRender
 	{
 	public:
-		JWSystemRender() {};
-		~JWSystemRender();
+		JWSystemRender() = default;
+		~JWSystemRender() = default;
 
-		void CreateSystem(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
+		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
+		void Destroy() noexcept;
 
 		auto CreateComponent() noexcept->SComponentRender&;
 		void DestroyComponent(SComponentRender& Component) noexcept;

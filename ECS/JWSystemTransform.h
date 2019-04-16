@@ -54,8 +54,11 @@ namespace JWEngine
 	class JWSystemTransform
 	{
 	public:
-		JWSystemTransform() {};
-		~JWSystemTransform();
+		JWSystemTransform() = default;
+		~JWSystemTransform() = default;
+
+		void Create() noexcept {};
+		void Destroy() noexcept;
 
 		auto CreateComponent() noexcept->SComponentTransform&;
 		void DestroyComponent(SComponentTransform& Component) noexcept;

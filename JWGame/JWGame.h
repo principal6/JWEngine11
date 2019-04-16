@@ -49,13 +49,6 @@ namespace JWEngine
 		// Base directory
 		auto GetBaseDirectory() const noexcept { return m_BaseDirectory; }
 
-		// -------------------
-		// --- Picking ray ---
-		void CastPickingRay() noexcept;
-		void PickEntityTriangle() noexcept;
-		auto GetPickingRayOrigin() const noexcept->const XMVECTOR&;
-		auto GetPickingRayDirection() const noexcept->const XMVECTOR&;
-
 		void Run() noexcept;
 		void Halt() noexcept;
 
@@ -92,13 +85,5 @@ namespace JWEngine
 
 		JWImageCursor			m_MouseCursorImage{};
 		XMFLOAT2				m_MouseCursorPosition{};
-		
-		HWND					m_hWnd{};
-		POINT					m_MouseClientPosition{};
-		XMFLOAT2				m_NormalizedMousePosition{};
-		XMVECTOR				m_PickingRayViewSpacePosition{ XMVectorSet(0, 0, 0, 0) };
-		XMVECTOR				m_PickingRayViewSpaceDirection{};
-		XMVECTOR				m_PickingRayOrigin{};
-		XMVECTOR				m_PickingRayDirection{};
 	};
 };

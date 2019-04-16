@@ -1,8 +1,21 @@
 #include "JWSystemPhysics.h"
+#include "JWEntity.h"
+#include "../Core/JWWin32Window.h"
+#include "../Core/JWCamera.h"
 
 using namespace JWEngine;
 
-JWSystemPhysics::~JWSystemPhysics()
+void JWSystemPhysics::Create(JWWin32Window& Window, JWCamera& Camera) noexcept
+{
+	m_pWindow = &Window;
+	m_pCamera = &Camera;
+
+	m_hWnd = m_pWindow->GethWnd();
+	m_WindowWidth = static_cast<float>(m_pWindow->GetWidth());
+	m_WindowHeight = static_cast<float>(m_pWindow->GetHeight());
+}
+
+void JWSystemPhysics::Destroy() noexcept
 {
 	if (m_vpComponents.size())
 	{
@@ -50,6 +63,222 @@ void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 	}
 
 	m_vpComponents.pop_back();
+}
+
+void JWSystemPhysics::Pick() noexcept
+{
+	CastPickingRay();
+
+	PickEntityByTriangle();
+}
+
+PRIVATE void JWSystemPhysics::CastPickingRay() noexcept
+{
+	// Get mouse cursor position in screen space (in client rect)
+	GetCursorPos(&m_MouseClientPosition);
+	ScreenToClient(m_hWnd, &m_MouseClientPosition);
+
+	// Normalize mouse cursor position
+	m_NormalizedMousePosition.x = (static_cast<float>(m_MouseClientPosition.x) / m_WindowWidth) * 2.0f - 1.0f;
+	m_NormalizedMousePosition.y = (static_cast<float>(m_MouseClientPosition.y) / m_WindowHeight) * 2.0f - 1.0f;
+
+	auto MatrixView = m_pCamera->GetViewMatrix();
+	auto MatrixProjection = m_pCamera->GetProjectionMatrix();
+
+	m_PickingRayViewSpacePosition = XMVectorSet(0, 0, 0.001f, 0);
+	m_PickingRayViewSpaceDirection = XMVectorSet(
+		+m_NormalizedMousePosition.x / XMVectorGetX(MatrixProjection.r[0]),
+		-m_NormalizedMousePosition.y / XMVectorGetY(MatrixProjection.r[1]),
+		1.0f,
+		0.0f
+	);
+
+	auto MatrixViewInverse = XMMatrixInverse(nullptr, MatrixView);
+	m_PickingRayOrigin = XMVector3TransformCoord(m_PickingRayViewSpacePosition, MatrixViewInverse);
+	m_PickingRayDirection = XMVector3TransformNormal(m_PickingRayViewSpaceDirection, MatrixViewInverse);
+}
+
+PRIVATE void JWSystemPhysics::PickEntityByTriangle() noexcept
+{
+	if (m_vpComponents.size())
+	{
+		XMVECTOR t_cmp{ XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0) };
+
+		for (auto iter : m_vpComponents)
+		{
+			auto entity = iter->PtrEntity;
+
+			auto transform{ entity->GetComponentTransform() };
+			auto render{ entity->GetComponentRender() };
+			auto type{ entity->GetEntityType() };
+
+			if (type != EEntityType::UserDefined)
+			{
+				continue;
+			}
+
+			if (transform)
+			{
+				auto model_type = render->PtrModel->GetRenderType();
+				if ((model_type == ERenderType::Model_Dynamic) || (model_type == ERenderType::Model_Static))
+				{
+					auto indices = render->PtrModel->NonRiggedModelData.IndexData.vIndices;
+					auto vertices = render->PtrModel->NonRiggedModelData.VertexData.vVertices;
+
+					// Iterate all the triangles in the model
+					for (auto triangle : indices)
+					{
+						auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
+						auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
+						auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
+
+						// Move vertices from local space to world space!
+						v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
+						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
+						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
+
+						auto t = PickTriangle(v0, v1, v2, t_cmp);
+					}
+				}
+				else if (model_type == ERenderType::Model_Rigged)
+				{
+					auto indices = render->PtrModel->RiggedModelData.IndexData.vIndices;
+					auto vertices = render->PtrModel->RiggedModelData.VertexData.vVertices;
+
+					// Iterate all the triangles in the model
+					for (auto triangle : indices)
+					{
+						auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
+						auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
+						auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
+
+						// Move vertices from local space to world space!
+						v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
+						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
+						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
+
+						auto t = PickTriangle(v0, v1, v2, t_cmp);
+					}
+				}
+			}
+		}
+	}
+}
+
+PRIVATE __forceinline auto JWSystemPhysics::PickTriangle(XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2, XMVECTOR& t_cmp) noexcept->XMVECTOR
+{
+	// Calculate edge vectors from vertex positions
+	auto edge0 = V1 - V0;
+	auto edge1 = V2 - V0;
+
+	// Calculate face normal from edge vectors,
+	// using cross product of vectors
+	auto normal = XMVector3Normalize(XMVector3Cross(edge0, edge1));
+
+	// Calculate plane equation  # Ax + By + Cz + D = 0
+	// # A, B, C = Face normal's xyz coord
+	// # x, y, z = Any point in the plane, so we can just use V0
+	// # Ax + By + Cz = Dot(normal, point) = Dot(N, P)
+	// # D = -(Ax + By + Cz) = -Dot(normal, v0) = -Dot(N, V0)
+	//
+	// @ Plane equation for a point P
+	// Dot(N, P) = Dot(N, V0)
+	auto D = -XMVector3Dot(normal, V0);
+
+	// Get ray's equation (which is a parametric equation of a line)
+	//
+	// Line = P0 + t * P1
+	//      = ray_origin + t * ray_direction
+	//
+	// @ N: plane normal  @ V = given vertex in the plane  @ L = line vector
+	//
+	// L = (P0x + P1x * t, P0y + P1y * t, P0z + P1z * t)
+	//
+	// Dot(N, L) = Dot(N, V)
+	// => (P0x + P1x * t) * Nx + (P0y + P1y * t) * Ny + (P0z + P1z * t) * Nz = (Vx) * Nx + (Vy) * Ny + (Vz) * Nz
+	// => (P1x * t) * Nx + (P1y * t) * Ny + (P1z * t) * Nz = (Vx - P0x) * Nx + (Vy - P0y) * Ny + (Vz - P0z) * Nz
+	// => (P1x * Nx) * t + (P1y * Ny) * t + (P1z * Nz) * t = (Vx - P0x) * Nx + (Vy - P0y) * Ny + (Vz - P0z) * Nz
+	// => Dot(P1, N) * t = Dot(V, N) - Dot(P0, N)
+	//
+	//           Dot(V, N) - Dot(P0, N)
+	// =>  t  = ------------------------
+	//                 Dot(P1, N)
+	//
+	auto p0_norm = XMVector3Dot(m_PickingRayOrigin, normal);
+	auto p1_norm = XMVector3Dot(m_PickingRayDirection, normal);
+	XMVECTOR zero{ XMVectorZero() };
+	XMVECTOR t{};
+
+	// For vectorization we use vectors to compare values
+	if (XMVector3NotEqual(p1_norm, zero))
+	{
+		t = (-D - p0_norm) / p1_norm;
+	}
+
+	// 't' should be positive for the picking to be in front of the camera!
+	// (if it's negative, the picking is occuring behind the camera)
+	// We will store the minimum of t values, which means that it's the closest picking to the camera.
+	if ((XMVector3Greater(t, zero)) && (XMVector3Less(t, t_cmp)))
+	{
+		auto point_on_plane = m_PickingRayOrigin + t * m_PickingRayDirection;
+
+		// Check if the point is in the triangle
+		if (IsPointInTriangle(point_on_plane, V0, V1, V2))
+		{
+			m_PickedTriangle[0] = V0;
+			m_PickedTriangle[1] = V1;
+			m_PickedTriangle[2] = V2;
+
+			t_cmp = t;
+		}
+	}
+
+	return t;
+}
+
+PRIVATE __forceinline auto JWSystemPhysics::IsPointInTriangle(XMVECTOR& Point, XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2) noexcept->bool
+{
+	bool result{ false };
+	auto zero = XMVectorZero();
+	auto check_0 = XMVector3Cross((V2 - V1), (Point - V1));
+	auto check_1 = XMVector3Cross((V2 - V1), (V0 - V1));
+
+	if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
+	{
+		check_0 = XMVector3Cross((V2 - V0), (Point - V0));
+		check_1 = XMVector3Cross((V2 - V0), (V1 - V0));
+
+		if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
+		{
+			check_0 = XMVector3Cross((V1 - V0), (Point - V0));
+			check_1 = XMVector3Cross((V1 - V0), (V2 - V0));
+
+			if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
+			{
+				// In triangle!
+				result = true;
+			}
+		}
+	}
+
+	return result;
+}
+
+auto JWSystemPhysics::GetPickingRayOrigin() const noexcept->const XMVECTOR& 
+{ 
+	return m_PickingRayOrigin; 
+}
+
+auto JWSystemPhysics::GetPickingRayDirection() const noexcept->const XMVECTOR&
+{ 
+	return m_PickingRayDirection;
+}
+
+auto JWSystemPhysics::GetPickedTrianglePosition(uint32_t PositionIndex) const noexcept->const XMVECTOR&
+{
+	PositionIndex = min(PositionIndex, 2);
+
+	return m_PickedTriangle[PositionIndex];
 }
 
 void JWSystemPhysics::Execute() noexcept

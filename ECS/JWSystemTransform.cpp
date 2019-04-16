@@ -2,7 +2,7 @@
 
 using namespace JWEngine;
 
-JWSystemTransform::~JWSystemTransform()
+void JWSystemTransform::Destroy() noexcept
 {
 	if (m_vpComponents.size())
 	{

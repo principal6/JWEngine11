@@ -7,6 +7,7 @@
 namespace JWEngine
 {
 	class JWDX;
+	class JWWin32Window;
 	class JWCamera;
 
 	enum class ESharedTextureType
@@ -28,7 +29,7 @@ namespace JWEngine
 		~JWECS() = default;
 
 		// Called in JWGame class
-		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
+		void Create(JWDX& DX, JWCamera& Camera, JWWin32Window& Window, STRING BaseDirectory) noexcept;
 		void Destroy() noexcept;
 		
 		// -------------------------
@@ -39,15 +40,11 @@ namespace JWEngine
 
 		// Creates unique entity
 		auto CreateEntity(EEntityType Type) noexcept->JWEntity*;
+
 		auto GetEntity(uint32_t index) noexcept->JWEntity*;
 		auto GetEntityByName(STRING EntityName) noexcept->JWEntity*;
 		auto GetEntityByType(EEntityType Type) noexcept->JWEntity*;
 		void DestroyEntity(uint32_t index) noexcept;
-
-		// Picking
-		void PickEntityTriangle(XMVECTOR& RayOrigin, XMVECTOR& RayDirection) noexcept;
-		// PositionIndex = { 0, 1, 2 }
-		auto GetPickedTrianglePosition(uint32_t PositionIndex) const noexcept->const XMVECTOR&;
 
 		// ------------------------
 		// --- Shared resources ---
@@ -78,21 +75,18 @@ namespace JWEngine
 		auto& SystemTransform() noexcept { return m_SystemTransform; }
 		auto& SystemRender() noexcept { return m_SystemRender; }
 		auto& SystemLight() noexcept { return m_SystemLight; }
+		auto& SystemPhysics() noexcept { return m_SystemPhysics; }
 		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
 
 	private:
-		// Returns t value
-		__forceinline auto PickTriangle(XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2,
-			XMVECTOR& RayOrigin, XMVECTOR& RayDirection, XMVECTOR& t_cmp) noexcept->XMVECTOR;
-		__forceinline auto IsPointInTriangle(XMVECTOR& Point, XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2) noexcept->bool;
-
-	private:
 		JWDX*					m_pDX{};
+		JWWin32Window*			m_pWindow{};
 		STRING					m_BaseDirectory{};
 
 		JWSystemTransform		m_SystemTransform{};
 		JWSystemRender			m_SystemRender{};
 		JWSystemLight			m_SystemLight{};
+		JWSystemPhysics			m_SystemPhysics{};
 
 		VECTOR<JWEntity*>		m_vpEntities;
 		MAP<STRING, uint64_t>	m_mapEntityNames;
@@ -105,8 +99,6 @@ namespace JWEngine
 		VECTOR<JWImage>						m_vSharedImage2D;
 
 		JWPrimitiveMaker					m_PrimitiveMaker{};
-
-		XMVECTOR							m_PickedTriangle[3]{};
 	};
 };
 

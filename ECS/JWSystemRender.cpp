@@ -5,18 +5,7 @@
 
 using namespace JWEngine;
 
-JWSystemRender::~JWSystemRender()
-{
-	if (m_vpComponents.size())
-	{
-		for (auto& iter : m_vpComponents)
-		{
-			JW_DELETE(iter);
-		}
-	}
-}
-
-void JWSystemRender::CreateSystem(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
+void JWSystemRender::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
 {
 	// Set JWDX pointer.
 	m_pDX = &DX;
@@ -26,6 +15,17 @@ void JWSystemRender::CreateSystem(JWDX& DX, JWCamera& Camera, STRING BaseDirecto
 	
 	// Set base directory.
 	m_BaseDirectory = BaseDirectory;
+}
+
+void JWSystemRender::Destroy() noexcept
+{
+	if (m_vpComponents.size())
+	{
+		for (auto& iter : m_vpComponents)
+		{
+			JW_DELETE(iter);
+		}
+	}
 }
 
 auto JWSystemRender::CreateComponent() noexcept->SComponentRender&

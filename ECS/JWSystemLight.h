@@ -76,10 +76,11 @@ namespace JWEngine
 	class JWSystemLight
 	{
 	public:
-		JWSystemLight() {};
-		~JWSystemLight();
+		JWSystemLight() = default;
+		~JWSystemLight() = default;
 
-		void CreateSystem(JWDX& DX) noexcept;
+		void Create(JWDX& DX) noexcept;
+		void Destroy() noexcept;
 
 		auto CreateComponent() noexcept->SComponentLight&;
 		void DestroyComponent(SComponentLight& Component) noexcept;

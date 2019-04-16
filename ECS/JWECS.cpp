@@ -1,26 +1,30 @@
 #include "JWECS.h"
+#include "../Core/JWWin32Window.h"
 
 using namespace JWEngine;
 
-void JWECS::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
+void JWECS::Create(JWDX& DX, JWCamera& Camera, JWWin32Window& Window, STRING BaseDirectory) noexcept
 {
 	m_pDX = &DX;
 	m_BaseDirectory = BaseDirectory;
 
-	// @important
-	m_SystemRender.CreateSystem(DX, Camera, BaseDirectory);
-	m_SystemLight.CreateSystem(DX);
+	m_SystemTransform.Create();
+	m_SystemRender.Create(DX, Camera, BaseDirectory);
+	m_SystemLight.Create(DX);
+	m_SystemPhysics.Create(Window, Camera);
 }
 
 void JWECS::Destroy() noexcept
 {
-	if (m_vpEntities.size())
+	// Destroy entities and free them
+	for (auto& iter : m_vpEntities)
 	{
-		for (auto& iter : m_vpEntities)
-		{
-			JW_DELETE(iter);
-		}
+		iter->Destroy();
+		JW_DELETE(iter);
+	}
 
+	// Destroy shared resources
+	{
 		for (auto& iter : m_vpSharedSRV)
 		{
 			JW_RELEASE(iter);
@@ -47,6 +51,12 @@ void JWECS::Destroy() noexcept
 			iter.Destroy();
 		}
 	}
+
+	// Destroy systems
+	m_SystemPhysics.Destroy();
+	m_SystemLight.Destroy();
+	m_SystemRender.Destroy();
+	m_SystemTransform.Destroy();
 }
 
 auto JWECS::CreateEntity(STRING EntityName) noexcept->JWEntity*
@@ -63,12 +73,15 @@ auto JWECS::CreateEntity(STRING EntityName) noexcept->JWEntity*
 		}
 	}
 
-	m_vpEntities.push_back(new JWEntity(this, EntityName));
-	
+	m_vpEntities.push_back(new JWEntity());
 	uint64_t index = m_vpEntities.size() - 1;
+
+	auto& entity = m_vpEntities[index];
+	entity->Create(this, EntityName);
+
 	m_mapEntityNames.insert(std::make_pair(EntityName, index));
 
-	return m_vpEntities[index];
+	return entity;
 }
 
 auto JWECS::CreateEntity(EEntityType Type) noexcept->JWEntity*
@@ -94,12 +107,15 @@ auto JWECS::CreateEntity(EEntityType Type) noexcept->JWEntity*
 	STRING entity_name{ "UniqueEntity" };
 	uint32_t type_id = static_cast<uint32_t>(Type);
 	entity_name += ConvertIntToSTRING(type_id, temp);
-	m_vpEntities.push_back(new JWEntity(this, entity_name, Type));
 
+	m_vpEntities.push_back(new JWEntity());
 	uint64_t index = m_vpEntities.size() - 1;
+
+	auto& entity = m_vpEntities[index];
+	entity->Create(this, entity_name, Type);
 	m_mapEntityNames.insert(std::make_pair(entity_name, index));
 
-	return m_vpEntities[index];
+	return entity;
 }
 
 auto JWECS::GetEntity(uint32_t index) noexcept->JWEntity*
@@ -174,178 +190,6 @@ void JWECS::DestroyEntity(uint32_t index) noexcept
 
 		m_vpEntities.pop_back();
 	}
-}
-
-void JWECS::PickEntityTriangle(XMVECTOR& RayOrigin, XMVECTOR& RayDirection) noexcept
-{
-	if (m_vpEntities.size())
-	{
-		XMVECTOR t_cmp{ XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0) };
-
-		for (auto iter : m_vpEntities)
-		{
-			auto transform{ iter->GetComponentTransform() };
-			auto render{ iter->GetComponentRender() };
-			auto type{ iter->GetEntityType() };
-			
-			if (type != EEntityType::UserDefined)
-			{
-				continue;
-			}
-
-			if (transform)
-			{
-				auto model_type = render->PtrModel->GetRenderType();
-				if ((model_type == ERenderType::Model_Dynamic) || (model_type == ERenderType::Model_Static))
-				{
-					auto indices = render->PtrModel->NonRiggedModelData.IndexData.vIndices;
-					auto vertices = render->PtrModel->NonRiggedModelData.VertexData.vVertices;
-
-					// Iterate all the triangles in the model
-					for (auto triangle : indices)
-					{
-						auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
-						auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
-						auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
-
-						// Move vertices from local space to world space!
-						v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
-						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
-						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
-
-						auto t = PickTriangle(v0, v1, v2, RayOrigin, RayDirection, t_cmp);
-					}
-				}
-				else if (model_type == ERenderType::Model_Rigged)
-				{
-					auto indices = render->PtrModel->RiggedModelData.IndexData.vIndices;
-					auto vertices = render->PtrModel->RiggedModelData.VertexData.vVertices;
-
-					// Iterate all the triangles in the model
-					for (auto triangle : indices)
-					{
-						auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
-						auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
-						auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
-
-						// Move vertices from local space to world space!
-						v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
-						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
-						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
-
-						auto t = PickTriangle(v0, v1, v2, RayOrigin, RayDirection, t_cmp);
-					}
-				}
-			}
-		}
-	}
-}
-
-PRIVATE auto JWECS::PickTriangle(XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2,
-	XMVECTOR& RayOrigin, XMVECTOR& RayDirection, XMVECTOR& t_cmp) noexcept->XMVECTOR
-{
-	// Calculate edge vectors from vertex positions
-	auto edge0 = V1 - V0;
-	auto edge1 = V2 - V0;
-
-	// Calculate face normal from edge vectors,
-	// using cross product of vectors
-	auto normal = XMVector3Normalize(XMVector3Cross(edge0, edge1));
-
-	// Calculate plane equation  # Ax + By + Cz + D = 0
-	// # A, B, C = Face normal's xyz coord
-	// # x, y, z = Any point in the plane, so we can just use V0
-	// # Ax + By + Cz = Dot(normal, point) = Dot(N, P)
-	// # D = -(Ax + By + Cz) = -Dot(normal, v0) = -Dot(N, V0)
-	//
-	// @ Plane equation for a point P
-	// Dot(N, P) = Dot(N, V0)
-	auto D = -XMVector3Dot(normal, V0);
-
-	// Get ray's equation (which is a parametric equation of a line)
-	//
-	// Line = P0 + t * P1
-	//      = ray_origin + t * ray_direction
-	//
-	// @ N: plane normal  @ V = given vertex in the plane  @ L = line vector
-	//
-	// L = (P0x + P1x * t, P0y + P1y * t, P0z + P1z * t)
-	//
-	// Dot(N, L) = Dot(N, V)
-	// => (P0x + P1x * t) * Nx + (P0y + P1y * t) * Ny + (P0z + P1z * t) * Nz = (Vx) * Nx + (Vy) * Ny + (Vz) * Nz
-	// => (P1x * t) * Nx + (P1y * t) * Ny + (P1z * t) * Nz = (Vx - P0x) * Nx + (Vy - P0y) * Ny + (Vz - P0z) * Nz
-	// => (P1x * Nx) * t + (P1y * Ny) * t + (P1z * Nz) * t = (Vx - P0x) * Nx + (Vy - P0y) * Ny + (Vz - P0z) * Nz
-	// => Dot(P1, N) * t = Dot(V, N) - Dot(P0, N)
-	//
-	//           Dot(V, N) - Dot(P0, N)
-	// =>  t  = ------------------------
-	//                 Dot(P1, N)
-	//
-	auto p0_norm = XMVector3Dot(RayOrigin, normal);
-	auto p1_norm = XMVector3Dot(RayDirection, normal);
-	XMVECTOR zero{ XMVectorZero() };
-	XMVECTOR t{};
-
-	// For vectorization we use vectors to compare values
-	if (XMVector3NotEqual(p1_norm, zero))
-	{
-		t = (-D - p0_norm) / p1_norm;
-	}
-
-	// 't' should be positive for the picking to be in front of the camera!
-	// (if it's negative, the picking is occuring behind the camera)
-	// We will store the minimum of t values, which means that it's the closest picking to the camera.
-	if ((XMVector3Greater(t, zero)) && (XMVector3Less(t, t_cmp)))
-	{
-		auto point_on_plane = RayOrigin + t * RayDirection;
-
-		// Check if the point is in the triangle
-		if (IsPointInTriangle(point_on_plane, V0, V1, V2))
-		{
-			m_PickedTriangle[0] = V0;
-			m_PickedTriangle[1] = V1;
-			m_PickedTriangle[2] = V2;
-
-			t_cmp = t;
-		}
-	}
-
-	return t;
-}
-
-PRIVATE auto JWECS::IsPointInTriangle(XMVECTOR& Point, XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2) noexcept->bool
-{
-	bool result{ false };
-	auto zero = XMVectorZero();
-	auto check_0 = XMVector3Cross((V2 - V1), (Point - V1));
-	auto check_1 = XMVector3Cross((V2 - V1), (V0 - V1));
-
-	if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
-	{
-		check_0 = XMVector3Cross((V2 - V0), (Point - V0));
-		check_1 = XMVector3Cross((V2 - V0), (V1 - V0));
-
-		if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
-		{
-			check_0 = XMVector3Cross((V1 - V0), (Point - V0));
-			check_1 = XMVector3Cross((V1 - V0), (V2 - V0));
-
-			if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
-			{
-				// In triangle!
-				result = true;
-			}
-		}
-	}
-
-	return result;
-}
-
-auto JWECS::GetPickedTrianglePosition(uint32_t PositionIndex) const noexcept->const XMVECTOR&
-{
-	PositionIndex = min(PositionIndex, 2);
-
-	return m_PickedTriangle[PositionIndex];
 }
 
 void JWECS::CreateSharedTexture(ESharedTextureType Type, STRING FileName) noexcept
@@ -602,4 +446,6 @@ void JWECS::ExecuteSystems() noexcept
 	m_SystemLight.Execute();
 
 	m_SystemRender.Execute();
+
+	m_SystemPhysics.Execute();
 }

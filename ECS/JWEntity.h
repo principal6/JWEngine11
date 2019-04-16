@@ -3,6 +3,7 @@
 #include "JWSystemTransform.h"
 #include "JWSystemRender.h"
 #include "JWSystemLight.h"
+#include "JWSystemPhysics.h"
 
 namespace JWEngine
 {
@@ -21,12 +22,12 @@ namespace JWEngine
 	class JWEntity
 	{
 	public:
-		// Called by ECS
-		JWEntity(JWECS* pECS, STRING Name) : m_pECS{ pECS }, m_EntityName{ Name } {};
-		JWEntity(JWECS* pECS, STRING Name, EEntityType Type) : m_pECS{ pECS }, m_EntityName{ Name }, m_EntityType{ Type } {};
-
-		// Destroy all the components this Entity has
-		~JWEntity();
+		JWEntity() = default;
+		~JWEntity() = default;
+		
+		void Create(JWECS* pECS, const STRING& EntityName) noexcept;
+		void Create(JWECS* pECS, const STRING& EntityName, EEntityType EntityType) noexcept;
+		void Destroy() noexcept;
 
 		auto CreateComponentTransform() noexcept->SComponentTransform*;
 		auto GetComponentTransform() noexcept { return m_pComponentTransform; };
@@ -36,6 +37,9 @@ namespace JWEngine
 
 		auto CreateComponentLight() noexcept->SComponentLight*;
 		auto GetComponentLight() noexcept { return m_pComponentLight; };
+
+		auto CreateComponentPhysics() noexcept->SComponentPhysics*;
+		auto GetComponentPhysics() noexcept { return m_pComponentPhysics; };
 		
 		auto GetEntityType() const noexcept { return m_EntityType; };
 		const auto& GetEntityName() const noexcept { return m_EntityName; };
@@ -48,5 +52,6 @@ namespace JWEngine
 		SComponentTransform*	m_pComponentTransform{};
 		SComponentRender*		m_pComponentRender{};
 		SComponentLight*		m_pComponentLight{};
+		SComponentPhysics*		m_pComponentPhysics{};
 	};
 };

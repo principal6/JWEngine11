@@ -107,6 +107,7 @@ int main()
 	jars->CreateComponentRender()
 		->SetModel(myGame.ECS().GetSharedModel(0))
 		->SetRenderFlag(JWFlagRenderOption_UseLighting);
+	jars->CreateComponentPhysics();
 
 	auto ambient_light = myGame.ECS().CreateEntity("ambient_light");
 	ambient_light->CreateComponentLight()
@@ -224,18 +225,17 @@ JW_FUNCTION_ON_INPUT(OnInput)
 	// Mouse left button pressed
 	if (DeviceState.CurrentMouse.rgbButtons[0])
 	{
-		myGame.CastPickingRay();
-		myGame.PickEntityTriangle();
-
+		myGame.ECS().SystemPhysics().Pick();
+		
 		// ECS entity Ray
 		myGame.ECS().GetEntityByType(EEntityType::PickingRay)->GetComponentRender()->PtrLine
-			->SetLine3DOriginDirection(0, myGame.GetPickingRayOrigin(), myGame.GetPickingRayDirection())
+			->SetLine3DOriginDirection(0, myGame.ECS().SystemPhysics().GetPickingRayOrigin(), myGame.ECS().SystemPhysics().GetPickingRayDirection())
 			->UpdateLines();
 
 		XMFLOAT3 tri_a{}, tri_b{}, tri_c{};
-		XMStoreFloat3(&tri_a, myGame.ECS().GetPickedTrianglePosition(0));
-		XMStoreFloat3(&tri_b, myGame.ECS().GetPickedTrianglePosition(1));
-		XMStoreFloat3(&tri_c, myGame.ECS().GetPickedTrianglePosition(2));
+		XMStoreFloat3(&tri_a, myGame.ECS().SystemPhysics().GetPickedTrianglePosition(0));
+		XMStoreFloat3(&tri_b, myGame.ECS().SystemPhysics().GetPickedTrianglePosition(1));
+		XMStoreFloat3(&tri_c, myGame.ECS().SystemPhysics().GetPickedTrianglePosition(2));
 		
 		myGame.ECS().GetEntityByType(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
 			->SetVertex(0, tri_a, XMFLOAT4(1, 1, 1, 1))
@@ -281,7 +281,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
 	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID, s_temp);
 	
-	auto ray_dir = myGame.GetPickingRayDirection();
+	auto ray_dir = myGame.ECS().SystemPhysics().GetPickingRayDirection();
 	s_ray = L"Ray Direction: ( ";
 	s_ray += ConvertFloatToWSTRING(XMVectorGetX(ray_dir), s_temp) + L", ";
 	s_ray += ConvertFloatToWSTRING(XMVectorGetY(ray_dir), s_temp) + L", ";

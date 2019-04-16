@@ -4,7 +4,13 @@
 
 using namespace JWEngine;
 
-JWSystemLight::~JWSystemLight()
+void JWSystemLight::Create(JWDX& DX) noexcept
+{
+	// Set JWDX pointer.
+	m_pDX = &DX;
+}
+
+void JWSystemLight::Destroy() noexcept
 {
 	if (m_vpComponents.size())
 	{
@@ -13,12 +19,6 @@ JWSystemLight::~JWSystemLight()
 			JW_DELETE(iter);
 		}
 	}
-}
-
-void JWSystemLight::CreateSystem(JWDX& DX) noexcept
-{
-	// Set JWDX pointer.
-	m_pDX = &DX;
 }
 
 auto JWSystemLight::CreateComponent() noexcept->SComponentLight&
