@@ -172,7 +172,8 @@ void JWInstantText::RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 
 		float u1{}, u2{}, v1{}, v2{};
 		BMFont::BMChar current_bm_char{};
 
-		uint64_t iterator_index{ static_cast<uint64_t>(m_TotalTextLength) * 4 };
+		uint64_t vertex_id_base{ static_cast<uint64_t>(m_TotalTextLength) * 4 };
+		uint64_t vertex_id{};
 
 		for (auto iterator_char : Text)
 		{
@@ -188,33 +189,33 @@ void JWInstantText::RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 
 			x2 = x1 + current_bm_char.Width_f;
 			y2 = y1 - current_bm_char.Height_f;
 
-			m_VertexData.vVertices[iterator_index * 4].Position.x = x1;
-			m_VertexData.vVertices[iterator_index * 4].Position.y = y1;
-			m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.x = u1;
-			m_VertexData.vVertices[iterator_index * 4].TextureCoordinates.y = v1;
-			m_VertexData.vVertices[iterator_index * 4].Color = FontColorRGB;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4].Position.x = x1;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4].Position.y = y1;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4].TextureCoordinates.x = u1;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4].TextureCoordinates.y = v1;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4].Color = FontColorRGB;
 
-			m_VertexData.vVertices[iterator_index * 4 + 1].Position.x = x2;
-			m_VertexData.vVertices[iterator_index * 4 + 1].Position.y = y1;
-			m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.x = u2;
-			m_VertexData.vVertices[iterator_index * 4 + 1].TextureCoordinates.y = v1;
-			m_VertexData.vVertices[iterator_index * 4 + 1].Color = FontColorRGB;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 1].Position.x = x2;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 1].Position.y = y1;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 1].TextureCoordinates.x = u2;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 1].TextureCoordinates.y = v1;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 1].Color = FontColorRGB;
 
-			m_VertexData.vVertices[iterator_index * 4 + 2].Position.x = x1;
-			m_VertexData.vVertices[iterator_index * 4 + 2].Position.y = y2;
-			m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.x = u1;
-			m_VertexData.vVertices[iterator_index * 4 + 2].TextureCoordinates.y = v2;
-			m_VertexData.vVertices[iterator_index * 4 + 2].Color = FontColorRGB;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 2].Position.x = x1;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 2].Position.y = y2;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 2].TextureCoordinates.x = u1;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 2].TextureCoordinates.y = v2;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 2].Color = FontColorRGB;
 
-			m_VertexData.vVertices[iterator_index * 4 + 3].Position.x = x2;
-			m_VertexData.vVertices[iterator_index * 4 + 3].Position.y = y2;
-			m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.x = u2;
-			m_VertexData.vVertices[iterator_index * 4 + 3].TextureCoordinates.y = v2;
-			m_VertexData.vVertices[iterator_index * 4 + 3].Color = FontColorRGB;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 3].Position.x = x2;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 3].Position.y = y2;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 3].TextureCoordinates.x = u2;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 3].TextureCoordinates.y = v2;
+			m_VertexData.vVertices[vertex_id_base + vertex_id * 4 + 3].Color = FontColorRGB;
 
 			base_x_position += current_bm_char.XAdvance;
 
-			++iterator_index;
+			++vertex_id;
 		}
 
 		// Increase total text length
