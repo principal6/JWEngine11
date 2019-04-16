@@ -180,6 +180,7 @@ namespace JWEngine
 		void Execute() noexcept;
 
 		void SetUniversalRasterizerState(ERasterizerState State) noexcept;
+
 		void ToggleWireFrame() noexcept;
 		void ToggleNormalDrawing() noexcept;
 		void ToggleLighting() noexcept;
