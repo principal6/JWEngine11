@@ -19,9 +19,9 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// # Physics	@ Picking bounding sphere!
-	// # Physics	@ Collision!
-	// # Render		@ Instancing!
+	// # Render		@ Draw (instanced) bounding spheres
+	// # Physics	@ Collision
+	// # Render		@ Sprite nstancing
 
 	myLogger.InitializeTime();
 
