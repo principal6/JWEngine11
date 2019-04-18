@@ -35,6 +35,7 @@ namespace JWEngine
 
 	enum class EVertexShader
 	{
+		Invalid,
 		VSBase,
 		VSRaw,
 		VSSkyMap,
@@ -42,6 +43,7 @@ namespace JWEngine
 
 	enum class EPixelShader
 	{
+		Invalid,
 		PSBase,
 		PSRaw,
 		PSSkyMap,
@@ -157,6 +159,8 @@ namespace JWEngine
 		ID3D11PixelShader*	m_PSRaw{};
 		ID3D10Blob*			m_PSSkyMapBuffer{};
 		ID3D11PixelShader*	m_PSSkyMap{};
+		EVertexShader		m_CurrentVS{ EVertexShader::Invalid };
+		EPixelShader		m_CurrentPS{ EPixelShader::Invalid };
 
 		// Shader constant buffer
 		ID3D11Buffer*		m_VSCBSpace{};

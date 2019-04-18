@@ -556,6 +556,15 @@ void JWDX::SetDepthStencilState(EDepthStencilState State) noexcept
 
 void JWDX::SetVS(EVertexShader VS) noexcept
 {
+	if (m_CurrentVS == VS) 
+	{
+		return; 
+	}
+	else
+	{
+		m_CurrentVS = VS;
+	}
+
 	switch (VS)
 	{
 	case JWEngine::EVertexShader::VSBase:
@@ -577,6 +586,15 @@ void JWDX::SetVS(EVertexShader VS) noexcept
 
 void JWDX::SetPS(EPixelShader PS) noexcept
 {
+	if (m_CurrentPS == PS)
+	{
+		return; 
+	}
+	else
+	{
+		m_CurrentPS = PS;
+	}
+
 	switch (PS)
 	{
 	case JWEngine::EPixelShader::PSBase:
