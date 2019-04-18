@@ -15,9 +15,8 @@ namespace JWEngine
 		void Create(JWDX& DX, STRING& BaseDirectory) noexcept;
 		void Destroy() noexcept;
 
-		void SetNonRiggedModelData(const SNonRiggedModelData& ModelData) noexcept;
-		void SetDynamicModelData(const SNonRiggedModelData& ModelData) noexcept;
-		void SetRiggedModelData(const SRiggedModelData& ModelData) noexcept;
+		void CreateMeshBuffers(const SModelData& Data, ERenderType Type) noexcept;
+		void CreateInstanceBuffer() noexcept;
 
 		// ---------------------------------
 		// --- Animation related methods ---
@@ -31,19 +30,12 @@ namespace JWEngine
 		void UpdateModel() noexcept;
 
 		auto GetRenderType() const noexcept { return m_RenderType; };
-		auto GetTextureFileName() const noexcept->WSTRING
-		{
-			if (m_RenderType == ERenderType::Model_Rigged)
-			{ return RiggedModelData.TextureFileNameW; }
-			else 
-			{ return NonRiggedModelData.TextureFileNameW; }
-		}
+		auto GetTextureFileName() const noexcept->const WSTRING& { return ModelData.TextureFileNameW; }
 
 	public:
-		ID3D11Buffer*		ModelVertexBuffer{};
+		ID3D11Buffer*		ModelVertexBuffer[KVertexBufferCount]{};
 		ID3D11Buffer*		ModelIndexBuffer{};
-		SNonRiggedModelData	NonRiggedModelData{};
-		SRiggedModelData	RiggedModelData{};
+		SModelData			ModelData{};
 
 		ID3D11Buffer*		NormalVertexBuffer{};
 		ID3D11Buffer*		NormalIndexBuffer{};
@@ -51,13 +43,14 @@ namespace JWEngine
 
 	private:
 		void CreateModelVertexIndexBuffers() noexcept;
+		void CreateNormalVertexIndexBuffers() noexcept;
 
 		// ---------------------------------
 		// --- Animation related methods ---
-		void SaveTPoseIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const SRiggedModelData& ModelData,
+		void SaveTPoseIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const SModelData& ModelData,
 			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
 		void SaveAnimationFrameIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const int AnimationID, const float FrameTime,
-			const SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
+			const SModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
 		void BakeCurrentFrameIntoTexture(uint32_t StartIndex, const XMMATRIX* FrameMatrices, float*& OutData) noexcept;
 
 	private:

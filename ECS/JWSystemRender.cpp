@@ -1,12 +1,15 @@
-#include "JWSystemRender.h"
-#include "JWEntity.h"
+#include "JWECS.h"
 #include "../Core/JWDX.h"
 #include "../Core/JWCamera.h"
+#include "../Core/JWPrimitiveMaker.h"
 
 using namespace JWEngine;
 
-void JWSystemRender::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
+void JWSystemRender::Create(JWECS& ECS, JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
 {
+	// Set JWECS pointer.
+	m_pECS = &ECS;
+
 	// Set JWDX pointer.
 	m_pDX = &DX;
 
@@ -15,6 +18,12 @@ void JWSystemRender::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) no
 	
 	// Set base directory.
 	m_BaseDirectory = BaseDirectory;
+
+	// Bounding volume (with instance buffer)
+	JWPrimitiveMaker primitive{};
+	m_BoundingVolume.Create(DX, BaseDirectory);
+	m_BoundingVolume.CreateMeshBuffers(primitive.MakeSphere(1.0f, 16, 7), ERenderType::Model_Static);
+	m_BoundingVolume.CreateInstanceBuffer();
 }
 
 void JWSystemRender::Destroy() noexcept
@@ -26,6 +35,8 @@ void JWSystemRender::Destroy() noexcept
 			JW_DELETE(iter);
 		}
 	}
+
+	m_BoundingVolume.Destroy();
 }
 
 auto JWSystemRender::CreateComponent() noexcept->SComponentRender&
@@ -67,6 +78,26 @@ void JWSystemRender::DestroyComponent(SComponentRender& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
+void JWSystemRender::AddBoundingVolumeInstance(float Radius, const XMFLOAT3& Translation) noexcept
+{
+	auto instance = m_pECS->SystemRender().BoundingVolume().ModelData.VertexData.PushInstance();
+
+	auto mat_s = XMMatrixScaling(Radius, Radius, Radius);
+	auto mat_t = XMMatrixTranslation(Translation.x, Translation.y, Translation.z);
+
+	// Set the world matrix of the instance
+	instance->World = XMMatrixIdentity() * mat_s * mat_t;
+
+	UpdateBoundingVolume();
+}
+
+void JWSystemRender::UpdateBoundingVolume() noexcept
+{
+	m_pDX->UpdateDynamicResource(m_BoundingVolume.ModelVertexBuffer[KVBIDInstancing],
+		m_BoundingVolume.ModelData.VertexData.GetInstancePtrData(),
+		m_BoundingVolume.ModelData.VertexData.GetInstanceByteSize());
+}
+
 void JWSystemRender::Execute() noexcept
 {
 	for (auto& iter : m_vpComponents)
@@ -101,6 +132,94 @@ void JWSystemRender::Execute() noexcept
 		SetShaders(*iter);
 
 		Draw(*iter);
+
+		//DrawBoundingVolumesNoInstancing(*iter);
+	}
+
+	DrawInstancedBoundingVolume();
+}
+
+void JWSystemRender::DrawInstancedBoundingVolume() noexcept
+{
+	auto world_matrix{ XMMatrixIdentity() };
+
+	// Set RS State
+	m_pDX->SetRasterizerState(ERasterizerState::WireFrame);
+
+	// Set VS Base
+	m_pDX->SetVS(EVertexShader::VSBase);
+
+	// Update VS constant buffer #0
+	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+	m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
+	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
+
+	// Update VS constant buffer #1
+	m_VSCBFlags.FlagVS = JWFlagVS_Instanced;
+	m_pDX->UpdateVSCBFlags(m_VSCBFlags);
+
+	// Set PS Base
+	m_pDX->SetPS(EPixelShader::PSBase);
+
+	// Update PS constant buffer
+	m_pDX->UpdatePSCBFlags(false, false);
+
+	// Set IA primitive topology
+	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Set IA vertex buffer
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 3, m_BoundingVolume.ModelVertexBuffer,
+		m_BoundingVolume.ModelData.VertexData.GetPtrStrides(), m_BoundingVolume.ModelData.VertexData.GetPtrOffsets());
+
+	// Set IA index buffer
+	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_BoundingVolume.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+	// Draw indexed instanced
+	m_pDX->GetDeviceContext()->DrawIndexedInstanced(
+		m_BoundingVolume.ModelData.IndexData.GetCount(), m_BoundingVolume.ModelData.VertexData.GetInstanceCount(), 0, 0, 0);
+}
+
+void JWSystemRender::DrawBoundingVolumesNoInstancing(SComponentRender& Component) noexcept
+{
+	auto entity = Component.PtrEntity;
+	auto transform = entity->GetComponentTransform();
+	auto physics = entity->GetComponentPhysics();
+
+	if (physics)
+	{
+		assert(transform);
+
+		const auto& p = transform->Position;
+		const auto& r = physics->BoundingSphereRadius;
+		auto world_matrix{ XMMatrixScaling(r, r, r) };
+		world_matrix *= XMMatrixTranslation(p.x, p.y, p.z);
+
+		// Set VS Base
+		m_pDX->SetVS(EVertexShader::VSBase);
+
+		// Update VS constant buffer
+		m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
+		m_pDX->UpdateVSCBSpace(m_VSCBSpace);
+
+		// Set PS Base
+		m_pDX->SetPS(EPixelShader::PSBase);
+
+		// Update PS constant buffer
+		m_pDX->UpdatePSCBFlags(false, false);
+
+		// Set IA primitive topology
+		m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		// Set IA vertex buffer
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, m_BoundingVolume.ModelVertexBuffer,
+			m_BoundingVolume.ModelData.VertexData.GetPtrStrides(), m_BoundingVolume.ModelData.VertexData.GetPtrOffsets());
+
+		// Set IA index buffer
+		m_pDX->GetDeviceContext()->IASetIndexBuffer(m_BoundingVolume.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		// Draw
+		m_pDX->GetDeviceContext()->DrawIndexed(m_BoundingVolume.ModelData.IndexData.GetCount(), 0, 0);
 	}
 }
 
@@ -119,7 +238,7 @@ void JWSystemRender::AnimateOnGPU(SComponentRender& Component) noexcept
 		{
 			// Not TPose
 
-			auto& current_anim{ model->RiggedModelData.AnimationSet.vAnimations[anim_state.CurrAnimationID - 1] };
+			auto& current_anim{ model->ModelData.AnimationSet.vAnimations[anim_state.CurrAnimationID - 1] };
 
 			// Advance animation tick
 			//anim_state.CurrAnimationTick += model->RiggedModelData.AnimationSet.vAnimations[current_animation_id - 1].AnimationTicksPerGameTick;
@@ -184,21 +303,21 @@ void JWSystemRender::AnimateOnCPU(SComponentRender& Component) noexcept
 			anim_state.NextFrameTime = 0.0f;
 			anim_state.TweeningTime = 0.0f;
 
-			UpdateNodeTPoseIntoBones(anim_state.CurrAnimationTick, model->RiggedModelData, model->RiggedModelData.NodeTree.vNodes[0],
+			UpdateNodeTPoseIntoBones(anim_state.CurrAnimationTick, model->ModelData, model->ModelData.NodeTree.vNodes[0],
 				XMMatrixIdentity());
 
 			// Update bone's T-Pose transformation for shader's constant buffer
-			for (size_t iterator_bone_mat{}; iterator_bone_mat < model->RiggedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
+			for (size_t iterator_bone_mat{}; iterator_bone_mat < model->ModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
 			{
 				m_VSCBCPUAnimation.TransformedBoneMatrices[iterator_bone_mat] =
-					XMMatrixTranspose(model->RiggedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
+					XMMatrixTranspose(model->ModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
 			}
 		}
 		else
 		{
 			// Not TPose
 
-			auto& current_anim{ model->RiggedModelData.AnimationSet.vAnimations[anim_state.CurrAnimationID - 1] };
+			auto& current_anim{ model->ModelData.AnimationSet.vAnimations[anim_state.CurrAnimationID - 1] };
 
 			// Advance animation tick
 			//anim_state.CurrAnimationTick += model->RiggedModelData.AnimationSet.vAnimations[anim_state.CurrAnimationID - 1].AnimationTicksPerGameTick;
@@ -214,19 +333,19 @@ void JWSystemRender::AnimateOnCPU(SComponentRender& Component) noexcept
 
 			// Update bones' transformations for the animation.
 			UpdateNodeAnimationIntoBones((Component.FlagRenderOption & JWFlagRenderOption_UseAnimationInterpolation),
-				anim_state, model->RiggedModelData, model->RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+				anim_state, model->ModelData, model->ModelData.NodeTree.vNodes[0], XMMatrixIdentity());
 
 			// Update bone's final transformation for shader's constant buffer
-			for (size_t iterator_bone_mat{}; iterator_bone_mat < model->RiggedModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
+			for (size_t iterator_bone_mat{}; iterator_bone_mat < model->ModelData.BoneTree.vBones.size(); ++iterator_bone_mat)
 			{
 				m_VSCBCPUAnimation.TransformedBoneMatrices[iterator_bone_mat] =
-					XMMatrixTranspose(model->RiggedModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
+					XMMatrixTranspose(model->ModelData.BoneTree.vBones[iterator_bone_mat].FinalTransformation);
 			}
 		}
 	}
 }
 
-PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation, SAnimationState& AnimationState, SRiggedModelData& ModelData,
+PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation, SAnimationState& AnimationState, SModelData& ModelData,
 	const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept
 {
 	XMMATRIX global_transformation = CurrentNode.Transformation * Accumulated;
@@ -346,7 +465,7 @@ PRIVATE void JWSystemRender::UpdateNodeAnimationIntoBones(bool UseInterpolation,
 	}
 }
 
-PRIVATE void JWSystemRender::UpdateNodeTPoseIntoBones(float AnimationTime, SRiggedModelData& ModelData, const SModelNode& CurrentNode,
+PRIVATE void JWSystemRender::UpdateNodeTPoseIntoBones(float AnimationTime, SModelData& ModelData, const SModelNode& CurrentNode,
 	const XMMATRIX Accumulated) noexcept
 {
 	XMMATRIX accumulation = CurrentNode.Transformation * Accumulated;
@@ -416,10 +535,14 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	case ERenderType::Model_Static:
 		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
 		World = XMMatrixTranspose(component_world_matrix);
+
+		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Dynamic:
 		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
 		World = XMMatrixTranspose(component_world_matrix);
+
+		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Rigged:
 		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
@@ -427,27 +550,31 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 
 		if (Component.FlagRenderOption & JWFlagRenderOption_UseGPUAnimation)
 		{
-			m_VSCBFlags.ShouldUseGPUAnimation = TRUE;
+			m_VSCBFlags.FlagVS = JWFlagVS_UseAnimation | JWFlagVS_AnimateOnGPU;
 			
-			m_pDX->UpdateVSCBGPUAnimation(m_VSCBGPUAnimation);
-			m_pDX->UpdateVSCBFlags(m_VSCBFlags);
+			m_pDX->UpdateVSCBGPUAnimationData(m_VSCBGPUAnimation);
 		}
 		else
 		{
-			m_VSCBFlags.ShouldUseGPUAnimation = FALSE;
+			m_VSCBFlags.FlagVS = JWFlagVS_UseAnimation;
 			
-			m_pDX->UpdateVSCBCPUAnimation(m_VSCBCPUAnimation);
-			m_pDX->UpdateVSCBFlags(m_VSCBFlags);
+			m_pDX->UpdateVSCBCPUAnimationData(m_VSCBCPUAnimation);
 		}
 		break;
 	case ERenderType::Image_2D:
 		WVP = XMMatrixTranspose(m_pCamera->GetTransformedOrthographicMatrix());
+
+		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Line3D:
 		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
+
+		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Line2D:
 		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetFixedOrthographicMatrix());
+
+		m_VSCBFlags.FlagVS = 0;
 		break;
 	default:
 		break;
@@ -457,6 +584,7 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	m_VSCBSpace.World = World;
 
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
+	m_pDX->UpdateVSCBFlags(m_VSCBFlags);
 }
 
 PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
@@ -494,40 +622,42 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	case ERenderType::Model_Static:
 		// Set IA vertex buffer
 		ptr_device_context->IASetVertexBuffers(
-			0, 1, &model->ModelVertexBuffer, model->NonRiggedModelData.VertexData.GetPtrStride(), model->NonRiggedModelData.VertexData.GetPtrOffset());
+			0, 1, model->ModelVertexBuffer, model->ModelData.VertexData.GetPtrStrides(), model->ModelData.VertexData.GetPtrOffsets());
 
 		// Set IA index buffer
 		ptr_device_context->IASetIndexBuffer(model->ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		ptr_device_context->DrawIndexed(model->NonRiggedModelData.IndexData.GetCount(), 0, 0);
+		ptr_device_context->DrawIndexed(model->ModelData.IndexData.GetCount(), 0, 0);
 		break;
 	case ERenderType::Model_Dynamic:
 		// Set IA vertex buffer
 		ptr_device_context->IASetVertexBuffers(
-			0, 1, &model->ModelVertexBuffer, model->NonRiggedModelData.VertexData.GetPtrStride(), model->NonRiggedModelData.VertexData.GetPtrOffset());
+			0, 1, model->ModelVertexBuffer, model->ModelData.VertexData.GetPtrStrides(), model->ModelData.VertexData.GetPtrOffsets());
 
 		// Set IA index buffer
 		ptr_device_context->IASetIndexBuffer(model->ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		ptr_device_context->DrawIndexed(model->NonRiggedModelData.IndexData.GetCount(), 0, 0);
+		ptr_device_context->DrawIndexed(model->ModelData.IndexData.GetCount(), 0, 0);
 		break;
 	case ERenderType::Model_Rigged:
+		//
+		// @important!! (Buffer count = 2)
 		// Set IA vertex buffer
 		ptr_device_context->IASetVertexBuffers(
-			0, 1, &model->ModelVertexBuffer, model->RiggedModelData.VertexData.GetPtrStride(), model->RiggedModelData.VertexData.GetPtrOffset());
+			0, 2, model->ModelVertexBuffer, model->ModelData.VertexData.GetPtrStrides(), model->ModelData.VertexData.GetPtrOffsets());
 
 		// Set IA index buffer
 		ptr_device_context->IASetIndexBuffer(model->ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 		// Draw indexed
-		ptr_device_context->DrawIndexed(model->RiggedModelData.IndexData.GetCount(), 0, 0);
+		ptr_device_context->DrawIndexed(model->ModelData.IndexData.GetCount(), 0, 0);
 		break;
 	case ERenderType::Image_2D:
 		// Set IA vertex buffer
 		ptr_device_context->IASetVertexBuffers(
-			0, 1, &image->m_VertexBuffer, image->m_VertexData.GetPtrStride(), image->m_VertexData.GetPtrOffset());
+			0, 1, &image->m_VertexBuffer, image->m_VertexData.GetPtrStrides(), image->m_VertexData.GetPtrOffsets());
 
 		// Set IA index buffer
 		ptr_device_context->IASetIndexBuffer(image->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -541,7 +671,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 
 		// Set IA vertex buffer
 		ptr_device_context->IASetVertexBuffers(
-			0, 1, &line->m_VertexBuffer, line->m_VertexData.GetPtrStride(), line->m_VertexData.GetPtrOffset());
+			0, 1, &line->m_VertexBuffer, line->m_VertexData.GetPtrStrides(), line->m_VertexData.GetPtrOffsets());
 
 		// Set IA index buffer
 		ptr_device_context->IASetIndexBuffer(line->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -555,7 +685,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 
 		// Set IA vertex buffer
 		ptr_device_context->IASetVertexBuffers(
-			0, 1, &line->m_VertexBuffer, line->m_VertexData.GetPtrStride(), line->m_VertexData.GetPtrOffset());
+			0, 1, &line->m_VertexBuffer, line->m_VertexData.GetPtrStrides(), line->m_VertexData.GetPtrOffsets());
 
 		// Set IA index buffer
 		ptr_device_context->IASetIndexBuffer(line->m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
@@ -603,7 +733,7 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 
 	// Set IA vertex buffer
 	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &model->NormalVertexBuffer,
-		model->NormalData.VertexData.GetPtrStride(), model->NormalData.VertexData.GetPtrOffset());
+		model->NormalData.VertexData.GetPtrStrides(), model->NormalData.VertexData.GetPtrOffsets());
 
 	// Set IA index buffer
 	m_pDX->GetDeviceContext()->IASetIndexBuffer(model->NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);

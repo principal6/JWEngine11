@@ -52,8 +52,8 @@ namespace JWEngine
 		void CreateSharedTextureFromSharedModel(size_t ModelIndex) noexcept;
 		auto GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*;
 
-		auto CreateSharedModelPrimitive(const SNonRiggedModelData& ModelData) noexcept->JWModel*;
-		auto CreateSharedModelDynamicPrimitive(const SNonRiggedModelData& ModelData) noexcept->JWModel*;
+		auto CreateSharedModelPrimitive(const SModelData& ModelData) noexcept->JWModel*;
+		auto CreateSharedModelDynamicPrimitive(const SModelData& ModelData) noexcept->JWModel*;
 		auto CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) noexcept->JWModel*;
 		auto GetSharedModel(size_t Index) noexcept->JWModel*;
 

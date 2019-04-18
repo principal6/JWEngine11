@@ -1,13 +1,18 @@
-#include "JWSystemPhysics.h"
-#include "JWEntity.h"
+#include "JWECS.h"
 #include "../Core/JWWin32Window.h"
 #include "../Core/JWCamera.h"
 
 using namespace JWEngine;
 
-void JWSystemPhysics::Create(JWWin32Window& Window, JWCamera& Camera) noexcept
+void JWSystemPhysics::Create(JWECS& ECS, const JWWin32Window& Window, const JWCamera& Camera) noexcept
 {
+	// Set JWECS pointer.
+	m_pECS = &ECS;
+
+	// Set JWWindow pointer.
 	m_pWindow = &Window;
+
+	// Set JWCamera pointer.
 	m_pCamera = &Camera;
 
 	m_hWnd = m_pWindow->GethWnd();
@@ -63,6 +68,19 @@ void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 	}
 
 	m_vpComponents.pop_back();
+}
+
+void JWSystemPhysics::SetBoundingSphereRadius(SComponentPhysics* pComponent, float Radius) noexcept
+{
+	if (pComponent == nullptr) { return; }
+
+	// Set the radius
+	pComponent->BoundingSphereRadius = Radius;
+
+	// Add bounding sphere instance (JWSystemRender)
+	auto transform = pComponent->PtrEntity->GetComponentTransform();
+	
+	m_pECS->SystemRender().AddBoundingVolumeInstance(Radius, transform->Position);
 }
 
 void JWSystemPhysics::Pick() noexcept
@@ -125,50 +143,38 @@ PRIVATE void JWSystemPhysics::PickEntityByTriangle() noexcept
 				auto model_type = render->PtrModel->GetRenderType();
 				XMVECTOR t{};
 
+				SIndexDataTriangle* ptr_index_data{};
+				SVertexDataModel* ptr_vertex_data{};
+
 				if ((model_type == ERenderType::Model_Dynamic) || (model_type == ERenderType::Model_Static))
 				{
-					auto indices = render->PtrModel->NonRiggedModelData.IndexData.vIndices;
-					auto vertices = render->PtrModel->NonRiggedModelData.VertexData.vVertices;
-
-					// Iterate all the triangles in the model
-					for (auto triangle : indices)
-					{
-						auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
-						auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
-						auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
-
-						// Move vertices from local space to world space!
-						v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
-						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
-						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
-
-						if (PickTriangle(v0, v1, v2, t_cmp))
-						{
-							m_pPickedEntity = entity;
-						}
-					}
+					ptr_index_data = &render->PtrModel->ModelData.IndexData;
+					ptr_vertex_data = &render->PtrModel->ModelData.VertexData;
 				}
 				else if (model_type == ERenderType::Model_Rigged)
 				{
-					auto indices = render->PtrModel->RiggedModelData.IndexData.vIndices;
-					auto vertices = render->PtrModel->RiggedModelData.VertexData.vVertices;
+					ptr_index_data = &render->PtrModel->ModelData.IndexData;
+					ptr_vertex_data = &render->PtrModel->ModelData.VertexData;
+				}
 
-					// Iterate all the triangles in the model
-					for (auto triangle : indices)
+				const auto& indices{ ptr_index_data->vIndices };
+				const auto& vertices{ ptr_vertex_data->vVerticesModel };
+
+				// Iterate all the triangles in the model
+				for (auto triangle : indices)
+				{
+					auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
+					auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
+					auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
+
+					// Move vertices from local space to world space!
+					v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
+					v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
+					v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
+
+					if (PickTriangle(v0, v1, v2, t_cmp))
 					{
-						auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
-						auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
-						auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
-
-						// Move vertices from local space to world space!
-						v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
-						v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
-						v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
-
-						if (PickTriangle(v0, v1, v2, t_cmp))
-						{
-							m_pPickedEntity = entity;
-						}
+						m_pPickedEntity = entity;
 					}
 				}
 			}
@@ -302,7 +308,7 @@ PRIVATE void JWSystemPhysics::PickEntityBySphere() noexcept
 
 			if (transform)
 			{
-				auto& radius = iter->BoundingSphereRadious;
+				auto& radius = iter->BoundingSphereRadius;
 				auto& position = transform->Position;
 
 				auto sphere_center = XMVectorSet(position.x, position.y, position.z, 1.0f);

@@ -25,7 +25,6 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearCol
 
 		// Create VS shaders, input layout and constant buffers
 		CreateVSBase();
-		CreateVSAnim();
 		CreateVSRaw();
 		CreateVSSkyMap();
 		CreateVSCBs();
@@ -90,8 +89,8 @@ void JWDX::Destroy() noexcept
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBCamera);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBLights);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBFlags);
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBGPUAnimation);
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBCPUAnimation);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBGPUAnimationData);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBCPUAnimationData);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBFlags);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBSpace);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSSkyMap);
@@ -105,12 +104,9 @@ void JWDX::Destroy() noexcept
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSSkyMapBuffer);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSRaw);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSRawBuffer);
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSAnim);
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSAnimBuffer);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBaseInputLayout);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBase);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBaseBuffer);
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_IAInputLayoutAnim);
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_IAInputLayoutBase);
 
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DeviceContext11);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_Device11);
@@ -154,7 +150,6 @@ PRIVATE void JWDX::CreateVSBase() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSBase.hlsl";
-
 	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSBaseBuffer, nullptr);
 
@@ -162,24 +157,8 @@ PRIVATE void JWDX::CreateVSBase() noexcept
 	m_Device11->CreateVertexShader(m_VSBaseBuffer->GetBufferPointer(), m_VSBaseBuffer->GetBufferSize(), nullptr, &m_VSBase);
 
 	// Create input layout
-	m_Device11->CreateInputLayout(KInputElementDescriptionBase, ARRAYSIZE(KInputElementDescriptionBase),
-		m_VSBaseBuffer->GetBufferPointer(), m_VSBaseBuffer->GetBufferSize(), &m_IAInputLayoutBase);
-}
-
-PRIVATE void JWDX::CreateVSAnim() noexcept
-{
-	// Compile shader from file
-	WSTRING shader_file_name;
-	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSAnim.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSAnimBuffer, nullptr);
-
-	// Create shader
-	m_Device11->CreateVertexShader(m_VSAnimBuffer->GetBufferPointer(), m_VSAnimBuffer->GetBufferSize(), nullptr, &m_VSAnim);
-
-	// Create input layout
-	m_Device11->CreateInputLayout(KInputElementDescriptionAnim, ARRAYSIZE(KInputElementDescriptionAnim),
-		m_VSAnimBuffer->GetBufferPointer(), m_VSAnimBuffer->GetBufferSize(), &m_IAInputLayoutAnim);
+	m_Device11->CreateInputLayout(KInputElementDescriptionModel, ARRAYSIZE(KInputElementDescriptionModel),
+		m_VSBaseBuffer->GetBufferPointer(), m_VSBaseBuffer->GetBufferSize(), &m_VSBaseInputLayout);
 }
 
 PRIVATE void JWDX::CreateVSRaw() noexcept
@@ -256,11 +235,11 @@ PRIVATE void JWDX::CreateVSCBs() noexcept
 	constant_buffer_description.ByteWidth = sizeof(SVSCBFlags);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBFlags);
 
-	constant_buffer_description.ByteWidth = sizeof(SVSCBCPUAnimation);
-	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBCPUAnimation);
+	constant_buffer_description.ByteWidth = sizeof(SVSCBCPUAnimationData);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBCPUAnimationData);
 
-	constant_buffer_description.ByteWidth = sizeof(SVSCBGPUAnimation);
-	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBGPUAnimation);
+	constant_buffer_description.ByteWidth = sizeof(SVSCBGPUAnimationData);
+	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBGPUAnimationData);
 }
 
 PRIVATE void JWDX::CreatePSCBs() noexcept
@@ -483,6 +462,17 @@ void JWDX::CreateIndexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** pp
 	m_Device11->CreateBuffer(&index_buffer_description, &index_buffer_data, ppBuffer);
 }
 
+inline void JWDX::UpdateDynamicResource(ID3D11Resource* pResource, const void* pData, size_t Size) noexcept
+{
+	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
+	if (SUCCEEDED(m_DeviceContext11->Map(pResource, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
+	{
+		memcpy(mapped_subresource.pData, pData, Size);
+
+		m_DeviceContext11->Unmap(pResource, 0);
+	}
+}
+
 void JWDX::SetRasterizerState(ERasterizerState State) noexcept
 {
 	// No need to change
@@ -569,19 +559,15 @@ void JWDX::SetVS(EVertexShader VS) noexcept
 	switch (VS)
 	{
 	case JWEngine::EVertexShader::VSBase:
-		m_DeviceContext11->IASetInputLayout(m_IAInputLayoutBase);
+		m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
 		m_DeviceContext11->VSSetShader(m_VSBase, nullptr, 0);
-		break;
-	case JWEngine::EVertexShader::VSAnim:
-		m_DeviceContext11->IASetInputLayout(m_IAInputLayoutAnim);
-		m_DeviceContext11->VSSetShader(m_VSAnim, nullptr, 0);
 		break;
 	case JWEngine::EVertexShader::VSRaw:
 		m_DeviceContext11->IASetInputLayout(nullptr);
 		m_DeviceContext11->VSSetShader(m_VSRaw, nullptr, 0);
 		break;
 	case JWEngine::EVertexShader::VSSkyMap:
-		m_DeviceContext11->IASetInputLayout(m_IAInputLayoutBase);
+		m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
 		m_DeviceContext11->VSSetShader(m_VSSkyMap, nullptr, 0);
 		break;
 	default:
@@ -609,46 +595,30 @@ void JWDX::SetPS(EPixelShader PS) noexcept
 
 void JWDX::UpdateVSCBSpace(const SVSCBSpace& Data) noexcept
 {
-	D3D11_MAPPED_SUBRESOURCE subresource{};
-	if (SUCCEEDED(m_DeviceContext11->Map(m_VSCBSpace, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource)))
-	{
-		memcpy(subresource.pData, &Data, sizeof(Data));
-		m_DeviceContext11->Unmap(m_VSCBSpace, 0);
-	}
+	UpdateDynamicResource(m_VSCBSpace, &Data, sizeof(Data));
+
 	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBSpace);
 }
 
 void JWDX::UpdateVSCBFlags(const SVSCBFlags& Data) noexcept
 {
-	D3D11_MAPPED_SUBRESOURCE subresource{};
-	if (SUCCEEDED(m_DeviceContext11->Map(m_VSCBFlags, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource)))
-	{
-		memcpy(subresource.pData, &Data, sizeof(Data));
-		m_DeviceContext11->Unmap(m_VSCBFlags, 0);
-	}
+	UpdateDynamicResource(m_VSCBFlags, &Data, sizeof(Data));
+
 	m_DeviceContext11->VSSetConstantBuffers(1, 1, &m_VSCBFlags);
 }
 
-void JWDX::UpdateVSCBCPUAnimation(const SVSCBCPUAnimation& Data) noexcept
+void JWDX::UpdateVSCBCPUAnimationData(const SVSCBCPUAnimationData& Data) noexcept
 {
-	D3D11_MAPPED_SUBRESOURCE subresource{};
-	if (SUCCEEDED(m_DeviceContext11->Map(m_VSCBCPUAnimation, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource)))
-	{
-		memcpy(subresource.pData, &Data, sizeof(Data));
-		m_DeviceContext11->Unmap(m_VSCBCPUAnimation, 0);
-	}
-	m_DeviceContext11->VSSetConstantBuffers(2, 1, &m_VSCBCPUAnimation);
+	UpdateDynamicResource(m_VSCBCPUAnimationData, &Data, sizeof(Data));
+
+	m_DeviceContext11->VSSetConstantBuffers(2, 1, &m_VSCBCPUAnimationData);
 }
 
-void JWDX::UpdateVSCBGPUAnimation(const SVSCBGPUAnimation& Data) noexcept
+void JWDX::UpdateVSCBGPUAnimationData(const SVSCBGPUAnimationData& Data) noexcept
 {
-	D3D11_MAPPED_SUBRESOURCE subresource{};
-	if (SUCCEEDED(m_DeviceContext11->Map(m_VSCBGPUAnimation, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource)))
-	{
-		memcpy(subresource.pData, &Data, sizeof(Data));
-		m_DeviceContext11->Unmap(m_VSCBGPUAnimation, 0);
-	}
-	m_DeviceContext11->VSSetConstantBuffers(3, 1, &m_VSCBGPUAnimation);
+	UpdateDynamicResource(m_VSCBGPUAnimationData, &Data, sizeof(Data));
+
+	m_DeviceContext11->VSSetConstantBuffers(3, 1, &m_VSCBGPUAnimationData);
 }
 
 void JWDX::UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept
@@ -671,23 +641,15 @@ void JWDX::UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept
 		m_PSCBFlagsData.UseLighting = FALSE;
 	}
 
-	D3D11_MAPPED_SUBRESOURCE subresource{};
-	if (SUCCEEDED(m_DeviceContext11->Map(m_PSCBFlags, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource)))
-	{
-		memcpy(subresource.pData, &m_PSCBFlagsData, sizeof(m_PSCBFlagsData));
-		m_DeviceContext11->Unmap(m_PSCBFlags, 0);
-	}
+	UpdateDynamicResource(m_PSCBFlags, &m_PSCBFlagsData, sizeof(m_PSCBFlagsData));
+
 	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBFlags);
 }
 
 void JWDX::UpdatePSCBLights(const SPSCBLights& Data) noexcept
 {
-	D3D11_MAPPED_SUBRESOURCE subresource{};
-	if (SUCCEEDED(m_DeviceContext11->Map(m_PSCBLights, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource)))
-	{
-		memcpy(subresource.pData, &Data, sizeof(Data));
-		m_DeviceContext11->Unmap(m_PSCBLights, 0);
-	}
+	UpdateDynamicResource(m_PSCBLights, &Data, sizeof(Data));
+
 	m_DeviceContext11->PSSetConstantBuffers(1, 1, &m_PSCBLights);
 }
 
@@ -695,12 +657,8 @@ void JWDX::UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept
 {
 	m_PSCBCameraData.CameraPosition = CameraPosition;
 
-	D3D11_MAPPED_SUBRESOURCE subresource{};
-	if (SUCCEEDED(m_DeviceContext11->Map(m_PSCBCamera, 0, D3D11_MAP_WRITE_DISCARD, 0, &subresource)))
-	{
-		memcpy(subresource.pData, &m_PSCBCameraData, sizeof(m_PSCBCameraData));
-		m_DeviceContext11->Unmap(m_PSCBCamera, 0);
-	}
+	UpdateDynamicResource(m_PSCBCamera, &m_PSCBCameraData, sizeof(m_PSCBCameraData));
+
 	m_DeviceContext11->PSSetConstantBuffers(2, 1, &m_PSCBCamera);
 }
 

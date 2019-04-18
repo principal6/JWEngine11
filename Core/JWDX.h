@@ -36,7 +36,6 @@ namespace JWEngine
 	enum class EVertexShader
 	{
 		VSBase,
-		VSAnim,
 		VSRaw,
 		VSSkyMap,
 	};
@@ -57,12 +56,14 @@ namespace JWEngine
 		void Create(const JWWin32Window& Window, STRING Directory, const SClearColor& ClearColor) noexcept;
 		void Destroy() noexcept;
 
-		// Factory functions
+		/// Factory functions
 		void CreateDynamicVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
 		void CreateStaticVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
 		void CreateIndexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
+		
+		inline void UpdateDynamicResource(ID3D11Resource* pResource, const void* pData, size_t Size) noexcept;
 
-		// Rasterizer state
+		/// Rasterizer state
 		auto GetRasterizerState() const noexcept { return m_eRasterizerState; }
 		auto GetPreviousRasterizerState() const noexcept { return m_ePreviousRasterizerState; }
 		void SetRasterizerState(ERasterizerState State) noexcept;
@@ -75,16 +76,15 @@ namespace JWEngine
 		void SetVS(EVertexShader VS) noexcept;
 		void SetPS(EPixelShader PS) noexcept;
 
-		// Called in each JWModel(/JWImage/JWLineModel)'s Draw()-Update() function
+		/// Update VS constant buffers
 		void UpdateVSCBSpace(const SVSCBSpace& Data) noexcept;
-		// Called in each animated JWModel's Animate() function
 		void UpdateVSCBFlags(const SVSCBFlags& Data) noexcept;
-		void UpdateVSCBCPUAnimation(const SVSCBCPUAnimation& Data) noexcept;
-		void UpdateVSCBGPUAnimation(const SVSCBGPUAnimation& Data) noexcept;
-		// Called in each JWModel(/JWImage/JWLineModel)'s Draw()-Update() function
+		void UpdateVSCBCPUAnimationData(const SVSCBCPUAnimationData& Data) noexcept;
+		void UpdateVSCBGPUAnimationData(const SVSCBGPUAnimationData& Data) noexcept;
+
+		/// Update PS constant buffers
 		void UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept;
 		void UpdatePSCBLights(const SPSCBLights& Data) noexcept;
-		// Called once per game loop, which is when the camera's position would probably be changed.
 		void UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept;
 
 		void BeginDrawing() noexcept;
@@ -98,15 +98,14 @@ namespace JWEngine
 		// Called in Create()
 		void CreateDeviceAndSwapChain(HWND hWnd) noexcept;
 
-		// VS Shader & input layout creation
-		// Called in Create()
+		/// VS Shader & input layout creation
+		/// Called in Create()
 		void CreateVSBase() noexcept;
-		void CreateVSAnim() noexcept;
 		void CreateVSRaw() noexcept;
 		void CreateVSSkyMap() noexcept;
 		void CreateVSCBs() noexcept;
 
-		// PS Shader creation
+		/// PS Shader creation
 		void CreatePSBase() noexcept;
 		void CreatePSRaw() noexcept;
 		void CreatePSSkyMap() noexcept;
@@ -145,12 +144,9 @@ namespace JWEngine
 		ID3D11DeviceContext*	m_DeviceContext11{};
 
 		// Shader and input layout
-		ID3D11InputLayout*	m_IAInputLayoutBase{};
-		ID3D11InputLayout*	m_IAInputLayoutAnim{};
+		ID3D11InputLayout*	m_VSBaseInputLayout{};
 		ID3D10Blob*			m_VSBaseBuffer{};
 		ID3D11VertexShader*	m_VSBase{};
-		ID3D10Blob*			m_VSAnimBuffer{};
-		ID3D11VertexShader*	m_VSAnim{};
 		ID3D10Blob*			m_VSRawBuffer{};
 		ID3D11VertexShader*	m_VSRaw{};
 		ID3D10Blob*			m_VSSkyMapBuffer{};
@@ -165,8 +161,8 @@ namespace JWEngine
 		// Shader constant buffer
 		ID3D11Buffer*		m_VSCBSpace{};
 		ID3D11Buffer*		m_VSCBFlags{};
-		ID3D11Buffer*		m_VSCBCPUAnimation{};
-		ID3D11Buffer*		m_VSCBGPUAnimation{};
+		ID3D11Buffer*		m_VSCBCPUAnimationData{};
+		ID3D11Buffer*		m_VSCBGPUAnimationData{};
 		ID3D11Buffer*		m_PSCBFlags{};
 		SPSCBFlags			m_PSCBFlagsData{};
 		ID3D11Buffer*		m_PSCBLights{};

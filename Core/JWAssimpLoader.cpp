@@ -2,9 +2,9 @@
 
 using namespace JWEngine;
 
-auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SNonRiggedModelData
+auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
 	Assimp::Importer importer{};
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_NORMALS);
@@ -70,7 +70,7 @@ auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) 
 
 					normal = ConvertaiVector3DToXMFLOAT3(scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
 
-					result.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
+					result.VertexData.AddVertex(SVertexModel(position, texcoord, normal, diffuse, specular));
 				}
 			}
 			else
@@ -124,9 +124,9 @@ auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) 
 	return result;
 }
 
-auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SRiggedModelData
+auto JWAssimpLoader::LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SModelData
 {
-	SRiggedModelData result{};
+	SModelData result{};
 
 	Assimp::Importer importer{};
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, aiComponent_NORMALS);
@@ -211,7 +211,7 @@ PRIVATE void JWAssimpLoader::ExtractNodeTree(const aiScene* Scene, const aiNode*
 	}
 }
 
-PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const STRING Directory, const aiScene* Scene, SRiggedModelData& OutModelData) noexcept
+PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const STRING Directory, const aiScene* Scene, SModelData& OutModelData) noexcept
 {
 	int indices_offset{};
 
@@ -258,7 +258,8 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const STRING Directory
 				normal = ConvertaiVector3DToXMFLOAT3(ai_mesh->mNormals[vertex_id]);
 				texcoord = ConvertaiVector3DToXMFLOAT2(ai_mesh->mTextureCoords[0][vertex_id]);
 
-				OutModelData.VertexData.vVertices.emplace_back(position, texcoord, normal, diffuse, specular);
+				// Needs rigging!
+				OutModelData.VertexData.AddVertex(SVertexModel(position, texcoord, normal, diffuse, specular), true);
 			}
 
 			// #2 Model must have faces
@@ -351,13 +352,13 @@ PRIVATE void JWAssimpLoader::ExtractBone(const aiBone* paiBone, int VertexOffset
 	}
 }
 
-PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTree, SVertexDataRiggedModel& OutVertexData) noexcept
+PRIVATE void JWAssimpLoader::MatchBonesAndVertices(const SModelBoneTree& BoneTree, SVertexDataModel& OutVertexData) noexcept
 {
 	for (const auto& bone : BoneTree.vBones)
 	{
 		for (const auto& weight : bone.vWeights)
 		{
-			OutVertexData.vVertices[weight.VertexID].AddBone(bone.ID, weight.Weight);
+			OutVertexData.vVerticesRigging[weight.VertexID].AddBone(bone.ID, weight.Weight);
 		}
 	}
 }
@@ -466,9 +467,9 @@ PRIVATE void JWAssimpLoader::ExtractAnimationSet(const aiScene* Scene, const SMo
 	}
 }
 
-void JWAssimpLoader::LoadAdditionalAnimationIntoRiggedModel(SRiggedModelData& ModelData, STRING Directory, STRING ModelFileName) noexcept
+void JWAssimpLoader::LoadAdditionalAnimationIntoRiggedModel(SModelData& ModelData, STRING Directory, STRING ModelFileName) noexcept
 {
-	SRiggedModelData new_animation_model{};
+	SModelData new_animation_model{};
 
 	Assimp::Importer importer{};
 	const aiScene* scene{ importer.ReadFile(Directory + ModelFileName,

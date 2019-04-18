@@ -35,7 +35,7 @@ namespace JWEngine
 
 		ID3D11Buffer*				m_VertexBuffer{};
 		ID3D11Buffer*				m_IndexBuffer{};
-		SVertexDataNonRiggedModel		m_VertexData{};
+		SVertexDataModel		m_VertexData{};
 		SIndexDataTriangle			m_IndexData{};
 		ID3D11ShaderResourceView*	m_TextureShaderResourceView{};
 

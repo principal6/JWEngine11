@@ -33,126 +33,134 @@ int main()
 		.SetPosition(XMFLOAT3(0.0f, 0.0f, -4.0f));
 
 	// ECS Shared resources
+	auto& ecs = myGame.ECS();
 	{
 		// SharedModel
-		myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.obj"); // Shared Model #0
-		myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.obj"); // Shared Model #1
-		myGame.ECS().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X") // Shared Model #2
+		ecs.CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.obj"); // Shared Model #0
+		ecs.CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.obj"); // Shared Model #1
+		ecs.CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X") // Shared Model #2
 			->AddAnimationFromFile("Ezreal_Punching.X")
 			->AddAnimationFromFile("Ezreal_Walk.X")
 			->BakeAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
-		myGame.ECS().CreateSharedModelPrimitive(
-			myGame.ECS().PrimitiveMaker().MakeSphere(100.0f, 16, 7)); // Shared Model #3
-		myGame.ECS().CreateSharedModelPrimitive(
-			myGame.ECS().PrimitiveMaker().MakeSquare(10.0f, XMFLOAT2(10.0f, 10.0f))); // Shared Model #4
-		myGame.ECS().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
-		myGame.ECS().CreateSharedModelDynamicPrimitive(
-			myGame.ECS().PrimitiveMaker().MakeTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0))); // Shared Model #6
+		ecs.CreateSharedModelPrimitive(
+			ecs.PrimitiveMaker().MakeSphere(100.0f, 16, 7)); // Shared Model #3 (Sphere for Sky)
+		ecs.CreateSharedModelPrimitive(
+			ecs.PrimitiveMaker().MakeSquare(10.0f, XMFLOAT2(10.0f, 10.0f))); // Shared Model #4
+		ecs.CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
+		ecs.CreateSharedModelDynamicPrimitive(
+			ecs.PrimitiveMaker().MakeTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0))); // Shared Model #6
 	}
 	{
 		// SharedImage2D
-		myGame.ECS().CreateSharedImage2D(SPositionInt(160, 10), SSizeInt(100, 40)); // Shared Image2D #0
+		ecs.CreateSharedImage2D(SPositionInt(160, 10), SSizeInt(100, 40)); // Shared Image2D #0
 	}
 	{
 		// SharedLineModel
-		myGame.ECS().CreateSharedLineModel() // Shared LineModel #0
+		ecs.CreateSharedLineModel() // Shared LineModel #0
 			->Make3DGrid(50.0f, 50.0f, 1.0f);
-		myGame.ECS().CreateSharedLineModel() // Shared LineModel #1 (Picking ray casting representation)
+		ecs.CreateSharedLineModel() // Shared LineModel #1 (Picking ray casting representation)
 			->AddLine3D(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT4(1, 0, 1, 1))
 			->AddEnd();
 	}
 	{
 		// SharedTexture
-		myGame.ECS().CreateSharedTexture(ESharedTextureType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
-		myGame.ECS().CreateSharedTexture(ESharedTextureType::Texture2D, "grass.png"); //Shared Resource #1
-		myGame.ECS().CreateSharedTexture(ESharedTextureType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #2
-		myGame.ECS().CreateSharedTextureFromSharedModel(2); //Shared Resource #3
+		ecs.CreateSharedTexture(ESharedTextureType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
+		ecs.CreateSharedTexture(ESharedTextureType::Texture2D, "grass.png"); //Shared Resource #1
+		ecs.CreateSharedTexture(ESharedTextureType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #2
+		ecs.CreateSharedTextureFromSharedModel(2); //Shared Resource #3
 	}
 	{
 		// Animations texture
-		myGame.ECS().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
+		ecs.CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 	}
 
-	auto grid = myGame.ECS().CreateEntity(EEntityType::Grid);
+	auto grid = ecs.CreateEntity(EEntityType::Grid);
 	grid->CreateComponentRender()
-		->SetLineModel(myGame.ECS().GetSharedLineModel(0));
+		->SetLineModel(ecs.GetSharedLineModel(0));
 
-	auto main_sprite = myGame.ECS().CreateEntity(EEntityType::MainSprite);
+	auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
 	main_sprite->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
 		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
 	main_sprite->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(2))
-		->SetTexture(myGame.ECS().GetSharedTexture(3))
+		->SetModel(ecs.GetSharedModel(2))
+		->SetTexture(ecs.GetSharedTexture(3))
 		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
-		->SetAnimationTexture(myGame.ECS().GetAnimationTexture(0))
+		->SetAnimationTexture(ecs.GetAnimationTexture(0))
 		->SetAnimation(3);
 
-	auto sky_sphere = myGame.ECS().CreateEntity(EEntityType::Sky);
+	auto sky_sphere = ecs.CreateEntity(EEntityType::Sky);
 	sky_sphere->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 	sky_sphere->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(3))
-		->SetTexture(myGame.ECS().GetSharedTexture(0))
+		->SetModel(ecs.GetSharedModel(3))
+		->SetTexture(ecs.GetSharedTexture(0))
 		->SetVertexShader(EVertexShader::VSSkyMap)
 		->SetPixelShader(EPixelShader::PSSkyMap);
 
-	auto jars = myGame.ECS().CreateEntity("jars");
-	jars->CreateComponentTransform()
-		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		->SetPosition(XMFLOAT3(10.0f, 0.0f, 0.0f))
-		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
-	jars->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(0))
-		->SetRenderFlag(JWFlagRenderOption_UseLighting);
-	jars->CreateComponentPhysics();
+	{
+		auto jars = ecs.CreateEntity("jars");
+		jars->CreateComponentTransform()
+			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+			->SetPosition(XMFLOAT3(10.0f, 0.0f, 0.0f))
+			->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
+		jars->CreateComponentRender()
+			->SetModel(ecs.GetSharedModel(0))
+			->SetRenderFlag(JWFlagRenderOption_UseLighting);
+		auto jars_physics = jars->CreateComponentPhysics();
+		ecs.SystemPhysics().SetBoundingSphereRadius(jars_physics, 1.0f);
+	}
+	
 
-	auto ambient_light = myGame.ECS().CreateEntity("ambient_light");
+	auto ambient_light = ecs.CreateEntity("ambient_light");
 	ambient_light->CreateComponentLight()
 		->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
 	ambient_light->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(0.0f, -5.0f, 0.0f));
 	ambient_light->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(1));
+		->SetModel(ecs.GetSharedModel(1));
 
-	auto directional_light = myGame.ECS().CreateEntity("directional_light");
+	auto directional_light = ecs.CreateEntity("directional_light");
 	directional_light->CreateComponentLight()
 		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5.0f, 5.0f, 0.0f), 0.6f);
 	directional_light->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(8.0f, 8.0f, 0.0f));
 	directional_light->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(1));
+		->SetModel(ecs.GetSharedModel(1));
 
-	auto floor_plane = myGame.ECS().CreateEntity("Floor");
-	floor_plane->CreateComponentTransform()
-		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	floor_plane->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(4))
-		->SetTexture(myGame.ECS().GetSharedTexture(1));
-	floor_plane->CreateComponentPhysics();
+	{
+		auto floor_plane = ecs.CreateEntity("Floor");
+		floor_plane->CreateComponentTransform()
+			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+			->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+		floor_plane->CreateComponentRender()
+			->SetModel(ecs.GetSharedModel(4))
+			->SetTexture(ecs.GetSharedTexture(1));
+		auto floor_plane_physics = floor_plane->CreateComponentPhysics();
+		ecs.SystemPhysics().SetBoundingSphereRadius(floor_plane_physics, 1.0f);
+	}
 
-	auto image_gamma = myGame.ECS().CreateEntity("IMG_Gamma");
+	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
 	image_gamma->CreateComponentRender()
-		->SetImage2D(myGame.ECS().GetSharedImage2D(0))
-		->SetTexture(myGame.ECS().GetSharedTexture(2));
+		->SetImage2D(ecs.GetSharedImage2D(0))
+		->SetTexture(ecs.GetSharedTexture(2));
 
-	auto cam = myGame.ECS().CreateEntity("Camera");
+	auto cam = ecs.CreateEntity("Camera");
 	cam->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(0, 2, 0));
 	cam->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(5));
+		->SetModel(ecs.GetSharedModel(5));
 
-	auto picked_tri = myGame.ECS().CreateEntity(EEntityType::PickedTriangle);
+	auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
 	picked_tri->CreateComponentRender()
-		->SetModel(myGame.ECS().GetSharedModel(6))
+		->SetModel(ecs.GetSharedModel(6))
 		->SetRenderFlag(JWFlagRenderOption_AlwaysSolidNoCull);
 
-	auto ray = myGame.ECS().CreateEntity(EEntityType::PickingRay);
+	auto ray = ecs.CreateEntity(EEntityType::PickingRay);
 	ray->CreateComponentRender()
-		->SetLineModel(myGame.ECS().GetSharedLineModel(1));
+		->SetLineModel(ecs.GetSharedLineModel(1));
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);

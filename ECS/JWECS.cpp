@@ -9,9 +9,9 @@ void JWECS::Create(JWDX& DX, JWCamera& Camera, JWWin32Window& Window, STRING Bas
 	m_BaseDirectory = BaseDirectory;
 
 	m_SystemTransform.Create();
-	m_SystemRender.Create(DX, Camera, BaseDirectory);
+	m_SystemRender.Create(*this, DX, Camera, BaseDirectory);
 	m_SystemLight.Create(DX);
-	m_SystemPhysics.Create(Window, Camera);
+	m_SystemPhysics.Create(*this, Window, Camera);
 }
 
 void JWECS::Destroy() noexcept
@@ -284,7 +284,7 @@ auto JWECS::GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*
 	return result;
 }
 
-auto JWECS::CreateSharedModelPrimitive(const SNonRiggedModelData& ModelData) noexcept->JWModel*
+auto JWECS::CreateSharedModelPrimitive(const SModelData& ModelData) noexcept->JWModel*
 {
 	m_vSharedModel.push_back(JWModel());
 
@@ -293,12 +293,12 @@ auto JWECS::CreateSharedModelPrimitive(const SNonRiggedModelData& ModelData) noe
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetNonRiggedModelData(ModelData);
+	current_model.CreateMeshBuffers(ModelData, ERenderType::Model_Static);
 
 	return &current_model;
 }
 
-auto JWECS::CreateSharedModelDynamicPrimitive(const SNonRiggedModelData& ModelData) noexcept->JWModel*
+auto JWECS::CreateSharedModelDynamicPrimitive(const SModelData& ModelData) noexcept->JWModel*
 {
 	m_vSharedModel.push_back(JWModel());
 
@@ -307,7 +307,7 @@ auto JWECS::CreateSharedModelDynamicPrimitive(const SNonRiggedModelData& ModelDa
 	current_model.Create(*m_pDX, m_BaseDirectory);
 
 	JWPrimitiveMaker maker{};
-	current_model.SetDynamicModelData(ModelData);
+	current_model.CreateMeshBuffers(ModelData, ERenderType::Model_Dynamic);
 
 	return &current_model;
 }
@@ -325,11 +325,11 @@ auto JWECS::CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) no
 	switch (Type)
 	{
 	case JWEngine::ESharedModelType::StaticModel:
-		current_model.SetNonRiggedModelData(loader.LoadNonRiggedModel(m_BaseDirectory + KAssetDirectory, FileName));
+		current_model.CreateMeshBuffers(loader.LoadNonRiggedModel(m_BaseDirectory + KAssetDirectory, FileName), ERenderType::Model_Static);
 
 		break;
 	case JWEngine::ESharedModelType::RiggedModel:
-		current_model.SetRiggedModelData(loader.LoadRiggedModel(m_BaseDirectory + KAssetDirectory, FileName));
+		current_model.CreateMeshBuffers(loader.LoadRiggedModel(m_BaseDirectory + KAssetDirectory, FileName), ERenderType::Model_Rigged);
 
 		break;
 	default:

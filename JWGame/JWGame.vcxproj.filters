@@ -448,12 +448,6 @@
     <FxCompile Include="..\Shaders\PSRaw.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="..\Shaders\VSAnim.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\Shaders\VSBase.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="..\Shaders\VSRaw.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
@@ -464,6 +458,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="..\Shaders\VSInstantText.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\Shaders\VSBase.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

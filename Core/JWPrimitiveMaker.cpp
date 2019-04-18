@@ -3,18 +3,18 @@
 using namespace JWEngine;
 
 
-auto JWPrimitiveMaker::MakeTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) noexcept->SNonRiggedModelData
+auto JWPrimitiveMaker::MakeTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
 	XMFLOAT3 Color[3] = { {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
 
 	/*
 	** Vertex
 	*/
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(A.x, A.y, A.z, Color[0].x, Color[0].y, Color[0].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(B.x, B.y, B.z, Color[1].x, Color[1].y, Color[1].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(C.x, C.y, C.z, Color[2].x, Color[2].y, Color[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(A.x, A.y, A.z, Color[0].x, Color[0].y, Color[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(B.x, B.y, B.z, Color[1].x, Color[1].y, Color[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(C.x, C.y, C.z, Color[2].x, Color[2].y, Color[2].z, 1));
 
 	/*
 	** Index
@@ -24,9 +24,9 @@ auto JWPrimitiveMaker::MakeTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) noexcept
 	return result;
 
 }
-auto JWPrimitiveMaker::MakeSquare(float Size, XMFLOAT2 UVMap) noexcept->SNonRiggedModelData
+auto JWPrimitiveMaker::MakeSquare(float Size, XMFLOAT2 UVMap) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
 	float half_size = Size / 2.0f;
 
@@ -36,15 +36,15 @@ auto JWPrimitiveMaker::MakeSquare(float Size, XMFLOAT2 UVMap) noexcept->SNonRigg
 	** Vertex
 	*/
 	// (LeftUp - RightUp - LeftDown - RightDown order)
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, 0, +half_size, 0, 0, Color[0].x, Color[0].y, Color[0].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, 0, +half_size, UVMap.x, 0, Color[1].x, Color[1].y, Color[1].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, 0, -half_size, 0, UVMap.y, Color[2].x, Color[2].y, Color[2].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, 0, -half_size, UVMap.x, UVMap.y, Color[3].x, Color[3].y, Color[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, 0, +half_size, 0, 0, Color[0].x, Color[0].y, Color[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, 0, +half_size, UVMap.x, 0, Color[1].x, Color[1].y, Color[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, 0, -half_size, 0, UVMap.y, Color[2].x, Color[2].y, Color[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, 0, -half_size, UVMap.x, UVMap.y, Color[3].x, Color[3].y, Color[3].z, 1));
 
 	/*
 	** Index
 	*/
-	for (unsigned int i = 0; i < result.VertexData.GetCount() / 4; ++i)
+	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 4; ++i)
 	{
 		// Clock-wise winding
 		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 2));
@@ -54,9 +54,9 @@ auto JWPrimitiveMaker::MakeSquare(float Size, XMFLOAT2 UVMap) noexcept->SNonRigg
 	return result;
 }
 
-auto JWPrimitiveMaker::MakeCircle(float Radius, uint8_t Detail) noexcept->SNonRiggedModelData
+auto JWPrimitiveMaker::MakeCircle(float Radius, uint8_t Detail) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
 	XMFLOAT3 Color{ 0, 0, 1 };
 
@@ -69,17 +69,17 @@ auto JWPrimitiveMaker::MakeCircle(float Radius, uint8_t Detail) noexcept->SNonRi
 	float stride = XM_2PI / Detail;
 	for (uint8_t i = 0; i < Detail; ++i)
 	{
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(0, 0, 0, 0, 0, Color.x, Color.y, Color.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(0, 0, 0, 0, 0, Color.x, Color.y, Color.z, 1));
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
 			Color.x, Color.y, Color.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
 			Color.x, Color.y, Color.z, 1));
 	}
 
 	/*
 	** Index
 	*/
-	for (unsigned int i = 0; i < result.VertexData.GetCount() / 3; ++i)
+	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
 		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
@@ -88,9 +88,9 @@ auto JWPrimitiveMaker::MakeCircle(float Radius, uint8_t Detail) noexcept->SNonRi
 	return result;
 }
 
-auto JWPrimitiveMaker::MakeCube(float Size) noexcept->SNonRiggedModelData
+auto JWPrimitiveMaker::MakeCube(float Size) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
 	float half_size = Size / 2.0f;
 
@@ -104,45 +104,45 @@ auto JWPrimitiveMaker::MakeCube(float Size) noexcept->SNonRiggedModelData
 	** Vertex
 	*/
 	// Up (LeftUp - RightUp - LeftDown - RightDown order)
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, +half_size, +half_size, 0, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, +half_size, +half_size, 1, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, +half_size, -half_size, 0, 1, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, +half_size, -half_size, 1, 1, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, +half_size, +half_size, 0, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, +half_size, +half_size, 1, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, +half_size, -half_size, 0, 1, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, +half_size, -half_size, 1, 1, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
 
 	// Down
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, -half_size, -half_size, 0, 0, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, -half_size, -half_size, 1, 0, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, -half_size, +half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, -half_size, +half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, -half_size, -half_size, 0, 0, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, -half_size, -half_size, 1, 0, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, -half_size, +half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, -half_size, +half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
 
 	// Front
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, +half_size, -half_size, 0, 0, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, +half_size, -half_size, 1, 0, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, -half_size, -half_size, 0, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, -half_size, -half_size, 1, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, +half_size, -half_size, 0, 0, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, +half_size, -half_size, 1, 0, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, -half_size, -half_size, 0, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, -half_size, -half_size, 1, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
 
 	// Right
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, +half_size, -half_size, 0, 0, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, +half_size, +half_size, 1, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, -half_size, -half_size, 0, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, -half_size, +half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, +half_size, -half_size, 0, 0, UpColor[3].x, UpColor[3].y, UpColor[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, +half_size, +half_size, 1, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, -half_size, -half_size, 0, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, -half_size, +half_size, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
 
 	// Back
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, +half_size, +half_size, 0, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, +half_size, +half_size, 1, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_size, -half_size, +half_size, 0, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, -half_size, +half_size, 1, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, +half_size, +half_size, 0, 0, UpColor[1].x, UpColor[1].y, UpColor[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, +half_size, +half_size, 1, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_size, -half_size, +half_size, 0, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, -half_size, +half_size, 1, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
 
 	// Left
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, +half_size, +half_size, 0, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, +half_size, -half_size, 1, 0, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, -half_size, +half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_size, -half_size, -half_size, 1, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, +half_size, +half_size, 0, 0, UpColor[0].x, UpColor[0].y, UpColor[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, +half_size, -half_size, 1, 0, UpColor[2].x, UpColor[2].y, UpColor[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, -half_size, +half_size, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, -half_size, -half_size, 1, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
 
 	/*
 	** Index
 	*/
-	for (unsigned int i = 0; i < result.VertexData.GetCount() / 4; ++i)
+	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 4; ++i)
 	{
 		// Clock-wise winding
 		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 2));
@@ -152,9 +152,9 @@ auto JWPrimitiveMaker::MakeCube(float Size) noexcept->SNonRiggedModelData
 	return result;
 }
 
-auto JWPrimitiveMaker::MakePyramid(float Height, float Width) noexcept->SNonRiggedModelData
+auto JWPrimitiveMaker::MakePyramid(float Height, float Width) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
 	float half_width = Width / 2.0f;
 
@@ -166,30 +166,30 @@ auto JWPrimitiveMaker::MakePyramid(float Height, float Width) noexcept->SNonRigg
 	** Vertex
 	*/
 	// Down (LeftUp - RightUp - LeftDown - RightDown order)
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_width, 0, +half_width, 0, 0, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_width, 0, +half_width, 1, 0, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_width, 0, -half_width, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_width, 0, -half_width, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_width, 0, +half_width, 0, 0, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_width, 0, +half_width, 1, 0, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_width, 0, -half_width, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_width, 0, -half_width, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
 
 	// Front (Tip - LeftDown - RightDown order)
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_width, 0, -half_width, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_width, 0, -half_width, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_width, 0, -half_width, 0, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_width, 0, -half_width, 1, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
 
 	// Right
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_width, 0, -half_width, 0, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_width, 0, +half_width, 1, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_width, 0, -half_width, 0, 1, DownColor[3].x, DownColor[3].y, DownColor[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_width, 0, +half_width, 1, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
 
 	// Back
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(+half_width, 0, +half_width, 0, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_width, 0, +half_width, 1, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
+	result.VertexData.AddVertex(SVertexModel(+half_width, 0, +half_width, 0, 1, DownColor[1].x, DownColor[1].y, DownColor[1].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_width, 0, +half_width, 1, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
 
 	// Left
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_width, 0, +half_width, 0, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
-	result.VertexData.vVertices.push_back(SVertexNonRiggedModel(-half_width, 0, -half_width, 1, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(0, Height, 0, 0.5f, 1, UpColor.x, UpColor.y, UpColor.z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_width, 0, +half_width, 0, 1, DownColor[0].x, DownColor[0].y, DownColor[0].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_width, 0, -half_width, 1, 1, DownColor[2].x, DownColor[2].y, DownColor[2].z, 1));
 
 	/*
 	** Index
@@ -198,7 +198,7 @@ auto JWPrimitiveMaker::MakePyramid(float Height, float Width) noexcept->SNonRigg
 	result.IndexData.vIndices.push_back(SIndexTriangle(1, 3, 2));
 
 	int ind_offset = 4;
-	for (unsigned int i = 0; i < (result.VertexData.GetCount() - 4) / 3; ++i)
+	for (unsigned int i = 0; i < (result.VertexData.GetVertexCount() - 4) / 3; ++i)
 	{
 		// Clock-wise winding
 		result.IndexData.vIndices.push_back(SIndexTriangle(ind_offset + i * 3, ind_offset + i * 3 + 2, ind_offset + i * 3 + 1));
@@ -207,9 +207,9 @@ auto JWPrimitiveMaker::MakePyramid(float Height, float Width) noexcept->SNonRigg
 	return result;
 }
 
-auto JWPrimitiveMaker::MakeCone(float Height, float Radius, uint8_t Detail) noexcept->SNonRiggedModelData
+auto JWPrimitiveMaker::MakeCone(float Height, float Radius, uint8_t Detail) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
 	XMFLOAT3 UpColor{ 0, 0, 1 };
 	XMFLOAT3 DownColor{ 0, 1, 0 };
@@ -224,24 +224,24 @@ auto JWPrimitiveMaker::MakeCone(float Height, float Radius, uint8_t Detail) noex
 	for (uint8_t i = 0; i < Detail; ++i)
 	{
 		// Down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(0, 0, 0, 0, 0, DownColor.x, DownColor.y, DownColor.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(0, 0, 0, 0, 0, DownColor.x, DownColor.y, DownColor.z, 1));
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
 			DownColor.x, DownColor.y, DownColor.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
 			DownColor.x, DownColor.y, DownColor.z, 1));
 
 		// Side
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(0, Height, 0, 0, 0, UpColor.x, UpColor.y, UpColor.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(0, Height, 0, 0, 0, UpColor.x, UpColor.y, UpColor.z, 1));
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
 			DownColor.x, DownColor.y, DownColor.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
 			DownColor.x, DownColor.y, DownColor.z, 1));
 	}
 
 	/*
 	** Index
 	*/
-	for (unsigned int i = 0; i < result.VertexData.GetCount() / 3; ++i)
+	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
 		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
@@ -250,9 +250,9 @@ auto JWPrimitiveMaker::MakeCone(float Height, float Radius, uint8_t Detail) noex
 	return result;
 }
 
-auto JWPrimitiveMaker::MakeCylinder(float Height, float Radius, uint8_t Detail) noexcept->SNonRiggedModelData
+auto JWPrimitiveMaker::MakeCylinder(float Height, float Radius, uint8_t Detail) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
 	XMFLOAT3 UpColor{ 0, 0, 1 };
 	XMFLOAT3 DownColor{ 0, 1, 0 };
@@ -267,40 +267,40 @@ auto JWPrimitiveMaker::MakeCylinder(float Height, float Radius, uint8_t Detail) 
 	for (uint8_t i = 0; i < Detail; ++i)
 	{
 		// Up
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(0, Height, 0, 0, 0, UpColor.x, UpColor.y, UpColor.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * i), Height, Radius * sinf(stride * i), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(0, Height, 0, 0, 0, UpColor.x, UpColor.y, UpColor.z, 1));
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * i), Height, Radius * sinf(stride * i), 0, 0,
 			UpColor.x, UpColor.y, UpColor.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * (i + 1)), Height, Radius * sinf(stride * (i + 1)), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * (i + 1)), Height, Radius * sinf(stride * (i + 1)), 0, 0,
 			UpColor.x, UpColor.y, UpColor.z, 1));
 
 		// Down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(0, 0, 0, 0, 0, DownColor.x, DownColor.y, DownColor.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(0, 0, 0, 0, 0, DownColor.x, DownColor.y, DownColor.z, 1));
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
 			DownColor.x, DownColor.y, DownColor.z, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
 			DownColor.x, DownColor.y, DownColor.z, 1));
 
 		// Side #1 (0 - 1 - 2)
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * i), Height, Radius * sinf(stride * i), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * i), Height, Radius * sinf(stride * i), 0, 0,
 			UpColor.x * 0.9f, UpColor.y * 0.9f, UpColor.z * 0.9f, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * (i + 1)), Height, Radius * sinf(stride * (i + 1)), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * (i + 1)), Height, Radius * sinf(stride * (i + 1)), 0, 0,
 			UpColor.x * 0.9f, UpColor.y * 0.9f, UpColor.z * 0.9f, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
 			DownColor.x * 0.9f, DownColor.y * 0.9f, DownColor.z * 0.9f, 1));
 
 		// Side #2 (1 - 3 - 2)
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * (i + 1)), Height, Radius * sinf(stride * (i + 1)), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * (i + 1)), Height, Radius * sinf(stride * (i + 1)), 0, 0,
 			UpColor.x * 0.9f, UpColor.y * 0.9f, UpColor.z * 0.9f, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * (i + 1)), 0, Radius * sinf(stride * (i + 1)), 0, 0,
 			DownColor.x * 0.9f, DownColor.y * 0.9f, DownColor.z * 0.9f, 1));
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
+		result.VertexData.AddVertex(SVertexModel(Radius * cosf(stride * i), 0, Radius * sinf(stride * i), 0, 0,
 			DownColor.x * 0.9f, DownColor.y * 0.9f, DownColor.z * 0.9f, 1));
 	}
 
 	/*
 	** Index
 	*/
-	for (unsigned int i = 0; i < result.VertexData.GetCount() / 3; ++i)
+	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
 		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
@@ -309,12 +309,12 @@ auto JWPrimitiveMaker::MakeCylinder(float Height, float Radius, uint8_t Detail) 
 	return result;
 }
 
-auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->SNonRiggedModelData
+auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
-	XMFLOAT3 ColorA{ 0, 0.5f, 0 };
-	XMFLOAT3 ColorB{ 0, 0.5f, 1 };
+	XMFLOAT3 ColorA{ 0, 1, 0 };
+	XMFLOAT3 ColorB{ 0, 1, 1 };
 
 	VerticalDetail = max(VerticalDetail, 4);
 	HorizontalDetail = max(HorizontalDetail, 1);
@@ -330,7 +330,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 	for (uint8_t vert = 0; vert < VerticalDetail; ++vert)
 	{
 		// Up center (= sphere center)
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			0,
 			Radius,
 			0,
@@ -338,7 +338,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			ColorA.x, ColorA.y, ColorA.z, 1));
 
 		// Up left down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			Radius * cosf(horz_stride * vert) * cosf(vert_stride * vert_start),
 			Radius * sinf(vert_stride * vert_start),
 			Radius * sinf(horz_stride * vert) * cosf(vert_stride * vert_start),
@@ -346,7 +346,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			ColorA.x, ColorA.y, ColorA.z, 1));
 
 		// Up right down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
 			Radius * sinf(vert_stride * vert_start),
 			Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
@@ -354,7 +354,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			ColorB.x, ColorB.y, ColorB.z, 1));
 
 		// Down center (= sphere center)
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			0,
 			-Radius,
 			0,
@@ -362,7 +362,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			ColorA.x, ColorA.y, ColorA.z, 1));
 
 		// Down right down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
 			-Radius * sinf(vert_stride * vert_start),
 			Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
@@ -370,7 +370,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			ColorB.x, ColorB.y, ColorB.z, 1));
 
 		// Down left down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			Radius * cosf(horz_stride * vert) * cosf(vert_stride * vert_start),
 			-Radius * sinf(vert_stride * vert_start),
 			Radius * sinf(horz_stride * vert) * cosf(vert_stride * vert_start),
@@ -389,7 +389,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			for (uint8_t vert = 0; vert < VerticalDetail; ++vert)
 			{
 				// Side #1 left up
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * vert) * cosf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(horz_stride * vert) * cosf(vert_stride * (vert_start + 1 - horz)),
@@ -397,7 +397,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #1 left down
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
 					Radius * sinf(vert_stride * (vert_start - horz)),
 					Radius * sinf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
@@ -405,7 +405,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #1 right up
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
@@ -413,7 +413,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #2 right up
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
@@ -421,7 +421,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #2 left down
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
 					Radius * sinf(vert_stride * (vert_start - horz)),
 					Radius * sinf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
@@ -429,7 +429,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #2 right down
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start - horz)),
 					Radius * sinf(vert_stride * (vert_start - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start - horz)),
@@ -442,7 +442,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 	/*
 	** Index
 	*/
-	for (unsigned int i = 0; i < result.VertexData.GetCount() / 3; ++i)
+	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
 		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
@@ -451,9 +451,9 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 	return result;
 }
 
-auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->SNonRiggedModelData
+auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->SModelData
 {
-	SNonRiggedModelData result{};
+	SModelData result{};
 
 	XMFLOAT3 ColorA{ 0, 0.5f, 0 };
 	XMFLOAT3 ColorB{ 0, 0.5f, 1 };
@@ -481,7 +481,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 	for (uint8_t i = 0; i < VerticalDetail; ++i)
 	{
 		// Up center (= sphere center)
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			0,
 			Radius,
 			0,
@@ -489,7 +489,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 			ColorA.x, ColorA.y, ColorA.z, 1));
 
 		// Up right down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			Radius * cosf(horz_stride * (i + 1)) * cosf(vert_stride * start),
 			Radius * sinf(vert_stride * start),
 			Radius * sinf(horz_stride * (i + 1)) * cosf(vert_stride * start),
@@ -497,7 +497,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 			ColorB.x, ColorB.y, ColorB.z, 1));
 
 		// Up left down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			Radius * cosf(horz_stride * i) * cosf(vert_stride * start),
 			Radius * sinf(vert_stride * start),
 			Radius * sinf(horz_stride * i) * cosf(vert_stride * start),
@@ -519,7 +519,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 			for (uint8_t vert = 0; vert < VerticalDetail; ++vert)
 			{
 				// Side #1 left up
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert)) * cosf(vert_stride * (start - horz)),
 					Radius * sinf(vert_stride * (start - horz)),
 					Radius * sinf(horz_stride * (vert)) * cosf(vert_stride * (start - horz)),
@@ -527,7 +527,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #1 right up
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
 					Radius * sinf(vert_stride * (start - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
@@ -535,7 +535,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #1 left down
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert)) * cosf(vert_stride * (start - horz - 1)),
 					Radius * sinf(vert_stride * (start - horz - 1)),
 					Radius * sinf(horz_stride * (vert)) * cosf(vert_stride * (start - horz - 1)),
@@ -543,7 +543,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #2 right up
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
 					Radius * sinf(vert_stride * (start - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
@@ -551,7 +551,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #2 right down
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz - 1)),
 					Radius * sinf(vert_stride * (start - horz - 1)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz - 1)),
@@ -559,7 +559,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorB.x, ColorB.y, ColorB.z, 1));
 
 				// Side #2 left down
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert)) * cosf(vert_stride * (start - horz - 1)),
 					Radius * sinf(vert_stride * (start - horz - 1)),
 					Radius * sinf(horz_stride * (vert)) * cosf(vert_stride * (start - horz - 1)),
@@ -574,19 +574,19 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 		for (uint8_t i = 0; i < VerticalDetail; ++i)
 		{
 			// Side #1 (0 - 1 - 2)
-			result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(horz_stride * i), side_offset_y - Height, Radius * sinf(horz_stride * i), 0, 0,
+			result.VertexData.AddVertex(SVertexModel(Radius * cosf(horz_stride * i), side_offset_y - Height, Radius * sinf(horz_stride * i), 0, 0,
 				ColorA.x * 0.9f, ColorA.y * 0.9f, ColorA.z * 0.9f, 1));
-			result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(horz_stride * (i + 1)), side_offset_y - Height, Radius * sinf(horz_stride * (i + 1)), 0, 0,
+			result.VertexData.AddVertex(SVertexModel(Radius * cosf(horz_stride * (i + 1)), side_offset_y - Height, Radius * sinf(horz_stride * (i + 1)), 0, 0,
 				ColorA.x * 0.9f, ColorA.y * 0.9f, ColorA.z * 0.9f, 1));
-			result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(horz_stride * i), side_offset_y, Radius * sinf(horz_stride * i), 0, 0,
+			result.VertexData.AddVertex(SVertexModel(Radius * cosf(horz_stride * i), side_offset_y, Radius * sinf(horz_stride * i), 0, 0,
 				ColorA.x * 0.9f, ColorA.y * 0.9f, ColorA.z * 0.9f, 1));
 
 			// Side #2 (1 - 3 - 2)
-			result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(horz_stride * (i + 1)), side_offset_y - Height, Radius * sinf(horz_stride * (i + 1)), 0, 0,
+			result.VertexData.AddVertex(SVertexModel(Radius * cosf(horz_stride * (i + 1)), side_offset_y - Height, Radius * sinf(horz_stride * (i + 1)), 0, 0,
 				ColorB.x * 0.9f, ColorB.y * 0.9f, ColorB.z * 0.9f, 1));
-			result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(horz_stride * (i + 1)), side_offset_y, Radius * sinf(horz_stride * (i + 1)), 0, 0,
+			result.VertexData.AddVertex(SVertexModel(Radius * cosf(horz_stride * (i + 1)), side_offset_y, Radius * sinf(horz_stride * (i + 1)), 0, 0,
 				ColorB.x * 0.9f, ColorB.y * 0.9f, ColorB.z * 0.9f, 1));
-			result.VertexData.vVertices.push_back(SVertexNonRiggedModel(Radius * cosf(horz_stride * i), side_offset_y, Radius * sinf(horz_stride * i), 0, 0,
+			result.VertexData.AddVertex(SVertexModel(Radius * cosf(horz_stride * i), side_offset_y, Radius * sinf(horz_stride * i), 0, 0,
 				ColorB.x * 0.9f, ColorB.y * 0.9f, ColorB.z * 0.9f, 1));
 		}
 
@@ -596,7 +596,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 			for (uint8_t vert = 0; vert < VerticalDetail; ++vert)
 			{
 				// Side #1 left up
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert)) * cosf(vert_stride * (start - horz)),
 					-Height + Radius * sinf(vert_stride * (start - horz)),
 					Radius * sinf(horz_stride * (vert)) * cosf(vert_stride * (start - horz)),
@@ -604,7 +604,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #1 right up
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
 					-Height + Radius * sinf(vert_stride * (start - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
@@ -612,7 +612,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #1 left down
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert)) * cosf(vert_stride * (start - horz - 1)),
 					-Height + Radius * sinf(vert_stride * (start - horz - 1)),
 					Radius * sinf(horz_stride * (vert)) * cosf(vert_stride * (start - horz - 1)),
@@ -620,7 +620,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #2 right up
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
 					-Height + Radius * sinf(vert_stride * (start - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz)),
@@ -628,7 +628,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorA.x, ColorA.y, ColorA.z, 1));
 
 				// Side #2 right down
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz - 1)),
 					-Height + Radius * sinf(vert_stride * (start - horz - 1)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (start - horz - 1)),
@@ -636,7 +636,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 					ColorB.x, ColorB.y, ColorB.z, 1));
 
 				// Side #2 left down
-				result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * (vert)) * cosf(vert_stride * (start - horz - 1)),
 					-Height + Radius * sinf(vert_stride * (start - horz - 1)),
 					Radius * sinf(horz_stride * (vert)) * cosf(vert_stride * (start - horz - 1)),
@@ -650,7 +650,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 	for (uint8_t i = 0; i < VerticalDetail; ++i)
 	{
 		// Down center (= sphere center)
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			0,
 			-Height - Radius,
 			0,
@@ -658,7 +658,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 			ColorA.x, ColorA.y, ColorA.z, 1));
 
 		// Down right down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			Radius * cosf(horz_stride * (i + 1)) * cosf(vert_stride * start),
 			-Height - Radius * sinf(vert_stride * start),
 			Radius * sinf(horz_stride * (i + 1)) * cosf(vert_stride * start),
@@ -667,7 +667,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 			ColorB.x, ColorB.y, ColorB.z, 1));
 
 		// Down left down
-		result.VertexData.vVertices.push_back(SVertexNonRiggedModel(
+		result.VertexData.AddVertex(SVertexModel(
 			Radius * cosf(horz_stride * i) * cosf(vert_stride * start),
 			-Height - Radius * sinf(vert_stride * start),
 			Radius * sinf(horz_stride * i) * cosf(vert_stride * start),
@@ -678,7 +678,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 	/*
 	** Index
 	*/
-	for (unsigned int i = 0; i < result.VertexData.GetCount() / 3; ++i)
+	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
 		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));

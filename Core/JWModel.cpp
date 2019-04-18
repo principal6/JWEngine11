@@ -15,128 +15,47 @@ void JWModel::Create(JWDX& DX, STRING& BaseDirectory) noexcept
 
 void JWModel::Destroy() noexcept
 {
-	JW_RELEASE(ModelVertexBuffer);
+	for (uint32_t i = 0; i < KVertexBufferCount; ++i)
+	{
+		JW_RELEASE(ModelVertexBuffer[i]);
+	}
 	JW_RELEASE(ModelIndexBuffer);
 
 	JW_RELEASE(NormalVertexBuffer);
 	JW_RELEASE(NormalIndexBuffer);
 }
 
-void JWModel::SetNonRiggedModelData(const SNonRiggedModelData& ModelData) noexcept
+void JWModel::CreateMeshBuffers(const SModelData& Data, ERenderType Type) noexcept
 {
-	if (m_RenderType != ERenderType::Invalid)
+	// Avoid duplicate creation
+	if (m_RenderType != ERenderType::Invalid) { return; }
+
+	if ((Type == ERenderType::Model_Static) || (Type == ERenderType::Model_Dynamic) || (Type == ERenderType::Model_Rigged))
 	{
-		return;
+		// Set render type
+		m_RenderType = Type;
+
+		// Save the model data
+		ModelData = Data;
+
+		// Create model's vertex & index buffers
+		CreateModelVertexIndexBuffers();
+
+		// Create normal's vertex & index buffers
+		CreateNormalVertexIndexBuffers();
 	}
-
-	m_RenderType = ERenderType::Model_Static;
-
-	// Save the model data
-	NonRiggedModelData = ModelData;
-
-	CreateModelVertexIndexBuffers();
-
-	// For normal line drawing
-	NormalData.VertexData.Clear();
-	NormalData.IndexData.Clear();
-
-	size_t iterator_vertex{};
-	XMFLOAT3 second_vertex_position{};
-	for (const auto& vertex : ModelData.VertexData.vVertices)
-	{
-		second_vertex_position.x = vertex.Position.x + vertex.Normal.x;
-		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
-		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
-
-		NormalData.VertexData.vVertices.push_back(SVertexNonRiggedModel(vertex.Position, KDefaultColorNormals));
-		NormalData.VertexData.vVertices.push_back(SVertexNonRiggedModel(second_vertex_position, KDefaultColorNormals));
-		NormalData.IndexData.vIndices.push_back(SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
-		++iterator_vertex;
-	}
-	
-	// Create vertex buffer for normals
-	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetByteSize(), NormalData.VertexData.GetPtrData(), &NormalVertexBuffer);
-
-	// Create index buffer for normals
-	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
-void JWModel::SetDynamicModelData(const SNonRiggedModelData& ModelData) noexcept
+void JWModel::CreateInstanceBuffer() noexcept
 {
-	if (m_RenderType != ERenderType::Invalid)
-	{
-		return;
-	}
+	// @important
+	ModelData.VertexData.InitializeInstance();
 
-	m_RenderType = ERenderType::Model_Dynamic;
-
-	// Save the model data
-	NonRiggedModelData = ModelData;
-
-	CreateModelVertexIndexBuffers();
-
-	// For normal line drawing
-	NormalData.VertexData.Clear();
-	NormalData.IndexData.Clear();
-
-	size_t iterator_vertex{};
-	XMFLOAT3 second_vertex_position{};
-	for (const auto& vertex : ModelData.VertexData.vVertices)
-	{
-		second_vertex_position.x = vertex.Position.x + vertex.Normal.x;
-		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
-		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
-
-		NormalData.VertexData.vVertices.push_back(SVertexNonRiggedModel(vertex.Position, KDefaultColorNormals));
-		NormalData.VertexData.vVertices.push_back(SVertexNonRiggedModel(second_vertex_position, KDefaultColorNormals));
-		NormalData.IndexData.vIndices.push_back(SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
-		++iterator_vertex;
-	}
-
-	// Create vertex buffer for normals
-	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetByteSize(), NormalData.VertexData.GetPtrData(), &NormalVertexBuffer);
-
-	// Create index buffer for normals
-	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
-}
-
-void JWModel::SetRiggedModelData(const SRiggedModelData& ModelData) noexcept
-{
-	if (m_RenderType != ERenderType::Invalid)
-	{
-		return;
-	}
-
-	m_RenderType = ERenderType::Model_Rigged;
-
-	// Save the model data
-	RiggedModelData = ModelData;
-
-	CreateModelVertexIndexBuffers();
-
-	// For normal line drawing
-	NormalData.VertexData.Clear();
-	NormalData.IndexData.Clear();
-
-	size_t iterator_vertex{};
-	XMFLOAT3 second_vertex_position{};
-	for (const auto& vertex : ModelData.VertexData.vVertices)
-	{
-		second_vertex_position.x = vertex.Position.x + vertex.Normal.x;
-		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
-		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
-
-		NormalData.VertexData.vVertices.push_back(SVertexNonRiggedModel(vertex.Position, KDefaultColorNormals));
-		NormalData.VertexData.vVertices.push_back(SVertexNonRiggedModel(second_vertex_position, KDefaultColorNormals));
-		NormalData.IndexData.vIndices.push_back(SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
-		++iterator_vertex;
-	}
-
-	// Create vertex buffer for normals
-	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetByteSize(), NormalData.VertexData.GetPtrData(), &NormalVertexBuffer);
-
-	// Create index buffer for normals
-	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
+	// Create vertex buffer #KVBIDInstancing
+	m_pDX->CreateDynamicVertexBuffer(
+		ModelData.VertexData.GetInstanceByteSize(),
+		ModelData.VertexData.GetInstancePtrData(),
+		&ModelVertexBuffer[KVBIDInstancing]);
 }
 
 auto JWModel::AddAnimationFromFile(STRING FileName) noexcept->JWModel*
@@ -144,7 +63,7 @@ auto JWModel::AddAnimationFromFile(STRING FileName) noexcept->JWModel*
 	if (m_RenderType == ERenderType::Model_Rigged)
 	{
 		JWAssimpLoader loader{};
-		loader.LoadAdditionalAnimationIntoRiggedModel(RiggedModelData, *m_pBaseDirectory + KAssetDirectory, FileName);
+		loader.LoadAdditionalAnimationIntoRiggedModel(ModelData, *m_pBaseDirectory + KAssetDirectory, FileName);
 	}
 
 	return this;
@@ -152,138 +71,130 @@ auto JWModel::AddAnimationFromFile(STRING FileName) noexcept->JWModel*
 
 auto JWModel::BakeAnimationTexture(SSizeInt TextureSize, STRING FileName) noexcept->JWModel*
 {
-		if (RiggedModelData.AnimationSet.vAnimations.size())
+	if (ModelData.AnimationSet.vAnimations.size())
+	{
+		SAnimationTextureData texture_data{};
+		auto& current_tex = texture_data.Texture;
+		auto& current_srv = texture_data.TextureSRV;
+		auto& current_tex_size = texture_data.TextureSize;
+
+		// Set texture format we want to use
+		DXGI_FORMAT texture_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+		// Describe the texture.
+		D3D11_TEXTURE2D_DESC texture_descrption{};
+		texture_descrption.Width = current_tex_size.Width = TextureSize.Width;
+		texture_descrption.Height = current_tex_size.Height = TextureSize.Height;
+		texture_descrption.MipLevels = 1;
+		texture_descrption.ArraySize = 1;
+		texture_descrption.Format = texture_format;
+		texture_descrption.SampleDesc.Count = 1;
+		texture_descrption.Usage = D3D11_USAGE_DYNAMIC;
+		texture_descrption.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		texture_descrption.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		texture_descrption.MiscFlags = 0;
+
+		// Create the texture.
+		if (SUCCEEDED(m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &current_tex)))
 		{
-			SAnimationTextureData texture_data{};
-			auto& current_tex = texture_data.Texture;
-			auto& current_srv = texture_data.TextureSRV;
-			auto& current_tex_size = texture_data.TextureSize;
+			// Describe the shader resource view.
+			D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
+			srv_description.Format = texture_format;
+			srv_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+			srv_description.Texture2D.MostDetailedMip = 0;
+			srv_description.Texture2D.MipLevels = 1;
 
-			// Set texture format we want to use
-			DXGI_FORMAT texture_format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			// Create the shader resource view.
+			m_pDX->GetDevice()->CreateShaderResourceView(current_tex, &srv_description, &current_srv);
 
-			// Describe the texture.
-			D3D11_TEXTURE2D_DESC texture_descrption{};
-			texture_descrption.Width = current_tex_size.Width = TextureSize.Width;
-			texture_descrption.Height = current_tex_size.Height = TextureSize.Height;
-			texture_descrption.MipLevels = 1;
-			texture_descrption.ArraySize = 1;
-			texture_descrption.Format = texture_format;
-			texture_descrption.SampleDesc.Count = 1;
-			texture_descrption.Usage = D3D11_USAGE_DYNAMIC;
-			texture_descrption.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-			texture_descrption.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-			texture_descrption.MiscFlags = 0;
+			auto& vec_animations{ ModelData.AnimationSet.vAnimations };
 
-			// Create the texture.
-			if (SUCCEEDED(m_pDX->GetDevice()->CreateTexture2D(&texture_descrption, nullptr, &current_tex)))
+			uint32_t texel_count{ TextureSize.Width * TextureSize.Height };
+			uint32_t texel_y_advance{ TextureSize.Width * KColorCountPerTexel };
+			uint32_t data_size{ texel_count * KColorCountPerTexel };
+			float* data = new float[data_size] {};
+
+			//
+			// Set animation set's info
+			// (with maximum bone count = KMaxBoneCount)
+			// data[0 ~ 3] = Animation ID 0 = TPose
+			//
+			// TPose frame count(=texel line count)
+			data[0] = 1;
+			// TPose texel start y index
+			data[1] = 1;
+			// Reserved
+			data[2] = 0;
+			// Reserved
+			data[3] = 0;
+
+			for (uint16_t iter_anim = 0; iter_anim < vec_animations.size(); iter_anim++)
 			{
-				// Describe the shader resource view.
-				D3D11_SHADER_RESOURCE_VIEW_DESC srv_description{};
-				srv_description.Format = texture_format;
-				srv_description.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-				srv_description.Texture2D.MostDetailedMip = 0;
-				srv_description.Texture2D.MipLevels = 1;
+				// current animation's frame count(=texel line count)
+				data[4 + iter_anim * 4] = static_cast<float>(vec_animations[iter_anim].TotalFrameCount);
 
-				// Create the shader resource view.
-				m_pDX->GetDevice()->CreateShaderResourceView(current_tex, &srv_description, &current_srv);
+				// current animation's texel start y index
+				data[4 + iter_anim * 4 + 1] = data[iter_anim * 4] + data[1 + iter_anim * 4];
 
-				auto& vec_animations{ RiggedModelData.AnimationSet.vAnimations };
-
-				uint32_t texel_count{ TextureSize.Width * TextureSize.Height };
-				uint32_t texel_y_advance{ TextureSize.Width * KColorCountPerTexel };
-				uint32_t data_size{ texel_count * KColorCountPerTexel };
-				float* data = new float[data_size] {};
-
-				//
-				// Set animation set's info
-				// (with maximum bone count = KMaxBoneCount)
-				// data[0 ~ 3] = Animation ID 0 = TPose
-				//
-				// TPose frame count(=texel line count)
-				data[0] = 1;
-				// TPose texel start y index
-				data[1] = 1;
 				// Reserved
-				data[2] = 0;
+				//data[4 + iter_anim * 4 + 2] = 0;
+
 				// Reserved
-				data[3] = 0;
-
-				for (uint16_t iter_anim = 0; iter_anim < vec_animations.size(); iter_anim++)
-				{
-					// current animation's frame count(=texel line count)
-					data[4 + iter_anim * 4] = static_cast<float>(vec_animations[iter_anim].TotalFrameCount);
-
-					// current animation's texel start y index
-					data[4 + iter_anim * 4 + 1] = data[iter_anim * 4] + data[1 + iter_anim * 4];
-
-					// Reserved
-					//data[4 + iter_anim * 4 + 2] = 0;
-
-					// Reserved
-					//data[4 + iter_anim * 4 + 3] = 0;
-				}
-
-				// Bake animations into the texture
-				uint32_t start_index{ texel_y_advance };
-				XMMATRIX frame_matrices[KMaxBoneCount]{};
-
-				// TPose into FrameMatrices
-				SaveTPoseIntoFrameMatrices(frame_matrices, RiggedModelData, RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
-
-				// Bake FrameMatrices into Texture
-				BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
-
-				// Update start index
-				start_index += texel_y_advance;
-
-				for (uint16_t anim_index = 0; anim_index < vec_animations.size(); anim_index++)
-				{
-					// This loop iterates each animation, starting from vec_animations[0]
-
-					float frame_time{};
-
-					for (uint16_t frame_index = 0; frame_index < vec_animations[anim_index].TotalFrameCount; frame_index++)
-					{
-						frame_time = static_cast<float>(frame_index) * vec_animations[anim_index].AnimationTicksPerGameTick;
-
-						// Current frame into FrameMatrices
-						SaveAnimationFrameIntoFrameMatrices(frame_matrices, anim_index, frame_time,
-							RiggedModelData, RiggedModelData.NodeTree.vNodes[0], XMMatrixIdentity());
-
-						// Bake FrameMatrices into Texture
-						BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
-
-						// Update start index
-						start_index += texel_y_advance;
-					}
-				}
-
-				// Map data into texture
-				D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
-				if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(current_tex, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
-				{
-					memcpy(mapped_subresource.pData, data, sizeof(float) * data_size);
-
-					m_pDX->GetDeviceContext()->Unmap(current_tex, 0);
-				}
-
-				JW_DELETE_ARRAY(data);
-
-				// Save texture into file
-				WSTRING w_fn = StringToWstring(*m_pBaseDirectory + KAssetDirectory + FileName);
-				SaveDDSTextureToFile(m_pDX->GetDeviceContext(), current_tex, w_fn.c_str());
-
-				JW_RELEASE(current_tex);
-				JW_RELEASE(current_srv);
+				//data[4 + iter_anim * 4 + 3] = 0;
 			}
-		}
 
+			// Bake animations into the texture
+			uint32_t start_index{ texel_y_advance };
+			XMMATRIX frame_matrices[KMaxBoneCount]{};
+
+			// TPose into FrameMatrices
+			SaveTPoseIntoFrameMatrices(frame_matrices, ModelData, ModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+
+			// Bake FrameMatrices into Texture
+			BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
+
+			// Update start index
+			start_index += texel_y_advance;
+
+			for (uint16_t anim_index = 0; anim_index < vec_animations.size(); anim_index++)
+			{
+				// This loop iterates each animation, starting from vec_animations[0]
+
+				float frame_time{};
+
+				for (uint16_t frame_index = 0; frame_index < vec_animations[anim_index].TotalFrameCount; frame_index++)
+				{
+					frame_time = static_cast<float>(frame_index) * vec_animations[anim_index].AnimationTicksPerGameTick;
+
+					// Current frame into FrameMatrices
+					SaveAnimationFrameIntoFrameMatrices(frame_matrices, anim_index, frame_time,
+						ModelData, ModelData.NodeTree.vNodes[0], XMMatrixIdentity());
+
+					// Bake FrameMatrices into Texture
+					BakeCurrentFrameIntoTexture(start_index, frame_matrices, data);
+
+					// Update start index
+					start_index += texel_y_advance;
+				}
+			}
+
+			// Map data into texture
+			m_pDX->UpdateDynamicResource(current_tex, data, sizeof(float)* data_size);
+
+			// Save texture into file
+			WSTRING w_fn = StringToWstring(*m_pBaseDirectory + KAssetDirectory + FileName);
+			SaveDDSTextureToFile(m_pDX->GetDeviceContext(), current_tex, w_fn.c_str());
+
+			JW_DELETE_ARRAY(data);
+			JW_RELEASE(current_tex);
+			JW_RELEASE(current_srv);
+		}
+	}
 
 	return this;
 }
 
-PRIVATE void JWModel::SaveTPoseIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const SRiggedModelData& ModelData,
+PRIVATE void JWModel::SaveTPoseIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const SModelData& ModelData,
 	const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept
 {
 	XMMATRIX accumulation = CurrentNode.Transformation * Accumulated;
@@ -305,7 +216,7 @@ PRIVATE void JWModel::SaveTPoseIntoFrameMatrices(XMMATRIX* OutFrameMatrices, con
 }
 
 PRIVATE void JWModel::SaveAnimationFrameIntoFrameMatrices(XMMATRIX* OutFrameMatrices, const int AnimationID, const float FrameTime,
-	const SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept
+	const SModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept
 {
 	XMMATRIX global_transformation = CurrentNode.Transformation * Accumulated;
 
@@ -385,51 +296,62 @@ PRIVATE void JWModel::BakeCurrentFrameIntoTexture(uint32_t StartIndex, const XMM
 	}
 }
 
-
 PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 {
-	switch (m_RenderType)
+	// Create vertex buffer #KVBIDModel
+	m_pDX->CreateStaticVertexBuffer(
+		ModelData.VertexData.GetVertexModelByteSize(), ModelData.VertexData.GetVertexModelPtrData(), &ModelVertexBuffer[KVBIDModel]);
+
+	if (m_RenderType == ERenderType::Model_Rigged)
 	{
-	case JWEngine::ERenderType::Model_Static:
-		// Create vertex buffer
-		m_pDX->CreateStaticVertexBuffer(NonRiggedModelData.VertexData.GetByteSize(), NonRiggedModelData.VertexData.GetPtrData(), &ModelVertexBuffer);
-
-		// Create index buffer
-		m_pDX->CreateIndexBuffer(NonRiggedModelData.IndexData.GetByteSize(), NonRiggedModelData.IndexData.GetPtrData(), &ModelIndexBuffer);
-
-		break;
-	case JWEngine::ERenderType::Model_Dynamic:
-		// Create vertex buffer
-		m_pDX->CreateDynamicVertexBuffer(NonRiggedModelData.VertexData.GetByteSize(), NonRiggedModelData.VertexData.GetPtrData(), &ModelVertexBuffer);
-
-		// Create index buffer
-		m_pDX->CreateIndexBuffer(NonRiggedModelData.IndexData.GetByteSize(), NonRiggedModelData.IndexData.GetPtrData(), &ModelIndexBuffer);
-
-		break;
-	case JWEngine::ERenderType::Model_Rigged:
-		// Create vertex buffer
-		m_pDX->CreateStaticVertexBuffer(RiggedModelData.VertexData.GetByteSize(), RiggedModelData.VertexData.GetPtrData(), &ModelVertexBuffer);
-
-		// Create index buffer
-		m_pDX->CreateIndexBuffer(RiggedModelData.IndexData.GetByteSize(), RiggedModelData.IndexData.GetPtrData(), &ModelIndexBuffer);
-
-		break;
-	default:
-		break;
+		// Create vertex buffer #KVBIDRigging
+		m_pDX->CreateStaticVertexBuffer(
+			ModelData.VertexData.GetVertexRiggingByteSize(), ModelData.VertexData.GetVertexRiggingPtrData(), &ModelVertexBuffer[KVBIDRigging]);
 	}
+
+	// Create index buffer
+	m_pDX->CreateIndexBuffer(ModelData.IndexData.GetByteSize(), ModelData.IndexData.GetPtrData(), &ModelIndexBuffer);
+}
+
+PRIVATE void JWModel::CreateNormalVertexIndexBuffers() noexcept
+{
+	// Clear data
+	NormalData.VertexData.Clear();
+	NormalData.IndexData.Clear();
+
+	// Calculate normal line positions
+	size_t iterator_vertex{};
+	XMFLOAT3 second_vertex_position{};
+	for (const auto& vertex : ModelData.VertexData.vVerticesModel)
+	{
+		second_vertex_position.x = vertex.Position.x + vertex.Normal.x;
+		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
+		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
+
+		NormalData.VertexData.AddVertex(SVertexModel(vertex.Position, KDefaultColorNormals));
+		NormalData.VertexData.AddVertex(SVertexModel(second_vertex_position, KDefaultColorNormals));
+		NormalData.IndexData.vIndices.push_back(SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+		++iterator_vertex;
+	}
+
+	// Create vertex buffer for normals
+	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetVertexModelByteSize(), NormalData.VertexData.GetVertexModelPtrData(), &NormalVertexBuffer);
+
+	// Create index buffer for normals
+	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
 auto JWModel::SetVertex(uint32_t VertexIndex, XMFLOAT3 Position, XMFLOAT4 Color) noexcept->JWModel*
 {
 	if (m_RenderType == ERenderType::Model_Dynamic)
 	{
-		if (VertexIndex > NonRiggedModelData.VertexData.GetCount())
+		if (VertexIndex > ModelData.VertexData.GetVertexCount())
 		{
 			return this;
 		}
 
-		NonRiggedModelData.VertexData.vVertices[VertexIndex].Position = Position;
-		NonRiggedModelData.VertexData.vVertices[VertexIndex].ColorDiffuse = Color;
+		ModelData.VertexData.vVerticesModel[VertexIndex].Position = Position;
+		ModelData.VertexData.vVerticesModel[VertexIndex].ColorDiffuse = Color;
 	}
 
 	return this;
@@ -439,12 +361,8 @@ void JWModel::UpdateModel() noexcept
 {
 	if (m_RenderType == ERenderType::Model_Dynamic)
 	{
-		D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
-		if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(ModelVertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
-		{
-			memcpy(mapped_subresource.pData, NonRiggedModelData.VertexData.GetPtrData(), NonRiggedModelData.VertexData.GetByteSize());
-
-			m_pDX->GetDeviceContext()->Unmap(ModelVertexBuffer, 0);
-		}
+		m_pDX->UpdateDynamicResource(ModelVertexBuffer[KVBIDModel],
+			ModelData.VertexData.GetVertexModelPtrData(),
+			ModelData.VertexData.GetVertexModelByteSize());
 	}
 }

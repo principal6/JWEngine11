@@ -35,20 +35,20 @@ namespace JWEngine
 	class JWAssimpLoader final
 	{
 	public:
-		auto LoadNonRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SNonRiggedModelData;
+		auto LoadNonRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SModelData;
 
-		auto LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SRiggedModelData;
+		auto LoadRiggedModel(STRING Directory, STRING ModelFileName) noexcept->SModelData;
 
-		void LoadAdditionalAnimationIntoRiggedModel(SRiggedModelData& ModelData, STRING Directory, STRING ModelFileName) noexcept;
+		void LoadAdditionalAnimationIntoRiggedModel(SModelData& ModelData, STRING Directory, STRING ModelFileName) noexcept;
 
 	private:
 		void ExtractNodeTree(const aiScene* Scene, const aiNode* Node, int ParentNodeID, SModelNodeTree& OutNodeTree) noexcept;
 
-		void BuildMeshesAndBonesFromNodes(const STRING Directory, const aiScene* Scene, SRiggedModelData& OutModelData) noexcept;
+		void BuildMeshesAndBonesFromNodes(const STRING Directory, const aiScene* Scene, SModelData& OutModelData) noexcept;
 
 		void ExtractBone(const aiBone* paiBone, int VertexOffset, SModelBoneTree& OutBoneTree) noexcept;
 
-		void MatchBonesAndVertices(const SModelBoneTree& BoneTree, SVertexDataRiggedModel& OutVertexData) noexcept;
+		void MatchBonesAndVertices(const SModelBoneTree& BoneTree, SVertexDataModel& OutVertexData) noexcept;
 
 		void MatchBonesAndNodes(const SModelBoneTree& BoneTree, SModelNodeTree& OutNodeTree) noexcept;
 

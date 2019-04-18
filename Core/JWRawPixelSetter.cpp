@@ -96,11 +96,5 @@ void JWRawPixelSetter::Draw() noexcept
 
 PRIVATE void JWRawPixelSetter::UpdateRawTexture() noexcept
 {
-	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
-	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_RawTexture2D, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
-	{
-		memcpy(mapped_subresource.pData, m_RawPixelData.GetPtrData(), m_RawPixelData.GetByteSize());
-
-		m_pDX->GetDeviceContext()->Unmap(m_RawTexture2D, 0);
-	}
+	m_pDX->UpdateDynamicResource(m_RawTexture2D, m_RawPixelData.GetPtrData(), m_RawPixelData.GetByteSize());
 }

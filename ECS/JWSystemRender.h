@@ -9,6 +9,7 @@ namespace JWEngine
 {
 	class JWCamera;
 	class JWEntity;
+	class JWECS;
 
 	enum EFLAGRenderOption : uint16_t
 	{
@@ -81,7 +82,7 @@ namespace JWEngine
 				RenderType = PtrModel->GetRenderType();
 
 				// @important!!
-				if (RenderType == ERenderType::Model_Rigged) { VertexShader = EVertexShader::VSAnim; }
+				VertexShader = EVertexShader::VSBase;
 			}
 
 			return this;
@@ -128,11 +129,11 @@ namespace JWEngine
 			{
 				if (NextAnimationID == -1) { NextAnimationID = AnimationID; }
 
-				if (PtrModel->RiggedModelData.AnimationSet.vAnimations.size())
+				if (PtrModel->ModelData.AnimationSet.vAnimations.size())
 				{
 					if (AnimationID == (uint32_t)-1) { AnimationID = 0; }
 
-					AnimationID = min(AnimationID, static_cast<uint32_t>(PtrModel->RiggedModelData.AnimationSet.vAnimations.size()));
+					AnimationID = min(AnimationID, static_cast<uint32_t>(PtrModel->ModelData.AnimationSet.vAnimations.size()));
 				}
 				else
 				{
@@ -171,11 +172,14 @@ namespace JWEngine
 		JWSystemRender() = default;
 		~JWSystemRender() = default;
 
-		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
+		void Create(JWECS& ECS, JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
 		void Destroy() noexcept;
 
 		auto CreateComponent() noexcept->SComponentRender&;
 		void DestroyComponent(SComponentRender& Component) noexcept;
+
+		void AddBoundingVolumeInstance(float Radius, const XMFLOAT3& Translation) noexcept;
+		void UpdateBoundingVolume() noexcept;
 
 		void Execute() noexcept;
 
@@ -185,6 +189,9 @@ namespace JWEngine
 		void ToggleNormalDrawing() noexcept;
 		void ToggleLighting() noexcept;
 
+		/// Object getter
+		auto& BoundingVolume() noexcept { return m_BoundingVolume; };
+
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;
 
@@ -192,22 +199,30 @@ namespace JWEngine
 		void AnimateOnCPU(SComponentRender& Component) noexcept;
 
 		void UpdateNodeAnimationIntoBones(bool UseInterpolation, SAnimationState& AnimationState,
-			SRiggedModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
-		void UpdateNodeTPoseIntoBones(float AnimationTime, SRiggedModelData& ModelData,
+			SModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
+		void UpdateNodeTPoseIntoBones(float AnimationTime, SModelData& ModelData,
 			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
 
 		void Draw(SComponentRender& Component) noexcept;
 		void DrawNormals(SComponentRender& Component) noexcept;
+		void DrawBoundingVolumesNoInstancing(SComponentRender& Component) noexcept;
+		void DrawInstancedBoundingVolume() noexcept;
 
 	private:
 		VECTOR<SComponentRender*>	m_vpComponents;
+
+		JWECS*						m_pECS{};
 		JWDX*						m_pDX{};
 		JWCamera*					m_pCamera{};
 		STRING						m_BaseDirectory{};
+
 		SVSCBSpace					m_VSCBSpace{};
 		SVSCBFlags					m_VSCBFlags{};
-		SVSCBCPUAnimation			m_VSCBCPUAnimation{};
-		SVSCBGPUAnimation			m_VSCBGPUAnimation{};
+		SVSCBCPUAnimationData		m_VSCBCPUAnimation{};
+		SVSCBGPUAnimationData		m_VSCBGPUAnimation{};
+
+		// Bounding volume
+		JWModel						m_BoundingVolume{};
 
 		ERasterizerState			m_UniversalRasterizerState{ ERasterizerState::SolidNoCull };
 		ERasterizerState			m_OldUniversalRasterizerState{ ERasterizerState::SolidNoCull };

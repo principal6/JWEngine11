@@ -26,7 +26,7 @@ cbuffer cbPointlight
 
 Texture2D	CurrentTexture	: register(t0);
 
-float4 main(VS_OUTPUT input) : SV_TARGET
+float4 main(VS_OUTPUT_MODEL input) : SV_TARGET
 {
 	float4 final_color = input.Diffuse;
 

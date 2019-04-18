@@ -226,13 +226,7 @@ void JWInstantText::RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 
 void JWInstantText::EndRendering() noexcept
 {
 	// Update vertex buffer
-	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
-	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_subresource)))
-	{
-		memcpy(mapped_subresource.pData, m_VertexData.GetPtrData(), m_VertexData.GetByteSize());
-
-		m_pDX->GetDeviceContext()->Unmap(m_VertexBuffer, 0);
-	}
+	m_pDX->UpdateDynamicResource(m_VertexBuffer, m_VertexData.GetPtrData(), m_VertexData.GetByteSize());
 
 	// Set IA primitive topology
 	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

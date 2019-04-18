@@ -7,13 +7,14 @@ namespace JWEngine
 	class JWWin32Window;
 	class JWCamera;
 	class JWEntity;
+	class JWECS;
 
 	struct SComponentPhysics
 	{
 		JWEntity*	PtrEntity{};
 		uint32_t	ComponentID{};
 
-		float		BoundingSphereRadious{ 1.0f };
+		float		BoundingSphereRadius{};
 	};
 
 	class JWSystemPhysics
@@ -22,11 +23,14 @@ namespace JWEngine
 		JWSystemPhysics() = default;
 		~JWSystemPhysics() = default;
 
-		void Create(JWWin32Window& Window, JWCamera& Camera) noexcept;
+		void Create(JWECS& ECS, const JWWin32Window& Window, const JWCamera& Camera) noexcept;
 		void Destroy() noexcept;
 
 		auto CreateComponent() noexcept->SComponentPhysics&;
 		void DestroyComponent(SComponentPhysics& Component) noexcept;
+
+		/// Component setting
+		void SetBoundingSphereRadius(SComponentPhysics* pComponent, float Radius) noexcept;
 
 		void Pick() noexcept;
 
@@ -54,21 +58,22 @@ namespace JWEngine
 	private:
 		VECTOR<SComponentPhysics*>	m_vpComponents;
 
-		JWWin32Window*			m_pWindow{};
-		JWCamera*				m_pCamera{};
+		JWECS*						m_pECS{};
+		const JWWin32Window*		m_pWindow{};
+		const JWCamera*				m_pCamera{};
 
-		HWND					m_hWnd{};
-		float					m_WindowWidth{};
-		float					m_WindowHeight{};
+		HWND						m_hWnd{};
+		float						m_WindowWidth{};
+		float						m_WindowHeight{};
 
-		POINT					m_MouseClientPosition{};
-		XMFLOAT2				m_NormalizedMousePosition{};
-		XMVECTOR				m_PickingRayViewSpacePosition{ XMVectorSet(0, 0, 0, 0) };
-		XMVECTOR				m_PickingRayViewSpaceDirection{};
-		XMVECTOR				m_PickingRayOrigin{};
-		XMVECTOR				m_PickingRayDirection{};
-		XMVECTOR				m_PickedTriangle[3]{};
-		STRING					m_PickedEntityName{};
-		JWEntity*				m_pPickedEntity{};
+		POINT						m_MouseClientPosition{};
+		XMFLOAT2					m_NormalizedMousePosition{};
+		XMVECTOR					m_PickingRayViewSpacePosition{ XMVectorSet(0, 0, 0, 0) };
+		XMVECTOR					m_PickingRayViewSpaceDirection{};
+		XMVECTOR					m_PickingRayOrigin{};
+		XMVECTOR					m_PickingRayDirection{};
+		XMVECTOR					m_PickedTriangle[3]{};
+		STRING						m_PickedEntityName{};
+		JWEntity*					m_pPickedEntity{};
 	};
 };

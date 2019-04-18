@@ -13,6 +13,7 @@ namespace JWEngine
 
 		XMFLOAT3	Position{};
 		XMFLOAT3	ScalingFactor{ 1.0f, 1.0f, 1.0f };
+		// Pitch/Yaw/Roll orientation
 		// m_Orientation.x = Pitch = Y-Z rotation (nod)
 		// m_Orientation.y = Yaw   = X-Z rotation (turn)
 		// m_Orientation.z = Roll  = Y-X rotation (tilt)

@@ -159,10 +159,15 @@ namespace JWEngine
 	
 	using namespace DirectX;
 
+	static constexpr uint8_t KVertexBufferCount = 3;
+	static constexpr uint8_t KVBIDModel = 0;
+	static constexpr uint8_t KVBIDRigging = 1;
+	static constexpr uint8_t KVBIDInstancing = 2;
 	static constexpr uint8_t KMaxBoneCount{ 50 };
 	static constexpr uint8_t KColorCountPerTexel{ 4 };
 	static constexpr uint8_t KMaxBoneCountPerVertex{ 4 };
 	static constexpr uint16_t KMaxFileLength{ 255 };
+	static constexpr uint32_t KMaxInstanceCount{ 1000 };
 	static constexpr uint16_t KInputKeyCount{ 256 };
 	static constexpr const char* KAssetDirectory{ "Asset\\" };
 	static constexpr float KAnimationTickBase{ 30.0f };
@@ -207,7 +212,7 @@ namespace JWEngine
 		float G{};
 		float B{};
 	};
-
+	
 	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionText[] =
 	{
 		{ "POSITION"	, 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -215,27 +220,26 @@ namespace JWEngine
 		{ "COLOR"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
-	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionBase[] =
+	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionModel[] =
 	{
-		{ "POSITION"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD"	, 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL"		, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Diffuse
-		{ "COLOR"		, 1, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Specular
-	};
-
-	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionAnim[] =
-	{
+		// Vertex buffer #0 (VertexModel)
 		{ "POSITION"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD"	, 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"		, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "COLOR"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Diffuse
 		{ "COLOR"		, 1, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Specular
 
-		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT	, 0, 64, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // int BoneID[4]
-		{ "BLENDWEIGHT"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 80, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // float Weight[4]
+		// Vertex buffer #1 (VertexRigging)
+		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT	, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // int BoneID[4]
+		{ "BLENDWEIGHT"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 1, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // float Weight[4]
+
+		// Vertex buffer #2 (Instance buffer)
+		{ "INST_WORLD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		{ "INST_WORLD", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		{ "INST_WORLD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		{ "INST_WORLD", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 48, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 	};
-	
+
 	struct SVertexText
 	{
 		SVertexText() {};
@@ -257,32 +261,32 @@ namespace JWEngine
 		XMFLOAT4 Color{ 0.0f, 0.0f, 0.0f, 1.0f };
 	};
 	
-	struct SVertexNonRiggedModel
+	struct SVertexModel
 	{
-		SVertexNonRiggedModel() {};
-		SVertexNonRiggedModel(XMFLOAT3 _Position) :
+		SVertexModel() {};
+		SVertexModel(XMFLOAT3 _Position) :
 			Position{ _Position } {};
-		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
+		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
+		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
-		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
+		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
+		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SVertexNonRiggedModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
+		SVertexModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
 			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
-		SVertexNonRiggedModel(float x, float y, float z) :
+		SVertexModel(float x, float y, float z) :
 			Position{ x, y, z } {};
-		SVertexNonRiggedModel(float x, float y, float z, float u, float v) :
+		SVertexModel(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		SVertexNonRiggedModel(float x, float y, float z, float r, float g, float b, float a) :
+		SVertexModel(float x, float y, float z, float r, float g, float b, float a) :
 			Position{ x, y, z }, ColorDiffuse{ r, g, b, a } {};
-		SVertexNonRiggedModel(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
+		SVertexModel(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, ColorDiffuse{ r, g, b, a } {};
-		SVertexNonRiggedModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
+		SVertexModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
-		SVertexNonRiggedModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
+		SVertexModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
@@ -292,41 +296,15 @@ namespace JWEngine
 		XMFLOAT4 Specular{};
 	};
 	
-	struct SVertexRiggedModel
+	struct SVertexRigging
 	{
-		SVertexRiggedModel() {};
-		SVertexRiggedModel(XMFLOAT3 _Position) :
-			Position{ _Position } {};
-		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
-		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
-		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
-		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SVertexRiggedModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
-			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
-		SVertexRiggedModel(float x, float y, float z) :
-			Position{ x, y, z } {};
-		SVertexRiggedModel(float x, float y, float z, float u, float v) :
-			Position{ x, y, z }, TextureCoordinates{ u, v } {};
-		SVertexRiggedModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
-			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
-		SVertexRiggedModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
-			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
+		SVertexRigging() {};
 
-		XMFLOAT3 Position{};
-		XMFLOAT2 TextureCoordinates{};
-		XMFLOAT3 Normal{};
-		XMFLOAT4 ColorDiffuse{ 0.0f, 0.0f, 0.0f, 1.0f };
-		XMFLOAT4 Specular{};
+		int		BoneIndex[KMaxBoneCountPerVertex]{}; // BLENDINDICES
+		float	BoneWeight[KMaxBoneCountPerVertex]{}; // BLENDWEIGHT
 
-		int BoneIndex[KMaxBoneCountPerVertex]{}; // BLENDINDICES
-		float BoneWeight[KMaxBoneCountPerVertex]{}; // BLENDWEIGHT
-
-		// From here below, data will NOT be sent to Intput Merger
-		int BoneCount{};
+		// From here below, data will NOT be sent to Intput Assembler
+		int		BoneCount{};
 
 		void AddBone(int _BoneIndex, float _BoneWeight)
 		{
@@ -338,6 +316,11 @@ namespace JWEngine
 				++BoneCount;
 			}
 		}
+	};
+
+	struct SModelInstanceData
+	{
+		XMMATRIX World{};
 	};
 
 	struct SVertexDataText
@@ -354,35 +337,86 @@ namespace JWEngine
 		auto GetPtrOffset() const noexcept { return &Offset; };
 		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
 	};
-
-	struct SVertexDataNonRiggedModel
+	
+	struct SVertexDataModel
 	{
-		VECTOR<SVertexNonRiggedModel> vVertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SVertexNonRiggedModel)) };
-		UINT Offset{};
+		VECTOR<SVertexModel>		vVerticesModel;
+		VECTOR<SVertexRigging>		vVerticesRigging;
+		VECTOR<SModelInstanceData>	vInstances;
 
-		void Clear() noexcept { vVertices.clear(); };
-		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexNonRiggedModel)); };
-		auto GetPtrData() const noexcept { return &vVertices[0]; };
-		auto GetPtrStride() const noexcept { return &Stride; };
-		auto GetPtrOffset() const noexcept { return &Offset; };
-		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
-	};
+		UINT						Strides[KVertexBufferCount]
+		{ static_cast<UINT>(sizeof(SVertexModel)), static_cast<UINT>(sizeof(SVertexRigging)), static_cast<UINT>(sizeof(SModelInstanceData)) };
+		UINT						Offsets[KVertexBufferCount]{ 0, 0, 0 };
 
-	struct SVertexDataRiggedModel
-	{
-		VECTOR<SVertexRiggedModel> vVertices;
-		UINT Stride{ static_cast<UINT>(sizeof(SVertexRiggedModel)) };
-		UINT Offset{};
+		uint32_t					InstanceCount{};
 
-		void Clear() noexcept { vVertices.clear(); };
-		auto GetCount() const noexcept { return static_cast<UINT>(vVertices.size()); };
-		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(SVertexRiggedModel)); };
-		auto GetPtrData() const noexcept { return &vVertices[0]; };
-		auto GetPtrStride() const noexcept { return &Stride; };
-		auto GetPtrOffset() const noexcept { return &Offset; };
-		void EmptyData() noexcept { memset(&vVertices[0], 0, GetByteSize()); };
+		void Clear() noexcept 
+		{
+			vVerticesModel.clear(); 
+			vVerticesRigging.clear();
+
+			vInstances.clear();
+			InstanceCount = 0;
+		};
+
+		void AddVertex(const SVertexModel& Model, bool UseRigging = false) noexcept
+		{
+			vVerticesModel.emplace_back(Model);
+
+			if (UseRigging)
+			{
+				vVerticesRigging.resize(vVerticesModel.size());
+			}
+		}
+
+		inline void InitializeInstance() noexcept
+		{
+			if (vInstances.size() == 0)
+			{
+				vInstances.resize(KMaxInstanceCount);
+			}
+		}
+
+		inline auto PushInstance() noexcept
+		{
+			if (InstanceCount < KMaxInstanceCount)
+			{
+				++InstanceCount;
+			}
+
+			return &vInstances[InstanceCount - 1];
+		}
+
+		inline void PopInstance() noexcept
+		{
+			if (InstanceCount)
+			{
+				--InstanceCount;
+			}
+		}
+
+		auto GetVertexCount() const noexcept { return static_cast<UINT>(vVerticesModel.size()); };
+		auto GetInstanceCount() const noexcept { return InstanceCount; };
+
+		auto GetVertexModelByteSize() const noexcept { return static_cast<UINT>(GetVertexCount() * sizeof(SVertexModel)); };
+		auto GetVertexModelPtrData() const noexcept { return &vVerticesModel[0]; };
+
+		auto GetVertexRiggingByteSize() const noexcept { return static_cast<UINT>(GetVertexCount() * sizeof(SVertexRigging)); };
+		auto GetVertexRiggingPtrData() const noexcept { return &vVerticesRigging[0]; };
+
+		// @important ( KMaxInstanceCount )
+		auto GetInstanceByteSize() const noexcept { return static_cast<UINT>(KMaxInstanceCount * sizeof(SModelInstanceData)); };
+		auto GetInstancePtrData() const noexcept { return &vInstances[0]; };
+
+		auto GetPtrStrides() const noexcept { return Strides; };
+		auto GetPtrOffsets() const noexcept { return Offsets; };
+
+		void EmptyData() noexcept 
+		{ 
+			memset(&vVerticesModel[0], 0, GetVertexModelByteSize()); 
+			memset(&vVerticesRigging[0], 0, GetVertexRiggingByteSize());
+			memset(&vInstances[0], 0, GetInstanceByteSize());
+		};
 	};
 
 	struct SIndexTriangle
@@ -561,25 +595,16 @@ namespace JWEngine
 		VECTOR<SModelAnimation> vAnimations;
 	};
 
-	// StaticModel & Image2D
-	struct SNonRiggedModelData
+	// StaticModel, DynamicModel, RiggedModel, Image2D
+	struct SModelData
 	{
-		SVertexDataNonRiggedModel VertexData{};
-		SIndexDataTriangle IndexData{};
-
-		bool HasTexture{ false };
-		WSTRING TextureFileNameW{};
-	};
-
-	// RiggedModel
-	struct SRiggedModelData
-	{
-		SVertexDataRiggedModel VertexData{};
+		SVertexDataModel VertexData{};
 		SIndexDataTriangle IndexData{};
 
 		bool HasTexture{ false };
 		WSTRING TextureFileNameW{};
 
+		// Rigging data
 		SModelNodeTree NodeTree{};
 		SModelBoneTree BoneTree{};
 		SModelAnimationSet AnimationSet{};
@@ -595,7 +620,7 @@ namespace JWEngine
 	// Line2D & Line3D
 	struct SLineModelData
 	{
-		SVertexDataNonRiggedModel VertexData{};
+		SVertexDataModel VertexData{};
 		SIndexDataLine IndexData{};
 	};
 	
@@ -608,27 +633,37 @@ namespace JWEngine
 		XMMATRIX	WVP{};
 		XMMATRIX	World{};
 	};
+	
+	enum EFLAGVS : uint32_t
+	{
+		JWFlagVS_UseAnimation = 0x01,
+
+		// If this bit is off(zero) then the model will be animated on CPU
+		JWFlagVS_AnimateOnGPU = 0x02,
+
+		JWFlagVS_Instanced = 0x04,
+	};
 
 	struct SVSCBFlags
 	{
 		SVSCBFlags() {};
 
-		BOOL	ShouldUseGPUAnimation{ FALSE };
-		float	pad[3]{};
+		uint32_t	FlagVS{};
+		float		pad[3]{};
 	};
 	
-	struct SVSCBCPUAnimation
+	struct SVSCBCPUAnimationData
 	{
-		SVSCBCPUAnimation() {};
+		SVSCBCPUAnimationData() {};
 
 		XMMATRIX	TransformedBoneMatrices[KMaxBoneCount]{};
 	};
 
-	struct SVSCBGPUAnimation
+	// Animation info for GPU
+	struct SVSCBGPUAnimationData
 	{
-		SVSCBGPUAnimation() {};
-
-		// Animation info for GPU
+		SVSCBGPUAnimationData() {};
+		
 		uint32_t	AnimationID{};
 		uint32_t	CurrFrame{};
 		uint32_t	NextFrame{};

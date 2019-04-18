@@ -6,7 +6,7 @@ cbuffer cbWorld
 	float4x4 World;
 };
 
-SKY_MAP_OUTPUT main(VS_INPUT_STATIC input)
+SKY_MAP_OUTPUT main(VS_INPUT_MODEL input)
 {
 	SKY_MAP_OUTPUT output;
 

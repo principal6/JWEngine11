@@ -1,4 +1,3 @@
-#include "JWSystemLight.h"
 #include "JWEntity.h"
 #include "../Core/JWDX.h"
 
