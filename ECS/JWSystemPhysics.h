@@ -15,6 +15,7 @@ namespace JWEngine
 		uint32_t	ComponentID{};
 
 		float		BoundingSphereRadius{};
+		XMFLOAT3	BoundingSphereCenter{};
 	};
 
 	class JWSystemPhysics
@@ -30,7 +31,7 @@ namespace JWEngine
 		void DestroyComponent(SComponentPhysics& Component) noexcept;
 
 		/// Component setting
-		void SetBoundingSphereRadius(SComponentPhysics* pComponent, float Radius) noexcept;
+		void CreateBoundingSphere(SComponentPhysics* pComponent, float Radius, const XMFLOAT3& CenterOffset = XMFLOAT3(0, 0, 0)) noexcept;
 
 		void Pick() noexcept;
 

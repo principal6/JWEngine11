@@ -70,7 +70,7 @@ void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
-void JWSystemPhysics::SetBoundingSphereRadius(SComponentPhysics* pComponent, float Radius) noexcept
+void JWSystemPhysics::CreateBoundingSphere(SComponentPhysics* pComponent, float Radius, const XMFLOAT3& CenterOffset) noexcept
 {
 	if (pComponent == nullptr) { return; }
 
@@ -80,7 +80,12 @@ void JWSystemPhysics::SetBoundingSphereRadius(SComponentPhysics* pComponent, flo
 	// Add bounding sphere instance (JWSystemRender)
 	auto transform = pComponent->PtrEntity->GetComponentTransform();
 	
-	m_pECS->SystemRender().AddBoundingVolumeInstance(Radius, transform->Position);
+	// Set center position
+	pComponent->BoundingSphereCenter.x = transform->Position.x + CenterOffset.x;
+	pComponent->BoundingSphereCenter.y = transform->Position.y + CenterOffset.y;
+	pComponent->BoundingSphereCenter.z = transform->Position.z + CenterOffset.z;
+	
+	m_pECS->SystemRender().AddBoundingVolumeInstance(pComponent->BoundingSphereRadius, pComponent->BoundingSphereCenter);
 }
 
 void JWSystemPhysics::Pick() noexcept
@@ -309,9 +314,9 @@ PRIVATE void JWSystemPhysics::PickEntityBySphere() noexcept
 			if (transform)
 			{
 				auto& radius = iter->BoundingSphereRadius;
-				auto& position = transform->Position;
+				auto& center = iter->BoundingSphereCenter;
 
-				auto sphere_center = XMVectorSet(position.x, position.y, position.z, 1.0f);
+				auto sphere_center = XMVectorSet(center.x, center.y, center.z, 1.0f);
 
 				// Sphere equation
 				// (Px - Cx)©÷ + (Py - Cy)©÷ + (Pz - Cz)©÷ = r©÷

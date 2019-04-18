@@ -110,9 +110,8 @@ int main()
 			->SetModel(ecs.GetSharedModel(0))
 			->SetRenderFlag(JWFlagRenderOption_UseLighting);
 		auto jars_physics = jars->CreateComponentPhysics();
-		ecs.SystemPhysics().SetBoundingSphereRadius(jars_physics, 1.0f);
+		ecs.SystemPhysics().CreateBoundingSphere(jars_physics, 1.1f, XMFLOAT3(0, 0.7f, 0.3f));
 	}
-	
 
 	auto ambient_light = ecs.CreateEntity("ambient_light");
 	ambient_light->CreateComponentLight()
@@ -139,7 +138,7 @@ int main()
 			->SetModel(ecs.GetSharedModel(4))
 			->SetTexture(ecs.GetSharedTexture(1));
 		auto floor_plane_physics = floor_plane->CreateComponentPhysics();
-		ecs.SystemPhysics().SetBoundingSphereRadius(floor_plane_physics, 1.0f);
+		ecs.SystemPhysics().CreateBoundingSphere(floor_plane_physics, 2.0f);
 	}
 
 	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
