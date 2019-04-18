@@ -205,9 +205,10 @@ namespace JWEngine
 
 		void Draw(SComponentRender& Component) noexcept;
 		void DrawNormals(SComponentRender& Component) noexcept;
-		void DrawBoundingVolumesNoInstancing(SComponentRender& Component) noexcept;
 		void DrawInstancedBoundingVolume() noexcept;
-
+		__declspec(deprecated("This function is deprecated. Use DrawInstancedBoundingVolume() instead."))
+			void DrawBoundingVolumesNoInstancing(SComponentRender& Component) noexcept;
+		
 	private:
 		VECTOR<SComponentRender*>	m_vpComponents;
 

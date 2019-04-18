@@ -86,7 +86,7 @@ void JWRawPixelSetter::Draw() noexcept
 	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipPointWrap);
 
 	// Set primitive topology
-	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleStrip);
 
 	// Draw Screen-quad
 	m_pDX->GetDeviceContext()->IASetInputLayout(nullptr);

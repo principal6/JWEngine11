@@ -27,13 +27,15 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearCol
 		CreateVSBase();
 		CreateVSRaw();
 		CreateVSSkyMap();
-		CreateVSCBs();
+		CreateVSInstantText();
+		CreateAndSetVSCBs();
 
 		// Create PS shaders and constant buffers
 		CreatePSBase();
 		CreatePSRaw();
 		CreatePSSkyMap();
-		CreatePSCBs();
+		CreatePSInstantText();
+		CreateAndSetPSCBs();
 
 		// Set default shaders
 		SetVS(EVertexShader::VSBase);
@@ -69,6 +71,8 @@ void JWDX::Destroy() noexcept
 	uint64_t reference_count{};
 
 	// Release the COM objects we created.
+
+	// States
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SamplerStateMinMagMipPointWrap);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SamplerStateMinMagMipLinearWrap);
 
@@ -86,13 +90,20 @@ void JWDX::Destroy() noexcept
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DepthStencilStateZEnabled11);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DepthStencilView11);
 
+	// PS CB
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBCamera);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBLights);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBFlags);
+
+	// VS CB
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBGPUAnimationData);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBCPUAnimationData);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBFlags);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSCBSpace);
+
+	// PS
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSInstantTextBlob);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSInstantText);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSSkyMap);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSSkyMapBuffer);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSRaw);
@@ -100,6 +111,10 @@ void JWDX::Destroy() noexcept
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSBase);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSBaseBuffer);
 
+	// VS
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSInstantTextInputLayout);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSInstantText);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSInstantTextBlob);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSSkyMap);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSSkyMapBuffer);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSRaw);
@@ -108,6 +123,7 @@ void JWDX::Destroy() noexcept
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBase);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSBaseBuffer);
 
+	// Device, Context, SwapChain
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DeviceContext11);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_Device11);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SwapChain);
@@ -185,6 +201,22 @@ PRIVATE void JWDX::CreateVSSkyMap() noexcept
 	m_Device11->CreateVertexShader(m_VSSkyMapBuffer->GetBufferPointer(), m_VSSkyMapBuffer->GetBufferSize(), nullptr, &m_VSSkyMap);
 }
 
+
+PRIVATE void JWDX::CreateVSInstantText() noexcept
+{
+	// Compile Shaders from shader file
+	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSInstantText.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSInstantTextBlob, nullptr);
+
+	// Create the shader
+	m_Device11->CreateVertexShader(m_VSInstantTextBlob->GetBufferPointer(), m_VSInstantTextBlob->GetBufferSize(), nullptr, &m_VSInstantText);
+
+	// Create input layout
+	m_Device11->CreateInputLayout(KInputElementDescriptionText, ARRAYSIZE(KInputElementDescriptionText),
+		m_VSInstantTextBlob->GetBufferPointer(), m_VSInstantTextBlob->GetBufferSize(), &m_VSInstantTextInputLayout);
+}
+
 PRIVATE void JWDX::CreatePSBase() noexcept
 {
 	// Compile shader from file
@@ -221,7 +253,18 @@ PRIVATE void JWDX::CreatePSSkyMap() noexcept
 	m_Device11->CreatePixelShader(m_PSSkyMapBuffer->GetBufferPointer(), m_PSSkyMapBuffer->GetBufferSize(), nullptr, &m_PSSkyMap);
 }
 
-PRIVATE void JWDX::CreateVSCBs() noexcept
+PRIVATE void JWDX::CreatePSInstantText() noexcept
+{
+	// Compile Shaders from shader file
+	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSInstantText.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSInstantTextBlob, nullptr);
+
+	// Create the shader
+	m_Device11->CreatePixelShader(m_PSInstantTextBlob->GetBufferPointer(), m_PSInstantTextBlob->GetBufferSize(), nullptr, &m_PSInstantText);
+}
+
+PRIVATE void JWDX::CreateAndSetVSCBs() noexcept
 {
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
@@ -240,9 +283,15 @@ PRIVATE void JWDX::CreateVSCBs() noexcept
 
 	constant_buffer_description.ByteWidth = sizeof(SVSCBGPUAnimationData);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_VSCBGPUAnimationData);
+
+	// Set VSCBs
+	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBSpace);
+	m_DeviceContext11->VSSetConstantBuffers(1, 1, &m_VSCBFlags);
+	m_DeviceContext11->VSSetConstantBuffers(2, 1, &m_VSCBCPUAnimationData);
+	m_DeviceContext11->VSSetConstantBuffers(3, 1, &m_VSCBGPUAnimationData);
 }
 
-PRIVATE void JWDX::CreatePSCBs() noexcept
+PRIVATE void JWDX::CreateAndSetPSCBs() noexcept
 {
 	// Create buffer to send to constant buffer in HLSL
 	D3D11_BUFFER_DESC constant_buffer_description{};
@@ -258,6 +307,11 @@ PRIVATE void JWDX::CreatePSCBs() noexcept
 
 	constant_buffer_description.ByteWidth = sizeof(SPSCBCamera);
 	m_Device11->CreateBuffer(&constant_buffer_description, nullptr, &m_PSCBCamera);
+
+	// Set PSCBs
+	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBFlags);
+	m_DeviceContext11->PSSetConstantBuffers(1, 1, &m_PSCBLights);
+	m_DeviceContext11->PSSetConstantBuffers(2, 1, &m_PSCBCamera);
 }
 
 PRIVATE void JWDX::CreateDepthStencilView() noexcept
@@ -476,16 +530,13 @@ inline void JWDX::UpdateDynamicResource(ID3D11Resource* pResource, const void* p
 void JWDX::SetRasterizerState(ERasterizerState State) noexcept
 {
 	// No need to change
-	if (m_eRasterizerState == State)
-	{
-		return;
-	}
+	if (m_CurrentRasterizerState == State) { return; }
 
-	m_ePreviousRasterizerState = m_eRasterizerState;
+	m_PreviousRasterizerState = m_CurrentRasterizerState;
 
-	m_eRasterizerState = State;
+	m_CurrentRasterizerState = State;
 
-	switch (State)
+	switch (m_CurrentRasterizerState)
 	{
 	case JWEngine::ERasterizerState::WireFrame:
 		m_DeviceContext11->RSSetState(m_RasterizerStateWireFrame11);
@@ -506,12 +557,16 @@ void JWDX::SetRasterizerState(ERasterizerState State) noexcept
 
 void JWDX::SwitchRasterizerState() noexcept
 {
-	SetRasterizerState(m_ePreviousRasterizerState);
+	SetRasterizerState(m_PreviousRasterizerState);
 }
 
 void JWDX::SetBlendState(EBlendState State) noexcept
 {
-	switch (State)
+	if (m_CurerntBlendState == State) { return; }
+
+	m_CurerntBlendState = State;
+
+	switch (m_CurerntBlendState)
 	{
 	case JWEngine::EBlendState::Transprent:
 		m_DeviceContext11->OMSetBlendState(m_BlendStateTransparent, 0, 0xFFFFFFFF);
@@ -526,7 +581,11 @@ void JWDX::SetBlendState(EBlendState State) noexcept
 
 void JWDX::SetPSSamplerState(ESamplerState State) noexcept
 {
-	switch (State)
+	if (m_CurrentSamplerState == State) { return; }
+
+	m_CurrentSamplerState = State;
+
+	switch (m_CurrentSamplerState)
 	{
 	case JWEngine::ESamplerState::MinMagMipLinearWrap:
 		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateMinMagMipLinearWrap);
@@ -539,9 +598,35 @@ void JWDX::SetPSSamplerState(ESamplerState State) noexcept
 	}
 }
 
+void JWDX::SetPrimitiveTopology(EPrimitiveTopology Topology) noexcept
+{
+	if (m_CurrentPrimitiveTopology == Topology) { return; }
+
+	m_CurrentPrimitiveTopology = Topology;
+
+	switch (m_CurrentPrimitiveTopology)
+	{
+	case JWEngine::EPrimitiveTopology::TriangleList:
+		m_DeviceContext11->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		break;
+	case JWEngine::EPrimitiveTopology::TriangleStrip:
+		m_DeviceContext11->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+		break;
+	case JWEngine::EPrimitiveTopology::LineList:
+		m_DeviceContext11->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+		break;
+	default:
+		break;
+	}
+}
+
 void JWDX::SetDepthStencilState(EDepthStencilState State) noexcept
 {
-	switch (State)
+	if (m_CurrentDepthStencilState == State) { return; }
+	
+	m_CurrentDepthStencilState = State;
+
+	switch (m_CurrentDepthStencilState)
 	{
 	case JWEngine::EDepthStencilState::ZEnabled:
 		m_DeviceContext11->OMSetDepthStencilState(m_DepthStencilStateZEnabled11, 0);
@@ -556,16 +641,11 @@ void JWDX::SetDepthStencilState(EDepthStencilState State) noexcept
 
 void JWDX::SetVS(EVertexShader VS) noexcept
 {
-	if (m_CurrentVS == VS) 
-	{
-		return; 
-	}
-	else
-	{
-		m_CurrentVS = VS;
-	}
+	if (m_CurrentVS == VS) { return; }
 
-	switch (VS)
+	m_CurrentVS = VS;
+
+	switch (m_CurrentVS)
 	{
 	case JWEngine::EVertexShader::VSBase:
 		m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
@@ -579,6 +659,10 @@ void JWDX::SetVS(EVertexShader VS) noexcept
 		m_DeviceContext11->IASetInputLayout(m_VSBaseInputLayout);
 		m_DeviceContext11->VSSetShader(m_VSSkyMap, nullptr, 0);
 		break;
+	case JWEngine::EVertexShader::VSIntantText:
+		m_DeviceContext11->IASetInputLayout(m_VSInstantTextInputLayout);
+		m_DeviceContext11->VSSetShader(m_VSInstantText, nullptr, 0);
+		break;
 	default:
 		break;
 	}
@@ -586,16 +670,11 @@ void JWDX::SetVS(EVertexShader VS) noexcept
 
 void JWDX::SetPS(EPixelShader PS) noexcept
 {
-	if (m_CurrentPS == PS)
-	{
-		return; 
-	}
-	else
-	{
-		m_CurrentPS = PS;
-	}
+	if (m_CurrentPS == PS) { return; }
 
-	switch (PS)
+	m_CurrentPS = PS;
+
+	switch (m_CurrentPS)
 	{
 	case JWEngine::EPixelShader::PSBase:
 		m_DeviceContext11->PSSetShader(m_PSBase, nullptr, 0);
@@ -606,6 +685,9 @@ void JWDX::SetPS(EPixelShader PS) noexcept
 	case JWEngine::EPixelShader::PSSkyMap:
 		m_DeviceContext11->PSSetShader(m_PSSkyMap, nullptr, 0);
 		break;
+	case JWEngine::EPixelShader::PSIntantText:
+		m_DeviceContext11->PSSetShader(m_PSInstantText, nullptr, 0);
+		break;
 	default:
 		break;
 	}
@@ -614,29 +696,21 @@ void JWDX::SetPS(EPixelShader PS) noexcept
 void JWDX::UpdateVSCBSpace(const SVSCBSpace& Data) noexcept
 {
 	UpdateDynamicResource(m_VSCBSpace, &Data, sizeof(Data));
-
-	m_DeviceContext11->VSSetConstantBuffers(0, 1, &m_VSCBSpace);
 }
 
 void JWDX::UpdateVSCBFlags(const SVSCBFlags& Data) noexcept
 {
 	UpdateDynamicResource(m_VSCBFlags, &Data, sizeof(Data));
-
-	m_DeviceContext11->VSSetConstantBuffers(1, 1, &m_VSCBFlags);
 }
 
 void JWDX::UpdateVSCBCPUAnimationData(const SVSCBCPUAnimationData& Data) noexcept
 {
 	UpdateDynamicResource(m_VSCBCPUAnimationData, &Data, sizeof(Data));
-
-	m_DeviceContext11->VSSetConstantBuffers(2, 1, &m_VSCBCPUAnimationData);
 }
 
 void JWDX::UpdateVSCBGPUAnimationData(const SVSCBGPUAnimationData& Data) noexcept
 {
 	UpdateDynamicResource(m_VSCBGPUAnimationData, &Data, sizeof(Data));
-
-	m_DeviceContext11->VSSetConstantBuffers(3, 1, &m_VSCBGPUAnimationData);
 }
 
 void JWDX::UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept
@@ -660,15 +734,11 @@ void JWDX::UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept
 	}
 
 	UpdateDynamicResource(m_PSCBFlags, &m_PSCBFlagsData, sizeof(m_PSCBFlagsData));
-
-	m_DeviceContext11->PSSetConstantBuffers(0, 1, &m_PSCBFlags);
 }
 
 void JWDX::UpdatePSCBLights(const SPSCBLights& Data) noexcept
 {
 	UpdateDynamicResource(m_PSCBLights, &Data, sizeof(Data));
-
-	m_DeviceContext11->PSSetConstantBuffers(1, 1, &m_PSCBLights);
 }
 
 void JWDX::UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept
@@ -676,8 +746,6 @@ void JWDX::UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept
 	m_PSCBCameraData.CameraPosition = CameraPosition;
 
 	UpdateDynamicResource(m_PSCBCamera, &m_PSCBCameraData, sizeof(m_PSCBCameraData));
-
-	m_DeviceContext11->PSSetConstantBuffers(2, 1, &m_PSCBCamera);
 }
 
 void JWDX::BeginDrawing() noexcept

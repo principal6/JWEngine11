@@ -6,6 +6,14 @@ namespace JWEngine
 {
 	// Forward declaration
 	class JWWin32Window;
+	
+	enum class EPrimitiveTopology
+	{
+		Invalid,
+		TriangleList,
+		TriangleStrip,
+		LineList,
+	};
 
 	enum class ERasterizerState
 	{
@@ -17,18 +25,21 @@ namespace JWEngine
 
 	enum class EBlendState
 	{
+		Invalid,
 		Transprent,
 		Opaque,
 	};
 
 	enum class ESamplerState
 	{
+		Invalid,
 		MinMagMipLinearWrap,
 		MinMagMipPointWrap,
 	};
 
 	enum class EDepthStencilState
 	{
+		Invalid,
 		ZEnabled,
 		ZDisabled,
 	};
@@ -39,6 +50,7 @@ namespace JWEngine
 		VSBase,
 		VSRaw,
 		VSSkyMap,
+		VSIntantText,
 	};
 
 	enum class EPixelShader
@@ -47,6 +59,7 @@ namespace JWEngine
 		PSBase,
 		PSRaw,
 		PSSkyMap,
+		PSIntantText,
 	};
 
 	class JWDX
@@ -66,11 +79,12 @@ namespace JWEngine
 		inline void UpdateDynamicResource(ID3D11Resource* pResource, const void* pData, size_t Size) noexcept;
 
 		/// Rasterizer state
-		auto GetRasterizerState() const noexcept { return m_eRasterizerState; }
-		auto GetPreviousRasterizerState() const noexcept { return m_ePreviousRasterizerState; }
+		auto GetRasterizerState() const noexcept { return m_CurrentRasterizerState; }
+		auto GetPreviousRasterizerState() const noexcept { return m_PreviousRasterizerState; }
 		void SetRasterizerState(ERasterizerState State) noexcept;
 		void SwitchRasterizerState() noexcept;
 
+		void SetPrimitiveTopology(EPrimitiveTopology Topology) noexcept;
 		void SetDepthStencilState(EDepthStencilState State) noexcept;
 		void SetBlendState(EBlendState State) noexcept;
 		void SetPSSamplerState(ESamplerState State) noexcept;
@@ -105,13 +119,15 @@ namespace JWEngine
 		void CreateVSBase() noexcept;
 		void CreateVSRaw() noexcept;
 		void CreateVSSkyMap() noexcept;
-		void CreateVSCBs() noexcept;
+		void CreateVSInstantText() noexcept;
+		void CreateAndSetVSCBs() noexcept;
 
 		/// PS Shader creation
 		void CreatePSBase() noexcept;
 		void CreatePSRaw() noexcept;
 		void CreatePSSkyMap() noexcept;
-		void CreatePSCBs() noexcept;
+		void CreatePSInstantText() noexcept;
+		void CreateAndSetPSCBs() noexcept;
 		
 		// Called in Create()
 		void CreateDepthStencilView() noexcept;
@@ -153,12 +169,17 @@ namespace JWEngine
 		ID3D11VertexShader*	m_VSRaw{};
 		ID3D10Blob*			m_VSSkyMapBuffer{};
 		ID3D11VertexShader*	m_VSSkyMap{};
+		ID3D11InputLayout*	m_VSInstantTextInputLayout{};
+		ID3D10Blob*			m_VSInstantTextBlob{};
+		ID3D11VertexShader*	m_VSInstantText{};
 		ID3D10Blob*			m_PSBaseBuffer{};
 		ID3D11PixelShader*	m_PSBase{};
 		ID3D10Blob*			m_PSRawBuffer{};
 		ID3D11PixelShader*	m_PSRaw{};
 		ID3D10Blob*			m_PSSkyMapBuffer{};
 		ID3D11PixelShader*	m_PSSkyMap{};
+		ID3D10Blob*			m_PSInstantTextBlob{};
+		ID3D11PixelShader*	m_PSInstantText{};
 		EVertexShader		m_CurrentVS{ EVertexShader::Invalid };
 		EPixelShader		m_CurrentPS{ EPixelShader::Invalid };
 
@@ -174,24 +195,31 @@ namespace JWEngine
 		SPSCBCamera			m_PSCBCameraData{};
 
 		ID3D11DepthStencilView*		m_DepthStencilView11{};
+		ID3D11RenderTargetView*		m_RenderTargetView11{};
+		D3D11_VIEWPORT				m_DefaultViewPort{};
+
+		///
+		/// States
+		///
+		EDepthStencilState			m_CurrentDepthStencilState{ EDepthStencilState::Invalid };
 		ID3D11DepthStencilState*	m_DepthStencilStateZEnabled11{};
 		ID3D11DepthStencilState*	m_DepthStencilStateZDisabled11{};
 
-		ID3D11RenderTargetView*		m_RenderTargetView11{};
-
-		ERasterizerState			m_eRasterizerState{};
-		ERasterizerState			m_ePreviousRasterizerState{};
+		ERasterizerState			m_CurrentRasterizerState{};
+		ERasterizerState			m_PreviousRasterizerState{};
 		ID3D11RasterizerState*		m_RasterizerStateWireFrame11{};
 		ID3D11RasterizerState*		m_RasterizerStateSolidNoCull11{};
 		ID3D11RasterizerState*		m_RasterizerStateSolidBackCullCCW11{};
 		ID3D11RasterizerState*		m_RasterizerStateSolidBackCullCW11{};
 
+		EBlendState					m_CurerntBlendState{ EBlendState::Invalid };
 		ID3D11BlendState*			m_BlendStateTransparent{};
 		ID3D11BlendState*			m_BlendStateOpaque{};
 		
+		ESamplerState				m_CurrentSamplerState{ ESamplerState::Invalid };
 		ID3D11SamplerState*			m_SamplerStateMinMagMipLinearWrap{};
 		ID3D11SamplerState*			m_SamplerStateMinMagMipPointWrap{};
 
-		D3D11_VIEWPORT				m_DefaultViewPort{};
+		EPrimitiveTopology			m_CurrentPrimitiveTopology{ EPrimitiveTopology::Invalid };
 	};
 };

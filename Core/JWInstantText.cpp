@@ -30,8 +30,6 @@ void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STR
 
 		CreateInstantTextVertexBuffer();
 		CreateInstantTextIndexBuffer();
-		CreateInstantTextVS();
-		CreateInstantTextPS();
 
 		LoadImageFromFile(BaseDirectory, FontFileName + "_0.png");
 
@@ -42,13 +40,6 @@ void JWInstantText::Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STR
 void JWInstantText::Destroy() noexcept
 {
 	JW_RELEASE(m_FontTextureSRV);
-
-	JW_RELEASE(m_PSInstantTextBlob);
-	JW_RELEASE(m_PSInstantText);
-
-	JW_RELEASE(m_VSInstantTextBlob);
-	JW_RELEASE(m_VSInstantText);
-	JW_RELEASE(m_IAInputLayoutText);
 
 	JW_RELEASE(m_IndexBuffer);
 	JW_RELEASE(m_VertexBuffer);
@@ -83,32 +74,6 @@ PRIVATE void JWInstantText::CreateInstantTextIndexBuffer() noexcept
 	m_pDX->CreateIndexBuffer(m_IndexData.GetByteSize(), m_IndexData.GetPtrData(), &m_IndexBuffer);
 }
 
-PRIVATE void JWInstantText::CreateInstantTextVS() noexcept
-{
-	// Compile Shaders from shader file
-	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSInstantText.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSInstantTextBlob, nullptr);
-
-	// Create the shader
-	m_pDX->GetDevice()->CreateVertexShader(m_VSInstantTextBlob->GetBufferPointer(), m_VSInstantTextBlob->GetBufferSize(), nullptr, &m_VSInstantText);
-
-	// Create input layout
-	m_pDX->GetDevice()->CreateInputLayout(KInputElementDescriptionText, ARRAYSIZE(KInputElementDescriptionText),
-		m_VSInstantTextBlob->GetBufferPointer(), m_VSInstantTextBlob->GetBufferSize(), &m_IAInputLayoutText);
-}
-
-PRIVATE void JWInstantText::CreateInstantTextPS() noexcept
-{
-	// Compile Shaders from shader file
-	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSInstantText.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSInstantTextBlob, nullptr);
-
-	// Create the shader
-	m_pDX->GetDevice()->CreatePixelShader(m_PSInstantTextBlob->GetBufferPointer(), m_PSInstantTextBlob->GetBufferSize(), nullptr, &m_PSInstantText);
-}
-
 PRIVATE inline void JWInstantText::LoadImageFromFile(STRING Directory, STRING FileName) noexcept
 {
 	STRING path_string = Directory + FileName;
@@ -132,18 +97,15 @@ void JWInstantText::BeginRendering() noexcept
 	// Disable Z-buffer for 2D drawing
 	m_pDX->SetDepthStencilState(EDepthStencilState::ZDisabled);
 
-	// Set IA input layout
-	m_pDX->GetDeviceContext()->IASetInputLayout(m_IAInputLayoutText);
-
 	// Set VS
-	m_pDX->GetDeviceContext()->VSSetShader(m_VSInstantText, nullptr, 0);
+	m_pDX->SetVS(EVertexShader::VSIntantText);
 
 	// Update VS constant buffer (WVP matrix, which in reality is WO matrix.)
 	m_VSCBSpace.WVP = XMMatrixTranspose(XMMatrixIdentity() * m_pCamera->GetTransformedOrthographicMatrix());
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Set PS
-	m_pDX->GetDeviceContext()->PSSetShader(m_PSInstantText, nullptr, 0);
+	m_pDX->SetPS(EPixelShader::PSIntantText);
 
 	// Set PS texture and sampler
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_FontTextureSRV);
@@ -229,7 +191,7 @@ void JWInstantText::EndRendering() noexcept
 	m_pDX->UpdateDynamicResource(m_VertexBuffer, m_VertexData.GetPtrData(), m_VertexData.GetByteSize());
 
 	// Set IA primitive topology
-	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
 	// Set IA vertex buffer
 	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, m_VertexData.GetPtrStride(), m_VertexData.GetPtrOffset());

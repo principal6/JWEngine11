@@ -118,7 +118,7 @@ void JWImageCursor::Draw() noexcept
 	m_pDX->UpdatePSCBFlags(true, false);
 
 	// Set IA primitive topology
-	m_pDX->GetDeviceContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
 	// Set IA vertex buffer
 	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &m_VertexBuffer, m_VertexData.GetPtrStrides(), m_VertexData.GetPtrOffsets());

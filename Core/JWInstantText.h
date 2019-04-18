@@ -27,8 +27,6 @@ namespace JWEngine
 	private:
 		void CreateInstantTextVertexBuffer() noexcept;
 		void CreateInstantTextIndexBuffer() noexcept;
-		void CreateInstantTextVS() noexcept;
-		void CreateInstantTextPS() noexcept;
 
 		inline void LoadImageFromFile(STRING Directory, STRING FileName) noexcept;
 
@@ -47,11 +45,6 @@ namespace JWEngine
 		SIndexDataTriangle			m_IndexData{};
 
 		SVSCBSpace					m_VSCBSpace{};
-		ID3D11InputLayout*			m_IAInputLayoutText{};
-		ID3D10Blob*					m_VSInstantTextBlob{};
-		ID3D11VertexShader*			m_VSInstantText{};
-		ID3D10Blob*					m_PSInstantTextBlob{};
-		ID3D11PixelShader*			m_PSInstantText{};
 
 		ID3D11ShaderResourceView*	m_FontTextureSRV{};
 		uint32_t					m_TotalTextLength{};

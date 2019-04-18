@@ -19,7 +19,6 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// # Render		@ Draw (instanced) bounding spheres
 	// # Physics	@ Collision
 	// # Render		@ Sprite nstancing
 
@@ -283,26 +282,17 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	static WSTRING s_temp{};
 	static WSTRING s_fps{};
 	static WSTRING s_anim_id{};
-	static WSTRING s_ray{};
 	static WSTRING s_picked_entity{};
 
 	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
 	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID, s_temp);
-	
-	auto ray_dir = myGame.ECS().SystemPhysics().GetPickingRayDirection();
-	s_ray = L"Ray Direction: ( ";
-	s_ray += ConvertFloatToWSTRING(XMVectorGetX(ray_dir), s_temp) + L", ";
-	s_ray += ConvertFloatToWSTRING(XMVectorGetY(ray_dir), s_temp) + L", ";
-	s_ray += ConvertFloatToWSTRING(XMVectorGetZ(ray_dir), s_temp) + L" )";
-
 	s_picked_entity = L"Picked Entity = " + StringToWstring(myGame.ECS().SystemPhysics().GetPickedEntityName());
 
 	myGame.InstantText().BeginRendering();
 
-	myGame.InstantText().RenderText(s_fps, XMFLOAT2(10, 10), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
-	myGame.InstantText().RenderText(s_anim_id, XMFLOAT2(10, 30), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
-	myGame.InstantText().RenderText(s_ray, XMFLOAT2(10, 50), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
-	myGame.InstantText().RenderText(s_picked_entity, XMFLOAT2(10, 70), XMFLOAT4(0, 0.5f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_fps, XMFLOAT2(10, 10), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_anim_id, XMFLOAT2(10, 30), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_picked_entity, XMFLOAT2(10, 50), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 
 	myGame.InstantText().EndRendering();
 }
