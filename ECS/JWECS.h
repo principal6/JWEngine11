@@ -18,26 +18,26 @@ namespace JWEngine
 		void Create(JWDX& DX, JWCamera& Camera, JWWin32Window& Window, STRING BaseDirectory) noexcept;
 		void Destroy() noexcept;
 		
-		// -------------------------
-		// --- Entity management ---
-		
+		// ### Entity creator ###
 		// Creates user-defined entity
 		auto CreateEntity(STRING EntityName) noexcept->JWEntity*;
-
 		// Creates unique entity
 		auto CreateEntity(EEntityType Type) noexcept->JWEntity*;
 
-		auto GetEntity(uint32_t index) noexcept->JWEntity*;
+		// ### Entity getters ###
+		auto GetEntityByIndex(uint32_t Index) noexcept->JWEntity*;
 		auto GetEntityByName(STRING EntityName) noexcept->JWEntity*;
 		auto GetEntityByType(EEntityType Type) noexcept->JWEntity*;
-		void DestroyEntity(uint32_t index) noexcept;
 
-		// ---------------
-		// --- Execute ---
+		// ### Entity destroyers ###
+		void DestroyEntityByIndex(uint32_t Index) noexcept;
+		void DestroyEntityByName(STRING EntityName) noexcept;
+		void DestroyEntityByType(EEntityType Type) noexcept;
+
+		// ### Execute ###
 		void ExecuteSystems() noexcept;
 
-		// ---------------
-		// --- Getters ---
+		// ### Object getters ###
 		auto& SystemTransform() noexcept { return m_SystemTransform; }
 		auto& SystemRender() noexcept { return m_SystemRender; }
 		auto& SystemLight() noexcept { return m_SystemLight; }

@@ -89,13 +89,13 @@ auto JWECS::CreateEntity(EEntityType Type) noexcept->JWEntity*
 	return entity;
 }
 
-auto JWECS::GetEntity(uint32_t index) noexcept->JWEntity*
+auto JWECS::GetEntityByIndex(uint32_t Index) noexcept->JWEntity*
 {
 	JWEntity* result{};
 
-	if (index < m_vpEntities.size())
+	if (Index < m_vpEntities.size())
 	{
-		result = m_vpEntities[index];
+		result = m_vpEntities[Index];
 	}
 
 	return result;
@@ -116,7 +116,7 @@ auto JWECS::GetEntityByName(STRING EntityName) noexcept->JWEntity*
 		}
 		else
 		{
-			JW_ERROR_ABORT("Unable to fine the entity of name (" + EntityName + ")");
+			JW_ERROR_ABORT("Unable to find the entity of name (" + EntityName + ")");
 		}
 	}
 
@@ -146,20 +146,80 @@ auto JWECS::GetEntityByType(EEntityType Type) noexcept->JWEntity*
 	return result;
 }
 
-void JWECS::DestroyEntity(uint32_t index) noexcept
+void JWECS::DestroyEntityByIndex(uint32_t Index) noexcept
 {
-	if (index < m_vpEntities.size())
+	if (Index < m_vpEntities.size())
 	{
-		JW_DELETE(m_vpEntities[index]);
+		JW_DELETE(m_vpEntities[Index]);
 
-		uint32_t last_index = static_cast<uint32_t>(m_vpEntities.size() - 1);
-		if (index < last_index)
+		uint32_t last_Index = static_cast<uint32_t>(m_vpEntities.size() - 1);
+		if (Index < last_Index)
 		{
-			m_vpEntities[index] = m_vpEntities[last_index];
-			m_vpEntities[last_index] = nullptr;
+			m_vpEntities[Index] = m_vpEntities[last_Index];
+			m_vpEntities[last_Index] = nullptr;
 		}
 
 		m_vpEntities.pop_back();
+	}
+}
+
+void JWECS::DestroyEntityByName(STRING EntityName) noexcept
+{
+	if (m_vpEntities.size())
+	{
+		auto find = m_mapEntityNames.find(EntityName);
+		if (find != m_mapEntityNames.end())
+		{
+			auto index = find->second;
+
+			JW_DELETE(m_vpEntities[index]);
+
+			uint32_t last_index = static_cast<uint32_t>(m_vpEntities.size() - 1);
+			if (index < last_index)
+			{
+				m_vpEntities[index] = m_vpEntities[last_index];
+				m_vpEntities[last_index] = nullptr;
+			}
+
+			m_vpEntities.pop_back();
+		}
+		else
+		{
+			JW_ERROR_ABORT("Unable to fine the entity of name (" + EntityName + ")");
+		}
+	}
+}
+
+void JWECS::DestroyEntityByType(EEntityType Type) noexcept
+{
+	if (Type == EEntityType::UserDefined)
+	{
+		JW_ERROR_ABORT("Impossible to destroy the entity of user defined type by calling this method.");
+	}
+
+	if (m_vpEntities.size())
+	{
+		uint32_t index{};
+		for (auto& iter : m_vpEntities)
+		{
+			if (iter->GetEntityType() == Type)
+			{
+				JW_DELETE(m_vpEntities[index]);
+
+				uint32_t last_index = static_cast<uint32_t>(m_vpEntities.size() - 1);
+				if (index < last_index)
+				{
+					m_vpEntities[index] = m_vpEntities[last_index];
+					m_vpEntities[last_index] = nullptr;
+				}
+
+				m_vpEntities.pop_back();
+
+				return;
+			}
+
+			++index;
+		}
 	}
 }
 
