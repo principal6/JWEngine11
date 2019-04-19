@@ -161,6 +161,13 @@ PRIVATE void JWSystemPhysics::PickEntityByTriangle() noexcept
 					ptr_index_data = &render->PtrModel->ModelData.IndexData;
 					ptr_vertex_data = &render->PtrModel->ModelData.VertexData;
 				}
+				else
+				{
+					continue;
+				}
+
+				assert(ptr_index_data);
+				assert(ptr_vertex_data);
 
 				const auto& indices{ ptr_index_data->vIndices };
 				const auto& vertices{ ptr_vertex_data->vVerticesModel };
