@@ -78,6 +78,15 @@ int main()
 	grid->CreateComponentRender()
 		->SetLineModel(ecs.GetSharedLineModel(0));
 
+	auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
+	picked_tri->CreateComponentRender()
+		->SetModel(ecs.GetSharedModel(6))
+		->SetRenderFlag(JWFlagRenderOption_AlwaysSolidNoCull);
+
+	auto ray = ecs.CreateEntity(EEntityType::PickingRay);
+	ray->CreateComponentRender()
+		->SetLineModel(ecs.GetSharedLineModel(1));
+
 	auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
 	main_sprite->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
@@ -151,15 +160,6 @@ int main()
 		->SetPosition(XMFLOAT3(0, 2, 0));
 	cam->CreateComponentRender()
 		->SetModel(ecs.GetSharedModel(5));
-
-	auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
-	picked_tri->CreateComponentRender()
-		->SetModel(ecs.GetSharedModel(6))
-		->SetRenderFlag(JWFlagRenderOption_AlwaysSolidNoCull);
-
-	auto ray = ecs.CreateEntity(EEntityType::PickingRay);
-	ray->CreateComponentRender()
-		->SetLineModel(ecs.GetSharedLineModel(1));
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);
