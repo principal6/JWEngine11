@@ -21,31 +21,31 @@ namespace JWEngine
 		XMMATRIX	WorldMatrix{};
 		EWorldMatrixCalculationOrder	WorldMatrixCalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 
-		auto SetPosition(const XMVECTOR& _Position)
+		inline auto SetPosition(const XMVECTOR& _Position)
 		{
 			XMStoreFloat3(&Position, _Position);
 			return this;
 
 		}
-		auto SetPosition(const XMFLOAT3& _Position)
+		inline auto SetPosition(const XMFLOAT3& _Position)
 		{
 			Position = _Position;
 			return this;
 		}
 
-		auto SetScalingFactor(const XMFLOAT3& _ScalingFactor)
+		inline auto SetScalingFactor(const XMFLOAT3& _ScalingFactor)
 		{
 			ScalingFactor = _ScalingFactor;
 			return this;
 		}
 
-		auto SetOrientation(const XMFLOAT3& _Orientation)
+		inline auto SetOrientation(const XMFLOAT3& _Orientation)
 		{
 			Orientation = _Orientation;
 			return this;
 		}
 
-		auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder _Order)
+		inline auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder _Order)
 		{
 			WorldMatrixCalculationOrder = _Order;
 			return this;
