@@ -19,6 +19,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
+	// # Render		@ Shared resource management
 	// # Physics	@ Collision
 	// # Render		@ Sprite nstancing
 
