@@ -21,7 +21,8 @@ int main()
 	// TODO:
 	// # Render		@ Shared resource management
 	// # Physics	@ Collision
-	// # Render		@ Sprite nstancing
+	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
+	// # Render		@ Sprite instancing
 
 	myLogger.InitializeTime();
 
@@ -126,7 +127,7 @@ int main()
 	ambient_light->CreateComponentLight()
 		->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
 	ambient_light->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(0.0f, -5.0f, 0.0f));
+		->SetPosition(XMFLOAT3(0.0f, 5.0f, 0.0f));
 	ambient_light->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(1));
 
