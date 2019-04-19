@@ -2,14 +2,31 @@
 
 #include "../Core/JWDX.h"
 #include "../Core/JWModel.h"
-#include "../Core/JWImage.h"
 #include "../Core/JWLineModel.h"
+#include "../Core/JWImage.h"
+#include "../Core/JWPrimitiveMaker.h"
 
 namespace JWEngine
 {
 	class JWCamera;
+	//class JWModel;
+	//class JWLineModel;
+	//class JWImage;
+	//class JWPrimitiveMaker;
 	class JWEntity;
 	class JWECS;
+
+	enum class ESharedTextureType
+	{
+		Texture2D,
+		TextureCubeMap,
+	};
+
+	enum class ESharedModelType
+	{
+		StaticModel,
+		RiggedModel,
+	};
 
 	enum EFLAGRenderOption : uint16_t
 	{
@@ -178,6 +195,26 @@ namespace JWEngine
 		auto CreateComponent() noexcept->SComponentRender&;
 		void DestroyComponent(SComponentRender& Component) noexcept;
 
+		/// Shared resources
+		void CreateSharedTexture(ESharedTextureType Type, STRING FileName) noexcept;
+		void CreateSharedTextureFromSharedModel(size_t ModelIndex) noexcept;
+		auto GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*;
+
+		auto CreateSharedModelPrimitive(const SModelData& ModelData) noexcept->JWModel*;
+		auto CreateSharedModelDynamicPrimitive(const SModelData& ModelData) noexcept->JWModel*;
+		auto CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) noexcept->JWModel*;
+		auto GetSharedModel(size_t Index) noexcept->JWModel*;
+
+		auto CreateSharedLineModel() noexcept->JWLineModel*;
+		auto GetSharedLineModel(size_t Index) noexcept->JWLineModel*;
+
+		auto CreateSharedImage2D(SPositionInt Position, SSizeInt Size) noexcept->JWImage*;
+		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
+
+		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
+		auto GetAnimationTexture(size_t Index) noexcept->SAnimationTextureData*;
+
+		/// Bounidng volume
 		void AddBoundingVolumeInstance(float Radius, const XMFLOAT3& Translation) noexcept;
 		void UpdateBoundingVolume() noexcept;
 
@@ -191,6 +228,7 @@ namespace JWEngine
 
 		/// Object getter
 		auto& BoundingVolume() noexcept { return m_BoundingVolume; };
+		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
 
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;
@@ -221,6 +259,16 @@ namespace JWEngine
 		SVSCBFlags					m_VSCBFlags{};
 		SVSCBCPUAnimationData		m_VSCBCPUAnimation{};
 		SVSCBGPUAnimationData		m_VSCBGPUAnimation{};
+
+		/// Shared resources(texture, model data, animation texture)
+		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;
+		VECTOR<SAnimationTextureData>		m_vAnimationTextureData;
+		VECTOR<JWModel>						m_vSharedModel;
+		VECTOR<JWLineModel>					m_vSharedLineModel;
+		VECTOR<JWImage>						m_vSharedImage2D;
+
+		// Primitive maker (for shared resources)
+		JWPrimitiveMaker					m_PrimitiveMaker{};
 
 		// Bounding volume
 		JWModel						m_BoundingVolume{};
