@@ -225,6 +225,7 @@ namespace JWEngine
 		void ToggleWireFrame() noexcept;
 		void ToggleNormalDrawing() noexcept;
 		void ToggleLighting() noexcept;
+		void ToggleBoundingVolumeDrawing() noexcept;
 
 		/// Object getter
 		auto& BoundingVolume() noexcept { return m_BoundingVolume; };
@@ -277,5 +278,6 @@ namespace JWEngine
 		ERasterizerState			m_OldUniversalRasterizerState{ ERasterizerState::SolidNoCull };
 		bool						m_ShouldDrawNormals{ false };
 		bool						m_ShouldLight{ true };
+		bool						m_ShouldDrawBoundingVolumes{ false };
 	};
 };

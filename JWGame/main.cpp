@@ -188,6 +188,11 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 	{
 		myGame.ECS().SystemRender().ToggleLighting();
 	}
+
+	if (VK == VK_F4)
+	{
+		myGame.ECS().SystemRender().ToggleBoundingVolumeDrawing();
+	}
 }
 
 JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)

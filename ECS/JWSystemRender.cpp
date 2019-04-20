@@ -410,7 +410,10 @@ void JWSystemRender::Execute() noexcept
 		Draw(*iter);
 	}
 
-	DrawInstancedBoundingVolume();
+	if (m_ShouldDrawBoundingVolumes)
+	{
+		DrawInstancedBoundingVolume();
+	}
 }
 
 void JWSystemRender::DrawInstancedBoundingVolume() noexcept
@@ -1035,4 +1038,9 @@ void JWSystemRender::ToggleNormalDrawing() noexcept
 void JWSystemRender::ToggleLighting() noexcept
 {
 	m_ShouldLight = !m_ShouldLight;
+}
+
+void JWSystemRender::ToggleBoundingVolumeDrawing() noexcept
+{
+	m_ShouldDrawBoundingVolumes = !m_ShouldDrawBoundingVolumes;
 }
