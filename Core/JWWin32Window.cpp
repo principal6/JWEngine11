@@ -36,8 +36,8 @@ void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& T
 {
 	m_hInstance = GetModuleHandleA(nullptr);
 
-	m_WindowSize.Width = Size.Width;
-	m_WindowSize.Height = Size.Height;
+	m_WindowSize.x = static_cast<float>(Size.Width);
+	m_WindowSize.y = static_cast<float>(Size.Height);
 
 	m_WindowClass.cbSize = sizeof(WNDCLASSEXA);
 	m_WindowClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -89,24 +89,4 @@ void JWWin32Window::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function)
 void JWWin32Window::SetOnWindowsCharInputFunction(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept
 {
 	s_fpWindowsCharKeyPressed = Function;
-}
-
-auto JWWin32Window::GetWidth() const noexcept->int
-{
-	return m_WindowSize.Width;
-}
-
-auto JWWin32Window::GetHeight() const noexcept->int
-{
-	return m_WindowSize.Height;
-}
-
-auto JWWin32Window::GethWnd() const noexcept->HWND
-{
-	return m_hWnd;
-}
-
-auto JWWin32Window::GethInstance() const noexcept->HINSTANCE
-{
-	return m_hInstance;
 }

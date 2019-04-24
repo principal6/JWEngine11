@@ -28,15 +28,15 @@ namespace JWEngine
 	{
 		VECTOR<SRawPixelColor> vPixels;
 
-		int Width{}, Height{};
-		int PixelCount{};
+		uint32_t Width{}, Height{};
+		uint32_t PixelCount{};
 
-		void CreatePixelData(int screen_width, int screen_height)
+		void CreatePixelData(XMFLOAT2 WindowSize)
 		{
-			Width = screen_width;
-			Height = screen_height;
+			Width = static_cast<uint32_t>(WindowSize.x);
+			Height = static_cast<uint32_t>(WindowSize.y);
 
-			PixelCount = screen_width * screen_height;
+			PixelCount = Width * Height;
 
 			vPixels.reserve(PixelCount);
 			vPixels.resize(PixelCount);

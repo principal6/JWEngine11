@@ -68,7 +68,7 @@ namespace JWEngine
 		JWDX() = default;
 		~JWDX() = default;
 
-		void Create(const JWWin32Window& Window, STRING Directory, const SClearColor& ClearColor) noexcept;
+		void Create(HWND hWnd, XMFLOAT2 WindowSize, STRING Directory, const SClearColor& ClearColor) noexcept;
 		void Destroy() noexcept;
 
 		/// Factory functions
@@ -106,9 +106,9 @@ namespace JWEngine
 		void BeginDrawing() noexcept;
 		void EndDrawing() noexcept;
 
-		auto GetDevice() const noexcept->ID3D11Device*;
-		auto GetDeviceContext() const noexcept->ID3D11DeviceContext*;
-		auto GetWindowSize() const noexcept->SSizeInt;
+		auto GetDevice() const noexcept { return m_Device11; }
+		auto GetDeviceContext() const noexcept { return m_DeviceContext11; }
+		auto GetWindowSize() const noexcept { return m_WindowSize; }
 
 	private:
 		// Called in Create()
@@ -154,7 +154,7 @@ namespace JWEngine
 		bool		m_IsCreated{ false };
 
 		STRING		m_BaseDirectory;
-		SSizeInt	m_WindowSize{};
+		XMFLOAT2	m_WindowSize{};
 		FLOAT		m_ClearColor[4]{};
 
 		IDXGISwapChain*			m_SwapChain{};

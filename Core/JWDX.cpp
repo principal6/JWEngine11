@@ -1,9 +1,8 @@
 #include "JWDX.h"
-#include "JWWin32Window.h"
 
 using namespace JWEngine;
 
-void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearColor& ClearColor) noexcept
+void JWDX::Create(HWND hWnd, XMFLOAT2 WindowSize, STRING Directory, const SClearColor& ClearColor) noexcept
 {
 	if (!m_IsCreated)
 	{
@@ -11,8 +10,7 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearCol
 		m_BaseDirectory = Directory;
 
 		// Set window size
-		m_WindowSize.Width = Window.GetWidth();
-		m_WindowSize.Height = Window.GetHeight();
+		m_WindowSize = WindowSize;
 
 		// Set clear color
 		m_ClearColor[0] = ClearColor.R;
@@ -21,7 +19,7 @@ void JWDX::Create(const JWWin32Window& Window, STRING Directory, const SClearCol
 		m_ClearColor[3] = 1.0f;
 
 		// Create device and swap chain
-		CreateDeviceAndSwapChain(Window.GethWnd());
+		CreateDeviceAndSwapChain(hWnd);
 
 		// Create VS shaders, input layout and constant buffers
 		CreateVSBase();
@@ -136,8 +134,8 @@ PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 {
 	// Describe the screen buffer
 	DXGI_MODE_DESC buffer_description{};
-	buffer_description.Width = m_WindowSize.Width;
-	buffer_description.Height = m_WindowSize.Height;
+	buffer_description.Width = static_cast<UINT>(m_WindowSize.x);
+	buffer_description.Height = static_cast<UINT>(m_WindowSize.y);
 	buffer_description.RefreshRate.Numerator = 60;
 	buffer_description.RefreshRate.Denominator = 1;
 	buffer_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -318,8 +316,8 @@ PRIVATE void JWDX::CreateDepthStencilView() noexcept
 {
 	// Describe depth-stencil buffer
 	D3D11_TEXTURE2D_DESC depth_stencil_texture_descrption{};
-	depth_stencil_texture_descrption.Width = m_WindowSize.Width;
-	depth_stencil_texture_descrption.Height = m_WindowSize.Height;
+	depth_stencil_texture_descrption.Width = static_cast<UINT>(m_WindowSize.x);
+	depth_stencil_texture_descrption.Height = static_cast<UINT>(m_WindowSize.y);
 	depth_stencil_texture_descrption.MipLevels = 1;
 	depth_stencil_texture_descrption.ArraySize = 1;
 	depth_stencil_texture_descrption.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -462,8 +460,8 @@ PRIVATE void JWDX::CreateDefaultViewport() noexcept
 	// Setup the viewport
 	m_DefaultViewPort.TopLeftX = 0;
 	m_DefaultViewPort.TopLeftY = 0;
-	m_DefaultViewPort.Width = static_cast<FLOAT>(m_WindowSize.Width);
-	m_DefaultViewPort.Height = static_cast<FLOAT>(m_WindowSize.Height);
+	m_DefaultViewPort.Width = m_WindowSize.x;
+	m_DefaultViewPort.Height = m_WindowSize.y;
 	m_DefaultViewPort.MinDepth = 0.0f; // IMPORTANT!
 	m_DefaultViewPort.MaxDepth = 1.0f; // IMPORTANT!
 
@@ -761,19 +759,4 @@ void JWDX::EndDrawing() noexcept
 {
 	// Present back buffer to screen
 	m_SwapChain->Present(0, 0);
-}
-
-auto JWDX::GetDevice() const noexcept->ID3D11Device*
-{
-	return m_Device11;
-}
-
-auto JWDX::GetDeviceContext() const noexcept->ID3D11DeviceContext*
-{
-	return m_DeviceContext11;
-}
-
-auto JWDX::GetWindowSize() const noexcept->SSizeInt
-{
-	return m_WindowSize;
 }

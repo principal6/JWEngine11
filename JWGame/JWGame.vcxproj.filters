@@ -31,9 +31,6 @@
     <ClCompile Include="..\Core\JWDX.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\Core\JWCamera.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="JWGame.cpp" />
     <ClCompile Include="..\Core\JWModel.cpp">
@@ -87,6 +84,9 @@
     <ClCompile Include="..\ECS\JWSystemPhysics.cpp">
       <Filter>ECS</Filter>
     </ClCompile>
+    <ClCompile Include="..\ECS\JWSystemCamera.cpp">
+      <Filter>ECS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Core\JWCommon.h">
@@ -96,9 +96,6 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="..\Core\JWDX.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Core\JWCamera.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="JWGame.h" />
@@ -430,6 +427,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="..\ECS\JWSystemPhysics.h">
+      <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ECS\JWSystemCamera.h">
       <Filter>ECS</Filter>
     </ClInclude>
   </ItemGroup>

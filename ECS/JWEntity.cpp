@@ -70,3 +70,11 @@ auto JWEntity::CreateComponentPhysics() noexcept->SComponentPhysics*
 
 	return m_pComponentPhysics;
 }
+
+auto JWEntity::CreateComponentCamera() noexcept->SComponentCamera*
+{
+	m_pComponentCamera = &m_pECS->SystemCamera().CreateComponent();
+	m_pComponentCamera->PtrEntity = this;
+
+	return m_pComponentCamera;
+}

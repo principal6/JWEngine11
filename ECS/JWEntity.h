@@ -4,14 +4,16 @@
 #include "JWSystemRender.h"
 #include "JWSystemLight.h"
 #include "JWSystemPhysics.h"
+#include "JWSystemCamera.h"
 
 namespace JWEngine
 {
 	class JWECS;
-
+	
 	enum class EEntityType
 	{
 		UserDefined,
+
 		Sky,
 		Grid,
 		PickingRay,
@@ -40,6 +42,9 @@ namespace JWEngine
 
 		auto CreateComponentPhysics() noexcept->SComponentPhysics*;
 		auto GetComponentPhysics() noexcept { return m_pComponentPhysics; };
+
+		auto CreateComponentCamera() noexcept->SComponentCamera*;
+		auto GetComponentCamera() noexcept { return m_pComponentCamera; };
 		
 		auto GetEntityType() const noexcept { return m_EntityType; };
 		const auto& GetEntityName() const noexcept { return m_EntityName; };
@@ -53,5 +58,6 @@ namespace JWEngine
 		SComponentRender*		m_pComponentRender{};
 		SComponentLight*		m_pComponentLight{};
 		SComponentPhysics*		m_pComponentPhysics{};
+		SComponentCamera*		m_pComponentCamera{};
 	};
 };

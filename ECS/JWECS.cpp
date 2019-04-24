@@ -3,15 +3,16 @@
 
 using namespace JWEngine;
 
-void JWECS::Create(JWDX& DX, JWCamera& Camera, JWWin32Window& Window, STRING BaseDirectory) noexcept
+void JWECS::Create(JWDX& DX, JWWin32Window& Window, STRING BaseDirectory) noexcept
 {
 	m_pDX = &DX;
 	m_BaseDirectory = BaseDirectory;
 
 	m_SystemTransform.Create();
-	m_SystemRender.Create(*this, DX, Camera, BaseDirectory);
+	m_SystemRender.Create(*this, DX, BaseDirectory);
 	m_SystemLight.Create(DX);
-	m_SystemPhysics.Create(*this, Window, Camera);
+	m_SystemPhysics.Create(*this, Window.GethWnd(), Window.GetWindowSize());
+	m_SystemCamera.Create(*this, Window.GetWindowSize());
 }
 
 void JWECS::Destroy() noexcept
@@ -23,7 +24,9 @@ void JWECS::Destroy() noexcept
 		JW_DELETE(iter);
 	}
 
+	// @important
 	// Destroy systems
+	m_SystemCamera.Destroy();
 	m_SystemPhysics.Destroy();
 	m_SystemLight.Destroy();
 	m_SystemRender.Destroy();

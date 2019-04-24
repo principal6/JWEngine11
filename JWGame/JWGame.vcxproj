@@ -165,7 +165,6 @@
   <ItemGroup>
     <ClCompile Include="..\Core\JWAssimpLoader.cpp" />
     <ClCompile Include="..\Core\JWBMFontParser.cpp" />
-    <ClCompile Include="..\Core\JWCamera.cpp" />
     <ClCompile Include="..\Core\JWDX.cpp" />
     <ClCompile Include="..\Core\JWImage.cpp" />
     <ClCompile Include="..\Core\JWImageCursor.cpp" />
@@ -178,6 +177,7 @@
     <ClCompile Include="..\Core\JWWin32Window.cpp" />
     <ClCompile Include="..\ECS\JWECS.cpp" />
     <ClCompile Include="..\ECS\JWEntity.cpp" />
+    <ClCompile Include="..\ECS\JWSystemCamera.cpp" />
     <ClCompile Include="..\ECS\JWSystemLight.cpp" />
     <ClCompile Include="..\ECS\JWSystemPhysics.cpp" />
     <ClCompile Include="..\ECS\JWSystemRender.cpp" />
@@ -260,7 +260,6 @@
     <ClInclude Include="..\Assimp\XMLTools.h" />
     <ClInclude Include="..\Core\JWAssimpLoader.h" />
     <ClInclude Include="..\Core\JWBMFontParser.h" />
-    <ClInclude Include="..\Core\JWCamera.h" />
     <ClInclude Include="..\Core\JWCommon.h" />
     <ClInclude Include="..\Core\JWDX.h" />
     <ClInclude Include="..\Core\JWImage.h" />
@@ -295,6 +294,7 @@
     <ClInclude Include="..\DirectXTK\XboxDDSTextureLoader.h" />
     <ClInclude Include="..\ECS\JWECS.h" />
     <ClInclude Include="..\ECS\JWEntity.h" />
+    <ClInclude Include="..\ECS\JWSystemCamera.h" />
     <ClInclude Include="..\ECS\JWSystemLight.h" />
     <ClInclude Include="..\ECS\JWSystemPhysics.h" />
     <ClInclude Include="..\ECS\JWSystemRender.h" />

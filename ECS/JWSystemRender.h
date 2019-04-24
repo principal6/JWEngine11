@@ -8,7 +8,6 @@
 
 namespace JWEngine
 {
-	class JWCamera;
 	//class JWModel;
 	//class JWLineModel;
 	//class JWImage;
@@ -189,7 +188,7 @@ namespace JWEngine
 		JWSystemRender() = default;
 		~JWSystemRender() = default;
 
-		void Create(JWECS& ECS, JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept;
+		void Create(JWECS& ECS, JWDX& DX, STRING BaseDirectory) noexcept;
 		void Destroy() noexcept;
 
 		auto CreateComponent() noexcept->SComponentRender&;
@@ -253,7 +252,6 @@ namespace JWEngine
 
 		JWECS*						m_pECS{};
 		JWDX*						m_pDX{};
-		JWCamera*					m_pCamera{};
 		STRING						m_BaseDirectory{};
 
 		SVSCBSpace					m_VSCBSpace{};

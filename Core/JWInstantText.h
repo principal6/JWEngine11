@@ -7,9 +7,8 @@ namespace JWEngine
 {
 	// Forward declaration
 	class JWDX;
-	class JWCamera;
 	
-	static constexpr uint32_t KMaxInsantTextLength = 2048;
+	static constexpr uint32_t	KMaxInsantTextLength = 2048;
 	
 	class JWInstantText
 	{
@@ -17,7 +16,7 @@ namespace JWEngine
 		JWInstantText() = default;
 		~JWInstantText() = default;
 
-		void Create(JWDX& DX, JWCamera& Camera, STRING BaseDirectory, STRING FontFileName) noexcept;
+		void Create(JWDX& DX, XMFLOAT2 WindowSize, STRING BaseDirectory, STRING FontFileName) noexcept;
 		void Destroy() noexcept;
 
 		void BeginRendering() noexcept;
@@ -34,8 +33,8 @@ namespace JWEngine
 		bool						m_IsCreated{ false };
 
 		JWDX*						m_pDX{};
-		JWCamera*					m_pCamera{};
 
+		XMMATRIX					m_MatrixProjOrthographic{};
 		STRING						m_BaseDirectory{};
 		JWBMFontParser				m_FontParser{};
 

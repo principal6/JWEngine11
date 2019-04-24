@@ -4,8 +4,6 @@
 
 namespace JWEngine
 {
-	class JWWin32Window;
-	class JWCamera;
 	class JWEntity;
 	class JWECS;
 
@@ -24,7 +22,7 @@ namespace JWEngine
 		JWSystemPhysics() = default;
 		~JWSystemPhysics() = default;
 
-		void Create(JWECS& ECS, const JWWin32Window& Window, const JWCamera& Camera) noexcept;
+		void Create(JWECS& ECS, HWND hWnd, XMFLOAT2 WindowSize) noexcept;
 		void Destroy() noexcept;
 
 		auto CreateComponent() noexcept->SComponentPhysics&;
@@ -60,12 +58,9 @@ namespace JWEngine
 		VECTOR<SComponentPhysics*>	m_vpComponents;
 
 		JWECS*						m_pECS{};
-		const JWWin32Window*		m_pWindow{};
-		const JWCamera*				m_pCamera{};
 
 		HWND						m_hWnd{};
-		float						m_WindowWidth{};
-		float						m_WindowHeight{};
+		XMFLOAT2					m_WindowSize{};
 
 		POINT						m_MouseClientPosition{};
 		XMFLOAT2					m_NormalizedMousePosition{};

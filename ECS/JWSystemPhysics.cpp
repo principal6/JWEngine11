@@ -1,23 +1,13 @@
 #include "JWECS.h"
-#include "../Core/JWWin32Window.h"
-#include "../Core/JWCamera.h"
-
 using namespace JWEngine;
 
-void JWSystemPhysics::Create(JWECS& ECS, const JWWin32Window& Window, const JWCamera& Camera) noexcept
+void JWSystemPhysics::Create(JWECS& ECS, HWND hWnd, XMFLOAT2 WindowSize) noexcept
 {
 	// Set JWECS pointer.
 	m_pECS = &ECS;
 
-	// Set JWWindow pointer.
-	m_pWindow = &Window;
-
-	// Set JWCamera pointer.
-	m_pCamera = &Camera;
-
-	m_hWnd = m_pWindow->GethWnd();
-	m_WindowWidth = static_cast<float>(m_pWindow->GetWidth());
-	m_WindowHeight = static_cast<float>(m_pWindow->GetHeight());
+	m_hWnd = hWnd;
+	m_WindowSize = WindowSize;
 }
 
 void JWSystemPhysics::Destroy() noexcept
@@ -103,11 +93,11 @@ PRIVATE void JWSystemPhysics::CastPickingRay() noexcept
 	ScreenToClient(m_hWnd, &m_MouseClientPosition);
 
 	// Normalize mouse cursor position
-	m_NormalizedMousePosition.x = (static_cast<float>(m_MouseClientPosition.x) / m_WindowWidth) * 2.0f - 1.0f;
-	m_NormalizedMousePosition.y = (static_cast<float>(m_MouseClientPosition.y) / m_WindowHeight) * 2.0f - 1.0f;
+	m_NormalizedMousePosition.x = (static_cast<float>(m_MouseClientPosition.x) / m_WindowSize.x) * 2.0f - 1.0f;
+	m_NormalizedMousePosition.y = (static_cast<float>(m_MouseClientPosition.y) / m_WindowSize.y) * 2.0f - 1.0f;
 
-	auto MatrixView = m_pCamera->GetViewMatrix();
-	auto MatrixProjection = m_pCamera->GetProjectionMatrix();
+	auto MatrixView = m_pECS->SystemCamera().CurrentViewMatrix();
+	auto MatrixProjection = m_pECS->SystemCamera().CurrentProjectionMatrix();
 
 	m_PickingRayViewSpacePosition = XMVectorSet(0, 0, 0.001f, 0);
 	m_PickingRayViewSpaceDirection = XMVectorSet(

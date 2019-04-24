@@ -2,7 +2,6 @@
 
 #include "../Core/JWWin32Window.h"
 #include "../Core/JWDX.h"
-#include "../Core/JWCamera.h"
 #include "../Core/JWImage.h"
 #include "../Core/JWImageCursor.h"
 #include "../Core/JWInstantText.h"
@@ -38,13 +37,14 @@ namespace JWEngine
 
 		// ---------------------
 		// --- Object getter ---
-		auto& Camera() noexcept { return m_Camera; }
 		auto& InstantText() noexcept { return m_InstantText; }
 		auto& RawPixelSetter() noexcept { return m_RawPixelSetter; }
 		auto& ECS() noexcept { return m_ECS; }
 	
-		// FPS
+		// Getter
 		auto GetFPS() noexcept { return m_FPS; };
+		auto GetWindowWidth() noexcept { return m_Window.GetWindowSize().x; }
+		auto GetWindowHeight() noexcept { return m_Window.GetWindowSize().y; }
 
 		// Base directory
 		auto GetBaseDirectory() const noexcept { return m_BaseDirectory; }
@@ -69,7 +69,6 @@ namespace JWEngine
 		JWDX					m_DX{};
 		JWInput					m_Input{};
 		SDirectInputDeviceState	m_InputDeviceState{};
-		JWCamera				m_Camera{};
 		JWInstantText			m_InstantText{};
 		JWRawPixelSetter		m_RawPixelSetter{};
 		JWECS					m_ECS{};

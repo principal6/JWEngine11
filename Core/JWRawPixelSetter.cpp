@@ -11,12 +11,12 @@ void JWRawPixelSetter::Create(JWDX& DX) noexcept
 		m_pDX = &DX;
 
 		// Create raw pixel data
-		m_RawPixelData.CreatePixelData(m_pDX->GetWindowSize().Width, m_pDX->GetWindowSize().Height);
+		m_RawPixelData.CreatePixelData(m_pDX->GetWindowSize());
 
 		// Set default color
-		for (int y = 0; y < m_RawPixelData.GetHeight(); ++y)
+		for (uint32_t y = 0; y < m_RawPixelData.GetHeight(); ++y)
 		{
-			for (int x = 0; x < m_RawPixelData.GetWidth(); ++x)
+			for (uint32_t x = 0; x < m_RawPixelData.GetWidth(); ++x)
 			{
 				m_RawPixelData.SetPixel(x, y, SRawPixelColor(255, 255, 0, 255));
 			}

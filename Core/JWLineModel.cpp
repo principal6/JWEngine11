@@ -1,6 +1,5 @@
 #include "JWLineModel.h"
 #include "../Core/JWDX.h"
-#include "JWCamera.h"
 
 using namespace JWEngine;
 
@@ -116,8 +115,8 @@ auto JWLineModel::AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Co
 
 	if (m_RenderType == ERenderType::Model_Line2D)
 	{
-		float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
-		float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
+		float window_width = m_pDX->GetWindowSize().x;
+		float window_height = m_pDX->GetWindowSize().y;
 
 		XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
 		XMFLOAT3 position_b = position_a;
@@ -239,8 +238,8 @@ auto JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2
 		{
 			Line2DIndex = min(Line2DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
-			float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
-			float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
+			float window_width = m_pDX->GetWindowSize().x;
+			float window_height = m_pDX->GetWindowSize().y;
 
 			XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
 			XMFLOAT3 position_b = position_a;
@@ -264,8 +263,8 @@ auto JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2
 		{
 			Line2DIndex = min(Line2DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
-			float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
-			float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
+			float window_width = m_pDX->GetWindowSize().x;
+			float window_height = m_pDX->GetWindowSize().y;
 
 			XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
 			XMFLOAT3 position_b = position_a;

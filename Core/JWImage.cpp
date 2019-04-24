@@ -53,8 +53,8 @@ auto JWImage::SetSize(XMFLOAT2 Size) noexcept->JWImage*
 
 PRIVATE void JWImage::UpdateScreenPositionAndSize() noexcept
 {
-	float window_width = static_cast<float>(m_pDX->GetWindowSize().Width);
-	float window_height = static_cast<float>(m_pDX->GetWindowSize().Height);
+	float window_width = m_pDX->GetWindowSize().x;
+	float window_height = m_pDX->GetWindowSize().y;
 
 	m_VertexData.vVerticesModel[0].Position.x = -window_width/2 + m_Position.x;
 	m_VertexData.vVerticesModel[0].Position.y = window_height/2 - m_Position.y;

@@ -22,16 +22,15 @@ namespace JWEngine
 		void SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function) noexcept;
 		void SetOnWindowsCharInputFunction(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept;
 
-		auto GetWidth() const noexcept->int;
-		auto GetHeight() const noexcept->int;
-		auto GethWnd() const noexcept->HWND;
-		auto GethInstance() const noexcept->HINSTANCE;
+		auto GetWindowSize() const noexcept { return m_WindowSize; }
+		auto GethWnd() const noexcept { return m_hWnd; }
+		auto GethInstance() const noexcept { return m_hInstance; }
 
 	private:
 		HINSTANCE	m_hInstance{};
 		HWND		m_hWnd{};
 		WNDCLASSEXA	m_WindowClass{};
 
-		SSizeInt	m_WindowSize;
+		XMFLOAT2	m_WindowSize;
 	};
 };

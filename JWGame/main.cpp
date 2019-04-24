@@ -19,6 +19,8 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
+	// # JWSystemCaemra		@ Multiple camera, Camera representation
+	// # JWPrimitiveMaker	@ Dynamic Quad
 	// # Render		@ Frustum culling + Culling freeze
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
@@ -28,11 +30,7 @@ int main()
 
 	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "megt20all", &myLogger);
 	//myGame.LoadCursorImage("cursor_default.png");
-
-	myGame.Camera()
-		.SetCameraType(ECameraType::FreeLook)
-		.SetPosition(XMFLOAT3(0.0f, 0.0f, -4.0f));
-
+	
 	// ECS Shared resources
 	auto& ecs = myGame.ECS();
 	{
@@ -74,6 +72,11 @@ int main()
 		// Animations texture
 		ecs.SystemRender().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 	}
+
+	auto camera_0 = ecs.CreateEntity("camera_0");
+	camera_0->CreateComponentCamera()
+		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight(), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 1));
+	ecs.SystemCamera().SetMainCamera(0);
 
 	auto grid = ecs.CreateEntity(EEntityType::Grid);
 	grid->CreateComponentRender()
@@ -174,42 +177,53 @@ int main()
 
 JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 {
+	auto& ecs = myGame.ECS();
+
 	if (VK == VK_F1)
 	{
-		myGame.ECS().SystemRender().ToggleWireFrame();
+		ecs.SystemRender().ToggleWireFrame();
 	}
 
 	if (VK == VK_F2)
 	{
-		myGame.ECS().SystemRender().ToggleNormalDrawing();
+		ecs.SystemRender().ToggleNormalDrawing();
 	}
 
 	if (VK == VK_F3)
 	{
-		myGame.ECS().SystemRender().ToggleLighting();
+		ecs.SystemRender().ToggleLighting();
 	}
 
 	if (VK == VK_F4)
 	{
-		myGame.ECS().SystemRender().ToggleBoundingVolumeDrawing();
+		ecs.SystemRender().ToggleBoundingVolumeDrawing();
+	}
+
+	if (VK == VK_F5)
+	{
+		ecs.SystemCamera().SetCurrentCameraPosition(XMFLOAT3(3, 1, 3));
 	}
 }
 
 JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 {
+	auto& ecs = myGame.ECS();
+
 	if (Character == '1')
 	{
-		myGame.ECS().GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->PrevAnimation();
+		ecs.GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->PrevAnimation();
 	}
 
 	if (Character == '2')
 	{
-		myGame.ECS().GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->NextAnimation();
+		ecs.GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->NextAnimation();
 	}
 }
 
 JW_FUNCTION_ON_INPUT(OnInput)
 {
+	auto& ecs = myGame.ECS();
+
 	if (DeviceState.Keys[DIK_ESCAPE])
 	{
 		myGame.Halt();
@@ -217,22 +231,22 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 	if (DeviceState.Keys[DIK_W])
 	{
-		myGame.Camera().MoveCamera(ECameraMoveDirection::Forward, 1.0f);
+		ecs.SystemCamera().MoveCurrentCamera(ECameraDirection::Forward);
 	}
 
 	if (DeviceState.Keys[DIK_S])
 	{
-		myGame.Camera().MoveCamera(ECameraMoveDirection::Backward, 1.0f);
+		ecs.SystemCamera().MoveCurrentCamera(ECameraDirection::Backward);
 	}
 
 	if (DeviceState.Keys[DIK_A])
 	{
-		myGame.Camera().MoveCamera(ECameraMoveDirection::Left, 1.0f);
+		ecs.SystemCamera().MoveCurrentCamera(ECameraDirection::Left);
 	}
 
 	if (DeviceState.Keys[DIK_D])
 	{
-		myGame.Camera().MoveCamera(ECameraMoveDirection::Right, 1.0f);
+		ecs.SystemCamera().MoveCurrentCamera(ECameraDirection::Right);
 	}
 
 	// Mouse left button pressed
@@ -263,21 +277,21 @@ JW_FUNCTION_ON_INPUT(OnInput)
 		// Mouse right button pressed
 		if (DeviceState.CurrentMouse.rgbButtons[1])
 		{
-			myGame.Camera().RotateCamera(static_cast<float>(DeviceState.CurrentMouse.lY), static_cast<float>(DeviceState.CurrentMouse.lX), 0);
+			ecs.SystemCamera().RotateCurrentCamera(static_cast<float>(DeviceState.CurrentMouse.lY), static_cast<float>(DeviceState.CurrentMouse.lX), 0);
 		}
 	}
 	
 	// Mouse wheel scrolled
 	if ((DeviceState.CurrentMouse.lZ))
 	{
-		myGame.Camera().ZoomCamera(static_cast<float>(DeviceState.CurrentMouse.lZ));
+		ecs.SystemCamera().ZoomCurrentCamera(static_cast<float>(DeviceState.CurrentMouse.lZ));
 	}
 }
 
 JW_FUNCTION_ON_RENDER(OnRender)
 {
 	// ECS entity Skybox
-	myGame.ECS().GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(myGame.Camera().GetPosition());
+	myGame.ECS().GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(myGame.ECS().SystemCamera().CurrentCameraPosition());
 
 	// ECS execute systems
 	myGame.ECS().ExecuteSystems();

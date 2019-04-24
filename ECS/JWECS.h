@@ -6,7 +6,6 @@ namespace JWEngine
 {
 	class JWDX;
 	class JWWin32Window;
-	class JWCamera;
 
 	class JWECS final
 	{
@@ -15,12 +14,13 @@ namespace JWEngine
 		~JWECS() = default;
 
 		// Called in JWGame class
-		void Create(JWDX& DX, JWCamera& Camera, JWWin32Window& Window, STRING BaseDirectory) noexcept;
+		void Create(JWDX& DX, JWWin32Window& Window, STRING BaseDirectory) noexcept;
 		void Destroy() noexcept;
 		
 		// ### Entity creator ###
-		// Creates user-defined entity
+		// Creates non-unique entity without specifying the type (user-defined type)
 		auto CreateEntity(STRING EntityName) noexcept->JWEntity*;
+		
 		// Creates unique entity
 		auto CreateEntity(EEntityType Type) noexcept->JWEntity*;
 
@@ -42,6 +42,7 @@ namespace JWEngine
 		auto& SystemRender() noexcept { return m_SystemRender; }
 		auto& SystemLight() noexcept { return m_SystemLight; }
 		auto& SystemPhysics() noexcept { return m_SystemPhysics; }
+		auto& SystemCamera() noexcept { return m_SystemCamera; }
 
 	private:
 		JWDX*					m_pDX{};
@@ -52,6 +53,7 @@ namespace JWEngine
 		JWSystemRender			m_SystemRender{};
 		JWSystemLight			m_SystemLight{};
 		JWSystemPhysics			m_SystemPhysics{};
+		JWSystemCamera			m_SystemCamera{};
 
 		VECTOR<JWEntity*>		m_vpEntities;
 		MAP<STRING, uint64_t>	m_mapEntityNames;

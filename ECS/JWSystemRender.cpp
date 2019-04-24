@@ -1,10 +1,9 @@
 #include "JWECS.h"
-#include "../Core/JWCamera.h"
 #include "../Core/JWAssimpLoader.h"
 
 using namespace JWEngine;
 
-void JWSystemRender::Create(JWECS& ECS, JWDX& DX, JWCamera& Camera, STRING BaseDirectory) noexcept
+void JWSystemRender::Create(JWECS& ECS, JWDX& DX, STRING BaseDirectory) noexcept
 {
 	// Set JWECS pointer.
 	m_pECS = &ECS;
@@ -12,9 +11,6 @@ void JWSystemRender::Create(JWECS& ECS, JWDX& DX, JWCamera& Camera, STRING BaseD
 	// Set JWDX pointer.
 	m_pDX = &DX;
 
-	// Set JWCamera pointer.
-	m_pCamera = &Camera;
-	
 	// Set base directory.
 	m_BaseDirectory = BaseDirectory;
 
@@ -425,9 +421,9 @@ void JWSystemRender::DrawInstancedBoundingVolume() noexcept
 
 	// Set VS Base
 	m_pDX->SetVS(EVertexShader::VSBase);
-
+	
 	// Update VS constant buffer #0
-	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
 	m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
@@ -475,7 +471,7 @@ void JWSystemRender::DrawBoundingVolumesNoInstancing(SComponentRender& Component
 		m_pDX->SetVS(EVertexShader::VSBase);
 
 		// Update VS constant buffer
-		m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+		m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
 		m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
 		m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
@@ -805,24 +801,18 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 
 	// Update VS constant buffer
 	XMMATRIX WVP{}, World{};
+	WVP = XMMatrixTranspose(component_world_matrix * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
+	World = XMMatrixTranspose(component_world_matrix);
+
 	switch (Component.RenderType)
 	{
 	case ERenderType::Model_Static:
-		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
-		World = XMMatrixTranspose(component_world_matrix);
-
 		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Dynamic:
-		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
-		World = XMMatrixTranspose(component_world_matrix);
-
 		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Rigged:
-		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
-		World = XMMatrixTranspose(component_world_matrix);
-
 		if (Component.FlagRenderOption & JWFlagRenderOption_UseGPUAnimation)
 		{
 			m_VSCBFlags.FlagVS = JWFlagVS_UseAnimation | JWFlagVS_AnimateOnGPU;
@@ -837,17 +827,15 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 		}
 		break;
 	case ERenderType::Image_2D:
-		WVP = XMMatrixTranspose(m_pCamera->GetTransformedOrthographicMatrix());
+		WVP = XMMatrixTranspose(m_pECS->SystemCamera().OrthographicMatrix());
 
 		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Line3D:
-		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetViewProjectionMatrix());
-
 		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Line2D:
-		WVP = XMMatrixTranspose(component_world_matrix * m_pCamera->GetFixedOrthographicMatrix());
+		WVP = XMMatrixTranspose(component_world_matrix * m_pECS->SystemCamera().OrthographicMatrix());
 
 		m_VSCBFlags.FlagVS = 0;
 		break;
@@ -987,7 +975,7 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 	m_pDX->SetVS(EVertexShader::VSBase);
 
 	// Update VS constant buffer
-	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pCamera->GetViewProjectionMatrix());
+	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
 	m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 

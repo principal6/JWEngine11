@@ -30,7 +30,7 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 		LOG_ADD("Window created");
 
 		m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
-		m_DX.Create(m_Window, m_BaseDirectory, m_ClearColor);
+		m_DX.Create(m_Window.GethWnd(), m_Window.GetWindowSize(), m_BaseDirectory, m_ClearColor);
 		m_DX.SetRasterizerState(ERasterizerState::SolidNoCull);
 		m_IsDXCreated = true;
 
@@ -40,19 +40,15 @@ void JWGame::Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Tit
 
 		LOG_ADD("Input created");
 
-		m_Camera.Create(m_DX);
-
-		LOG_ADD("Camera created");
-
-		m_InstantText.Create(m_DX, m_Camera, m_BaseDirectory, KAssetDirectory + GameFontFileName);
+		m_InstantText.Create(m_DX, m_Window.GetWindowSize(), m_BaseDirectory, KAssetDirectory + GameFontFileName);
 
 		LOG_ADD("Instant text created");
 
-		m_MouseCursorImage.Create(m_DX, m_Camera);
+		m_MouseCursorImage.Create(m_DX, m_Window.GetWindowSize());
 
 		m_RawPixelSetter.Create(m_DX);
 
-		m_ECS.Create(m_DX, m_Camera, m_Window, m_BaseDirectory);
+		m_ECS.Create(m_DX, m_Window, m_BaseDirectory);
 
 		LOG_ADD("ECS created");
 
@@ -128,15 +124,12 @@ void JWGame::Run() noexcept
 
 			// Limit mouse cursor position to window size
 			m_MouseCursorPosition.x = max(m_MouseCursorPosition.x, 0);
-			m_MouseCursorPosition.x = min(m_MouseCursorPosition.x, static_cast<float>(m_Window.GetWidth()));
+			m_MouseCursorPosition.x = min(m_MouseCursorPosition.x, m_Window.GetWindowSize().x);
 			m_MouseCursorPosition.y = max(m_MouseCursorPosition.y, 0);
-			m_MouseCursorPosition.y = min(m_MouseCursorPosition.y, static_cast<float>(m_Window.GetHeight()));
+			m_MouseCursorPosition.y = min(m_MouseCursorPosition.y, m_Window.GetWindowSize().y);
 
 			// Call the outter OnInput function
 			m_fpOnInput(m_InputDeviceState);
-
-			// Update camera position into DefaultPSCBDefault
-			m_DX.UpdatePSCBCamera(m_Camera.GetPositionFloat4());
 
 			// Begin the drawing process
 			m_DX.BeginDrawing();
@@ -177,7 +170,6 @@ void JWGame::Run() noexcept
 	m_ECS.Destroy();
 	m_RawPixelSetter.Destroy();
 	m_InstantText.Destroy();
-	m_Camera.Destroy();
 	m_Input.Destroy();
 	m_DX.Destroy();
 	m_Window.Destroy();

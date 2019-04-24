@@ -156,6 +156,8 @@ namespace JWEngine
 #define JW_RELEASE_CHECK_REFERENCE_COUNT(DxObj) {if (DxObj) { reference_count = DxObj->Release(); DxObj = nullptr; }}
 #define JW_ERROR_ABORT(text) { MessageBoxA(nullptr, \
 	(STRING(typeid(*this).name()) + "::" + __func__ + "() " + text).c_str(), "Error", MB_OK); abort(); }
+#define JW_ERROR_RETURN(text) { MessageBoxA(nullptr, \
+	(STRING(typeid(*this).name()) + "::" + __func__ + "() " + text).c_str(), "Error", MB_OK); return; }
 	
 	using namespace DirectX;
 
@@ -174,6 +176,8 @@ namespace JWEngine
 	static constexpr XMFLOAT4 KDefaultColorNormals{ XMFLOAT4(0.4f, 0.8f, 0.0f, 1.0f) };
 	static constexpr XMFLOAT3 KDefaultColorGrid{ XMFLOAT3(1.0f, 1.0f, 1.0f) };
 	static constexpr size_t KSizeTInvalid{ MAXSIZE_T };
+	static constexpr float KOrthographicNearZ{ 1.0f };
+	static constexpr float KOrthographicFarZ{ 100.0f };
 
 	enum class EWorldMatrixCalculationOrder
 	{
