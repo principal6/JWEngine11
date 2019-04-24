@@ -19,6 +19,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
+	// # JWSystemLight		@ Position, Direction decoupling with JWSystemTransform
 	// # JWSystemCaemra		@ Multiple camera, Camera representation (ToggleCameraDrawing func)
 	// # JWPrimitiveMaker	@ Dynamic Quad
 	// # Render		@ Frustum culling + Culling freeze
