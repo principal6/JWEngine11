@@ -71,9 +71,9 @@ void JWSystemPhysics::CreateBoundingSphere(SComponentPhysics* pComponent, float 
 	auto transform = pComponent->PtrEntity->GetComponentTransform();
 	
 	// Set center position
-	pComponent->BoundingSphereCenter.x = transform->Position.x + CenterOffset.x;
-	pComponent->BoundingSphereCenter.y = transform->Position.y + CenterOffset.y;
-	pComponent->BoundingSphereCenter.z = transform->Position.z + CenterOffset.z;
+	pComponent->BoundingSphereCenter.x = XMVectorGetX(transform->Position) + CenterOffset.x;
+	pComponent->BoundingSphereCenter.y = XMVectorGetY(transform->Position) + CenterOffset.y;
+	pComponent->BoundingSphereCenter.z = XMVectorGetZ(transform->Position) + CenterOffset.z;
 	
 	m_pECS->SystemRender().AddBoundingVolumeInstance(pComponent->BoundingSphereRadius, pComponent->BoundingSphereCenter);
 }

@@ -11,25 +11,26 @@ namespace JWEngine
 		JWEntity*	PtrEntity{};
 		uint32_t	ComponentID{};
 
-		XMFLOAT3	Position{};
+		XMVECTOR	Position{};
 		XMFLOAT3	ScalingFactor{ 1.0f, 1.0f, 1.0f };
 		// Pitch/Yaw/Roll orientation
 		// m_Orientation.x = Pitch = Y-Z rotation (nod)
 		// m_Orientation.y = Yaw   = X-Z rotation (turn)
 		// m_Orientation.z = Roll  = Y-X rotation (tilt)
-		XMFLOAT3	Orientation{};
+		XMVECTOR	Orientation{};
 		XMMATRIX	WorldMatrix{};
 		EWorldMatrixCalculationOrder	WorldMatrixCalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 
 		inline auto SetPosition(const XMVECTOR& _Position)
 		{
-			XMStoreFloat3(&Position, _Position);
+			Position = _Position;
 			return this;
 
 		}
+
 		inline auto SetPosition(const XMFLOAT3& _Position)
 		{
-			Position = _Position;
+			Position = XMVectorSet(_Position.x, _Position.y, _Position.z, 1);
 			return this;
 		}
 
@@ -41,7 +42,7 @@ namespace JWEngine
 
 		inline auto SetOrientation(const XMFLOAT3& _Orientation)
 		{
-			Orientation = _Orientation;
+			Orientation = XMVectorSet(_Orientation.x, _Orientation.y, _Orientation.z, 0);
 			return this;
 		}
 

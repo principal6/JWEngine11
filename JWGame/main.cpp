@@ -19,7 +19,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// # JWSystemCaemra		@ Multiple camera, Camera representation
+	// # JWSystemCaemra		@ Multiple camera, Camera representation (ToggleCameraDrawing func)
 	// # JWPrimitiveMaker	@ Dynamic Quad
 	// # Render		@ Frustum culling + Culling freeze
 	// # Physics	@ Collision
@@ -74,8 +74,12 @@ int main()
 	}
 
 	auto camera_0 = ecs.CreateEntity("camera_0");
+	camera_0->CreateComponentTransform()
+		->SetPosition(XMFLOAT3(3, 1, 3))
+		->SetOrientation(XMFLOAT3(0, 0, 1));
 	camera_0->CreateComponentCamera()
-		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight(), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 1));
+		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
+
 	ecs.SystemCamera().SetMainCamera(0);
 
 	auto grid = ecs.CreateEntity(EEntityType::Grid);
@@ -291,7 +295,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 JW_FUNCTION_ON_RENDER(OnRender)
 {
 	// ECS entity Skybox
-	myGame.ECS().GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(myGame.ECS().SystemCamera().CurrentCameraPosition());
+	myGame.ECS().GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(myGame.ECS().SystemCamera().GetCurrentCameraPosition());
 
 	// ECS execute systems
 	myGame.ECS().ExecuteSystems();

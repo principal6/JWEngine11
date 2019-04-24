@@ -230,6 +230,8 @@ void JWECS::ExecuteSystems() noexcept
 {
 	m_SystemTransform.Execute();
 
+	m_SystemCamera.Execute();
+
 	m_SystemLight.Execute();
 
 	m_SystemRender.Execute();

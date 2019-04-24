@@ -462,10 +462,10 @@ void JWSystemRender::DrawBoundingVolumesNoInstancing(SComponentRender& Component
 	{
 		assert(transform);
 
-		const auto& p = transform->Position;
-		const auto& r = physics->BoundingSphereRadius;
-		auto world_matrix{ XMMatrixScaling(r, r, r) };
-		world_matrix *= XMMatrixTranslation(p.x, p.y, p.z);
+		const auto& position = transform->Position;
+		const auto& radius = physics->BoundingSphereRadius;
+		auto world_matrix{ XMMatrixScaling(radius, radius, radius) };
+		world_matrix *= XMMatrixTranslationFromVector(position);
 
 		// Set VS Base
 		m_pDX->SetVS(EVertexShader::VSBase);

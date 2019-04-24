@@ -62,10 +62,10 @@ void JWSystemTransform::Execute() noexcept
 	{
 		if (iter)
 		{
-			matrix_translation = XMMatrixTranslation(iter->Position.x, iter->Position.y, iter->Position.z);
+			matrix_translation = XMMatrixTranslationFromVector(iter->Position);
 			matrix_scaling = XMMatrixScaling(iter->ScalingFactor.x, iter->ScalingFactor.y, iter->ScalingFactor.z);
-			matrix_rotation = XMMatrixRotationRollPitchYaw(iter->Orientation.x, iter->Orientation.y, iter->Orientation.z);
-
+			matrix_rotation = XMMatrixRotationRollPitchYawFromVector(iter->Orientation);
+			
 			switch (iter->WorldMatrixCalculationOrder)
 			{
 			case JWEngine::EWorldMatrixCalculationOrder::TransRotScale:
