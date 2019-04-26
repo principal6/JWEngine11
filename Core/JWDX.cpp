@@ -739,9 +739,9 @@ void JWDX::UpdatePSCBLights(const SPSCBLights& Data) noexcept
 	UpdateDynamicResource(m_PSCBLights, &Data, sizeof(Data));
 }
 
-void JWDX::UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept
+void JWDX::UpdatePSCBCamera(const XMVECTOR& CameraPosition) noexcept
 {
-	m_PSCBCameraData.CameraPosition = CameraPosition;
+	XMStoreFloat4(&m_PSCBCameraData.CameraPosition, CameraPosition);
 
 	UpdateDynamicResource(m_PSCBCamera, &m_PSCBCameraData, sizeof(m_PSCBCameraData));
 }

@@ -101,7 +101,7 @@ namespace JWEngine
 		/// Update PS constant buffers
 		void UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept;
 		void UpdatePSCBLights(const SPSCBLights& Data) noexcept;
-		void UpdatePSCBCamera(const XMFLOAT4& CameraPosition) noexcept;
+		void UpdatePSCBCamera(const XMVECTOR& CameraPosition) noexcept;
 
 		void BeginDrawing() noexcept;
 		void EndDrawing() noexcept;

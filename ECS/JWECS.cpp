@@ -12,7 +12,7 @@ void JWECS::Create(JWDX& DX, JWWin32Window& Window, STRING BaseDirectory) noexce
 	m_SystemRender.Create(*this, DX, BaseDirectory);
 	m_SystemLight.Create(DX);
 	m_SystemPhysics.Create(*this, Window.GethWnd(), Window.GetWindowSize());
-	m_SystemCamera.Create(*this, Window.GetWindowSize());
+	m_SystemCamera.Create(*this, DX, Window.GetWindowSize());
 }
 
 void JWECS::Destroy() noexcept

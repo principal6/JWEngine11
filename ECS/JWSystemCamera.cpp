@@ -1,11 +1,15 @@
 #include "JWECS.h"
+#include "../Core/JWDX.h"
 
 using namespace JWEngine;
 
-void JWSystemCamera::Create(JWECS& ECS, XMFLOAT2 WindowSize) noexcept
+void JWSystemCamera::Create(JWECS& ECS, JWDX& DX, XMFLOAT2 WindowSize) noexcept
 {
 	// Set JWECS pointer.
 	m_pECS = &ECS;
+
+	// Set JWDX pointer.
+	m_pDX = &DX;
 	
 	// Set orthographic projection matrix.
 	m_MatrixProjOrthographic = XMMatrixOrthographicLH(WindowSize.x, WindowSize.y, KOrthographicNearZ, KOrthographicFarZ);
@@ -66,16 +70,19 @@ void JWSystemCamera::DestroyComponent(SComponentCamera& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
-void JWSystemCamera::SetMainCamera(size_t CameraIndex) noexcept
+void JWSystemCamera::SetCurrentCamera(size_t ComponentID) noexcept
 {
 	if (m_vpComponents.size() == 0)
 	{
 		JW_ERROR_ABORT("You didn't create any camera.");
 	}
 
-	CameraIndex = max(CameraIndex, m_vpComponents.size() - 1);
+	ComponentID = min(ComponentID, m_vpComponents.size() - 1);
 
-	m_pCurrentCamera = m_vpComponents[CameraIndex];
+	m_pCurrentCamera = m_vpComponents[ComponentID];
+
+	RotateCurrentCamera(0, 0, 0);
+	UpdateCurrentCameraViewMatrix();
 }
 
 void JWSystemCamera::RotateCurrentCamera(float X_Pitch, float Y_Yaw, float Z_Roll) noexcept
@@ -83,37 +90,21 @@ void JWSystemCamera::RotateCurrentCamera(float X_Pitch, float Y_Yaw, float Z_Rol
 	const auto& type = m_pCurrentCamera->Type;
 	const auto& rotate_factor = m_pCurrentCamera->RotateFactor;
 
-	auto& pitch = m_pCurrentCamera->Pitch;
-	auto& yaw = m_pCurrentCamera->Yaw;
-	auto& roll = m_pCurrentCamera->Roll;
-
-	pitch += X_Pitch * rotate_factor;
-	yaw += Y_Yaw * rotate_factor;
-	roll += Z_Roll * rotate_factor;
-
-	// This is needed to eliminate Y-axis flipping
-	pitch = min(pitch, XM_PIDIV2 - 0.01f);
-	pitch = max(pitch, -XM_PIDIV2 + 0.01f);
-
 	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	transform->RotatePitchYawRoll(X_Pitch * rotate_factor, Y_Yaw * rotate_factor, Z_Roll * rotate_factor, true);
 	auto& position = transform->Position;
-	auto& orientation = transform->Orientation;
-
-	// Update Orientation vector.
-	const auto& default_forward = m_pCurrentCamera->DefaultForward;
-	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
-	orientation = XMVector3TransformNormal(default_forward, rotation);
+	const auto& forward = transform->Forward;
 
 	// Update Position/LookAt vector.
 	auto& lookat = m_pCurrentCamera->LookAt;
 	if (type == ECameraType::ThirdPerson)
 	{
 		const auto& zoom = m_pCurrentCamera->Zoom;
-		position = lookat - orientation * zoom;
+		position = lookat - forward * zoom;
 	}
 	else
 	{
-		lookat = position + orientation;
+		lookat = position + forward;
 	}
 
 	UpdateCurrentCameraViewMatrix();
@@ -140,9 +131,9 @@ void JWSystemCamera::ZoomCurrentCamera(float Factor) noexcept
 	// Update Position vector.
 	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
 	auto& position = transform->Position;
-	const auto& orientation = transform->Orientation;
+	const auto& forward = transform->Forward;
 	const auto& lookat = m_pCurrentCamera->LookAt;
-	position = lookat - orientation * zoom;
+	position = lookat - forward * zoom;
 
 	UpdateCurrentCameraViewMatrix();
 }
@@ -174,19 +165,17 @@ PRIVATE inline void JWSystemCamera::MoveFreeLook(ECameraDirection Direction) noe
 
 	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
 	auto& position = transform->Position;
-	auto& orientation = transform->Orientation;
-
-	const auto& up = m_pCurrentCamera->Up;
-	const auto right = XMVector3Normalize(XMVector3Cross(up, orientation));
+	const auto& forward = transform->Forward;
+	const auto& right = transform->Right;
 
 	// Update Position vector.
 	switch (Direction)
 	{
 	case JWEngine::ECameraDirection::Forward:
-		position += orientation * move_factor;
+		position += forward * move_factor;
 		break;
 	case JWEngine::ECameraDirection::Backward:
-		position -= orientation * move_factor;
+		position -= forward * move_factor;
 		break;
 	case JWEngine::ECameraDirection::Left:
 		position -= right * move_factor;
@@ -200,7 +189,7 @@ PRIVATE inline void JWSystemCamera::MoveFreeLook(ECameraDirection Direction) noe
 
 	// Update LookAt vector.
 	auto& lookat = m_pCurrentCamera->LookAt;
-	lookat = position + orientation;
+	lookat = position + forward;
 }
 
 PRIVATE inline void JWSystemCamera::MoveFirstPerson(ECameraDirection Direction) noexcept
@@ -209,22 +198,20 @@ PRIVATE inline void JWSystemCamera::MoveFirstPerson(ECameraDirection Direction) 
 
 	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
 	auto& position = transform->Position;
-	const auto& orientation = transform->Orientation;
+	const auto& forward = transform->Forward;
+	const auto& right = transform->Right;
 
-	const auto& up = m_pCurrentCamera->Up;
-	const auto right = XMVector3Normalize(XMVector3Cross(up, orientation));
-
-	auto temp_orientation = XMVectorSetY(orientation, 0);
+	auto temp_forward = XMVectorSetY(forward, 0);
 	auto temp_right = XMVectorSetY(right, 0);
 
 	// Update Position vector.
 	switch (Direction)
 	{
 	case JWEngine::ECameraDirection::Forward:
-		position += temp_orientation * move_factor;
+		position += temp_forward * move_factor;
 		break;
 	case JWEngine::ECameraDirection::Backward:
-		position -= temp_orientation * move_factor;
+		position -= temp_forward * move_factor;
 		break;
 	case JWEngine::ECameraDirection::Left:
 		position -= temp_right * move_factor;
@@ -238,7 +225,7 @@ PRIVATE inline void JWSystemCamera::MoveFirstPerson(ECameraDirection Direction) 
 
 	// Update LookAt vector.
 	auto& lookat = m_pCurrentCamera->LookAt;
-	lookat = position + orientation;
+	lookat = position + forward;
 }
 
 PRIVATE inline void JWSystemCamera::MoveThirdPerson(ECameraDirection Direction) noexcept
@@ -246,12 +233,10 @@ PRIVATE inline void JWSystemCamera::MoveThirdPerson(ECameraDirection Direction) 
 	const auto& move_factor = m_pCurrentCamera->MoveFactor;
 
 	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
-	const auto& orientation = transform->Orientation;
+	const auto& forward = transform->Forward;
+	const auto& right = transform->Right;
 
-	const auto& up = m_pCurrentCamera->Up;
-	const auto right = XMVector3Normalize(XMVector3Cross(up, orientation));
-
-	auto temp_orientation = XMVectorSetY(orientation, 0);
+	auto temp_forward = XMVectorSetY(forward, 0);
 	auto temp_right = XMVectorSetY(right, 0);
 
 	// Update LookAt vector.
@@ -259,10 +244,10 @@ PRIVATE inline void JWSystemCamera::MoveThirdPerson(ECameraDirection Direction) 
 	switch (Direction)
 	{
 	case JWEngine::ECameraDirection::Forward:
-		lookat += temp_orientation * move_factor;
+		lookat += temp_forward * move_factor;
 		break;
 	case JWEngine::ECameraDirection::Backward:
-		lookat -= temp_orientation * move_factor;
+		lookat -= temp_forward * move_factor;
 		break;
 	case JWEngine::ECameraDirection::Left:
 		lookat -= temp_right * move_factor;
@@ -277,7 +262,7 @@ PRIVATE inline void JWSystemCamera::MoveThirdPerson(ECameraDirection Direction) 
 	// Update Position vector.
 	auto& position = transform->Position;
 	const auto& zoom = m_pCurrentCamera->Zoom;
-	position = lookat - orientation * zoom;
+	position = lookat - forward * zoom;
 }
 
 PRIVATE inline void JWSystemCamera::UpdateCurrentCameraViewMatrix() noexcept
@@ -286,11 +271,11 @@ PRIVATE inline void JWSystemCamera::UpdateCurrentCameraViewMatrix() noexcept
 	
 	const auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
 	const auto& position = transform->Position;
-	
+	const auto& up = transform->Up;
+
 	const auto& lookat = m_pCurrentCamera->LookAt;
 	const auto& zoom = m_pCurrentCamera->Zoom;
-	const auto& up = m_pCurrentCamera->Up;
-
+	
 	matrix_view = XMMatrixLookAtLH(position, lookat, up);
 }
 
@@ -301,20 +286,20 @@ void JWSystemCamera::SetCurrentCameraPosition(XMFLOAT3 Position) noexcept
 	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
 	auto& position = transform->Position = XMVectorSet(Position.x, Position.y, Position.z, 1);
 	auto& lookat = m_pCurrentCamera->LookAt;
-	const auto& orientation = transform->Orientation;
+	const auto& forward = transform->Forward;
 
 	if (type == ECameraType::ThirdPerson)
 	{
 		lookat = XMVectorSet(Position.x, Position.y, Position.z, 0);
 
 		const auto& zoom = m_pCurrentCamera->Zoom;
-		position = lookat - orientation * zoom;
+		position = lookat - forward * zoom;
 	}
 	else
 	{
 		position = XMVectorSet(Position.x, Position.y, Position.z, 0);
 
-		lookat = position + orientation;
+		lookat = position + forward;
 	}
 
 	UpdateCurrentCameraViewMatrix();
@@ -329,23 +314,17 @@ void JWSystemCamera::Execute() noexcept
 {
 	if (m_pCurrentCamera == nullptr)
 	{
-		JW_ERROR_ABORT("메인 카메라를 지정하지 않았습니다. JWSystemCamera::SetMainCamera()를 호출하십시오.");
-	}
-
-	if (m_AreCamerasSet == false)
-	{
-		for (auto& iter : m_vpComponents)
+		if (m_vpComponents.size())
 		{
-			if (iter)
-			{
-				auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
-				const auto& orientation = transform->Orientation;
-
-				auto& default_forward = m_pCurrentCamera->DefaultForward;
-				default_forward = orientation;
-			}
+			SetCurrentCamera(0);
 		}
-
-		m_AreCamerasSet = true;
+		else
+		{
+			JW_ERROR_ABORT("카메라가 없습니다.");
+		}
 	}
+	
+	// Update current camera's position to PS for specular calculation.
+	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	m_pDX->UpdatePSCBCamera(transform->Position);
 }

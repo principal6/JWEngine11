@@ -64,7 +64,7 @@ void JWSystemTransform::Execute() noexcept
 		{
 			matrix_translation = XMMatrixTranslationFromVector(iter->Position);
 			matrix_scaling = XMMatrixScaling(iter->ScalingFactor.x, iter->ScalingFactor.y, iter->ScalingFactor.z);
-			matrix_rotation = XMMatrixRotationRollPitchYawFromVector(iter->Orientation);
+			matrix_rotation = XMMatrixRotationRollPitchYaw(iter->PitchYawRoll.x, iter->PitchYawRoll.y, iter->PitchYawRoll.z);
 			
 			switch (iter->WorldMatrixCalculationOrder)
 			{

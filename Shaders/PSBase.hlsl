@@ -48,13 +48,13 @@ float4 main(VS_OUTPUT_MODEL input) : SV_TARGET
 		ambient_result = base_color * ambient_result;
 
 		// #2 Directional light
-		float directional_light_amount = saturate(dot(input.Normal, DirectionalDirection.xyz));
+		float directional_light_amount = saturate(dot(input.Normal, -DirectionalDirection.xyz));
 		float3 directional_result = DirectionalColor.rgb * DirectionalColor.a * directional_light_amount;
 		directional_result = base_color * directional_result;
 
 		// #3 Specular light //(relative to Directional Light)
 		float3 EyeDirection = normalize(CameraPosition.xyz - input.WorldPosition);
-		float3 HalfWay = normalize(DirectionalDirection.xyz + EyeDirection);
+		float3 HalfWay = normalize(-DirectionalDirection.xyz + EyeDirection);
 		float specular_light_amount = saturate(dot(input.Normal, HalfWay));
 		float3 specular_result = pow(specular_light_amount, 30.0f);
 		//specular_result = input.Specular.rgb * DirectionalColor.rgb * specular_result;

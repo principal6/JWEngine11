@@ -154,10 +154,14 @@ namespace JWEngine
 #define JW_DELETE_ARRAY(pArray) { if(pArray) {delete[] pArray; pArray = nullptr; }}
 #define JW_RELEASE(DxObj) {if (DxObj) { DxObj->Release(); DxObj = nullptr; }}
 #define JW_RELEASE_CHECK_REFERENCE_COUNT(DxObj) {if (DxObj) { reference_count = DxObj->Release(); DxObj = nullptr; }}
+#define JW_ERROR(text) { MessageBoxA(nullptr, \
+	(STRING(typeid(*this).name()) + "::" + __func__ + "() " + text).c_str(), "Error", MB_OK); }
 #define JW_ERROR_ABORT(text) { MessageBoxA(nullptr, \
 	(STRING(typeid(*this).name()) + "::" + __func__ + "() " + text).c_str(), "Error", MB_OK); abort(); }
 #define JW_ERROR_RETURN(text) { MessageBoxA(nullptr, \
 	(STRING(typeid(*this).name()) + "::" + __func__ + "() " + text).c_str(), "Error", MB_OK); return; }
+#define JW_ERROR_RETURN_THIS(text) { MessageBoxA(nullptr, \
+	(STRING(typeid(*this).name()) + "::" + __func__ + "() " + text).c_str(), "Error", MB_OK); return this; }
 	
 	using namespace DirectX;
 

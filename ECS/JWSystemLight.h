@@ -24,11 +24,13 @@ namespace JWEngine
 		ELightType	LightType{ ELightType::Invalid };
 		XMFLOAT3	LightColor{}; // Ambient | Directional | Pointlight | Spotlight
 		float		Intensity{}; // Ambient | Directional | Pointlight | Spotlight
-		XMFLOAT3	Position{}; // ( Ambient | Directional ) | Pointlight | Spotlight
-		float		Range{}; // Pointlight | Spotlight ?? Radius??
 		XMFLOAT3	Direction{}; // Directional | Spotlight
+		float		Range{}; // Pointlight | Spotlight ?? Radius??
 		XMFLOAT3	Attenuation{}; // Pointlight | Spotlight
 		float		Cone{}; // Spotlight
+
+		//XMFLOAT3	Position{}; // ( Ambient | Directional ) | Pointlight | Spotlight
+		
 	};
 
 	struct SComponentLight
@@ -47,26 +49,19 @@ namespace JWEngine
 		}
 
 		// Make DIRECTIONAL light
-		// @warning: '_Position' data WILL be used to calculate the DIRECTION of directional light.
-		void MakeDirectionalLight(const XMFLOAT3& _Color, const XMFLOAT3& _Position, float _Intensity)
+		void MakeDirectionalLight(const XMFLOAT3& _Color, const XMFLOAT3& _Direction, float _Intensity)
 		{
 			LightData.LightType = ELightType::DirectionalLight;
 			LightData.LightColor = _Color;
 			LightData.Intensity = _Intensity;
-			LightData.Position = _Position;
-
-			// Calculate direction
-			XMVECTOR direction = XMVectorSet(LightData.Position.x, LightData.Position.y, LightData.Position.z, 0);
-			direction = XMVector3Normalize(direction);
-			XMStoreFloat3(&LightData.Direction, direction);
+			LightData.Direction = _Direction;
 		}
 
 		// Make POINT light
-		void MakePointLight(const XMFLOAT3& _Color, const XMFLOAT3& _Position, float _Intensity, float _Range, const XMFLOAT3& _Attenuation)
+		void MakePointLight(const XMFLOAT3& _Color, float _Intensity, float _Range, const XMFLOAT3& _Attenuation)
 		{
 			LightData.LightType = ELightType::Pointlight;
 			LightData.LightColor = _Color;
-			LightData.Position = _Position;
 			LightData.Intensity = _Intensity;
 			LightData.Range = _Range;
 			LightData.Attenuation = _Attenuation;
@@ -89,6 +84,7 @@ namespace JWEngine
 
 	private:
 		VECTOR<SComponentLight*>	m_vpComponents;
+
 		JWDX*						m_pDX{};
 		bool						m_ShouldUpdate{ false };
 		SPSCBLights					m_PSCBLights{};

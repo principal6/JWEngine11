@@ -225,6 +225,7 @@ namespace JWEngine
 		void ToggleNormalDrawing() noexcept;
 		void ToggleLighting() noexcept;
 		void ToggleBoundingVolumeDrawing() noexcept;
+		void ToggleCameraDrawing() noexcept;
 
 		/// Object getter
 		auto& BoundingVolume() noexcept { return m_BoundingVolume; };
@@ -277,5 +278,6 @@ namespace JWEngine
 		bool						m_ShouldDrawNormals{ false };
 		bool						m_ShouldLight{ true };
 		bool						m_ShouldDrawBoundingVolumes{ false };
+		bool						m_ShouldDrawCameras{ true };
 	};
 };

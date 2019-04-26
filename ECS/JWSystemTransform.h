@@ -6,18 +6,23 @@ namespace JWEngine
 {
 	class JWEntity;
 
+	const XMVECTOR	KDefUp{ XMVectorSet(0, 1, 0, 0) };
+
 	struct SComponentTransform
 	{
 		JWEntity*	PtrEntity{};
 		uint32_t	ComponentID{};
 
-		XMVECTOR	Position{};
 		XMFLOAT3	ScalingFactor{ 1.0f, 1.0f, 1.0f };
-		// Pitch/Yaw/Roll orientation
-		// m_Orientation.x = Pitch = Y-Z rotation (nod)
-		// m_Orientation.y = Yaw   = X-Z rotation (turn)
-		// m_Orientation.z = Roll  = Y-X rotation (tilt)
-		XMVECTOR	Orientation{};
+
+		XMVECTOR	Position{ XMVectorZero() };
+
+		// Rotation calculation order is always Roll -> Pitch -> Yaw
+		XMFLOAT3	PitchYawRoll{ 0, 0, 0 };
+		XMVECTOR	Up{ KDefUp };
+		XMVECTOR	Forward{};
+		XMVECTOR	Right{};
+
 		XMMATRIX	WorldMatrix{};
 		EWorldMatrixCalculationOrder	WorldMatrixCalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 
@@ -25,7 +30,6 @@ namespace JWEngine
 		{
 			Position = _Position;
 			return this;
-
 		}
 
 		inline auto SetPosition(const XMFLOAT3& _Position)
@@ -40,9 +44,41 @@ namespace JWEngine
 			return this;
 		}
 
-		inline auto SetOrientation(const XMFLOAT3& _Orientation)
+		inline auto SetPitchYawRoll(float dPitch, float dYaw, float dRoll, bool IsCamera = false)
 		{
-			Orientation = XMVectorSet(_Orientation.x, _Orientation.y, _Orientation.z, 0);
+			PitchYawRoll.x = dPitch;
+			PitchYawRoll.y = dYaw;
+			PitchYawRoll.z = dRoll;
+
+			if (IsCamera)
+			{
+				PitchYawRoll.x = max(PitchYawRoll.x, 0.01f);
+				PitchYawRoll.x = min(PitchYawRoll.x, XM_PI - 0.01f);
+			}
+
+			auto rotation_matrix = XMMatrixRotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
+			Forward = XMVector3TransformNormal(Up, rotation_matrix);
+			Right = XMVector3Normalize(XMVector3Cross(Up, Forward));
+
+			return this;
+		}
+
+		inline auto RotatePitchYawRoll(float dPitch, float dYaw, float dRoll, bool IsCamera = false)
+		{
+			PitchYawRoll.x += dPitch;
+			PitchYawRoll.y += dYaw;
+			PitchYawRoll.z += dRoll;
+
+			if (IsCamera)
+			{
+				PitchYawRoll.x = max(PitchYawRoll.x, 0.01f);
+				PitchYawRoll.x = min(PitchYawRoll.x, XM_PI - 0.01f);
+			}
+
+			auto rotation_matrix = XMMatrixRotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
+			Forward = XMVector3TransformNormal(Up, rotation_matrix);
+			Right = XMVector3Normalize(XMVector3Cross(Up, Forward));
+
 			return this;
 		}
 

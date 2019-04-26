@@ -102,7 +102,6 @@ void JWSystemRender::DestroyComponent(SComponentRender& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
-
 void JWSystemRender::CreateSharedTexture(ESharedTextureType Type, STRING FileName) noexcept
 {
 	m_vpSharedSRV.push_back(nullptr);
@@ -374,6 +373,20 @@ void JWSystemRender::Execute() noexcept
 {
 	for (auto& iter : m_vpComponents)
 	{
+		auto camera = iter->PtrEntity->GetComponentCamera();
+		if (camera)
+		{
+			if (!m_ShouldDrawCameras)
+			{
+				continue;
+			}
+
+			if (camera->ComponentID == m_pECS->SystemCamera().GetCurrentCameraComponentID())
+			{
+				continue;
+			}
+		}
+
 		if (iter->FlagRenderOption & JWFlagRenderOption_AlwaysSolidNoCull)
 		{
 			m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
@@ -1031,4 +1044,9 @@ void JWSystemRender::ToggleLighting() noexcept
 void JWSystemRender::ToggleBoundingVolumeDrawing() noexcept
 {
 	m_ShouldDrawBoundingVolumes = !m_ShouldDrawBoundingVolumes;
+}
+
+void JWSystemRender::ToggleCameraDrawing() noexcept
+{
+	m_ShouldDrawCameras = !m_ShouldDrawCameras;
 }

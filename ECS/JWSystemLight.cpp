@@ -1,4 +1,4 @@
-#include "JWEntity.h"
+#include "JWECS.h"
 #include "../Core/JWDX.h"
 
 using namespace JWEngine;
@@ -82,7 +82,9 @@ void JWSystemLight::Execute() noexcept
 				m_PSCBLights.DirectionalColor.y = light_data.LightColor.y;
 				m_PSCBLights.DirectionalColor.z = light_data.LightColor.z;
 				m_PSCBLights.DirectionalColor.w = light_data.Intensity;
-				m_PSCBLights.DirectionalDirection = XMFLOAT4(light_data.Direction.x, light_data.Direction.y, light_data.Direction.z, 0.0f);
+				m_PSCBLights.DirectionalDirection.x = light_data.Direction.x;
+				m_PSCBLights.DirectionalDirection.y = light_data.Direction.y;
+				m_PSCBLights.DirectionalDirection.z = light_data.Direction.z;
 			}
 		}
 

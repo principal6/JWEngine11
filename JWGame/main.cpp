@@ -76,12 +76,14 @@ int main()
 
 	auto camera_0 = ecs.CreateEntity("camera_0");
 	camera_0->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(3, 1, 3))
-		->SetOrientation(XMFLOAT3(0, 0, 1));
+		->SetPosition(XMFLOAT3(3, 12, 3))
+		->RotatePitchYawRoll(XM_PIDIV2, 0, 0, true);
+	camera_0->CreateComponentRender()
+		->SetModel(ecs.SystemRender().GetSharedModel(5));
 	camera_0->CreateComponentCamera()
 		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
 
-	ecs.SystemCamera().SetMainCamera(0);
+	ecs.SystemCamera().SetCurrentCamera(0);
 
 	auto grid = ecs.CreateEntity(EEntityType::Grid);
 	grid->CreateComponentRender()
@@ -141,9 +143,9 @@ int main()
 
 	auto directional_light = ecs.CreateEntity("directional_light");
 	directional_light->CreateComponentLight()
-		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(5.0f, 5.0f, 0.0f), 0.6f);
+		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, -1.0f, -1.0f), 0.6f);
 	directional_light->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(8.0f, 8.0f, 0.0f));
+		->SetPosition(XMFLOAT3(3.0f, 3.0f, 3.0f));
 	directional_light->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(1));
 
@@ -169,6 +171,8 @@ int main()
 		->SetPosition(XMFLOAT3(0, 2, 0));
 	cam->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(5));
+	cam->CreateComponentCamera()
+		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);
@@ -206,7 +210,7 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 
 	if (VK == VK_F5)
 	{
-		ecs.SystemCamera().SetCurrentCameraPosition(XMFLOAT3(3, 1, 3));
+		ecs.SystemRender().ToggleCameraDrawing();
 	}
 }
 
@@ -222,6 +226,16 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 	if (Character == '2')
 	{
 		ecs.GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->NextAnimation();
+	}
+
+	if (Character == '3')
+	{
+		ecs.SystemCamera().SetCurrentCamera(0);
+	}
+
+	if (Character == '4')
+	{
+		ecs.SystemCamera().SetCurrentCamera(1);
 	}
 }
 

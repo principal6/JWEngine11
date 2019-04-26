@@ -6,9 +6,8 @@ namespace JWEngine
 {
 	class JWEntity;
 	class JWECS;
+	class JWDX;
 	
-	const XMVECTOR	KDefUp{ XMVectorSet(0, 1, 0, 0) };
-
 	constexpr float	KDefFOV{ XM_PIDIV4 };
 	constexpr float	KDefZNear{ 0.1f };
 	constexpr float	KDefZFar{ 1000.0f };
@@ -43,11 +42,9 @@ namespace JWEngine
 	{
 		JWEntity*	PtrEntity{};
 		uint32_t	ComponentID{};
-
+		
 		ECameraType	Type{ ECameraType::Invalid };
-		XMVECTOR	CameraDirection{};
 		XMVECTOR	LookAt{};
-		XMVECTOR	Up{ KDefUp };
 
 		float		Width{};
 		float		Height{};
@@ -57,12 +54,6 @@ namespace JWEngine
 
 		XMMATRIX	MatrixView{ XMMatrixIdentity() };
 		XMMATRIX	MatrixProjection{ XMMatrixIdentity() };
-
-		XMVECTOR	DefaultForward{};
-
-		float		Pitch{};
-		float		Yaw{};
-		float		Roll{};
 
 		float		Zoom{ KDefZoom };
 		float		ZoomNear{ KDefZoomNear };
@@ -108,13 +99,14 @@ namespace JWEngine
 		JWSystemCamera() = default;
 		~JWSystemCamera() = default;
 
-		void Create(JWECS& ECS, XMFLOAT2 WindowSize) noexcept;
+		void Create(JWECS& ECS, JWDX& DX, XMFLOAT2 WindowSize) noexcept;
 		void Destroy() noexcept;
 
 		auto CreateComponent() noexcept->SComponentCamera&;
 		void DestroyComponent(SComponentCamera& Component) noexcept;
 
-		void SetMainCamera(size_t CameraIndex) noexcept;
+		void SetCurrentCamera(size_t ComponentID) noexcept;
+		auto GetCurrentCameraComponentID() const noexcept { return m_pCurrentCamera->ComponentID; }
 		
 		// NORMALLY
 		// X_Pitch is mouse's y movement
@@ -144,13 +136,13 @@ namespace JWEngine
 		inline void UpdateCurrentCameraViewMatrix() noexcept;
 
 	private:
+		JWDX*						m_pDX{};
+		JWECS*						m_pECS{};
+
 		VECTOR<SComponentCamera*>	m_vpComponents;
 
 		SComponentCamera*			m_pCurrentCamera{};
 
-		JWECS*						m_pECS{};
 		XMMATRIX					m_MatrixProjOrthographic{};
-
-		bool						m_AreCamerasSet{ false };
 	};
 };
