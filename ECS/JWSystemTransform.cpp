@@ -13,7 +13,7 @@ void JWSystemTransform::Destroy() noexcept
 	}
 }
 
-auto JWSystemTransform::CreateComponent() noexcept->SComponentTransform&
+auto JWSystemTransform::CreateComponent(JWEntity* pEntity) noexcept->SComponentTransform&
 {
 	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
 	
@@ -21,8 +21,9 @@ auto JWSystemTransform::CreateComponent() noexcept->SComponentTransform&
 	m_vpComponents.push_back(new_entry);
 
 	// @important
-	// Save component ID
+	// Save component ID & pointer to Entity
 	m_vpComponents[slot]->ComponentID = slot;
+	m_vpComponents[slot]->PtrEntity = pEntity;
 
 	return *m_vpComponents[slot];
 }

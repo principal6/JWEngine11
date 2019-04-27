@@ -32,22 +32,22 @@ namespace JWEngine
 		void Destroy() noexcept;
 
 		auto CreateComponentTransform() noexcept->SComponentTransform*;
-		auto GetComponentTransform() noexcept { return m_pComponentTransform; };
-
-		auto CreateComponentRender() noexcept->SComponentRender*;
-		auto GetComponentRender() noexcept { return m_pComponentRender; };
+		inline auto GetComponentTransform() noexcept { return m_pComponentTransform; };
 
 		auto CreateComponentLight() noexcept->SComponentLight*;
-		auto GetComponentLight() noexcept { return m_pComponentLight; };
+		inline auto GetComponentLight() noexcept { return m_pComponentLight; };
 
 		auto CreateComponentPhysics() noexcept->SComponentPhysics*;
-		auto GetComponentPhysics() noexcept { return m_pComponentPhysics; };
+		inline auto GetComponentPhysics() noexcept { return m_pComponentPhysics; };
 
 		auto CreateComponentCamera() noexcept->SComponentCamera*;
-		auto GetComponentCamera() noexcept { return m_pComponentCamera; };
+		inline auto GetComponentCamera() noexcept { return m_pComponentCamera; };
+
+		auto CreateComponentRender() noexcept->SComponentRender*;
+		inline auto GetComponentRender() noexcept { return m_pComponentRender; };
 		
-		auto GetEntityType() const noexcept { return m_EntityType; };
-		const auto& GetEntityName() const noexcept { return m_EntityName; };
+		inline auto GetEntityType() const noexcept { return m_EntityType; };
+		inline const auto& GetEntityName() const noexcept { return m_EntityName; };
 
 	private:
 		JWECS*					m_pECS{};

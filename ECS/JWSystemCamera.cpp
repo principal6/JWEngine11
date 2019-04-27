@@ -26,7 +26,7 @@ void JWSystemCamera::Destroy() noexcept
 	}
 }
 
-auto JWSystemCamera::CreateComponent() noexcept->SComponentCamera&
+auto JWSystemCamera::CreateComponent(JWEntity* pEntity) noexcept->SComponentCamera&
 {
 	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
 
@@ -34,8 +34,9 @@ auto JWSystemCamera::CreateComponent() noexcept->SComponentCamera&
 	m_vpComponents.push_back(new_entry);
 
 	// @important
-	// Save component ID
+	// Save component ID & pointer to Entity
 	m_vpComponents[slot]->ComponentID = slot;
+	m_vpComponents[slot]->PtrEntity = pEntity;
 
 	return *m_vpComponents[slot];
 }
@@ -44,7 +45,8 @@ void JWSystemCamera::DestroyComponent(SComponentCamera& Component) noexcept
 {
 	if (m_vpComponents.size() == 1)
 	{
-		JW_ERROR_RETURN("카메라 컴포넌트 해제 실패. 모든 장면에는 최소한 1개의 카메라가 필요합니다.");
+		// 아래처럼 하면... 프로그램 종료될 때도 해제 실패함!!
+		//JW_ERROR_RETURN("카메라 컴포넌트 해제 실패. 모든 장면에는 최소한 1개의 카메라가 필요합니다.");
 	}
 
 	uint32_t slot{};
@@ -79,7 +81,14 @@ void JWSystemCamera::SetCurrentCamera(size_t ComponentID) noexcept
 
 	ComponentID = min(ComponentID, m_vpComponents.size() - 1);
 
+	if (m_pCurrentCamera)
+	{
+		m_pECS->SystemPhysics().UnhideBoundingSphere(m_pCurrentCamera->PtrEntity);
+	}
+
 	m_pCurrentCamera = m_vpComponents[ComponentID];
+
+	m_pECS->SystemPhysics().HideBoundingSphere(m_pCurrentCamera->PtrEntity);
 
 	RotateCurrentCamera(0, 0, 0);
 	UpdateCurrentCameraViewMatrix();
@@ -155,6 +164,10 @@ void JWSystemCamera::MoveCurrentCamera(ECameraDirection Direction) noexcept
 	default:
 		break;
 	}
+
+	// Update Camera's bounding sphere position & hide it.
+	m_pECS->SystemPhysics().UpdateBoundingSphere(m_pCurrentCamera->PtrEntity);
+	m_pECS->SystemPhysics().HideBoundingSphere(m_pCurrentCamera->PtrEntity);
 
 	UpdateCurrentCameraViewMatrix();
 }

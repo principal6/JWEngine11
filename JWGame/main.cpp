@@ -19,7 +19,6 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// # JWPrimitiveMaker	@ Dynamic Quad
 	// # Render		@ Frustum culling + Culling freeze
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
@@ -80,10 +79,11 @@ int main()
 	camera_0->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(3, 12, 3))
 		->RotatePitchYawRoll(XM_PIDIV2, 0, 0, true);
-	camera_0->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(5));
+	camera_0->CreateComponentPhysics();
 	camera_0->CreateComponentCamera()
 		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
+	camera_0->CreateComponentRender()
+		->SetModel(ecs.SystemRender().GetSharedModel(5));
 
 	ecs.SystemCamera().SetCurrentCamera(0);
 
@@ -100,17 +100,21 @@ int main()
 	ray->CreateComponentRender()
 		->SetLineModel(ecs.SystemRender().GetSharedLineModel(1));
 
-	auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
-	main_sprite->CreateComponentTransform()
-		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
-		->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
-	main_sprite->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(2))
-		->SetTexture(ecs.SystemRender().GetSharedTexture(3))
-		->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
-		->SetAnimationTexture(ecs.SystemRender().GetAnimationTexture(0))
-		->SetAnimation(3);
+	{
+		auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
+		main_sprite->CreateComponentTransform()
+			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+			->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
+			->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
+		main_sprite->CreateComponentPhysics();
+		main_sprite->CreateComponentRender()
+			->SetModel(ecs.SystemRender().GetSharedModel(2))
+			->SetTexture(ecs.SystemRender().GetSharedTexture(3))
+			->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
+			->SetAnimationTexture(ecs.SystemRender().GetAnimationTexture(0))
+			->SetAnimation(3);
+		ecs.SystemPhysics().SetBoundingSphere(main_sprite, 3.0f, XMFLOAT3(0, 0, 0));
+	}
 
 	auto sky_sphere = ecs.CreateEntity(EEntityType::Sky);
 	sky_sphere->CreateComponentTransform()
@@ -128,26 +132,28 @@ int main()
 			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 			->SetPosition(XMFLOAT3(10.0f, 0.0f, 0.0f))
 			->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
+		jars->CreateComponentPhysics();
 		jars->CreateComponentRender()
 			->SetModel(ecs.SystemRender().GetSharedModel(0))
 			->SetRenderFlag(JWFlagRenderOption_UseLighting);
-		auto jars_physics = jars->CreateComponentPhysics();
-		ecs.SystemPhysics().CreateBoundingSphere(jars_physics, 1.1f, XMFLOAT3(0, 0.7f, 0.3f));
+		ecs.SystemPhysics().SetBoundingSphere(jars, 1.1f, XMFLOAT3(0, 0.7f, 0.3f));
 	}
 
 	auto ambient_light = ecs.CreateEntity("ambient_light");
-	ambient_light->CreateComponentLight()
-		->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
 	ambient_light->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(0.0f, 5.0f, 0.0f));
+	ambient_light->CreateComponentLight()
+		->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
+	ambient_light->CreateComponentPhysics();
 	ambient_light->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(1));
 
 	auto directional_light = ecs.CreateEntity("directional_light");
-	directional_light->CreateComponentLight()
-		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, -1.0f, -1.0f), 0.6f);
 	directional_light->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(3.0f, 3.0f, 3.0f));
+	directional_light->CreateComponentLight()
+		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, -1.0f, -1.0f), 0.6f);
+	directional_light->CreateComponentPhysics();
 	directional_light->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(1));
 
@@ -156,11 +162,11 @@ int main()
 		floor_plane->CreateComponentTransform()
 			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 			->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+		floor_plane->CreateComponentPhysics();
 		floor_plane->CreateComponentRender()
 			->SetModel(ecs.SystemRender().GetSharedModel(4))
 			->SetTexture(ecs.SystemRender().GetSharedTexture(1));
-		auto floor_plane_physics = floor_plane->CreateComponentPhysics();
-		ecs.SystemPhysics().CreateBoundingSphere(floor_plane_physics, 2.0f);
+		ecs.SystemPhysics().SetBoundingSphere(floor_plane, 2.0f);
 	}
 
 	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
@@ -168,13 +174,14 @@ int main()
 		->SetImage2D(ecs.SystemRender().GetSharedImage2D(0))
 		->SetTexture(ecs.SystemRender().GetSharedTexture(2));
 
-	auto cam = ecs.CreateEntity("Camera");
+	auto cam = ecs.CreateEntity("camera_1");
 	cam->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(0, 2, 0));
-	cam->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(5));
+	cam->CreateComponentPhysics();
 	cam->CreateComponentCamera()
 		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
+	cam->CreateComponentRender()
+		->SetModel(ecs.SystemRender().GetSharedModel(5));
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);

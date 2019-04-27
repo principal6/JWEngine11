@@ -9,10 +9,10 @@ void JWECS::Create(JWDX& DX, JWWin32Window& Window, STRING BaseDirectory) noexce
 	m_BaseDirectory = BaseDirectory;
 
 	m_SystemTransform.Create();
-	m_SystemRender.Create(*this, DX, BaseDirectory);
 	m_SystemLight.Create(DX);
 	m_SystemPhysics.Create(*this, Window.GethWnd(), Window.GetWindowSize());
 	m_SystemCamera.Create(*this, DX, Window.GetWindowSize());
+	m_SystemRender.Create(*this, DX, BaseDirectory);
 }
 
 void JWECS::Destroy() noexcept
@@ -26,10 +26,10 @@ void JWECS::Destroy() noexcept
 
 	// @important
 	// Destroy systems
+	m_SystemRender.Destroy();
 	m_SystemCamera.Destroy();
 	m_SystemPhysics.Destroy();
 	m_SystemLight.Destroy();
-	m_SystemRender.Destroy();
 	m_SystemTransform.Destroy();
 }
 
@@ -230,11 +230,13 @@ void JWECS::ExecuteSystems() noexcept
 {
 	m_SystemTransform.Execute();
 
+	// Camera must be executed before Light and Phyiscs
 	m_SystemCamera.Execute();
 
 	m_SystemLight.Execute();
 
-	m_SystemRender.Execute();
-
 	m_SystemPhysics.Execute();
+
+	// Render must be the last one to be executed
+	m_SystemRender.Execute();
 }

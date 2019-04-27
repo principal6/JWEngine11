@@ -22,7 +22,7 @@ void JWSystemPhysics::Destroy() noexcept
 	}
 }
 
-auto JWSystemPhysics::CreateComponent() noexcept->SComponentPhysics&
+auto JWSystemPhysics::CreateComponent(JWEntity* pEntity) noexcept->SComponentPhysics&
 {
 	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
 
@@ -30,14 +30,28 @@ auto JWSystemPhysics::CreateComponent() noexcept->SComponentPhysics&
 	m_vpComponents.push_back(new_entry);
 
 	// @important
-	// Save component ID
+	// Save component ID & pointer to Entity
 	m_vpComponents[slot]->ComponentID = slot;
+	m_vpComponents[slot]->PtrEntity = pEntity;
+
+	// Set center position
+	auto transform = m_vpComponents[slot]->PtrEntity->GetComponentTransform();
+	if (transform)
+	{
+		m_vpComponents[slot]->BoundingSphereCenterPosition = m_vpComponents[slot]->BoundingSphereCenterOffset + transform->Position;
+	}
+
+	// Add bounding volume instance into SystemRender
+	m_pECS->SystemRender().AddBoundingVolumeInstance(m_vpComponents[slot]->BoundingSphereRadius, m_vpComponents[slot]->BoundingSphereCenterPosition);
 
 	return *m_vpComponents[slot];
 }
 
 void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 {
+	// Erase bounding volume instance in SystemRender
+	m_pECS->SystemRender().EraseBoundingVolumeInstance(Component.ComponentID);
+
 	uint32_t slot{};
 	for (const auto& iter : m_vpComponents)
 	{
@@ -61,22 +75,58 @@ void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
-void JWSystemPhysics::CreateBoundingSphere(SComponentPhysics* pComponent, float Radius, const XMFLOAT3& CenterOffset) noexcept
+void JWSystemPhysics::SetBoundingSphere(JWEntity* pEntity, float Radius, const XMFLOAT3& CenterOffset) noexcept
 {
-	if (pComponent == nullptr) { return; }
+	if (pEntity == nullptr) { return; }
+	auto physics = pEntity->GetComponentPhysics();
+	if (physics == nullptr) { return; }
 
 	// Set the radius
-	pComponent->BoundingSphereRadius = Radius;
+	physics->BoundingSphereRadius = Radius;
 
-	// Add bounding sphere instance (JWSystemRender)
-	auto transform = pComponent->PtrEntity->GetComponentTransform();
-	
 	// Set center position
-	pComponent->BoundingSphereCenter.x = XMVectorGetX(transform->Position) + CenterOffset.x;
-	pComponent->BoundingSphereCenter.y = XMVectorGetY(transform->Position) + CenterOffset.y;
-	pComponent->BoundingSphereCenter.z = XMVectorGetZ(transform->Position) + CenterOffset.z;
+	auto transform = physics->PtrEntity->GetComponentTransform();
+	physics->BoundingSphereCenterOffset = XMLoadFloat3(&CenterOffset);
+	physics->BoundingSphereCenterPosition = physics->BoundingSphereCenterOffset + transform->Position;
 	
-	m_pECS->SystemRender().AddBoundingVolumeInstance(pComponent->BoundingSphereRadius, pComponent->BoundingSphereCenter);
+	// Update the data into SystemRender
+	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereRadius, physics->BoundingSphereCenterPosition);
+}
+
+void JWSystemPhysics::HideBoundingSphere(JWEntity* pEntity) noexcept
+{
+	if (pEntity == nullptr) { return; }
+	auto physics = pEntity->GetComponentPhysics();
+	if (physics == nullptr) { return; }
+
+	// Update the data into SystemRender
+	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, 0, XMVectorZero());
+}
+
+void JWSystemPhysics::UnhideBoundingSphere(JWEntity* pEntity) noexcept
+{
+	if (pEntity == nullptr) { return; }
+	auto physics = pEntity->GetComponentPhysics();
+	if (physics == nullptr) { return; }
+
+	// Update the data into SystemRender
+	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereRadius, physics->BoundingSphereCenterPosition);
+}
+
+void JWSystemPhysics::UpdateBoundingSphere(JWEntity* pEntity) noexcept
+{
+	auto physics = pEntity->GetComponentPhysics();
+	if (physics == nullptr) { return; }
+
+	// Set center position
+	auto transform = physics->PtrEntity->GetComponentTransform();
+	if (transform)
+	{
+		physics->BoundingSphereCenterPosition = physics->BoundingSphereCenterOffset + transform->Position;
+	}
+
+	// Update the data into SystemRender
+	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereRadius, physics->BoundingSphereCenterPosition);
 }
 
 void JWSystemPhysics::Pick() noexcept
@@ -306,15 +356,28 @@ PRIVATE void JWSystemPhysics::PickEntityBySphere() noexcept
 
 			if (type != EEntityType::UserDefined)
 			{
-				continue;
+				// MainSprite needs to be picked
+				if (type != EEntityType::MainSprite)
+				{
+					continue;
+				}
 			}
 
 			if (transform)
 			{
-				auto& radius = iter->BoundingSphereRadius;
-				auto& center = iter->BoundingSphereCenter;
+				auto camera{ entity->GetComponentCamera() };
+				if (camera)
+				{
+					// @important
+					// You must not be able to pick the current camera!
+					if (m_pECS->SystemCamera().GetCurrentCameraComponentID() == camera->ComponentID)
+					{
+						continue;
+					}
+				}
 
-				auto sphere_center = XMVectorSet(center.x, center.y, center.z, 1.0f);
+				auto& radius = iter->BoundingSphereRadius;
+				auto center = iter->BoundingSphereCenterPosition;
 
 				// Sphere equation
 				// (Px - Cx)©÷ + (Py - Cy)©÷ + (Pz - Cz)©÷ = r©÷
@@ -358,8 +421,8 @@ PRIVATE void JWSystemPhysics::PickEntityBySphere() noexcept
 				
 				auto r = XMVectorSet(radius, radius, radius, 1.0f);
 				auto a = XMVector3Dot(m_PickingRayDirection, m_PickingRayDirection);
-				auto b = 2.0f * XMVector3Dot(m_PickingRayDirection, m_PickingRayOrigin - sphere_center);
-				auto c = XMVector3Dot(m_PickingRayOrigin - sphere_center, m_PickingRayOrigin - sphere_center) - r * r;
+				auto b = 2.0f * XMVector3Dot(m_PickingRayDirection, m_PickingRayOrigin - center);
+				auto c = XMVector3Dot(m_PickingRayOrigin - center, m_PickingRayOrigin - center) - r * r;
 				auto discriminant = b * b - 4.0f * a * c;
 
 				XMVECTOR t{};

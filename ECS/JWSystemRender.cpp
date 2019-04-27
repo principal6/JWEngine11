@@ -63,7 +63,7 @@ void JWSystemRender::Destroy() noexcept
 	m_BoundingVolume.Destroy();
 }
 
-auto JWSystemRender::CreateComponent() noexcept->SComponentRender&
+auto JWSystemRender::CreateComponent(JWEntity* pEntity) noexcept->SComponentRender&
 {
 	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
 
@@ -71,8 +71,9 @@ auto JWSystemRender::CreateComponent() noexcept->SComponentRender&
 	m_vpComponents.push_back(new_entry);
 
 	// @important
-	// Save component ID & set default data
+	// Save component ID & pointer to Entity
 	m_vpComponents[slot]->ComponentID = slot;
+	m_vpComponents[slot]->PtrEntity = pEntity;
 
 	return *m_vpComponents[slot];
 }
@@ -349,20 +350,40 @@ auto JWSystemRender::GetAnimationTexture(size_t Index) noexcept->SAnimationTextu
 	return result;
 }
 
-void JWSystemRender::AddBoundingVolumeInstance(float Radius, const XMFLOAT3& Translation) noexcept
+void JWSystemRender::AddBoundingVolumeInstance(float Radius, const XMVECTOR& Translation) noexcept
 {
 	auto instance = m_pECS->SystemRender().BoundingVolume().ModelData.VertexData.PushInstance();
 
 	auto mat_s = XMMatrixScaling(Radius, Radius, Radius);
-	auto mat_t = XMMatrixTranslation(Translation.x, Translation.y, Translation.z);
+	auto mat_t = XMMatrixTranslationFromVector(Translation);
 
 	// Set the world matrix of the instance
 	instance->World = XMMatrixIdentity() * mat_s * mat_t;
 
-	UpdateBoundingVolume();
+	UpdateBoundingVolumes();
 }
 
-void JWSystemRender::UpdateBoundingVolume() noexcept
+void JWSystemRender::EraseBoundingVolumeInstance(uint32_t InstanceID) noexcept
+{
+	m_pECS->SystemRender().BoundingVolume().ModelData.VertexData.EraseInstanceAt(InstanceID);
+
+	UpdateBoundingVolumes();
+}
+
+void JWSystemRender::UpdateBoundingVolumeInstance(uint32_t InstanceID, float Radius, const XMVECTOR& Translation) noexcept
+{
+	auto instance = m_pECS->SystemRender().BoundingVolume().ModelData.VertexData.GetInstance(InstanceID);
+
+	auto mat_s = XMMatrixScaling(Radius, Radius, Radius);
+	auto mat_t = XMMatrixTranslationFromVector(Translation);
+
+	// Set the world matrix of the instance
+	instance->World = XMMatrixIdentity() * mat_s * mat_t;
+
+	UpdateBoundingVolumes();
+}
+
+PRIVATE inline void JWSystemRender::UpdateBoundingVolumes() noexcept
 {
 	m_pDX->UpdateDynamicResource(m_BoundingVolume.ModelVertexBuffer[KVBIDInstancing],
 		m_BoundingVolume.ModelData.VertexData.GetInstancePtrData(),

@@ -191,10 +191,10 @@ namespace JWEngine
 		void Create(JWECS& ECS, JWDX& DX, STRING BaseDirectory) noexcept;
 		void Destroy() noexcept;
 
-		auto CreateComponent() noexcept->SComponentRender&;
+		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentRender&;
 		void DestroyComponent(SComponentRender& Component) noexcept;
 
-		/// Shared resources
+		// Shared resources
 		void CreateSharedTexture(ESharedTextureType Type, STRING FileName) noexcept;
 		void CreateSharedTextureFromSharedModel(size_t ModelIndex) noexcept;
 		auto GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*;
@@ -212,10 +212,11 @@ namespace JWEngine
 
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
 		auto GetAnimationTexture(size_t Index) noexcept->SAnimationTextureData*;
-
-		/// Bounidng volume
-		void AddBoundingVolumeInstance(float Radius, const XMFLOAT3& Translation) noexcept;
-		void UpdateBoundingVolume() noexcept;
+		
+		// Bounidng volume
+		void AddBoundingVolumeInstance(float Radius, const XMVECTOR& Translation) noexcept;
+		void EraseBoundingVolumeInstance(uint32_t InstanceID) noexcept;
+		void UpdateBoundingVolumeInstance(uint32_t InstanceID, float Radius, const XMVECTOR& Translation) noexcept;
 
 		void Execute() noexcept;
 
@@ -227,7 +228,7 @@ namespace JWEngine
 		void ToggleBoundingVolumeDrawing() noexcept;
 		void ToggleCameraDrawing() noexcept;
 
-		/// Object getter
+		// Object getter
 		auto& BoundingVolume() noexcept { return m_BoundingVolume; };
 		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
 
@@ -241,6 +242,9 @@ namespace JWEngine
 			SModelData& ModelData, const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
 		void UpdateNodeTPoseIntoBones(float AnimationTime, SModelData& ModelData,
 			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
+
+		// Bounding volume
+		inline void UpdateBoundingVolumes() noexcept;
 
 		void Draw(SComponentRender& Component) noexcept;
 		void DrawNormals(SComponentRender& Component) noexcept;

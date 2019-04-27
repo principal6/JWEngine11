@@ -77,7 +77,7 @@ namespace JWEngine
 		void Create(JWDX& DX) noexcept;
 		void Destroy() noexcept;
 
-		auto CreateComponent() noexcept->SComponentLight&;
+		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentLight&;
 		void DestroyComponent(SComponentLight& Component) noexcept;
 
 		void Execute() noexcept;

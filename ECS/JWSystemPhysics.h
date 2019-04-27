@@ -7,13 +7,16 @@ namespace JWEngine
 	class JWEntity;
 	class JWECS;
 
+	static constexpr float KDefBoundingSphereRadius = 1.0f;
+
 	struct SComponentPhysics
 	{
 		JWEntity*	PtrEntity{};
 		uint32_t	ComponentID{};
 
-		float		BoundingSphereRadius{};
-		XMFLOAT3	BoundingSphereCenter{};
+		float		BoundingSphereRadius{ KDefBoundingSphereRadius };
+		XMVECTOR	BoundingSphereCenterPosition{};
+		XMVECTOR	BoundingSphereCenterOffset{};
 	};
 
 	class JWSystemPhysics
@@ -25,11 +28,14 @@ namespace JWEngine
 		void Create(JWECS& ECS, HWND hWnd, XMFLOAT2 WindowSize) noexcept;
 		void Destroy() noexcept;
 
-		auto CreateComponent() noexcept->SComponentPhysics&;
+		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentPhysics&;
 		void DestroyComponent(SComponentPhysics& Component) noexcept;
 
-		/// Component setting
-		void CreateBoundingSphere(SComponentPhysics* pComponent, float Radius, const XMFLOAT3& CenterOffset = XMFLOAT3(0, 0, 0)) noexcept;
+		// Component setting
+		void SetBoundingSphere(JWEntity* pEntity, float Radius, const XMFLOAT3& CenterOffset = XMFLOAT3(0, 0, 0)) noexcept;
+		void HideBoundingSphere(JWEntity* pEntity) noexcept;
+		void UnhideBoundingSphere(JWEntity* pEntity) noexcept;
+		void UpdateBoundingSphere(JWEntity* pEntity) noexcept;
 
 		void Pick() noexcept;
 

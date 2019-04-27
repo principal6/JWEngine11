@@ -102,7 +102,7 @@ namespace JWEngine
 		void Create(JWECS& ECS, JWDX& DX, XMFLOAT2 WindowSize) noexcept;
 		void Destroy() noexcept;
 
-		auto CreateComponent() noexcept->SComponentCamera&;
+		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentCamera&;
 		void DestroyComponent(SComponentCamera& Component) noexcept;
 
 		void SetCurrentCamera(size_t ComponentID) noexcept;

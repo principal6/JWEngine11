@@ -98,7 +98,7 @@ namespace JWEngine
 		void Create() noexcept {};
 		void Destroy() noexcept;
 
-		auto CreateComponent() noexcept->SComponentTransform&;
+		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentTransform&;
 		void DestroyComponent(SComponentTransform& Component) noexcept;
 
 		void Execute() noexcept;

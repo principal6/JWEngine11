@@ -370,37 +370,40 @@ namespace JWEngine
 		void AddVertex(const SVertexModel& Model, bool UseRigging = false) noexcept
 		{
 			vVerticesModel.emplace_back(Model);
-
-			if (UseRigging)
-			{
-				vVerticesRigging.resize(vVerticesModel.size());
-			}
+			if (UseRigging) { vVerticesRigging.resize(vVerticesModel.size()); }
 		}
 
-		inline void InitializeInstance() noexcept
-		{
-			if (vInstances.size() == 0)
-			{
-				vInstances.resize(KMaxInstanceCount);
-			}
-		}
+		inline void InitializeInstance() noexcept { if (vInstances.size() == 0) { vInstances.resize(KMaxInstanceCount); } }
 
 		inline auto PushInstance() noexcept
 		{
-			if (InstanceCount < KMaxInstanceCount)
-			{
-				++InstanceCount;
-			}
-
+			if (InstanceCount < KMaxInstanceCount) { ++InstanceCount; }
 			return &vInstances[InstanceCount - 1];
 		}
 
-		inline void PopInstance() noexcept
+		inline void PopInstance() noexcept { if (InstanceCount) { --InstanceCount; } }
+
+		inline void EraseInstanceAt(uint32_t InstanceID) noexcept
 		{
 			if (InstanceCount)
 			{
-				--InstanceCount;
+				auto& last = vInstances[InstanceCount - 1];
+				auto& dest = vInstances[InstanceID];
+
+				dest = last;
+
+				last.World = XMMatrixIdentity();
+
+				PopInstance();
 			}
+		}
+
+		inline auto GetInstance(uint32_t InstanceID) noexcept
+		{
+			if (InstanceCount == 0) { JW_ERROR_ABORT("No instances.") };
+
+			InstanceID = min(InstanceID, InstanceCount - 1);
+			return &vInstances[InstanceID];
 		}
 
 		auto GetVertexCount() const noexcept { return static_cast<UINT>(vVerticesModel.size()); };

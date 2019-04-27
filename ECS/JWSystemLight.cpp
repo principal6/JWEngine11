@@ -20,7 +20,7 @@ void JWSystemLight::Destroy() noexcept
 	}
 }
 
-auto JWSystemLight::CreateComponent() noexcept->SComponentLight&
+auto JWSystemLight::CreateComponent(JWEntity* pEntity) noexcept->SComponentLight&
 {
 	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
 
@@ -28,8 +28,9 @@ auto JWSystemLight::CreateComponent() noexcept->SComponentLight&
 	m_vpComponents.push_back(new_entry);
 
 	// @important
-	// Save component ID
+	// Save component ID & pointer to Entity
 	m_vpComponents[slot]->ComponentID = slot;
+	m_vpComponents[slot]->PtrEntity = pEntity;
 
 	m_ShouldUpdate = true;
 
