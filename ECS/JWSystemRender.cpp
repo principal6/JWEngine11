@@ -397,7 +397,7 @@ void JWSystemRender::Execute() noexcept
 		auto camera = iter->PtrEntity->GetComponentCamera();
 		if (camera)
 		{
-			if (!m_ShouldDrawCameras)
+			if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawCameras))
 			{
 				continue;
 			}
@@ -408,7 +408,7 @@ void JWSystemRender::Execute() noexcept
 			}
 		}
 
-		if (iter->FlagRenderOption & JWFlagRenderOption_AlwaysSolidNoCull)
+		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_AlwaysSolidNoCull)
 		{
 			m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
 		}
@@ -423,7 +423,7 @@ void JWSystemRender::Execute() noexcept
 		// Set depth stencil state for the component
 		m_pDX->SetDepthStencilState(iter->DepthStencilState);
 
-		if (iter->FlagRenderOption & JWFlagRenderOption_UseGPUAnimation)
+		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_UseGPUAnimation)
 		{
 			// GPU animation
 			// Real animationing occurs in vertex shader when Draw() is called.
@@ -440,7 +440,7 @@ void JWSystemRender::Execute() noexcept
 		Draw(*iter);
 	}
 
-	if (m_ShouldDrawBoundingVolumes)
+	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingVolumes)
 	{
 		DrawInstancedBoundingVolume();
 	}
@@ -601,7 +601,7 @@ void JWSystemRender::AnimateOnCPU(SComponentRender& Component) noexcept
 	auto& anim_state = Component.AnimationState;
 	auto& model = Component.PtrModel;
 
-	if ((Component.FlagRenderOption & JWFlagRenderOption_DrawTPose) || (anim_state.CurrAnimationID == 0))
+	if ((Component.FlagComponentRenderOption & JWFlagComponentRenderOption_DrawTPose) || (anim_state.CurrAnimationID == 0))
 	{
 		// TPose
 
@@ -638,7 +638,7 @@ void JWSystemRender::AnimateOnCPU(SComponentRender& Component) noexcept
 		}
 
 		// Update bones' transformations for the animation.
-		UpdateNodeAnimationIntoBones((Component.FlagRenderOption & JWFlagRenderOption_UseAnimationInterpolation),
+		UpdateNodeAnimationIntoBones((Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseAnimationInterpolation),
 			anim_state, model->ModelData, model->ModelData.NodeTree.vNodes[0], XMMatrixIdentity());
 
 		// Update bone's final transformation for shader's constant buffer
@@ -799,20 +799,20 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	// Update PS constant buffer (if necessary)
 	if (Component.PixelShader == EPixelShader::PSBase)
 	{
-		bool use_lighting = Component.FlagRenderOption & JWFlagRenderOption_UseLighting;
-		if (!m_ShouldLight)
+		bool use_lighting = Component.FlagComponentRenderOption & JWFlagComponentRenderOption_GetLit;
+		if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_UseLighting))
 		{
 			use_lighting = false;
 		}
 
 		m_pDX->UpdatePSCBFlags(
-			(Component.FlagRenderOption & JWFlagRenderOption_UseTexture),
+			(Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTexture),
 			(use_lighting)
 		);
 	}
 
 	// If it uses texture
-	if (Component.FlagRenderOption & JWFlagRenderOption_UseTexture)
+	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTexture)
 	{
 		// Set PS texture
 		m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &Component.PtrTexture);
@@ -847,7 +847,7 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Rigged:
-		if (Component.FlagRenderOption & JWFlagRenderOption_UseGPUAnimation)
+		if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseGPUAnimation)
 		{
 			m_VSCBFlags.FlagVS = JWFlagVS_UseAnimation | JWFlagVS_AnimateOnGPU;
 			
@@ -893,7 +893,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	auto& image = Component.PtrImage;
 	auto& line = Component.PtrLine;
 
-	if (Component.FlagRenderOption & JWFlagRenderOption_UseTransparency)
+	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency)
 	{
 		m_pDX->SetBlendState(EBlendState::Transprent);
 	}
@@ -989,7 +989,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	}
 
 	// Draw normals
-	if (m_ShouldDrawNormals)
+	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawNormals)
 	{
 		DrawNormals(Component);
 	}
@@ -1038,6 +1038,16 @@ void JWSystemRender::SetUniversalRasterizerState(ERasterizerState State) noexcep
 	m_UniversalRasterizerState = State;
 }
 
+void JWSystemRender::SetSystemRenderFlag(JWFlagSystemRenderOption Flag) noexcept
+{
+	m_FlagSystemRenderOption = Flag;
+}
+
+void JWSystemRender::ToggleSystemRenderFlag(JWFlagSystemRenderOption Flag) noexcept
+{
+	m_FlagSystemRenderOption ^= Flag;
+}
+
 void JWSystemRender::ToggleWireFrame() noexcept
 {
 	if (m_UniversalRasterizerState == ERasterizerState::WireFrame)
@@ -1050,24 +1060,4 @@ void JWSystemRender::ToggleWireFrame() noexcept
 		m_OldUniversalRasterizerState = m_UniversalRasterizerState;
 		m_UniversalRasterizerState = ERasterizerState::WireFrame;
 	}
-}
-
-void JWSystemRender::ToggleNormalDrawing() noexcept
-{
-	m_ShouldDrawNormals = !m_ShouldDrawNormals;
-}
-
-void JWSystemRender::ToggleLighting() noexcept
-{
-	m_ShouldLight = !m_ShouldLight;
-}
-
-void JWSystemRender::ToggleBoundingVolumeDrawing() noexcept
-{
-	m_ShouldDrawBoundingVolumes = !m_ShouldDrawBoundingVolumes;
-}
-
-void JWSystemRender::ToggleCameraDrawing() noexcept
-{
-	m_ShouldDrawCameras = !m_ShouldDrawCameras;
 }

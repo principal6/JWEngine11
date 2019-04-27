@@ -75,6 +75,8 @@ int main()
 		ecs.SystemRender().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 	}
 
+	ecs.SystemRender().SetSystemRenderFlag(JWFlagSystemRenderOption_UseLighting | JWFlagSystemRenderOption_DrawCameras);
+
 	auto camera_0 = ecs.CreateEntity("camera_0");
 	camera_0->CreateComponentTransform()
 		->SetPosition(XMFLOAT3(3, 12, 3))
@@ -94,7 +96,7 @@ int main()
 	auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
 	picked_tri->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(6))
-		->SetRenderFlag(JWFlagRenderOption_AlwaysSolidNoCull);
+		->SetRenderFlag(JWFlagComponentRenderOption_AlwaysSolidNoCull);
 
 	auto ray = ecs.CreateEntity(EEntityType::PickingRay);
 	ray->CreateComponentRender()
@@ -110,7 +112,7 @@ int main()
 		main_sprite->CreateComponentRender()
 			->SetModel(ecs.SystemRender().GetSharedModel(2))
 			->SetTexture(ecs.SystemRender().GetSharedTexture(3))
-			->SetRenderFlag(JWFlagRenderOption_UseTexture | JWFlagRenderOption_UseLighting | JWFlagRenderOption_UseAnimationInterpolation)
+			->SetRenderFlag(JWFlagComponentRenderOption_UseTexture | JWFlagComponentRenderOption_GetLit | JWFlagComponentRenderOption_UseAnimationInterpolation)
 			->SetAnimationTexture(ecs.SystemRender().GetAnimationTexture(0))
 			->SetAnimation(3);
 		ecs.SystemPhysics().SetBoundingSphere(main_sprite, 3.0f, XMFLOAT3(0, 0, 0));
@@ -135,7 +137,7 @@ int main()
 		jars->CreateComponentPhysics();
 		jars->CreateComponentRender()
 			->SetModel(ecs.SystemRender().GetSharedModel(0))
-			->SetRenderFlag(JWFlagRenderOption_UseLighting);
+			->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 		ecs.SystemPhysics().SetBoundingSphere(jars, 1.1f, XMFLOAT3(0, 0.7f, 0.3f));
 	}
 
@@ -204,22 +206,22 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 
 	if (VK == VK_F2)
 	{
-		ecs.SystemRender().ToggleNormalDrawing();
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawNormals);
 	}
 
 	if (VK == VK_F3)
 	{
-		ecs.SystemRender().ToggleLighting();
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_UseLighting);
 	}
 
 	if (VK == VK_F4)
 	{
-		ecs.SystemRender().ToggleBoundingVolumeDrawing();
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawBoundingVolumes);
 	}
 
 	if (VK == VK_F5)
 	{
-		ecs.SystemRender().ToggleCameraDrawing();
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawCameras);
 	}
 }
 

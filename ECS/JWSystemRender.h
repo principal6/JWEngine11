@@ -27,17 +27,27 @@ namespace JWEngine
 		RiggedModel,
 	};
 
-	enum EFLAGRenderOption : uint16_t
+	enum EFLAGComponentRenderOption : uint16_t
 	{
-		JWFlagRenderOption_UseTexture					= 0x01,
-		JWFlagRenderOption_UseLighting					= 0x02,
-		JWFlagRenderOption_UseGPUAnimation				= 0x04,
-		JWFlagRenderOption_UseAnimationInterpolation	= 0x08,
-		JWFlagRenderOption_UseTransparency				= 0x10,
-		JWFlagRenderOption_DrawTPose					= 0x20,
-		JWFlagRenderOption_AlwaysSolidNoCull			= 0x40,
+		JWFlagComponentRenderOption_UseTexture					= 0x01,
+		JWFlagComponentRenderOption_UseGPUAnimation				= 0x02,
+		JWFlagComponentRenderOption_UseAnimationInterpolation	= 0x04,
+		JWFlagComponentRenderOption_UseTransparency				= 0x08,
+		JWFlagComponentRenderOption_GetLit						= 0x10,
+		JWFlagComponentRenderOption_DrawTPose					= 0x20,
+		JWFlagComponentRenderOption_AlwaysSolidNoCull			= 0x40,
 	};
-	using JWFlagRenderOption = uint16_t;
+	using JWFlagComponentRenderOption = uint16_t;
+
+	enum EFLAGSystemRenderOption : uint16_t
+	{
+		JWFlagSystemRenderOption_DrawNormals			= 0x01,
+		JWFlagSystemRenderOption_DrawBoundingVolumes	= 0x02,
+		JWFlagSystemRenderOption_DrawCameras			= 0x04,
+		JWFlagSystemRenderOption_UseLighting			= 0x08,
+		JWFlagSystemRenderOption_UseFrustumCulling		= 0x10,
+	};
+	using JWFlagSystemRenderOption = uint16_t;
 
 	struct SAnimationState
 	{
@@ -75,7 +85,7 @@ namespace JWEngine
 		SAnimationTextureData*		PtrAnimationTexture{};
 		SAnimationState				AnimationState{};
 
-		JWFlagRenderOption			FlagRenderOption{};
+		JWFlagComponentRenderOption	FlagComponentRenderOption{};
 
 		auto SetVertexShader(EVertexShader Shader) noexcept { VertexShader = Shader; return this; }
 		auto SetPixelShader(EPixelShader Shader) noexcept { PixelShader = Shader; return this; }
@@ -83,7 +93,7 @@ namespace JWEngine
 		auto SetTexture(ID3D11ShaderResourceView* pShaderResourceView) noexcept
 		{ 
 			PtrTexture = pShaderResourceView;
-			FlagRenderOption |= JWFlagRenderOption_UseTexture;
+			FlagComponentRenderOption |= JWFlagComponentRenderOption_UseTexture;
 			return this;
 		}
 
@@ -134,8 +144,8 @@ namespace JWEngine
 			return this;
 		}
 
-		auto SetRenderFlag(JWFlagRenderOption Flag) { FlagRenderOption = Flag; return this; }
-		auto ToggleRenderFlag(JWFlagRenderOption Flag) { FlagRenderOption ^= Flag; return this; }
+		auto SetRenderFlag(JWFlagComponentRenderOption Flag) { FlagComponentRenderOption = Flag; return this; }
+		auto ToggleRenderFlag(JWFlagComponentRenderOption Flag) { FlagComponentRenderOption ^= Flag; return this; }
 		auto SetDepthStencilState(EDepthStencilState State) { DepthStencilState = State; return this; }
 
 		// Animation ID 0 is not an animation but TPose
@@ -176,7 +186,7 @@ namespace JWEngine
 		{
 			// Save this texture data's pointer
 			PtrAnimationTexture = pAnimationTexture;
-			FlagRenderOption |= JWFlagRenderOption_UseGPUAnimation;
+			FlagComponentRenderOption |= JWFlagComponentRenderOption_UseGPUAnimation;
 			return this;
 		}
 	};
@@ -222,11 +232,9 @@ namespace JWEngine
 
 		void SetUniversalRasterizerState(ERasterizerState State) noexcept;
 
+		void SetSystemRenderFlag(JWFlagSystemRenderOption Flag) noexcept;
+		void ToggleSystemRenderFlag(JWFlagSystemRenderOption Flag) noexcept;
 		void ToggleWireFrame() noexcept;
-		void ToggleNormalDrawing() noexcept;
-		void ToggleLighting() noexcept;
-		void ToggleBoundingVolumeDrawing() noexcept;
-		void ToggleCameraDrawing() noexcept;
 
 		// Object getter
 		auto& BoundingVolume() noexcept { return m_BoundingVolume; };
@@ -264,7 +272,7 @@ namespace JWEngine
 		SVSCBCPUAnimationData		m_VSCBCPUAnimation{};
 		SVSCBGPUAnimationData		m_VSCBGPUAnimation{};
 
-		/// Shared resources(texture, model data, animation texture)
+		// Shared resources(texture, model data, animation texture)
 		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;
 		VECTOR<SAnimationTextureData>		m_vAnimationTextureData;
 		VECTOR<JWModel>						m_vSharedModel;
@@ -279,9 +287,7 @@ namespace JWEngine
 
 		ERasterizerState			m_UniversalRasterizerState{ ERasterizerState::SolidNoCull };
 		ERasterizerState			m_OldUniversalRasterizerState{ ERasterizerState::SolidNoCull };
-		bool						m_ShouldDrawNormals{ false };
-		bool						m_ShouldLight{ true };
-		bool						m_ShouldDrawBoundingVolumes{ false };
-		bool						m_ShouldDrawCameras{ true };
+
+		JWFlagSystemRenderOption	m_FlagSystemRenderOption{};
 	};
 };
