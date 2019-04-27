@@ -19,8 +19,6 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// # JWSystemLight		@ Position, Direction decoupling with JWSystemTransform
-	// # JWSystemCaemra		@ Multiple camera, Camera representation (ToggleCameraDrawing func)
 	// # JWPrimitiveMaker	@ Dynamic Quad
 	// # Render		@ Frustum culling + Culling freeze
 	// # Physics	@ Collision
@@ -48,7 +46,11 @@ int main()
 			ecs.SystemRender().PrimitiveMaker().MakeSquare(10.0f, XMFLOAT2(10.0f, 10.0f))); // Shared Model #4
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
 		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
-			ecs.SystemRender().PrimitiveMaker().MakeTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0))); // Shared Model #6
+			ecs.SystemRender().PrimitiveMaker().MakeTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0))
+		); // Shared Model #6
+		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
+			ecs.SystemRender().PrimitiveMaker().MakeQuad(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0))
+		); // Shared Model #7
 	}
 	{
 		// SharedImage2D

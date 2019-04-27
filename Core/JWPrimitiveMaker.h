@@ -10,6 +10,9 @@ namespace JWEngine
 		// Points A - B - C must be in clockwise order
 		auto MakeTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) noexcept->SModelData;
 
+		// Points A - B - C - D must be in clockwise order
+		auto MakeQuad(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C, XMFLOAT3 D) noexcept->SModelData;
+
 		auto MakeSquare(float Size, XMFLOAT2 UVMap) noexcept->SModelData;
 
 		// Minimum detail is 5

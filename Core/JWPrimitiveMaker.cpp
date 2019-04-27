@@ -12,9 +12,9 @@ auto JWPrimitiveMaker::MakeTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) noexcept
 	/*
 	** Vertex
 	*/
-	result.VertexData.AddVertex(SVertexModel(A.x, A.y, A.z, Color[0].x, Color[0].y, Color[0].z, 1));
-	result.VertexData.AddVertex(SVertexModel(B.x, B.y, B.z, Color[1].x, Color[1].y, Color[1].z, 1));
-	result.VertexData.AddVertex(SVertexModel(C.x, C.y, C.z, Color[2].x, Color[2].y, Color[2].z, 1));
+	result.VertexData.AddVertex(SVertexModel(A.x, A.y, A.z, Color[0].x, Color[0].y, Color[0].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(B.x, B.y, B.z, Color[1].x, Color[1].y, Color[1].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(C.x, C.y, C.z, Color[2].x, Color[2].y, Color[2].z, 1.0f));
 
 	/*
 	** Index
@@ -22,8 +22,31 @@ auto JWPrimitiveMaker::MakeTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) noexcept
 	result.IndexData.vIndices.push_back(SIndexTriangle(0, 1, 2));
 	
 	return result;
-
 }
+
+auto JWPrimitiveMaker::MakeQuad(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C, XMFLOAT3 D) noexcept->SModelData
+{
+	SModelData result{};
+
+	XMFLOAT3 Color[4] = { {1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1} };
+
+	/*
+	** Vertex
+	*/
+	result.VertexData.AddVertex(SVertexModel(A.x, A.y, A.z, Color[0].x, Color[0].y, Color[0].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(B.x, B.y, B.z, Color[1].x, Color[1].y, Color[1].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(C.x, C.y, C.z, Color[2].x, Color[2].y, Color[2].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(D.x, D.y, D.z, Color[3].x, Color[3].y, Color[3].z, 1.0f));
+
+	/*
+	** Index
+	*/
+	result.IndexData.vIndices.push_back(SIndexTriangle(0, 1, 3));
+	result.IndexData.vIndices.push_back(SIndexTriangle(1, 2, 3));
+
+	return result;
+}
+
 auto JWPrimitiveMaker::MakeSquare(float Size, XMFLOAT2 UVMap) noexcept->SModelData
 {
 	SModelData result{};
@@ -36,10 +59,10 @@ auto JWPrimitiveMaker::MakeSquare(float Size, XMFLOAT2 UVMap) noexcept->SModelDa
 	** Vertex
 	*/
 	// (LeftUp - RightUp - LeftDown - RightDown order)
-	result.VertexData.AddVertex(SVertexModel(-half_size, 0, +half_size, 0, 0, Color[0].x, Color[0].y, Color[0].z, 1));
-	result.VertexData.AddVertex(SVertexModel(+half_size, 0, +half_size, UVMap.x, 0, Color[1].x, Color[1].y, Color[1].z, 1));
-	result.VertexData.AddVertex(SVertexModel(-half_size, 0, -half_size, 0, UVMap.y, Color[2].x, Color[2].y, Color[2].z, 1));
-	result.VertexData.AddVertex(SVertexModel(+half_size, 0, -half_size, UVMap.x, UVMap.y, Color[3].x, Color[3].y, Color[3].z, 1));
+	result.VertexData.AddVertex(SVertexModel(-half_size, 0, +half_size, 0, 0, Color[0].x, Color[0].y, Color[0].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(+half_size, 0, +half_size, UVMap.x, 0, Color[1].x, Color[1].y, Color[1].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(-half_size, 0, -half_size, 0, UVMap.y, Color[2].x, Color[2].y, Color[2].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(+half_size, 0, -half_size, UVMap.x, UVMap.y, Color[3].x, Color[3].y, Color[3].z, 1.0f));
 
 	/*
 	** Index
