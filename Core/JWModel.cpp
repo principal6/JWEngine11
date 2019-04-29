@@ -299,8 +299,16 @@ PRIVATE void JWModel::BakeCurrentFrameIntoTexture(uint32_t StartIndex, const XMM
 PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 {
 	// Create vertex buffer #KVBIDModel
-	m_pDX->CreateStaticVertexBuffer(
-		ModelData.VertexData.GetVertexModelByteSize(), ModelData.VertexData.GetVertexModelPtrData(), &ModelVertexBuffer[KVBIDModel]);
+	if (m_RenderType == ERenderType::Model_Dynamic)
+	{
+		m_pDX->CreateDynamicVertexBuffer(
+			ModelData.VertexData.GetVertexModelByteSize(), ModelData.VertexData.GetVertexModelPtrData(), &ModelVertexBuffer[KVBIDModel]);
+	}
+	else
+	{
+		m_pDX->CreateStaticVertexBuffer(
+			ModelData.VertexData.GetVertexModelByteSize(), ModelData.VertexData.GetVertexModelPtrData(), &ModelVertexBuffer[KVBIDModel]);
+	}
 
 	if (m_RenderType == ERenderType::Model_Rigged)
 	{
@@ -341,7 +349,23 @@ PRIVATE void JWModel::CreateNormalVertexIndexBuffers() noexcept
 	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
-auto JWModel::SetVertex(uint32_t VertexIndex, XMFLOAT3 Position, XMFLOAT4 Color) noexcept->JWModel*
+auto JWModel::SetVertex(uint32_t VertexIndex, const XMVECTOR& Position, const XMFLOAT4& Color) noexcept->JWModel*
+{
+	if (m_RenderType == ERenderType::Model_Dynamic)
+	{
+		if (VertexIndex > ModelData.VertexData.GetVertexCount())
+		{
+			return this;
+		}
+
+		XMStoreFloat3(&ModelData.VertexData.vVerticesModel[VertexIndex].Position, Position);
+		ModelData.VertexData.vVerticesModel[VertexIndex].ColorDiffuse = Color;
+	}
+
+	return this;
+}
+
+auto JWModel::SetVertex(uint32_t VertexIndex, const XMFLOAT3& Position, const XMFLOAT4& Color) noexcept->JWModel*
 {
 	if (m_RenderType == ERenderType::Model_Dynamic)
 	{

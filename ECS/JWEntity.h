@@ -19,6 +19,7 @@ namespace JWEngine
 		PickingRay,
 		PickedTriangle,
 		MainSprite,
+		ViewFrustum,
 	};
 
 	class JWEntity

@@ -72,6 +72,83 @@ void JWSystemCamera::DestroyComponent(SComponentCamera& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
+void JWSystemCamera::CaptureViewFrustum() noexcept
+{
+	const auto& view_matrix = m_pCurrentCamera->MatrixView;
+	auto inverse_view_matrix = XMMatrixInverse(nullptr, view_matrix);
+
+	auto& nru = m_CapturedViewFrustumVertices.NRU;
+	auto& nld = m_CapturedViewFrustumVertices.NLD;
+	auto& nlu = m_CapturedViewFrustumVertices.NLU;
+	auto& nrd = m_CapturedViewFrustumVertices.NRD;
+
+	auto& fru = m_CapturedViewFrustumVertices.FRU;
+	auto& fld = m_CapturedViewFrustumVertices.FLD;
+	auto& flu = m_CapturedViewFrustumVertices.FLU;
+	auto& frd = m_CapturedViewFrustumVertices.FRD;
+	
+	nru = GetCurrentCameraViewFrustumNRU();
+	nld = XMVectorSetZ(-nru, XMVectorGetZ(nru));
+	nlu = XMVectorSetY(nld, XMVectorGetY(nru));
+	nrd = XMVectorSetY(nru, XMVectorGetY(nld));
+
+	fru = GetCurrentCameraViewFrustumFRU();
+	fld = XMVectorSetZ(-fru, XMVectorGetZ(fru));
+	flu = XMVectorSetY(fld, XMVectorGetY(fru));
+	frd = XMVectorSetY(fru, XMVectorGetY(fld));
+
+	nru = XMVector3TransformCoord(nru, inverse_view_matrix);
+	nld = XMVector3TransformCoord(nld, inverse_view_matrix);
+	nlu = XMVector3TransformCoord(nlu, inverse_view_matrix);
+	nrd = XMVector3TransformCoord(nrd, inverse_view_matrix);
+
+	fru = XMVector3TransformCoord(fru, inverse_view_matrix);
+	fld = XMVector3TransformCoord(fld, inverse_view_matrix);
+	flu = XMVector3TransformCoord(flu, inverse_view_matrix);
+	frd = XMVector3TransformCoord(frd, inverse_view_matrix);
+
+	return;
+}
+
+PRIVATE inline auto JWSystemCamera::GetCurrentCameraViewFrustumNRU() const noexcept->XMVECTOR
+{
+	XMFLOAT3 position{};
+	position.z = m_pCurrentCamera->ZNear;
+	position.y = tanf(m_pCurrentCamera->FOV / 2.0f) * position.z;
+	position.x = position.y * (m_pCurrentCamera->Width) / (m_pCurrentCamera->Height);
+
+	return XMVectorSet(position.x, position.y, position.z, 1);
+}
+
+PRIVATE inline auto JWSystemCamera::GetCurrentCameraViewFrustumFRU() const noexcept->XMVECTOR
+{
+	XMFLOAT3 position{};
+	position.z = m_pCurrentCamera->ZFar * 0.98f;
+	position.y = tanf(m_pCurrentCamera->FOV / 2.0f) * position.z;
+	position.x = position.y * (m_pCurrentCamera->Width) / (m_pCurrentCamera->Height);
+
+	return XMVectorSet(position.x, position.y, position.z, 1);
+}
+
+void JWSystemCamera::Execute() noexcept
+{
+	if (m_pCurrentCamera == nullptr)
+	{
+		if (m_vpComponents.size())
+		{
+			SetCurrentCamera(0);
+		}
+		else
+		{
+			JW_ERROR_ABORT("카메라가 없습니다.");
+		}
+	}
+
+	// Update current camera's position to PS for specular calculation.
+	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	m_pDX->UpdatePSCBCamera(transform->Position);
+}
+
 void JWSystemCamera::SetCurrentCamera(size_t ComponentID) noexcept
 {
 	if (m_vpComponents.size() == 0)
@@ -292,7 +369,7 @@ PRIVATE inline void JWSystemCamera::UpdateCurrentCameraViewMatrix() noexcept
 	matrix_view = XMMatrixLookAtLH(position, lookat, up);
 }
 
-void JWSystemCamera::SetCurrentCameraPosition(XMFLOAT3 Position) noexcept
+void JWSystemCamera::SetCurrentCameraPosition(const XMFLOAT3& Position) noexcept
 {
 	const auto& type = m_pCurrentCamera->Type;
 
@@ -318,26 +395,7 @@ void JWSystemCamera::SetCurrentCameraPosition(XMFLOAT3 Position) noexcept
 	UpdateCurrentCameraViewMatrix();
 }
 
-auto JWSystemCamera::GetCurrentCameraPosition() noexcept->const XMVECTOR&
+auto JWSystemCamera::GetCurrentCameraPosition() const noexcept->const XMVECTOR&
 {
 	return m_pCurrentCamera->PtrEntity->GetComponentTransform()->Position;
-}
-
-void JWSystemCamera::Execute() noexcept
-{
-	if (m_pCurrentCamera == nullptr)
-	{
-		if (m_vpComponents.size())
-		{
-			SetCurrentCamera(0);
-		}
-		else
-		{
-			JW_ERROR_ABORT("카메라가 없습니다.");
-		}
-	}
-	
-	// Update current camera's position to PS for specular calculation.
-	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
-	m_pDX->UpdatePSCBCamera(transform->Position);
 }

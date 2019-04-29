@@ -8,10 +8,10 @@ namespace JWEngine
 	{
 	public:
 		// Points A - B - C must be in clockwise order
-		auto MakeTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) noexcept->SModelData;
+		auto MakeTriangle(const XMFLOAT3& A, const XMFLOAT3& B, const XMFLOAT3& C) noexcept->SModelData;
 
 		// Points A - B - C - D must be in clockwise order
-		auto MakeQuad(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C, XMFLOAT3 D) noexcept->SModelData;
+		auto MakeQuad(const XMFLOAT3& A, const XMFLOAT3& B, const XMFLOAT3& C, const XMFLOAT3& D) noexcept->SModelData;
 
 		auto MakeSquare(float Size, XMFLOAT2 UVMap) noexcept->SModelData;
 
@@ -19,6 +19,17 @@ namespace JWEngine
 		auto MakeCircle(float Radius, uint8_t Detail) noexcept->SModelData;
 
 		auto MakeCube(float Size) noexcept->SModelData;
+
+		// NA~ND: (Front) Near plane 4 vertices
+		// FA~FD: (Back) Far plane 4 vertices
+		// Points ( NA - NB - NC - ND ) & ( FA - FB - FC - FD ) must be in clockwise order
+		// Planes order: F - B - U - D - L - R
+		auto MakeHexahedron(
+			const XMFLOAT3& NA = XMFLOAT3(0, 0, 0), const XMFLOAT3& NB = XMFLOAT3(0, 0, 0),
+			const XMFLOAT3& NC = XMFLOAT3(0, 0, 0), const XMFLOAT3& ND = XMFLOAT3(0, 0, 0),
+			const XMFLOAT3& FA = XMFLOAT3(0, 0, 0), const XMFLOAT3& FB = XMFLOAT3(0, 0, 0),
+			const XMFLOAT3& FC = XMFLOAT3(0, 0, 0), const XMFLOAT3& FD = XMFLOAT3(0, 0, 0)) noexcept->SModelData;
+
 		auto MakePyramid(float Height, float Width) noexcept->SModelData;
 
 		// Minimum detail is 5

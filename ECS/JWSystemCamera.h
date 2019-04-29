@@ -37,6 +37,19 @@ namespace JWEngine
 		Left,
 		Right,
 	};
+	
+	struct SViewFrustumVertices
+	{
+		XMVECTOR NLU{};
+		XMVECTOR NRU{};
+		XMVECTOR NRD{};
+		XMVECTOR NLD{};
+
+		XMVECTOR FLU{};
+		XMVECTOR FRU{};
+		XMVECTOR FRD{};
+		XMVECTOR FLD{};
+	};
 
 	struct SComponentCamera
 	{
@@ -105,6 +118,11 @@ namespace JWEngine
 		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentCamera&;
 		void DestroyComponent(SComponentCamera& Component) noexcept;
 
+		void CaptureViewFrustum() noexcept;
+		const auto& GetCapturedViewFrustum() const noexcept { return m_CapturedViewFrustumVertices; }
+
+		void Execute() noexcept;
+
 		void SetCurrentCamera(size_t ComponentID) noexcept;
 		auto GetCurrentCameraComponentID() const noexcept { return m_pCurrentCamera->ComponentID; }
 		
@@ -119,10 +137,8 @@ namespace JWEngine
 
 		void MoveCurrentCamera(ECameraDirection Direction) noexcept;
 
-		void Execute() noexcept;
-
-		void SetCurrentCameraPosition(XMFLOAT3 Position) noexcept;
-		auto GetCurrentCameraPosition() noexcept->const XMVECTOR&;
+		void SetCurrentCameraPosition(const XMFLOAT3& Position) noexcept;
+		auto GetCurrentCameraPosition() const noexcept->const XMVECTOR&;
 
 		const auto& OrthographicMatrix() noexcept { return m_MatrixProjOrthographic; }
 		const auto& CurrentViewMatrix() noexcept { return m_pCurrentCamera->MatrixView; }
@@ -135,6 +151,12 @@ namespace JWEngine
 		inline void MoveThirdPerson(ECameraDirection Direction) noexcept;
 		inline void UpdateCurrentCameraViewMatrix() noexcept;
 
+		// NRU(Near right up) vertex position
+		inline auto GetCurrentCameraViewFrustumNRU() const noexcept->XMVECTOR;
+
+		// FRU(Far right up) verex position
+		inline auto GetCurrentCameraViewFrustumFRU() const noexcept->XMVECTOR;
+
 	private:
 		JWDX*						m_pDX{};
 		JWECS*						m_pECS{};
@@ -144,5 +166,6 @@ namespace JWEngine
 		SComponentCamera*			m_pCurrentCamera{};
 
 		XMMATRIX					m_MatrixProjOrthographic{};
+		SViewFrustumVertices		m_CapturedViewFrustumVertices{};
 	};
 };

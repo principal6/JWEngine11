@@ -397,6 +397,8 @@ void JWSystemRender::Execute() noexcept
 		auto camera = iter->PtrEntity->GetComponentCamera();
 		if (camera)
 		{
+			// This is a Camera entity.
+
 			if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawCameras))
 			{
 				continue;

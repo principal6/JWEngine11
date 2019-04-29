@@ -46,10 +46,16 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
 		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
 			ecs.SystemRender().PrimitiveMaker().MakeTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0))
-		); // Shared Model #6
+		); // Shared Model #6 (Picked triangle)
+
+		/*
 		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
-			ecs.SystemRender().PrimitiveMaker().MakeQuad(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0))
-		); // Shared Model #7
+			ecs.SystemRender().PrimitiveMaker().MakeQuad(XMFLOAT3(-1, 1, 0), XMFLOAT3(1, 1, 0), XMFLOAT3(1, -1, 0), XMFLOAT3(-1, -1, 0))
+		); // Shared Model #7 (View Frustum representation)
+		*/
+
+		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
+			ecs.SystemRender().PrimitiveMaker().MakeHexahedron()); // Shared Model #7 (View Frustum representation)
 	}
 	{
 		// SharedImage2D
@@ -88,6 +94,10 @@ int main()
 		->SetModel(ecs.SystemRender().GetSharedModel(5));
 
 	ecs.SystemCamera().SetCurrentCamera(0);
+
+	auto view_frustum = ecs.CreateEntity(EEntityType::ViewFrustum);
+	view_frustum->CreateComponentRender()
+		->SetModel(ecs.SystemRender().GetSharedModel(7));
 
 	auto grid = ecs.CreateEntity(EEntityType::Grid);
 	grid->CreateComponentRender()
@@ -248,6 +258,26 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 	{
 		ecs.SystemCamera().SetCurrentCamera(1);
 	}
+
+	if (Character == '5')
+	{
+		// CUlling
+		ecs.SystemCamera().CaptureViewFrustum();
+		const auto& frustum = ecs.SystemCamera().GetCapturedViewFrustum();
+
+		ecs.GetEntityByType(EEntityType::ViewFrustum)->GetComponentRender()->PtrModel
+			// Left plane
+			->SetVertex(0, frustum.NLU, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(1, frustum.FLU, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(2, frustum.FLD, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(3, frustum.NLD, XMFLOAT4(0, 1, 0, 1))
+			// Right plane
+			->SetVertex(4, frustum.NRU, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(5, frustum.FRU, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(6, frustum.FRD, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(7, frustum.NRD, XMFLOAT4(0, 1, 0, 1))
+			->UpdateModel();
+	}
 }
 
 JW_FUNCTION_ON_INPUT(OnInput)
@@ -282,19 +312,19 @@ JW_FUNCTION_ON_INPUT(OnInput)
 	// Mouse left button pressed
 	if (DeviceState.CurrentMouse.rgbButtons[0])
 	{
-		myGame.ECS().SystemPhysics().Pick();
+		ecs.SystemPhysics().Pick();
 		
 		// ECS entity Ray
-		myGame.ECS().GetEntityByType(EEntityType::PickingRay)->GetComponentRender()->PtrLine
-			->SetLine3DOriginDirection(0, myGame.ECS().SystemPhysics().GetPickingRayOrigin(), myGame.ECS().SystemPhysics().GetPickingRayDirection())
+		ecs.GetEntityByType(EEntityType::PickingRay)->GetComponentRender()->PtrLine
+			->SetLine3DOriginDirection(0, ecs.SystemPhysics().GetPickingRayOrigin(), ecs.SystemPhysics().GetPickingRayDirection())
 			->UpdateLines();
 
 		XMFLOAT3 tri_a{}, tri_b{}, tri_c{};
-		XMStoreFloat3(&tri_a, myGame.ECS().SystemPhysics().GetPickedTrianglePosition(0));
-		XMStoreFloat3(&tri_b, myGame.ECS().SystemPhysics().GetPickedTrianglePosition(1));
-		XMStoreFloat3(&tri_c, myGame.ECS().SystemPhysics().GetPickedTrianglePosition(2));
+		XMStoreFloat3(&tri_a, ecs.SystemPhysics().GetPickedTrianglePosition(0));
+		XMStoreFloat3(&tri_b, ecs.SystemPhysics().GetPickedTrianglePosition(1));
+		XMStoreFloat3(&tri_c, ecs.SystemPhysics().GetPickedTrianglePosition(2));
 		
-		myGame.ECS().GetEntityByType(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
+		ecs.GetEntityByType(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
 			->SetVertex(0, tri_a, XMFLOAT4(1, 1, 1, 1))
 			->SetVertex(1, tri_b, XMFLOAT4(1, 0, 0, 1))
 			->SetVertex(2, tri_c, XMFLOAT4(0, 1, 0, 1))

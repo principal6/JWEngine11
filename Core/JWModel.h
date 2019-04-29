@@ -24,9 +24,17 @@ namespace JWEngine
 		auto BakeAnimationTexture(SSizeInt TextureSize, STRING FileName) noexcept->JWModel*;
 
 		// Only available when it's dynamic model
-		auto SetVertex(uint32_t VertexIndex, XMFLOAT3 Position, XMFLOAT4 Color) noexcept->JWModel*;
+		// @important
+		// You must call UpdateModel() after finishing all SetVertex() calls.
+		auto SetVertex(uint32_t VertexIndex, const XMVECTOR& Position, const XMFLOAT4& Color) noexcept->JWModel*;
 
 		// Only available when it's dynamic model
+		// @important
+		// You must call UpdateModel() after finishing all SetVertex() calls.
+		auto SetVertex(uint32_t VertexIndex, const XMFLOAT3& Position, const XMFLOAT4& Color) noexcept->JWModel*;
+
+		// Only available when it's dynamic model
+		// @important: Must be called after SetVertex()
 		void UpdateModel() noexcept;
 
 		auto GetRenderType() const noexcept { return m_RenderType; };

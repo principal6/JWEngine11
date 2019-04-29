@@ -3,7 +3,7 @@
 using namespace JWEngine;
 
 
-auto JWPrimitiveMaker::MakeTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) noexcept->SModelData
+auto JWPrimitiveMaker::MakeTriangle(const XMFLOAT3& A, const XMFLOAT3& B, const XMFLOAT3& C) noexcept->SModelData
 {
 	SModelData result{};
 
@@ -24,7 +24,7 @@ auto JWPrimitiveMaker::MakeTriangle(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C) noexcept
 	return result;
 }
 
-auto JWPrimitiveMaker::MakeQuad(XMFLOAT3 A, XMFLOAT3 B, XMFLOAT3 C, XMFLOAT3 D) noexcept->SModelData
+auto JWPrimitiveMaker::MakeQuad(const XMFLOAT3& A, const XMFLOAT3& B, const XMFLOAT3& C, const XMFLOAT3& D) noexcept->SModelData
 {
 	SModelData result{};
 
@@ -170,6 +170,65 @@ auto JWPrimitiveMaker::MakeCube(float Size) noexcept->SModelData
 		// Clock-wise winding
 		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 2));
 		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
+	}
+
+	return result;
+}
+
+auto JWPrimitiveMaker::MakeHexahedron(const XMFLOAT3& NA, const XMFLOAT3& NB, const XMFLOAT3& NC, const XMFLOAT3& ND,
+	const XMFLOAT3& FA, const XMFLOAT3& FB, const XMFLOAT3& FC, const XMFLOAT3& FD) noexcept->SModelData
+{
+	SModelData result{};
+
+	XMFLOAT4 Color{ 1, 1, 1, 1 };
+
+	/*
+	** Vertex
+	*/
+	// Near plane
+	result.VertexData.AddVertex(SVertexModel(NA, Color));
+	result.VertexData.AddVertex(SVertexModel(NB, Color));
+	result.VertexData.AddVertex(SVertexModel(NC, Color));
+	result.VertexData.AddVertex(SVertexModel(ND, Color));
+
+	// Far plane
+	result.VertexData.AddVertex(SVertexModel(FA, Color));
+	result.VertexData.AddVertex(SVertexModel(FB, Color));
+	result.VertexData.AddVertex(SVertexModel(FC, Color));
+	result.VertexData.AddVertex(SVertexModel(FD, Color));
+
+	// Upper plane
+	result.VertexData.AddVertex(SVertexModel(FA, Color));
+	result.VertexData.AddVertex(SVertexModel(FB, Color));
+	result.VertexData.AddVertex(SVertexModel(NB, Color));
+	result.VertexData.AddVertex(SVertexModel(NA, Color));
+
+	// Lower plane
+	result.VertexData.AddVertex(SVertexModel(FC, Color));
+	result.VertexData.AddVertex(SVertexModel(FD, Color));
+	result.VertexData.AddVertex(SVertexModel(ND, Color));
+	result.VertexData.AddVertex(SVertexModel(NC, Color));
+
+	// Left plane
+	result.VertexData.AddVertex(SVertexModel(FA, Color));
+	result.VertexData.AddVertex(SVertexModel(NA, Color));
+	result.VertexData.AddVertex(SVertexModel(ND, Color));
+	result.VertexData.AddVertex(SVertexModel(FD, Color));
+
+	// Right plane
+	result.VertexData.AddVertex(SVertexModel(NB, Color));
+	result.VertexData.AddVertex(SVertexModel(FB, Color));
+	result.VertexData.AddVertex(SVertexModel(FC, Color));
+	result.VertexData.AddVertex(SVertexModel(NC, Color));
+
+	/*
+	** Index
+	*/
+	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 4; ++i)
+	{
+		// Clock-wise winding
+		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 3));
+		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 2, i * 4 + 3));
 	}
 
 	return result;
