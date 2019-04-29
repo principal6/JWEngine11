@@ -20,6 +20,7 @@ namespace JWEngine
 		PickedTriangle,
 		MainSprite,
 		ViewFrustum,
+		Point3D,
 	};
 
 	class JWEntity

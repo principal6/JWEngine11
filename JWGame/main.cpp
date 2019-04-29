@@ -19,7 +19,6 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// # Render		@ Frustum culling + Culling freeze
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
 	// # Render		@ Sprite instancing
@@ -46,16 +45,11 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
 		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
 			ecs.SystemRender().PrimitiveMaker().MakeTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0))
-		); // Shared Model #6 (Picked triangle)
-
-		/*
-		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
-			ecs.SystemRender().PrimitiveMaker().MakeQuad(XMFLOAT3(-1, 1, 0), XMFLOAT3(1, 1, 0), XMFLOAT3(1, -1, 0), XMFLOAT3(-1, -1, 0))
-		); // Shared Model #7 (View Frustum representation)
-		*/
-
+		); // Shared Model #6 (Picked triangle) == Legacy
 		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
 			ecs.SystemRender().PrimitiveMaker().MakeHexahedron()); // Shared Model #7 (View Frustum representation)
+		ecs.SystemRender().CreateSharedModelPrimitive(
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 16, 7)); // Shared Model #8 (Representation for debugging a 3d point)
 	}
 	{
 		// SharedImage2D
@@ -81,7 +75,14 @@ int main()
 		ecs.SystemRender().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 	}
 
-	ecs.SystemRender().SetSystemRenderFlag(JWFlagSystemRenderOption_UseLighting | JWFlagSystemRenderOption_DrawCameras);
+	ecs.SystemRender().SetSystemRenderFlag(
+		JWFlagSystemRenderOption_UseLighting | JWFlagSystemRenderOption_DrawCameras | JWFlagSystemRenderOption_UseFrustumCulling);
+
+	auto debug_point = ecs.CreateEntity(EEntityType::Point3D);
+	debug_point->CreateComponentTransform()
+		->SetPosition(XMFLOAT3(0, 0, 10.0f));
+	debug_point->CreateComponentRender()
+		->SetModel(ecs.SystemRender().GetSharedModel(8));
 
 	auto camera_0 = ecs.CreateEntity("camera_0");
 	camera_0->CreateComponentTransform()
@@ -97,7 +98,8 @@ int main()
 
 	auto view_frustum = ecs.CreateEntity(EEntityType::ViewFrustum);
 	view_frustum->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(7));
+		->SetModel(ecs.SystemRender().GetSharedModel(7))
+		->SetRenderFlag(JWFlagComponentRenderOption_UseTransparency);
 
 	auto grid = ecs.CreateEntity(EEntityType::Grid);
 	grid->CreateComponentRender()
@@ -266,21 +268,20 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 
 	if (Character == '5')
 	{
-		// CUlling
-		ecs.SystemCamera().CaptureViewFrustum();
+		// Frustum culling
 		const auto& frustum = ecs.SystemCamera().GetCapturedViewFrustum();
 
 		ecs.GetEntityByType(EEntityType::ViewFrustum)->GetComponentRender()->PtrModel
 			// Left plane
-			->SetVertex(0, frustum.NLU, XMFLOAT4(0, 1, 0, 1))
-			->SetVertex(1, frustum.FLU, XMFLOAT4(0, 1, 0, 1))
-			->SetVertex(2, frustum.FLD, XMFLOAT4(0, 1, 0, 1))
-			->SetVertex(3, frustum.NLD, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(0, frustum.NLU, XMFLOAT4(1, 0, 0, 0.5f))
+			->SetVertex(1, frustum.FLU, XMFLOAT4(1, 0, 0, 0.5f))
+			->SetVertex(2, frustum.FLD, XMFLOAT4(1, 0, 0, 0.5f))
+			->SetVertex(3, frustum.NLD, XMFLOAT4(1, 0, 0, 0.5f))
 			// Right plane
-			->SetVertex(4, frustum.NRU, XMFLOAT4(0, 1, 0, 1))
-			->SetVertex(5, frustum.FRU, XMFLOAT4(0, 1, 0, 1))
-			->SetVertex(6, frustum.FRD, XMFLOAT4(0, 1, 0, 1))
-			->SetVertex(7, frustum.NRD, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(4, frustum.NRU, XMFLOAT4(1, 0, 0, 0.5f))
+			->SetVertex(5, frustum.FRU, XMFLOAT4(1, 0, 0, 0.5f))
+			->SetVertex(6, frustum.FRD, XMFLOAT4(1, 0, 0, 0.5f))
+			->SetVertex(7, frustum.NRD, XMFLOAT4(1, 0, 0, 0.5f))
 			->UpdateModel();
 	}
 }
@@ -355,30 +356,39 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 JW_FUNCTION_ON_RENDER(OnRender)
 {
+	auto& ecs = myGame.ECS();
+
+	// 3D Point for debugging
+	//ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->SetPosition(...);
+
 	// ECS entity Skybox
-	myGame.ECS().GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(myGame.ECS().SystemCamera().GetCurrentCameraPosition());
+	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(ecs.SystemCamera().GetCurrentCameraPosition());
 
 	// ECS execute systems
-	myGame.ECS().ExecuteSystems();
+	ecs.ExecuteSystems();
 
 	// ECS entity Sprite info
-	const auto& anim_state = myGame.ECS().GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->AnimationState;
+	const auto& anim_state = ecs.GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->AnimationState;
 	
 	// Text
 	static WSTRING s_temp{};
 	static WSTRING s_fps{};
 	static WSTRING s_anim_id{};
 	static WSTRING s_picked_entity{};
+	static WSTRING s_frustum_culled_entity_count{};
 
 	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
 	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID, s_temp);
-	s_picked_entity = L"Picked Entity = " + StringToWstring(myGame.ECS().SystemPhysics().GetPickedEntityName());
+	s_picked_entity = L"Picked Entity = " + StringToWstring(ecs.SystemPhysics().GetPickedEntityName());
+	s_frustum_culled_entity_count =
+		L"Frustum culled entities = " + ConvertIntToWSTRING(ecs.SystemRender().GetFrustumCulledEntityCount(), s_temp);
 
 	myGame.InstantText().BeginRendering();
 
 	myGame.InstantText().RenderText(s_fps, XMFLOAT2(10, 10), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_anim_id, XMFLOAT2(10, 30), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_picked_entity, XMFLOAT2(10, 50), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_frustum_culled_entity_count, XMFLOAT2(10, 70), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 
 	myGame.InstantText().EndRendering();
 }

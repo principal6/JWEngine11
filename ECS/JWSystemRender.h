@@ -237,8 +237,10 @@ namespace JWEngine
 		void ToggleSystemRenderFlag(JWFlagSystemRenderOption Flag) noexcept;
 		void ToggleWireFrame() noexcept;
 
+		auto GetFrustumCulledEntityCount() const noexcept { return m_FrustumCulledEntityCount; }
+
 		// Object getter
-		auto& BoundingVolume() noexcept { return m_BoundingVolume; };
+		auto& BoundingVolume() noexcept { return m_BoundingVolume; }
 		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
 
 	private:
@@ -254,6 +256,9 @@ namespace JWEngine
 
 		// Bounding volume
 		inline void UpdateBoundingVolumes() noexcept;
+
+		// Frustum culling
+		auto IsCulledByViewFrustum(const SComponentRender* pRender) const noexcept->bool;
 
 		void Draw(SComponentRender& Component) noexcept;
 		void DrawNormals(SComponentRender& Component) noexcept;
@@ -290,5 +295,7 @@ namespace JWEngine
 		ERasterizerState			m_OldUniversalRasterizerState{ ERasterizerState::SolidNoCull };
 
 		JWFlagSystemRenderOption	m_FlagSystemRenderOption{};
+		
+		mutable uint32_t			m_FrustumCulledEntityCount{};
 	};
 };

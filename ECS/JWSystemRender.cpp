@@ -392,8 +392,20 @@ PRIVATE inline void JWSystemRender::UpdateBoundingVolumes() noexcept
 
 void JWSystemRender::Execute() noexcept
 {
+	m_FrustumCulledEntityCount = 0;
+
+	// Opaque drawing
+	m_pDX->SetBlendState(EBlendState::Opaque);
+
 	for (auto& iter : m_vpComponents)
 	{
+		// Check transparency
+		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency)
+		{
+			continue;
+		}
+
+		// Check flag - View frustum drawing
 		if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawViewFrustum))
 		{
 			if (iter->PtrEntity->GetEntityType() == EEntityType::ViewFrustum)
@@ -402,6 +414,7 @@ void JWSystemRender::Execute() noexcept
 			}
 		}
 
+		// Check flag - Camera drawing
 		auto camera = iter->PtrEntity->GetComponentCamera();
 		if (camera)
 		{
@@ -418,6 +431,16 @@ void JWSystemRender::Execute() noexcept
 			}
 		}
 
+		// Check flag - Frustum culling
+		if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_UseFrustumCulling)
+		{
+			if (IsCulledByViewFrustum(iter))
+			{
+				continue;
+			}
+		}
+
+		// Check flag - Rasterizer state
 		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_AlwaysSolidNoCull)
 		{
 			m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
@@ -426,9 +449,6 @@ void JWSystemRender::Execute() noexcept
 		{
 			m_pDX->SetRasterizerState(m_UniversalRasterizerState);
 		}
-
-		// Set blend state for the component
-		m_pDX->SetBlendState(iter->BlendState);
 
 		// Set depth stencil state for the component
 		m_pDX->SetDepthStencilState(iter->DepthStencilState);
@@ -450,10 +470,140 @@ void JWSystemRender::Execute() noexcept
 		Draw(*iter);
 	}
 
+
+	// Bounding volume drawing
 	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingVolumes)
 	{
 		DrawInstancedBoundingVolume();
 	}
+
+
+	// Transparent drawing
+	m_pDX->SetBlendState(EBlendState::Transprent);
+
+	for (auto& iter : m_vpComponents)
+	{
+		// Check transparency
+		if (!(iter->FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency))
+		{
+			continue;
+		}
+
+		// Check flag - View frustum drawing
+		if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawViewFrustum))
+		{
+			if (iter->PtrEntity->GetEntityType() == EEntityType::ViewFrustum)
+			{
+				continue;
+			}
+		}
+
+		// Check flag - Camera drawing
+		auto camera = iter->PtrEntity->GetComponentCamera();
+		if (camera)
+		{
+			// This is a Camera entity.
+
+			if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawCameras))
+			{
+				continue;
+			}
+
+			if (camera->ComponentID == m_pECS->SystemCamera().GetCurrentCameraComponentID())
+			{
+				continue;
+			}
+		}
+
+		// Check flag - Frustum culling
+		if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_UseFrustumCulling)
+		{
+			if (IsCulledByViewFrustum(iter))
+			{
+				continue;
+			}
+		}
+
+		// Check flag - Rasterizer state
+		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_AlwaysSolidNoCull)
+		{
+			m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
+		}
+		else
+		{
+			m_pDX->SetRasterizerState(m_UniversalRasterizerState);
+		}
+
+		// Set depth stencil state for the component
+		m_pDX->SetDepthStencilState(iter->DepthStencilState);
+
+		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_UseGPUAnimation)
+		{
+			// GPU animation
+			// Real animationing occurs in vertex shader when Draw() is called.
+			AnimateOnGPU(*iter);
+		}
+		else
+		{
+			// CPU animation
+			AnimateOnCPU(*iter);
+		}
+
+		SetShaders(*iter);
+
+		Draw(*iter);
+	}
+}
+
+PRIVATE auto JWSystemRender::IsCulledByViewFrustum(const SComponentRender* pRender) const noexcept->bool
+{
+	auto physics = pRender->PtrEntity->GetComponentPhysics();
+	if (physics == nullptr)
+	{
+		return false;
+	}
+
+	m_pECS->SystemCamera().CaptureViewFrustum();
+	auto frustum = m_pECS->SystemCamera().GetCapturedViewFrustum();
+
+	auto& center_pos = physics->BoundingSphereCenterPosition;
+	auto radius = physics->BoundingSphereRadius;
+
+	// Left plane
+	auto lp_v0 = XMVector3Normalize(frustum.FLU - frustum.NLU);
+	auto lp_v1 = XMVector3Normalize(frustum.FLD - frustum.NLU);
+	auto lp_vn = XMVector3Normalize(XMVector3Cross(lp_v1, lp_v0)); // @important
+
+	auto cmp_pos = center_pos + (-lp_vn) * radius;
+	auto cmp_vec = XMVector3Normalize(cmp_pos - frustum.NLU);
+	auto distance = XMVector3Dot(cmp_vec, lp_vn);
+
+	if (XMVector3Greater(distance, XMVectorZero()))
+	{
+		// Entity is out of the view frustum.
+		++m_FrustumCulledEntityCount;
+
+		return true;
+	}
+
+	// Right plane
+	auto rp_v0 = XMVector3Normalize(frustum.FRU - frustum.NRU);
+	auto rp_v1 = XMVector3Normalize(frustum.FRD - frustum.NRU);
+	auto rp_vn = XMVector3Normalize(XMVector3Cross(rp_v0, rp_v1)); // @important
+
+	cmp_pos = center_pos + (-rp_vn) * radius;
+	cmp_vec = XMVector3Normalize(cmp_pos - frustum.NRU);
+	distance = XMVector3Dot(cmp_vec, rp_vn);
+
+	if (XMVector3Greater(distance, XMVectorZero()))
+	{
+		// Entity is out of the view frustum.
+		++m_FrustumCulledEntityCount;
+
+		return true;
+	}
+
+	return false;
 }
 
 void JWSystemRender::DrawInstancedBoundingVolume() noexcept

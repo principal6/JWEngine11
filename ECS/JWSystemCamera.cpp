@@ -97,6 +97,7 @@ void JWSystemCamera::CaptureViewFrustum() noexcept
 	flu = XMVectorSetY(fld, XMVectorGetY(fru));
 	frd = XMVectorSetY(fru, XMVectorGetY(fld));
 
+	// Move vertices to World Space.
 	nru = XMVector3TransformCoord(nru, inverse_view_matrix);
 	nld = XMVector3TransformCoord(nld, inverse_view_matrix);
 	nlu = XMVector3TransformCoord(nlu, inverse_view_matrix);
