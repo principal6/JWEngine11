@@ -110,16 +110,13 @@ void JWInstantText::BeginRendering() noexcept
 	m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &m_FontTextureSRV);
 	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
 
-	// Empty the vertex data
-	m_VertexData.EmptyData();
-
 	// Initialize text length
 	m_TotalTextLength = 0;
 }
 
 void JWInstantText::RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 FontColorRGB) noexcept
 {
-	// Throw if total text length is larger than the limit
+	// Only when the total text length is smaller than the limit
 	uint32_t text_length = static_cast<uint32_t>(Text.length());
 	if ((m_TotalTextLength + text_length) < KMaxInsantTextLength)
 	{
