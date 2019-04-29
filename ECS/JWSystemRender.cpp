@@ -394,6 +394,14 @@ void JWSystemRender::Execute() noexcept
 {
 	for (auto& iter : m_vpComponents)
 	{
+		if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawViewFrustum))
+		{
+			if (iter->PtrEntity->GetEntityType() == EEntityType::ViewFrustum)
+			{
+				continue;
+			}
+		}
+
 		auto camera = iter->PtrEntity->GetComponentCamera();
 		if (camera)
 		{

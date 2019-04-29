@@ -44,8 +44,9 @@ namespace JWEngine
 		JWFlagSystemRenderOption_DrawNormals			= 0x01,
 		JWFlagSystemRenderOption_DrawBoundingVolumes	= 0x02,
 		JWFlagSystemRenderOption_DrawCameras			= 0x04,
-		JWFlagSystemRenderOption_UseLighting			= 0x08,
-		JWFlagSystemRenderOption_UseFrustumCulling		= 0x10,
+		JWFlagSystemRenderOption_DrawViewFrustum		= 0x08,
+		JWFlagSystemRenderOption_UseLighting			= 0x10,
+		JWFlagSystemRenderOption_UseFrustumCulling		= 0x20,
 	};
 	using JWFlagSystemRenderOption = uint16_t;
 

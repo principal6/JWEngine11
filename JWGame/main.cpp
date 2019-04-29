@@ -233,6 +233,11 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 	{
 		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawCameras);
 	}
+
+	if (VK == VK_F6)
+	{
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawViewFrustum);
+	}
 }
 
 JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
