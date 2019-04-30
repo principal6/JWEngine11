@@ -197,7 +197,7 @@ void JWInstantText::EndRendering() noexcept
 
 	// @important for performance (Draw ONLY the visible vertices)
 	// Draw indexed 
-	m_pDX->GetDeviceContext()->DrawIndexed(3 * m_TotalTextLength * 4, 0, 0);
+	m_pDX->GetDeviceContext()->DrawIndexed(3 * m_TotalTextLength * 2, 0, 0);
 
 	// Restore rasterizer state
 	if (m_ShouldToggleWireFrame)
