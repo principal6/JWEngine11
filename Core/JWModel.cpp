@@ -73,7 +73,7 @@ auto JWModel::BakeAnimationTexture(SSizeInt TextureSize, STRING FileName) noexce
 {
 	if (ModelData.AnimationSet.vAnimations.size())
 	{
-		SAnimationTextureData texture_data{};
+		STextureData texture_data{};
 		auto& current_tex = texture_data.Texture;
 		auto& current_srv = texture_data.TextureSRV;
 		auto& current_tex_size = texture_data.TextureSize;

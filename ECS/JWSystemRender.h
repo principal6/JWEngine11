@@ -5,6 +5,7 @@
 #include "../Core/JWLineModel.h"
 #include "../Core/JWImage.h"
 #include "../Core/JWPrimitiveMaker.h"
+#include "../Core/JWTerrainGenerator.h"
 
 namespace JWEngine
 {
@@ -83,7 +84,7 @@ namespace JWEngine
 
 		ID3D11ShaderResourceView*	PtrTexture{};
 
-		SAnimationTextureData*		PtrAnimationTexture{};
+		STextureData*				PtrAnimationTexture{};
 		SAnimationState				AnimationState{};
 
 		JWFlagComponentRenderOption	FlagComponentRenderOption{};
@@ -183,7 +184,7 @@ namespace JWEngine
 		auto NextAnimation() { SetAnimation(AnimationState.CurrAnimationID + 1); return this; }
 		auto PrevAnimation() { SetAnimation(AnimationState.CurrAnimationID - 1); return this; }
 
-		auto SetAnimationTexture(SAnimationTextureData* pAnimationTexture) noexcept
+		auto SetAnimationTexture(STextureData* pAnimationTexture) noexcept
 		{
 			// Save this texture data's pointer
 			PtrAnimationTexture = pAnimationTexture;
@@ -210,8 +211,8 @@ namespace JWEngine
 		void CreateSharedTextureFromSharedModel(size_t ModelIndex) noexcept;
 		auto GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*;
 
-		auto CreateSharedModelPrimitive(const SModelData& ModelData) noexcept->JWModel*;
-		auto CreateSharedModelDynamicPrimitive(const SModelData& ModelData) noexcept->JWModel*;
+		auto CreateSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*;
+		auto CreateDynamicSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*;
 		auto CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) noexcept->JWModel*;
 		auto GetSharedModel(size_t Index) noexcept->JWModel*;
 
@@ -222,7 +223,7 @@ namespace JWEngine
 		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
 
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
-		auto GetAnimationTexture(size_t Index) noexcept->SAnimationTextureData*;
+		auto GetAnimationTexture(size_t Index) noexcept->STextureData*;
 		
 		// Bounidng volume
 		void AddBoundingVolumeInstance(float Radius, const XMVECTOR& Translation) noexcept;
@@ -242,6 +243,7 @@ namespace JWEngine
 		// Object getter
 		auto& BoundingVolume() noexcept { return m_BoundingVolume; }
 		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
+		auto& TerrainGenerator() noexcept { return m_TerrainGenerator; }
 
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;
@@ -280,7 +282,7 @@ namespace JWEngine
 
 		// Shared resources(texture, model data, animation texture)
 		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;
-		VECTOR<SAnimationTextureData>		m_vAnimationTextureData;
+		VECTOR<STextureData>				m_vAnimationTextureData;
 		VECTOR<JWModel>						m_vSharedModel;
 		VECTOR<JWLineModel>					m_vSharedLineModel;
 		VECTOR<JWImage>						m_vSharedImage2D;
@@ -297,5 +299,8 @@ namespace JWEngine
 		JWFlagSystemRenderOption	m_FlagSystemRenderOption{};
 		
 		mutable uint32_t			m_FrustumCulledEntityCount{};
+
+		// Terrain
+		JWTerrainGenerator			m_TerrainGenerator{};
 	};
 };

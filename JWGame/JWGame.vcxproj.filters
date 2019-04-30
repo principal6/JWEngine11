@@ -87,6 +87,9 @@
     <ClCompile Include="..\ECS\JWSystemCamera.cpp">
       <Filter>ECS</Filter>
     </ClCompile>
+    <ClCompile Include="..\Core\JWTerrainGenerator.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Core\JWCommon.h">
@@ -431,6 +434,9 @@
     </ClInclude>
     <ClInclude Include="..\ECS\JWSystemCamera.h">
       <Filter>ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Core\JWTerrainGenerator.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -39,18 +39,24 @@ int main()
 			->AddAnimationFromFile("Ezreal_Punching.X")
 			->AddAnimationFromFile("Ezreal_Walk.X")
 			->BakeAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
-		ecs.SystemRender().CreateSharedModelPrimitive(
+
+		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(100.0f, 16, 7)); // Shared Model #3 (Sphere for Sky)
-		ecs.SystemRender().CreateSharedModelPrimitive(
+		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSquare(10.0f, XMFLOAT2(10.0f, 10.0f))); // Shared Model #4
+
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
-		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
-			ecs.SystemRender().PrimitiveMaker().MakeTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0))
-		); // Shared Model #6 (Picked triangle) == Legacy
-		ecs.SystemRender().CreateSharedModelDynamicPrimitive(
+
+		ecs.SystemRender().CreateDynamicSharedModelFromModelData(
+			ecs.SystemRender().PrimitiveMaker().MakeTriangle(
+				XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0))); // Shared Model #6 (Picked triangle) == Legacy
+		ecs.SystemRender().CreateDynamicSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeHexahedron()); // Shared Model #7 (View Frustum representation)
-		ecs.SystemRender().CreateSharedModelPrimitive(
+
+		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 16, 7)); // Shared Model #8 (Representation for debugging a 3d point)
+		ecs.SystemRender().CreateSharedModelFromModelData(
+			ecs.SystemRender().TerrainGenerator().GenerateTerrainFromFile("heightmap_0.tif", 10.0f)); // Shared Model #9 (Terrain)
 	}
 	{
 		// SharedImage2D
@@ -67,7 +73,7 @@ int main()
 	{
 		// SharedTexture
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
-		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "grass.png"); //Shared Resource #1
+		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "terra_diffuse.png"); //Shared Resource #1
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #2
 		ecs.SystemRender().CreateSharedTextureFromSharedModel(2); //Shared Resource #3
 	}
@@ -173,15 +179,15 @@ int main()
 		->SetModel(ecs.SystemRender().GetSharedModel(1));
 
 	{
-		auto floor_plane = ecs.CreateEntity("Floor");
-		floor_plane->CreateComponentTransform()
+		auto terrain = ecs.CreateEntity("terrain");
+		terrain->CreateComponentTransform()
 			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 			->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		floor_plane->CreateComponentPhysics();
-		floor_plane->CreateComponentRender()
-			->SetModel(ecs.SystemRender().GetSharedModel(4))
+		terrain->CreateComponentPhysics();
+		terrain->CreateComponentRender()
+			->SetModel(ecs.SystemRender().GetSharedModel(9))
 			->SetTexture(ecs.SystemRender().GetSharedTexture(1));
-		ecs.SystemPhysics().SetBoundingSphere(floor_plane, 2.0f);
+		ecs.SystemPhysics().SetBoundingSphere(terrain, 2.0f);
 	}
 
 	auto image_gamma = ecs.CreateEntity("IMG_Gamma");

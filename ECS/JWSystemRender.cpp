@@ -19,6 +19,9 @@ void JWSystemRender::Create(JWECS& ECS, JWDX& DX, STRING BaseDirectory) noexcept
 	m_BoundingVolume.Create(DX, BaseDirectory);
 	m_BoundingVolume.CreateMeshBuffers(primitive.MakeSphere(1.0f, 16, 7), ERenderType::Model_Static);
 	m_BoundingVolume.CreateInstanceBuffer();
+
+	// Terrain
+	m_TerrainGenerator.Create(DX, BaseDirectory);
 }
 
 void JWSystemRender::Destroy() noexcept
@@ -59,6 +62,8 @@ void JWSystemRender::Destroy() noexcept
 			iter.Destroy();
 		}
 	}
+
+	m_TerrainGenerator.Destroy();
 
 	m_BoundingVolume.Destroy();
 }
@@ -195,7 +200,7 @@ auto JWSystemRender::GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResour
 	return result;
 }
 
-auto JWSystemRender::CreateSharedModelPrimitive(const SModelData& ModelData) noexcept->JWModel*
+auto JWSystemRender::CreateSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*
 {
 	m_vSharedModel.push_back(JWModel());
 
@@ -209,7 +214,7 @@ auto JWSystemRender::CreateSharedModelPrimitive(const SModelData& ModelData) noe
 	return &current_model;
 }
 
-auto JWSystemRender::CreateSharedModelDynamicPrimitive(const SModelData& ModelData) noexcept->JWModel*
+auto JWSystemRender::CreateDynamicSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*
 {
 	m_vSharedModel.push_back(JWModel());
 
@@ -313,7 +318,7 @@ auto JWSystemRender::GetSharedImage2D(size_t Index) noexcept->JWImage*
 
 void JWSystemRender::CreateAnimationTextureFromFile(STRING FileName) noexcept
 {
-	m_vAnimationTextureData.push_back(SAnimationTextureData());
+	m_vAnimationTextureData.push_back(STextureData());
 
 	auto& current_tex = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].Texture;
 	auto& current_srv = m_vAnimationTextureData[m_vAnimationTextureData.size() - 1].TextureSRV;
@@ -322,7 +327,7 @@ void JWSystemRender::CreateAnimationTextureFromFile(STRING FileName) noexcept
 	WSTRING w_fn = StringToWstring(m_BaseDirectory + KAssetDirectory + FileName);
 
 	// Load texture from file.
-	CreateDDSTextureFromFile(m_pDX->GetDevice(), w_fn.c_str(), (ID3D11Resource * *)& current_tex, &current_srv, 0);
+	CreateDDSTextureFromFile(m_pDX->GetDevice(), w_fn.c_str(), (ID3D11Resource**)&current_tex, &current_srv, 0);
 
 	// Get texture description from loaded texture.
 	D3D11_TEXTURE2D_DESC loaded_texture_desc{};
@@ -338,9 +343,9 @@ void JWSystemRender::CreateAnimationTextureFromFile(STRING FileName) noexcept
 	}
 }
 
-auto JWSystemRender::GetAnimationTexture(size_t Index) noexcept->SAnimationTextureData*
+auto JWSystemRender::GetAnimationTexture(size_t Index) noexcept->STextureData*
 {
-	SAnimationTextureData* result{};
+	STextureData* result{};
 
 	if (Index < m_vAnimationTextureData.size())
 	{

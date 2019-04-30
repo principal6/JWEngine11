@@ -2,7 +2,6 @@
 
 using namespace JWEngine;
 
-
 auto JWPrimitiveMaker::MakeTriangle(const XMFLOAT3& A, const XMFLOAT3& B, const XMFLOAT3& C) noexcept->SModelData
 {
 	SModelData result{};
