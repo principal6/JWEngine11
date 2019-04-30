@@ -40,12 +40,16 @@ namespace JWEngine
 
 		// Minimum vertical detail is 4
 		// Minimum horizontal detail is 1
-		auto MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->SModelData;
+		auto MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail,
+			const XMFLOAT3& ColorTop = XMFLOAT3(1, 0, 0), const XMFLOAT3& ColorBottom = XMFLOAT3(0, 0, 1)) noexcept->SModelData;
 
 		// Minimum vertical detail is 4
 		// Minimum horizontal detail is 1
 		// If horizontal detail input is an even number, it automatically changes to be an odd number by adding 1 to it.
 		// This is because even numbered horizontal detail can cause crack in the capsule.
 		auto MakeCapsule(float Height, float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->SModelData;
+
+	private:
+		inline auto InterpolateColor(const XMFLOAT3& ColorA, const XMFLOAT3& ColorB, float d) noexcept->XMFLOAT3;
 	};
 }

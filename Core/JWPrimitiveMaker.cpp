@@ -390,12 +390,24 @@ auto JWPrimitiveMaker::MakeCylinder(float Height, float Radius, uint8_t Detail) 
 	return result;
 }
 
-auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail) noexcept->SModelData
+PRIVATE inline auto JWPrimitiveMaker::InterpolateColor(const XMFLOAT3& ColorA, const XMFLOAT3& ColorB, float d) noexcept->XMFLOAT3
+{
+	XMFLOAT3 result{};
+	result.x = ColorA.x * (1 - d) + d * ColorB.x;
+	result.y = ColorA.y * (1 - d) + d * ColorB.y;
+	result.z = ColorA.z * (1 - d) + d * ColorB.z;
+	return result;
+}
+
+auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t HorizontalDetail,
+	const XMFLOAT3& ColorTop, const XMFLOAT3& ColorBottom) noexcept->SModelData
 {
 	SModelData result{};
 
-	XMFLOAT3 ColorA{ 0, 1, 0 };
-	XMFLOAT3 ColorB{ 0, 1, 1 };
+	XMFLOAT3 ColorA = ColorTop;
+	XMFLOAT3 ColorB = ColorBottom;
+	XMFLOAT3 ColorTweenedA{ 0, 0, 0 };
+	XMFLOAT3 ColorTweenedB{ 0, 0, 0 };
 
 	VerticalDetail = max(VerticalDetail, 4);
 	HorizontalDetail = max(HorizontalDetail, 1);
@@ -408,8 +420,12 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 	float vert_stride = XM_2PI / HorizontalDetail; // Side circle
 	float horz_stride = XM_2PI / VerticalDetail; // Top-down circle
 	float vert_start = ((static_cast<float>(HorizontalDetail) / 4.0f) - 1.0f);
+	uint8_t real_horz_count = (HorizontalDetail / 2) - 1;
+
 	for (uint8_t vert = 0; vert < VerticalDetail; ++vert)
 	{
+		ColorTweenedA = InterpolateColor(ColorA, ColorB, static_cast<float>(1.0f / (real_horz_count + 1)));
+
 		// Up center (= sphere center)
 		result.VertexData.AddVertex(SVertexModel(
 			0,
@@ -424,7 +440,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			Radius * sinf(vert_stride * vert_start),
 			Radius * sinf(horz_stride * vert) * cosf(vert_stride * vert_start),
 			0, 0,
-			ColorA.x, ColorA.y, ColorA.z, 1));
+			ColorTweenedA.x, ColorTweenedA.y, ColorTweenedA.z, 1));
 
 		// Up right down
 		result.VertexData.AddVertex(SVertexModel(
@@ -432,7 +448,9 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			Radius * sinf(vert_stride * vert_start),
 			Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
 			0, 0,
-			ColorB.x, ColorB.y, ColorB.z, 1));
+			ColorTweenedA.x, ColorTweenedA.y, ColorTweenedA.z, 1));
+
+		ColorTweenedA = InterpolateColor(ColorA, ColorB, static_cast<float>(static_cast<float>(real_horz_count) / (real_horz_count + 1)));
 
 		// Down center (= sphere center)
 		result.VertexData.AddVertex(SVertexModel(
@@ -440,7 +458,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			-Radius,
 			0,
 			0, 0,
-			ColorA.x, ColorA.y, ColorA.z, 1));
+			ColorB.x, ColorB.y, ColorB.z, 1));
 
 		// Down right down
 		result.VertexData.AddVertex(SVertexModel(
@@ -448,7 +466,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			-Radius * sinf(vert_stride * vert_start),
 			Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * vert_start),
 			0, 0,
-			ColorB.x, ColorB.y, ColorB.z, 1));
+			ColorTweenedA.x, ColorTweenedA.y, ColorTweenedA.z, 1));
 
 		// Down left down
 		result.VertexData.AddVertex(SVertexModel(
@@ -456,26 +474,27 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 			-Radius * sinf(vert_stride * vert_start),
 			Radius * sinf(horz_stride * vert) * cosf(vert_stride * vert_start),
 			0, 0,
-			ColorA.x, ColorA.y, ColorA.z, 1));
+			ColorTweenedA.x, ColorTweenedA.y, ColorTweenedA.z, 1));
 	}
 
 	// if (HorizontalDetail == 4), which is the minimum size,
 	// no sides are needed!
 	if (HorizontalDetail > 4)
 	{
-		uint8_t real_horz_count = (HorizontalDetail / 2) - 1;
-
 		for (uint8_t horz = 1; horz < real_horz_count; ++horz)
 		{
 			for (uint8_t vert = 0; vert < VerticalDetail; ++vert)
 			{
+				ColorTweenedA = InterpolateColor(ColorA, ColorB, static_cast<float>(static_cast<float>(horz) / (real_horz_count + 1)));
+				ColorTweenedB = InterpolateColor(ColorA, ColorB, static_cast<float>(static_cast<float>(horz + 1) / (real_horz_count + 1)));
+
 				// Side #1 left up
 				result.VertexData.AddVertex(SVertexModel(
 					Radius * cosf(horz_stride * vert) * cosf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(horz_stride * vert) * cosf(vert_stride * (vert_start + 1 - horz)),
 					0, 0,
-					ColorA.x, ColorA.y, ColorA.z, 1));
+					ColorTweenedA.x, ColorTweenedA.y, ColorTweenedA.z, 1));
 
 				// Side #1 left down
 				result.VertexData.AddVertex(SVertexModel(
@@ -483,7 +502,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					Radius * sinf(vert_stride * (vert_start - horz)),
 					Radius * sinf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
 					0, 0,
-					ColorA.x, ColorA.y, ColorA.z, 1));
+					ColorTweenedB.x, ColorTweenedB.y, ColorTweenedB.z, 1));
 
 				// Side #1 right up
 				result.VertexData.AddVertex(SVertexModel(
@@ -491,7 +510,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					Radius * sinf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
 					0, 0,
-					ColorA.x, ColorA.y, ColorA.z, 1));
+					ColorTweenedA.x, ColorTweenedA.y, ColorTweenedA.z, 1));
 
 				// Side #2 right up
 				result.VertexData.AddVertex(SVertexModel(
@@ -499,7 +518,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					Radius * sinf(vert_stride * (vert_start + 1 - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start + 1 - horz)),
 					0, 0,
-					ColorA.x, ColorA.y, ColorA.z, 1));
+					ColorTweenedA.x, ColorTweenedA.y, ColorTweenedA.z, 1));
 
 				// Side #2 left down
 				result.VertexData.AddVertex(SVertexModel(
@@ -507,7 +526,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					Radius * sinf(vert_stride * (vert_start - horz)),
 					Radius * sinf(horz_stride * vert) * cosf(vert_stride * (vert_start - horz)),
 					0, 0,
-					ColorA.x, ColorA.y, ColorA.z, 1));
+					ColorTweenedB.x, ColorTweenedB.y, ColorTweenedB.z, 1));
 
 				// Side #2 right down
 				result.VertexData.AddVertex(SVertexModel(
@@ -515,7 +534,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 					Radius * sinf(vert_stride * (vert_start - horz)),
 					Radius * sinf(horz_stride * (vert + 1)) * cosf(vert_stride * (vert_start - horz)),
 					0, 0,
-					ColorB.x, ColorB.y, ColorB.z, 1));
+					ColorTweenedB.x, ColorTweenedB.y, ColorTweenedB.z, 1));
 			}
 		}
 	}

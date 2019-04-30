@@ -54,7 +54,7 @@ int main()
 			ecs.SystemRender().PrimitiveMaker().MakeHexahedron()); // Shared Model #7 (View Frustum representation)
 
 		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 16, 7)); // Shared Model #8 (Representation for debugging a 3d point)
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(2.0f, 16, 7)); // Shared Model #8 (Representation for debugging a 3d point)
 		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().TerrainGenerator().GenerateTerrainFromFile("heightmap_gray_128.tif", 20.0f)); // Shared Model #9 (Terrain)
 	}
