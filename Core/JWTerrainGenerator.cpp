@@ -118,9 +118,8 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 			XMVECTOR normal{};
 			float du_0{}, du_1{}, dv_0{}, dv_1{};
 			float det{};
-			float inv_uv_mat[2][2]{};
+			float length{};
 			XMFLOAT3 tangent{}, bitangent{};
-			XMVECTOR normalized_tan{}, normalized_bitan{};
 			
 			for (auto& iter : v_indices)
 			{
@@ -158,24 +157,24 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 
 				// Get inverse matrix of 2x2 UV matrix
 				det = du_0 * dv_1 - du_1 * dv_0;
-				inv_uv_mat[0][0] = det * dv_1;
-				inv_uv_mat[0][1] = det * -dv_0;
-				inv_uv_mat[1][0] = det * -du_1;
-				inv_uv_mat[1][1] = det * du_0;
 				
-				tangent.x = XMVectorGetX(e_0) * inv_uv_mat[0][0] + XMVectorGetX(e_2) * inv_uv_mat[0][1];
-				tangent.y = XMVectorGetY(e_0) * inv_uv_mat[0][0] + XMVectorGetY(e_2) * inv_uv_mat[0][1];
-				tangent.z = XMVectorGetZ(e_0) * inv_uv_mat[0][0] + XMVectorGetZ(e_2) * inv_uv_mat[0][1];
-				normalized_tan = XMLoadFloat3(&tangent);
-				normalized_tan = XMVector3Normalize(normalized_tan);
-				XMStoreFloat3(&tangent, normalized_tan);
+				tangent.x = det * (XMVectorGetX(e_0) * dv_1 + XMVectorGetX(e_2) * -dv_0);
+				tangent.y = det * (XMVectorGetY(e_0) * dv_1 + XMVectorGetY(e_2) * -dv_0);
+				tangent.z = det * (XMVectorGetZ(e_0) * dv_1 + XMVectorGetZ(e_2) * -dv_0);
+				length = sqrtf(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z);
+				
+				tangent.x = tangent.x / length;
+				tangent.y = tangent.y / length;
+				tangent.z = tangent.z / length;
+				
+				bitangent.x = det * (XMVectorGetX(e_0) * -du_1 + XMVectorGetX(e_2) * du_0);
+				bitangent.y = det * (XMVectorGetY(e_0) * -du_1 + XMVectorGetY(e_2) * du_0);
+				bitangent.z = det * (XMVectorGetZ(e_0) * -du_1 + XMVectorGetZ(e_2) * du_0);
+				length = sqrtf(bitangent.x * bitangent.x + bitangent.y * bitangent.y + bitangent.z * bitangent.z);
 
-				bitangent.x = XMVectorGetX(e_0) * inv_uv_mat[1][0] + XMVectorGetX(e_2) * inv_uv_mat[1][1];
-				bitangent.y = XMVectorGetY(e_0) * inv_uv_mat[1][0] + XMVectorGetY(e_2) * inv_uv_mat[1][1];
-				bitangent.z = XMVectorGetZ(e_0) * inv_uv_mat[1][0] + XMVectorGetZ(e_2) * inv_uv_mat[1][1];
-				normalized_bitan = XMLoadFloat3(&bitangent);
-				normalized_bitan = XMVector3Normalize(normalized_bitan);
-				XMStoreFloat3(&bitangent, normalized_bitan);
+				bitangent.x = bitangent.x / length;
+				bitangent.y = bitangent.y / length;
+				bitangent.z = bitangent.z / length;
 
 				v_vertices[iter._0].Tangent = tangent;
 				v_vertices[iter._1].Tangent = tangent;
@@ -187,6 +186,10 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 			}
 			
 			JW_DELETE_ARRAY(data);
+		}
+		else
+		{
+			JW_ERROR_ABORT("File format not matching");
 		}
 
 		JW_RELEASE(readable_texture);

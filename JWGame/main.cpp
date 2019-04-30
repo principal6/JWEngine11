@@ -56,7 +56,7 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 16, 7)); // Shared Model #8 (Representation for debugging a 3d point)
 		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().TerrainGenerator().GenerateTerrainFromFile("heightmap_0.tif", 10.0f)); // Shared Model #9 (Terrain)
+			ecs.SystemRender().TerrainGenerator().GenerateTerrainFromFile("heightmap_1.tif", 10.0f)); // Shared Model #9 (Terrain)
 	}
 	{
 		// SharedImage2D
@@ -184,13 +184,13 @@ int main()
 		terrain->CreateComponentTransform()
 			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 			->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		terrain->CreateComponentPhysics();
+		//terrain->CreateComponentPhysics();
 		terrain->CreateComponentRender()
 			->SetModel(ecs.SystemRender().GetSharedModel(9))
 			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(1))
 			->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2))
 			->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
-		ecs.SystemPhysics().SetBoundingSphere(terrain, 2.0f);
+		//ecs.SystemPhysics().SetBoundingSphere(terrain, 2.0f);
 	}
 
 	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
