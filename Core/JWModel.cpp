@@ -359,7 +359,7 @@ auto JWModel::SetVertex(uint32_t VertexIndex, const XMVECTOR& Position, const XM
 		}
 
 		XMStoreFloat3(&ModelData.VertexData.vVerticesModel[VertexIndex].Position, Position);
-		ModelData.VertexData.vVerticesModel[VertexIndex].ColorDiffuse = Color;
+		ModelData.VertexData.vVerticesModel[VertexIndex].Diffuse = Color;
 	}
 
 	return this;
@@ -375,7 +375,7 @@ auto JWModel::SetVertex(uint32_t VertexIndex, const XMFLOAT3& Position, const XM
 		}
 
 		ModelData.VertexData.vVerticesModel[VertexIndex].Position = Position;
-		ModelData.VertexData.vVerticesModel[VertexIndex].ColorDiffuse = Color;
+		ModelData.VertexData.vVerticesModel[VertexIndex].Diffuse = Color;
 	}
 
 	return this;

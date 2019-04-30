@@ -16,6 +16,12 @@ namespace JWEngine
 	class JWEntity;
 	class JWECS;
 
+	enum class ETextureType
+	{
+		Diffuse,
+		Normal,
+	};
+
 	enum class ESharedTextureType
 	{
 		Texture2D,
@@ -28,17 +34,18 @@ namespace JWEngine
 		RiggedModel,
 	};
 
-	enum EFLAGComponentRenderOption : uint16_t
+	enum EFLAGComponentRenderOption : uint32_t
 	{
-		JWFlagComponentRenderOption_UseTexture					= 0x01,
-		JWFlagComponentRenderOption_UseGPUAnimation				= 0x02,
-		JWFlagComponentRenderOption_UseAnimationInterpolation	= 0x04,
-		JWFlagComponentRenderOption_UseTransparency				= 0x08,
-		JWFlagComponentRenderOption_GetLit						= 0x10,
-		JWFlagComponentRenderOption_DrawTPose					= 0x20,
-		JWFlagComponentRenderOption_AlwaysSolidNoCull			= 0x40,
+		JWFlagComponentRenderOption_UseDiffuseTexture			= 0x0001,
+		JWFlagComponentRenderOption_UseNormalTexture			= 0x0002,
+		JWFlagComponentRenderOption_UseGPUAnimation				= 0x0004,
+		JWFlagComponentRenderOption_UseAnimationInterpolation	= 0x0008,
+		JWFlagComponentRenderOption_UseTransparency				= 0x0010,
+		JWFlagComponentRenderOption_GetLit						= 0x0020,
+		JWFlagComponentRenderOption_DrawTPose					= 0x0040,
+		JWFlagComponentRenderOption_AlwaysSolidNoCull			= 0x0080,
 	};
-	using JWFlagComponentRenderOption = uint16_t;
+	using JWFlagComponentRenderOption = uint32_t;
 
 	enum EFLAGSystemRenderOption : uint16_t
 	{
@@ -82,8 +89,11 @@ namespace JWEngine
 		JWImage*					PtrImage{};
 		JWLineModel*				PtrLine{};
 
-		ID3D11ShaderResourceView*	PtrTexture{};
+		// Texture used in PS
+		ID3D11ShaderResourceView*	PtrTextureDiffuse{};
+		ID3D11ShaderResourceView*	PtrTextureNormal{};
 
+		// Animation texture is used in VS, not PS
 		STextureData*				PtrAnimationTexture{};
 		SAnimationState				AnimationState{};
 
@@ -92,10 +102,22 @@ namespace JWEngine
 		auto SetVertexShader(EVertexShader Shader) noexcept { VertexShader = Shader; return this; }
 		auto SetPixelShader(EPixelShader Shader) noexcept { PixelShader = Shader; return this; }
 
-		auto SetTexture(ID3D11ShaderResourceView* pShaderResourceView) noexcept
+		auto SetTexture(ETextureType Type, ID3D11ShaderResourceView* pShaderResourceView) noexcept
 		{ 
-			PtrTexture = pShaderResourceView;
-			FlagComponentRenderOption |= JWFlagComponentRenderOption_UseTexture;
+			switch (Type)
+			{
+			case JWEngine::ETextureType::Diffuse:
+				PtrTextureDiffuse = pShaderResourceView;
+				FlagComponentRenderOption |= JWFlagComponentRenderOption_UseDiffuseTexture;
+				break;
+			case JWEngine::ETextureType::Normal:
+				PtrTextureNormal = pShaderResourceView;
+				FlagComponentRenderOption |= JWFlagComponentRenderOption_UseNormalTexture;
+				break;
+			default:
+				break;
+			}
+			
 			return this;
 		}
 
@@ -146,6 +168,7 @@ namespace JWEngine
 			return this;
 		}
 
+		auto AddRenderFlag(JWFlagComponentRenderOption Flag) { FlagComponentRenderOption |= Flag; return this; }
 		auto SetRenderFlag(JWFlagComponentRenderOption Flag) { FlagComponentRenderOption = Flag; return this; }
 		auto ToggleRenderFlag(JWFlagComponentRenderOption Flag) { FlagComponentRenderOption ^= Flag; return this; }
 		auto SetDepthStencilState(EDepthStencilState State) { DepthStencilState = State; return this; }
@@ -279,6 +302,7 @@ namespace JWEngine
 		SVSCBFlags					m_VSCBFlags{};
 		SVSCBCPUAnimationData		m_VSCBCPUAnimation{};
 		SVSCBGPUAnimationData		m_VSCBGPUAnimation{};
+		SPSCBFlags					m_PSCBFlags{};
 
 		// Shared resources(texture, model data, animation texture)
 		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;

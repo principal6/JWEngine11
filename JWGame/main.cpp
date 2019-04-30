@@ -74,8 +74,9 @@ int main()
 		// SharedTexture
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "terra_diffuse.png"); //Shared Resource #1
-		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #2
-		ecs.SystemRender().CreateSharedTextureFromSharedModel(2); //Shared Resource #3
+		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "test_normal.png"); //Shared Resource #2
+		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #3
+		ecs.SystemRender().CreateSharedTextureFromSharedModel(2); //Shared Resource #4
 	}
 	{
 		// Animations texture
@@ -130,8 +131,8 @@ int main()
 		main_sprite->CreateComponentPhysics();
 		main_sprite->CreateComponentRender()
 			->SetModel(ecs.SystemRender().GetSharedModel(2))
-			->SetTexture(ecs.SystemRender().GetSharedTexture(3))
-			->SetRenderFlag(JWFlagComponentRenderOption_UseTexture | JWFlagComponentRenderOption_GetLit | JWFlagComponentRenderOption_UseAnimationInterpolation)
+			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(4))
+			->SetRenderFlag(JWFlagComponentRenderOption_UseDiffuseTexture | JWFlagComponentRenderOption_GetLit | JWFlagComponentRenderOption_UseAnimationInterpolation)
 			->SetAnimationTexture(ecs.SystemRender().GetAnimationTexture(0))
 			->SetAnimation(3);
 		ecs.SystemPhysics().SetBoundingSphere(main_sprite, 3.0f, XMFLOAT3(0, 0, 0));
@@ -143,7 +144,7 @@ int main()
 		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 	sky_sphere->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(3))
-		->SetTexture(ecs.SystemRender().GetSharedTexture(0))
+		->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(0))
 		->SetVertexShader(EVertexShader::VSSkyMap)
 		->SetPixelShader(EPixelShader::PSSkyMap);
 
@@ -186,14 +187,16 @@ int main()
 		terrain->CreateComponentPhysics();
 		terrain->CreateComponentRender()
 			->SetModel(ecs.SystemRender().GetSharedModel(9))
-			->SetTexture(ecs.SystemRender().GetSharedTexture(1));
+			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(1))
+			->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2))
+			->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
 		ecs.SystemPhysics().SetBoundingSphere(terrain, 2.0f);
 	}
 
 	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
 	image_gamma->CreateComponentRender()
 		->SetImage2D(ecs.SystemRender().GetSharedImage2D(0))
-		->SetTexture(ecs.SystemRender().GetSharedTexture(2));
+		->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(3));
 
 	auto cam = ecs.CreateEntity("camera_1");
 	cam->CreateComponentTransform()

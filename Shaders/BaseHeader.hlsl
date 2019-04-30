@@ -11,8 +11,10 @@ struct VS_INPUT_MODEL
 	float4 Position : POSITION;
 	float2 TexCoord : TEXCOORD;
 	float3 Normal	: NORMAL;
-	float4 Diffuse	: COLOR0;
-	float4 Specular	: COLOR1;
+	float3 Tangent	: TANGENT;
+	float3 Bitangent: BITANGENT;
+	float4 Diffuse	: DIFFUSE;
+	float4 Specular	: SPECULAR;
 
 	// Rigging data
 	uint4  BoneID	: BLENDINDICES;
@@ -37,6 +39,8 @@ struct VS_OUTPUT_MODEL
 	float4 Position			: SV_POSITION;
 	float2 TexCoord			: TEXCOORD;
 	float3 Normal			: NORMAL0;
+	float3 Tangent			: NORMAL1;
+	float3 Bitangent		: NORMAL2;
 	float4 Diffuse			: COLOR0;
 	float4 Specular			: COLOR1;
 	float3 WorldPosition	: COLOR2;

@@ -112,6 +112,8 @@ VS_OUTPUT_MODEL main(VS_INPUT_MODEL input)
 	output.Position = mul(position_result, WVP);
 	output.WorldPosition = mul(position_result, World).xyz;
 	output.Normal = normalize(mul(normal_result, World).xyz);
+	output.Tangent = normalize(mul(float4(input.Tangent.xyz, 0), World).xyz);
+	output.Bitangent = normalize(mul(float4(input.Bitangent.xyz, 0), World).xyz);
 
 	output.TexCoord = input.TexCoord;
 	output.Diffuse = input.Diffuse;

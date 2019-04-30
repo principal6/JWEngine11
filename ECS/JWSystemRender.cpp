@@ -634,7 +634,7 @@ void JWSystemRender::DrawInstancedBoundingVolume() noexcept
 	m_pDX->SetPS(EPixelShader::PSBase);
 
 	// Update PS constant buffer
-	m_pDX->UpdatePSCBFlags(false, false);
+	m_pDX->UpdatePSCBFlags(0);
 
 	// Set IA primitive topology
 	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
@@ -678,7 +678,7 @@ void JWSystemRender::DrawBoundingVolumesNoInstancing(SComponentRender& Component
 		m_pDX->SetPS(EPixelShader::PSBase);
 
 		// Update PS constant buffer
-		m_pDX->UpdatePSCBFlags(false, false);
+		m_pDX->UpdatePSCBFlags(0);
 
 		// Set IA primitive topology
 		m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
@@ -964,27 +964,48 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	// Update PS constant buffer (if necessary)
 	if (Component.PixelShader == EPixelShader::PSBase)
 	{
+		// Clean the flag
+		m_PSCBFlags.FlagPS = 0;
+
 		bool use_lighting = Component.FlagComponentRenderOption & JWFlagComponentRenderOption_GetLit;
 		if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_UseLighting))
 		{
 			use_lighting = false;
 		}
 
-		m_pDX->UpdatePSCBFlags(
-			(Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTexture),
-			(use_lighting)
-		);
+		if (use_lighting)
+		{
+			m_PSCBFlags.FlagPS |= JWFlagPS_UseLighting;
+		}
+
+		if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseDiffuseTexture)
+		{
+			m_PSCBFlags.FlagPS |= JWFlagPS_UseDiffuseTexture;
+		}
+
+		if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseNormalTexture)
+		{
+			m_PSCBFlags.FlagPS |= JWFlagPS_UseNormalTexture;
+		}
+
+		m_pDX->UpdatePSCBFlags(m_PSCBFlags);
 	}
 
-	// If it uses texture
-	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTexture)
+	// Set PS textures & sampler
+	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseDiffuseTexture)
 	{
-		// Set PS texture
-		m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &Component.PtrTexture);
-
-		// Set PS texture sampler
-		m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
+		// Set PS texture (diffuse)
+		m_pDX->GetDeviceContext()->PSSetShaderResources(0, 1, &Component.PtrTextureDiffuse);
 	}
+
+	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseNormalTexture)
+	{
+		// Set PS texture (normal)
+		m_pDX->GetDeviceContext()->PSSetShaderResources(1, 1, &Component.PtrTextureNormal);
+	}
+
+	// Set PS texture sampler
+	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
 
 	// Set VS
 	m_pDX->SetVS(Component.VertexShader);
@@ -1182,7 +1203,7 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 	m_pDX->SetPS(EPixelShader::PSBase);
 
 	// Update PS constant buffer
-	m_pDX->UpdatePSCBFlags(false, false);
+	m_pDX->UpdatePSCBFlags(0);
 
 	// Set IA primitive topology
 	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::LineList);

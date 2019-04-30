@@ -116,7 +116,7 @@ void JWImageCursor::Draw() noexcept
 	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
 
 	// Update PS constant buffer
-	m_pDX->UpdatePSCBFlags(true, false);
+	m_pDX->UpdatePSCBFlags(JWFlagPS_UseDiffuseTexture);
 
 	// Set IA primitive topology
 	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);

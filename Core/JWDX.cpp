@@ -711,27 +711,9 @@ void JWDX::UpdateVSCBGPUAnimationData(const SVSCBGPUAnimationData& Data) noexcep
 	UpdateDynamicResource(m_VSCBGPUAnimationData, &Data, sizeof(Data));
 }
 
-void JWDX::UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept
+void JWDX::UpdatePSCBFlags(const SPSCBFlags& Data) noexcept
 {
-	if (HasTexture)
-	{
-		m_PSCBFlagsData.HasTexture = TRUE;
-	}
-	else
-	{
-		m_PSCBFlagsData.HasTexture = FALSE;
-	}
-
-	if (UseLighting)
-	{
-		m_PSCBFlagsData.UseLighting = TRUE;
-	}
-	else
-	{
-		m_PSCBFlagsData.UseLighting = FALSE;
-	}
-
-	UpdateDynamicResource(m_PSCBFlags, &m_PSCBFlagsData, sizeof(m_PSCBFlagsData));
+	UpdateDynamicResource(m_PSCBFlags, &Data, sizeof(Data));
 }
 
 void JWDX::UpdatePSCBLights(const SPSCBLights& Data) noexcept

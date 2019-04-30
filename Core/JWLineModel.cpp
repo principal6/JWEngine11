@@ -166,10 +166,10 @@ auto JWLineModel::SetLine3DPosition(size_t Line3DIndex, XMFLOAT3 StartPosition, 
 			Line3DIndex = min(Line3DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
 			m_VertexData.vVerticesModel[Line3DIndex * 2].Position = StartPosition;
-			m_VertexData.vVerticesModel[Line3DIndex * 2].ColorDiffuse = Color;
+			m_VertexData.vVerticesModel[Line3DIndex * 2].Diffuse = Color;
 
 			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position = EndPosition;
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].ColorDiffuse = Color;
+			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Diffuse = Color;
 		}
 	}
 
@@ -215,7 +215,7 @@ auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, 
 			m_VertexData.vVerticesModel[Line3DIndex * 2].Position.x = XMVectorGetX(Origin);
 			m_VertexData.vVerticesModel[Line3DIndex * 2].Position.y = XMVectorGetY(Origin);
 			m_VertexData.vVerticesModel[Line3DIndex * 2].Position.z = XMVectorGetZ(Origin);
-			m_VertexData.vVerticesModel[Line3DIndex * 2].ColorDiffuse = Color;
+			m_VertexData.vVerticesModel[Line3DIndex * 2].Diffuse = Color;
 
 			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position.x =
 				m_VertexData.vVerticesModel[Line3DIndex * 2].Position.x + XMVectorGetX(Direction) * line_length;
@@ -223,7 +223,7 @@ auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, 
 				m_VertexData.vVerticesModel[Line3DIndex * 2].Position.y + XMVectorGetY(Direction) * line_length;
 			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position.z = 
 				m_VertexData.vVerticesModel[Line3DIndex * 2].Position.z + XMVectorGetZ(Direction) * line_length;
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].ColorDiffuse = Color;
+			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Diffuse = Color;
 		}
 	}
 
@@ -272,10 +272,10 @@ auto JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2
 			position_b.y += Length.y;
 
 			m_VertexData.vVerticesModel[Line2DIndex * 2].Position = position_a;
-			m_VertexData.vVerticesModel[Line2DIndex * 2].ColorDiffuse = Color;
+			m_VertexData.vVerticesModel[Line2DIndex * 2].Diffuse = Color;
 
 			m_VertexData.vVerticesModel[Line2DIndex * 2 + 1].Position = position_b;
-			m_VertexData.vVerticesModel[Line2DIndex * 2 + 1].ColorDiffuse = Color;
+			m_VertexData.vVerticesModel[Line2DIndex * 2 + 1].Diffuse = Color;
 		}
 	}
 

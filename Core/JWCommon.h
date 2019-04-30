@@ -234,8 +234,10 @@ namespace JWEngine
 		{ "POSITION"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD"	, 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "NORMAL"		, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Diffuse
-		{ "COLOR"		, 1, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // Specular
+		{ "TANGENT"		, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "BITANGENT"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "DIFFUSE"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 56, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "SPECULAR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 72, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 
 		// Vertex buffer #1 (VertexRigging)
 		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT	, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // int BoneID[4]
@@ -279,28 +281,30 @@ namespace JWEngine
 		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
 			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
 		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse } {};
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, Diffuse{ _ColorDiffuse } {};
 		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, ColorDiffuse{ _ColorDiffuse }, Specular{ _Specular } {};
+			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, Diffuse{ _ColorDiffuse }, Specular{ _Specular } {};
 		SVertexModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
-			Position{ _Position }, ColorDiffuse{ _ColorDiffuse } {};
+			Position{ _Position }, Diffuse{ _ColorDiffuse } {};
 		SVertexModel(float x, float y, float z) :
 			Position{ x, y, z } {};
 		SVertexModel(float x, float y, float z, float u, float v) :
 			Position{ x, y, z }, TextureCoordinates{ u, v } {};
 		SVertexModel(float x, float y, float z, float r, float g, float b, float a) :
-			Position{ x, y, z }, ColorDiffuse{ r, g, b, a } {};
+			Position{ x, y, z }, Diffuse{ r, g, b, a } {};
 		SVertexModel(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
-			Position{ x, y, z }, TextureCoordinates{ u, v }, ColorDiffuse{ r, g, b, a } {};
+			Position{ x, y, z }, TextureCoordinates{ u, v }, Diffuse{ r, g, b, a } {};
 		SVertexModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
 			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
 		SVertexModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
-			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, ColorDiffuse{ dr, dg, db, da } {};
+			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, Diffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
 		XMFLOAT2 TextureCoordinates{};
 		XMFLOAT3 Normal{};
-		XMFLOAT4 ColorDiffuse{ 0.0f, 0.0f, 0.0f, 1.0f };
+		XMFLOAT3 Tangent{};
+		XMFLOAT3 Bitangent{};
+		XMFLOAT4 Diffuse{ 0.0f, 0.0f, 0.0f, 1.0f };
 		XMFLOAT4 Specular{};
 	};
 	
@@ -623,8 +627,8 @@ namespace JWEngine
 
 	struct STextureData
 	{
-		ID3D11Texture2D* Texture{};
-		ID3D11ShaderResourceView* TextureSRV{};
+		ID3D11Texture2D*			Texture{};
+		ID3D11ShaderResourceView*	TextureSRV{};
 		SSizeInt					TextureSize{};
 	};
 
@@ -645,6 +649,7 @@ namespace JWEngine
 		XMMATRIX	World{};
 	};
 	
+	// @important
 	enum EFLAGVS : uint32_t
 	{
 		JWFlagVS_UseAnimation = 0x01,
@@ -654,12 +659,15 @@ namespace JWEngine
 
 		JWFlagVS_Instanced = 0x04,
 	};
+	using JWFlagVS = uint32_t;
 
 	struct SVSCBFlags
 	{
 		SVSCBFlags() {};
+		SVSCBFlags(JWFlagVS _FlagVS)
+			: FlagVS{ _FlagVS } {};
 
-		uint32_t	FlagVS{};
+		JWFlagVS	FlagVS{};
 		float		pad[3]{};
 	};
 	
@@ -681,17 +689,23 @@ namespace JWEngine
 		float		DeltaTime{};
 	};
 	
+	// @important
+	enum EFLAGPS : uint32_t
+	{
+		JWFlagPS_UseLighting		= 0x0001,
+		JWFlagPS_UseDiffuseTexture	= 0x0002,
+		JWFlagPS_UseNormalTexture	= 0x0004,
+	};
+	using JWFlagPS = uint32_t;
+
 	struct SPSCBFlags
 	{
-		SPSCBFlags() = default;
-		SPSCBFlags(BOOL _HasTexture)
-			: HasTexture{ _HasTexture } {};
-		SPSCBFlags(BOOL _HasTexture, BOOL _UseLighting)
-			: HasTexture{ _HasTexture }, UseLighting{ _UseLighting } {};
+		SPSCBFlags() {};
+		SPSCBFlags(JWFlagPS _FlagPS)
+			: FlagPS{ _FlagPS } {};
 
-		BOOL HasTexture{ FALSE };
-		BOOL UseLighting{ FALSE };
-		float pad[2]{};
+		JWFlagPS	FlagPS{};
+		float		pad[3]{};
 	};
 
 	struct SPSCBLights

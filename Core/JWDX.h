@@ -71,14 +71,14 @@ namespace JWEngine
 		void Create(HWND hWnd, XMFLOAT2 WindowSize, STRING Directory, const SClearColor& ClearColor) noexcept;
 		void Destroy() noexcept;
 
-		/// Factory functions
+		// Factory functions
 		void CreateDynamicVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
 		void CreateStaticVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
 		void CreateIndexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept;
 		
 		inline void UpdateDynamicResource(ID3D11Resource* pResource, const void* pData, size_t Size) noexcept;
 
-		/// Rasterizer state
+		// Rasterizer state
 		auto GetRasterizerState() const noexcept { return m_CurrentRasterizerState; }
 		auto GetPreviousRasterizerState() const noexcept { return m_PreviousRasterizerState; }
 		void SetRasterizerState(ERasterizerState State) noexcept;
@@ -92,14 +92,14 @@ namespace JWEngine
 		void SetVS(EVertexShader VS) noexcept;
 		void SetPS(EPixelShader PS) noexcept;
 
-		/// Update VS constant buffers
+		// Update VS constant buffers
 		void UpdateVSCBSpace(const SVSCBSpace& Data) noexcept;
 		void UpdateVSCBFlags(const SVSCBFlags& Data) noexcept;
 		void UpdateVSCBCPUAnimationData(const SVSCBCPUAnimationData& Data) noexcept;
 		void UpdateVSCBGPUAnimationData(const SVSCBGPUAnimationData& Data) noexcept;
 
-		/// Update PS constant buffers
-		void UpdatePSCBFlags(bool HasTexture, bool UseLighting) noexcept;
+		// Update PS constant buffers
+		void UpdatePSCBFlags(const SPSCBFlags& Data) noexcept;
 		void UpdatePSCBLights(const SPSCBLights& Data) noexcept;
 		void UpdatePSCBCamera(const XMVECTOR& CameraPosition) noexcept;
 
@@ -114,15 +114,15 @@ namespace JWEngine
 		// Called in Create()
 		void CreateDeviceAndSwapChain(HWND hWnd) noexcept;
 
-		/// VS Shader & input layout creation
-		/// Called in Create()
+		// VS Shader & input layout creation
+		// Called in Create()
 		void CreateVSBase() noexcept;
 		void CreateVSRaw() noexcept;
 		void CreateVSSkyMap() noexcept;
 		void CreateVSInstantText() noexcept;
 		void CreateAndSetVSCBs() noexcept;
 
-		/// PS Shader creation
+		// PS Shader creation
 		void CreatePSBase() noexcept;
 		void CreatePSRaw() noexcept;
 		void CreatePSSkyMap() noexcept;
@@ -189,7 +189,6 @@ namespace JWEngine
 		ID3D11Buffer*		m_VSCBCPUAnimationData{};
 		ID3D11Buffer*		m_VSCBGPUAnimationData{};
 		ID3D11Buffer*		m_PSCBFlags{};
-		SPSCBFlags			m_PSCBFlagsData{};
 		ID3D11Buffer*		m_PSCBLights{};
 		ID3D11Buffer*		m_PSCBCamera{};
 		SPSCBCamera			m_PSCBCameraData{};
@@ -198,9 +197,9 @@ namespace JWEngine
 		ID3D11RenderTargetView*		m_RenderTargetView11{};
 		D3D11_VIEWPORT				m_DefaultViewPort{};
 
-		///
-		/// States
-		///
+		//
+		// States
+		//
 		EDepthStencilState			m_CurrentDepthStencilState{ EDepthStencilState::Invalid };
 		ID3D11DepthStencilState*	m_DepthStencilStateZEnabled11{};
 		ID3D11DepthStencilState*	m_DepthStencilStateZDisabled11{};

@@ -109,6 +109,29 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 				model_data.IndexData.vIndices.push_back(SIndexTriangle(i * 4	, i * 4 + 1, i * 4 + 2));
 				model_data.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
 			}
+
+			// Compute normals
+			auto& v_indices = model_data.IndexData.vIndices;
+			auto& v_vertices = model_data.VertexData.vVerticesModel;
+			XMVECTOR v_0{}, v_1{}, v_2{};
+			XMVECTOR e_0{}, e_1{};
+			XMVECTOR normal{};
+
+			for (auto& iter : v_indices)
+			{
+				v_0 = XMLoadFloat3(&v_vertices[iter._0].Position);
+				v_1 = XMLoadFloat3(&v_vertices[iter._1].Position);
+				v_2 = XMLoadFloat3(&v_vertices[iter._2].Position);
+
+				e_0 = v_1 - v_0;
+				e_1 = v_2 - v_0;
+
+				normal = XMVector3Cross(e_0, e_1);
+
+				XMStoreFloat3(&v_vertices[iter._0].Normal, normal);
+				XMStoreFloat3(&v_vertices[iter._1].Normal, normal);
+				XMStoreFloat3(&v_vertices[iter._2].Normal, normal);
+			}
 			
 			JW_DELETE_ARRAY(data);
 		}
