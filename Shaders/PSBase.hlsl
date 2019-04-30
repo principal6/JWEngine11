@@ -52,7 +52,13 @@ float4 main(VS_OUTPUT_MODEL input) : SV_TARGET
 
 	if (InterpretFlag(FlagPS, FLAG_ID_USE_NORMAL_TEXTURE) == FLAG_ON)
 	{
-		//final_normal = TextureNormal.Sample(CurrentSampler, input.TexCoord).xyz;
+		float3 normal_map = TextureNormal.Sample(CurrentSampler, input.TexCoord).xyz;
+
+		// Map normal from [0.0, 1.0] to [-1.0, 1.0]
+		normal_map = (normal_map * 2.0) - 1.0;
+
+		final_normal = input.Tangent * normal_map.x + input.Bitangent * normal_map.y + input.Normal * normal_map.z;
+		final_normal = normalize(final_normal);
 	}
 
 	if (InterpretFlag(FlagPS, FLAG_ID_USE_DIFFUSE_TEXTURE) == FLAG_ON)

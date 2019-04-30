@@ -277,30 +277,30 @@ namespace JWEngine
 		SVertexModel(XMFLOAT3 _Position) :
 			Position{ _Position } {};
 		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates } {};
+			Position{ _Position }, TexCoord{ _TextureCoordinates } {};
 		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal } {};
+			Position{ _Position }, TexCoord{ _TextureCoordinates }, Normal{ _Normal } {};
 		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, Diffuse{ _ColorDiffuse } {};
+			Position{ _Position }, TexCoord{ _TextureCoordinates }, Normal{ _Normal }, Diffuse{ _ColorDiffuse } {};
 		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
-			Position{ _Position }, TextureCoordinates{ _TextureCoordinates }, Normal{ _Normal }, Diffuse{ _ColorDiffuse }, Specular{ _Specular } {};
+			Position{ _Position }, TexCoord{ _TextureCoordinates }, Normal{ _Normal }, Diffuse{ _ColorDiffuse }, Specular{ _Specular } {};
 		SVertexModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
 			Position{ _Position }, Diffuse{ _ColorDiffuse } {};
 		SVertexModel(float x, float y, float z) :
 			Position{ x, y, z } {};
 		SVertexModel(float x, float y, float z, float u, float v) :
-			Position{ x, y, z }, TextureCoordinates{ u, v } {};
+			Position{ x, y, z }, TexCoord{ u, v } {};
 		SVertexModel(float x, float y, float z, float r, float g, float b, float a) :
 			Position{ x, y, z }, Diffuse{ r, g, b, a } {};
 		SVertexModel(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
-			Position{ x, y, z }, TextureCoordinates{ u, v }, Diffuse{ r, g, b, a } {};
+			Position{ x, y, z }, TexCoord{ u, v }, Diffuse{ r, g, b, a } {};
 		SVertexModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
-			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz } {};
+			Position{ x, y, z }, TexCoord{ u, v }, Normal{ nx, ny, nz } {};
 		SVertexModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
-			Position{ x, y, z }, TextureCoordinates{ u, v }, Normal{ nx, ny, nz }, Diffuse{ dr, dg, db, da } {};
+			Position{ x, y, z }, TexCoord{ u, v }, Normal{ nx, ny, nz }, Diffuse{ dr, dg, db, da } {};
 
 		XMFLOAT3 Position{};
-		XMFLOAT2 TextureCoordinates{};
+		XMFLOAT2 TexCoord{};
 		XMFLOAT3 Normal{};
 		XMFLOAT3 Tangent{};
 		XMFLOAT3 Bitangent{};

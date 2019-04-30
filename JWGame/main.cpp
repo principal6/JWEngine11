@@ -74,7 +74,7 @@ int main()
 		// SharedTexture
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::TextureCubeMap, "skymap.dds"); // Shared Resource #0
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "terra_diffuse.png"); //Shared Resource #1
-		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "test_normal.png"); //Shared Resource #2
+		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "terra_normal.png"); //Shared Resource #2
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #3
 		ecs.SystemRender().CreateSharedTextureFromSharedModel(2); //Shared Resource #4
 	}
