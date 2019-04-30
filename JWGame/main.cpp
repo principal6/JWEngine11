@@ -56,7 +56,7 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 16, 7)); // Shared Model #8 (Representation for debugging a 3d point)
 		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().TerrainGenerator().GenerateTerrainFromFile("heightmap_1.tif", 10.0f)); // Shared Model #9 (Terrain)
+			ecs.SystemRender().TerrainGenerator().GenerateTerrainFromFile("heightmap_gray_128.tif", 20.0f)); // Shared Model #9 (Terrain)
 	}
 	{
 		// SharedImage2D

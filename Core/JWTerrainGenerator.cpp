@@ -9,6 +9,140 @@ void JWTerrainGenerator::Create(JWDX& DX, const STRING& BaseDirectory) noexcept
 	m_BaseDirectory = BaseDirectory;
 }
 
+inline auto JWTerrainGenerator::ConvertR8G8B8ToFloat(unsigned char R, unsigned char G, unsigned char B, float division_factor) noexcept->float
+{
+	return static_cast<float>(R + G * 256 + B * 65536) / division_factor;
+}
+
+inline auto JWTerrainGenerator::ConvertR8ToFloat(unsigned char R, float division_factor) noexcept->float
+{
+	return static_cast<float>(R) / division_factor;
+}
+
+void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
+	float HeightFactor, SModelData& OutModelData) noexcept
+{
+	uint32_t color_count = 4;
+	uint32_t array_size = color_count * TextureWidth * TextureHeight;
+	unsigned char* data = new unsigned char[array_size];
+
+	// Map the readable texture
+	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
+	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(Texture, 0, D3D11_MAP_READ, 0, &mapped_subresource)))
+	{
+		memcpy(data, mapped_subresource.pData, sizeof(unsigned char) * array_size);
+		m_pDX->GetDeviceContext()->Unmap(Texture, 0);
+	}
+
+	float		v_x{};
+	float		v_z{};
+	float		v_y[4]{};
+
+	// Vertex
+	for (uint32_t z = 0; z < TextureHeight - 1; ++z)
+	{
+		for (uint32_t x = 0; x < TextureWidth - 1; ++x)
+		{
+			v_x = static_cast<float>(x);
+			v_z = -static_cast<float>(z);
+
+			// Ignore alpha value
+			v_y[0] = ConvertR8G8B8ToFloat(
+				data[(z * TextureWidth * color_count) + (x * color_count)],
+				data[(z * TextureWidth * color_count) + (x * color_count) + 1],
+				data[(z * TextureWidth * color_count) + (x * color_count) + 2],
+				HeightFactor
+			);
+
+			v_y[1] = ConvertR8G8B8ToFloat(
+				data[(z * TextureWidth * color_count) + ((x + 1) * color_count)],
+				data[(z * TextureWidth * color_count) + ((x + 1) * color_count) + 1],
+				data[(z * TextureWidth * color_count) + ((x + 1) * color_count) + 2],
+				HeightFactor
+			);
+
+			v_y[2] = ConvertR8G8B8ToFloat(
+				data[((z + 1) * TextureWidth * color_count) + (x * color_count)],
+				data[((z + 1) * TextureWidth * color_count) + (x * color_count) + 1],
+				data[((z + 1) * TextureWidth * color_count) + (x * color_count) + 2],
+				HeightFactor
+			);
+
+			v_y[3] = ConvertR8G8B8ToFloat(
+				data[((z + 1) * TextureWidth * color_count) + ((x + 1) * color_count)],
+				data[((z + 1) * TextureWidth * color_count) + ((x + 1) * color_count) + 1],
+				data[((z + 1) * TextureWidth * color_count) + ((x + 1) * color_count) + 2],
+				HeightFactor
+			);
+
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x, v_y[0], v_z, 0, 0));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[1], v_z, 1, 0));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x, v_y[2], v_z - 1, 0, 1));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[3], v_z - 1, 1, 1));
+		}
+	}
+
+	JW_DELETE_ARRAY(data);
+}
+
+void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
+	float HeightFactor, SModelData& OutModelData) noexcept
+{
+	uint32_t color_count = 1;
+	uint32_t array_size = color_count * TextureWidth * TextureHeight;
+	unsigned char* data = new unsigned char[array_size];
+
+	// Map the readable texture
+	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
+	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(Texture, 0, D3D11_MAP_READ, 0, &mapped_subresource)))
+	{
+		memcpy(data, mapped_subresource.pData, sizeof(unsigned char) * array_size);
+		m_pDX->GetDeviceContext()->Unmap(Texture, 0);
+	}
+
+	float		v_x{};
+	float		v_z{};
+	float		v_y[4]{};
+
+	// Vertex
+	for (uint32_t z = 0; z < TextureHeight - 1; ++z)
+	{
+		for (uint32_t x = 0; x < TextureWidth - 1; ++x)
+		{
+			v_x = static_cast<float>(x);
+			v_z = -static_cast<float>(z);
+
+			// Ignore alpha value
+			v_y[0] = ConvertR8ToFloat(
+				data[(z * TextureWidth * color_count) + (x * color_count)],
+				HeightFactor
+			);
+
+			v_y[1] = ConvertR8ToFloat(
+				data[(z * TextureWidth * color_count) + ((x + 1) * color_count)],
+				HeightFactor
+			);
+
+			v_y[2] = ConvertR8ToFloat(
+				data[((z + 1) * TextureWidth * color_count) + (x * color_count)],
+				HeightFactor
+			);
+
+			v_y[3] = ConvertR8ToFloat(
+				data[((z + 1) * TextureWidth * color_count) + ((x + 1) * color_count)],
+				HeightFactor
+			);
+
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x, v_y[0], v_z, 0, 0));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[1], v_z, 1, 0));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x, v_y[2], v_z - 1, 0, 1));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[3], v_z - 1, 1, 1));
+		}
+	}
+
+	JW_DELETE_ARRAY(data);
+}
+
 auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float HeightFactor) noexcept->SModelData
 {
 	SModelData model_data{};
@@ -43,70 +177,24 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 		// Copy texture data
 		m_pDX->GetDeviceContext()->CopyResource(readable_texture, texture);
 
+		bool are_vertices_loaded{ false };
 		if (loaded_texture_desc.Format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
 		{
-			uint32_t color_count = 4; // B, G, R, A
-			uint32_t array_size = color_count * texture_size.Width * texture_size.Height;
-			unsigned char* data = new unsigned char[array_size];
+			LoadR8G8B8A8UnormData(readable_texture, texture_size.Width, texture_size.Height, HeightFactor, model_data);
+			are_vertices_loaded = true;
+		}
+		else if (loaded_texture_desc.Format == DXGI_FORMAT_R8_UNORM)
+		{
+			LoadGray8UnormData(readable_texture, texture_size.Width, texture_size.Height, HeightFactor, model_data);
+			are_vertices_loaded = true;
+		}
 
-			// Map the readable texture
-			D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
-			if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(readable_texture, 0, D3D11_MAP_READ, 0, &mapped_subresource)))
-			{
-				memcpy(data, mapped_subresource.pData, sizeof(unsigned char) * array_size);
-				m_pDX->GetDeviceContext()->Unmap(readable_texture, 0);
-			}
-
-			uint32_t	converted_int{};
-			float		converted_float{};
-			float		v_x{};
-			float		v_z{};
-			float		v_y[4]{};
-
-			// Vertex
-			for (uint32_t z = 0; z < texture_size.Height - 1; ++z)
-			{
-				for (uint32_t x = 0; x < texture_size.Width - 1; ++x)
-				{
-					v_x = static_cast<float>(x);
-					v_z = -static_cast<float>(z);
-
-					// Ignore alpha value
-					converted_int =
-						data[(z * texture_size.Width * 4) + (x * 4)] +
-						data[(z * texture_size.Width * 4) + (x * 4) + 1] * 256 +
-						data[(z * texture_size.Width * 4) + (x * 4) + 2] * 65536;
-					v_y[0] = static_cast<float>(converted_int) / HeightFactor;
-
-					converted_int =
-						data[(z * texture_size.Width * 4) + ((x + 1) * 4)] +
-						data[(z * texture_size.Width * 4) + ((x + 1) * 4) + 1] * 256 +
-						data[(z * texture_size.Width * 4) + ((x + 1) * 4) + 2] * 65536;
-					v_y[1] = static_cast<float>(converted_int) / HeightFactor;
-
-					converted_int =
-						data[((z + 1) * texture_size.Width * 4) + (x * 4)] +
-						data[((z + 1) * texture_size.Width * 4) + (x * 4) + 1] * 256 +
-						data[((z + 1) * texture_size.Width * 4) + (x * 4) + 2] * 65536;
-					v_y[2] = static_cast<float>(converted_int) / HeightFactor;
-
-					converted_int =
-						data[((z + 1) * texture_size.Width * 4) + ((x + 1) * 4)] +
-						data[((z + 1) * texture_size.Width * 4) + ((x + 1) * 4) + 1] * 256 +
-						data[((z + 1) * texture_size.Width * 4) + ((x + 1) * 4) + 2] * 65536;
-					v_y[3] = static_cast<float>(converted_int) / HeightFactor;
-
-					model_data.VertexData.AddVertex(SVertexModel(v_x, v_y[0], v_z, 0, 0));
-					model_data.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[1], v_z, 1, 0));
-					model_data.VertexData.AddVertex(SVertexModel(v_x, v_y[2], v_z - 1, 0, 1));
-					model_data.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[3], v_z - 1, 1, 1));
-				}
-			}
-
+		if (are_vertices_loaded)
+		{
 			// Index
 			for (uint32_t i = 0; i < (texture_size.Width - 1) * (texture_size.Height - 1); ++i)
 			{
-				model_data.IndexData.vIndices.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 2));
+				model_data.IndexData.vIndices.push_back(SIndexTriangle(i * 4	, i * 4 + 1, i * 4 + 2));
 				model_data.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
 			}
 
@@ -184,12 +272,10 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 				v_vertices[iter._1].Bitangent = bitangent;
 				v_vertices[iter._2].Bitangent = bitangent;
 			}
-			
-			JW_DELETE_ARRAY(data);
 		}
 		else
 		{
-			JW_ERROR_ABORT("File format not matching");
+			JW_ERROR_ABORT("No data loaded.");
 		}
 
 		JW_RELEASE(readable_texture);
