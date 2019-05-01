@@ -164,7 +164,7 @@ PRIVATE void JWDX::CreateVSBase() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSBase.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSBaseBuffer, nullptr);
 
 	// Create shader
@@ -180,7 +180,7 @@ PRIVATE void JWDX::CreateVSRaw() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSRaw.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSRawBuffer, nullptr);
 
 	// Create shader
@@ -192,7 +192,7 @@ PRIVATE void JWDX::CreateVSSkyMap() noexcept
 	// Compile shader from file (SkyMap)
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSSkyMap.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSSkyMapBuffer, nullptr);
 
 	// Create shader (SkyMap)
@@ -204,7 +204,7 @@ PRIVATE void JWDX::CreateVSInstantText() noexcept
 {
 	// Compile Shaders from shader file
 	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSInstantText.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSInstantTextBlob, nullptr);
 
 	// Create the shader
@@ -220,7 +220,7 @@ PRIVATE void JWDX::CreatePSBase() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSBase.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSBaseBuffer, nullptr);
 
 	// Create shader
@@ -232,7 +232,7 @@ PRIVATE void JWDX::CreatePSRaw() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSRaw.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSRawBuffer, nullptr);
 
 	// Create shader
@@ -244,7 +244,7 @@ PRIVATE void JWDX::CreatePSSkyMap() noexcept
 	// Compile shader from file (SkyMap)
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSSkyMap.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSSkyMapBuffer, nullptr);
 
 	// Create shader (SkyMap)
@@ -255,7 +255,7 @@ PRIVATE void JWDX::CreatePSInstantText() noexcept
 {
 	// Compile Shaders from shader file
 	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSInstantText.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSInstantTextBlob, nullptr);
 
 	// Create the shader
@@ -438,11 +438,16 @@ PRIVATE void JWDX::CreateSamplerStates() noexcept
 	sampler_description.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_description.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_description.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	sampler_description.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampler_description.MaxAnisotropy = 1;
+	sampler_description.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
 	sampler_description.MinLOD = 0;
 	sampler_description.MaxLOD = D3D11_FLOAT32_MAX;
+	sampler_description.MipLODBias = 0;
 
 	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateMinMagMipLinearWrap);
+
+	sampler_description.MipLODBias = 2;
+	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateMinMagMipLinearWrapBias2);
 
 	sampler_description.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 	sampler_description.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -451,6 +456,7 @@ PRIVATE void JWDX::CreateSamplerStates() noexcept
 	sampler_description.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	sampler_description.MinLOD = 0;
 	sampler_description.MaxLOD = D3D11_FLOAT32_MAX;
+	sampler_description.MipLODBias = 0;
 
 	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateMinMagMipPointWrap);
 }
@@ -587,6 +593,9 @@ void JWDX::SetPSSamplerState(ESamplerState State) noexcept
 	{
 	case JWEngine::ESamplerState::MinMagMipLinearWrap:
 		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateMinMagMipLinearWrap);
+		break;
+	case JWEngine::ESamplerState::MinMagMipLinearWrapBias1:
+		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateMinMagMipLinearWrapBias2);
 		break;
 	case JWEngine::ESamplerState::MinMagMipPointWrap:
 		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateMinMagMipPointWrap);

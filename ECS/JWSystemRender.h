@@ -322,7 +322,7 @@ namespace JWEngine
 		SPSCBFlags					m_PSCBFlags{};
 
 		// Shared resources(texture, model data, animation texture)
-		VECTOR<ID3D11ShaderResourceView*>	m_vpSharedSRV;
+		VECTOR<STextureData>				m_vSharedTextureData;
 		VECTOR<STextureData>				m_vAnimationTextureData;
 		VECTOR<JWModel>						m_vSharedModel;
 		VECTOR<JWLineModel>					m_vSharedLineModel;

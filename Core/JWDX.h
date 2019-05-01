@@ -34,6 +34,7 @@ namespace JWEngine
 	{
 		Invalid,
 		MinMagMipLinearWrap,
+		MinMagMipLinearWrapBias1,
 		MinMagMipPointWrap,
 	};
 
@@ -217,6 +218,7 @@ namespace JWEngine
 		
 		ESamplerState				m_CurrentSamplerState{ ESamplerState::Invalid };
 		ID3D11SamplerState*			m_SamplerStateMinMagMipLinearWrap{};
+		ID3D11SamplerState*			m_SamplerStateMinMagMipLinearWrapBias2{};
 		ID3D11SamplerState*			m_SamplerStateMinMagMipPointWrap{};
 
 		EPrimitiveTopology			m_CurrentPrimitiveTopology{ EPrimitiveTopology::Invalid };

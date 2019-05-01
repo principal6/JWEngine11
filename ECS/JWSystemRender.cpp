@@ -36,9 +36,10 @@ void JWSystemRender::Destroy() noexcept
 
 	// Destroy shared resources
 	{
-		for (auto& iter : m_vpSharedSRV)
+		for (auto& iter : m_vSharedTextureData)
 		{
-			JW_RELEASE(iter);
+			JW_RELEASE(iter.Texture);
+			JW_RELEASE(iter.TextureSRV);
 		}
 
 		for (auto& iter : m_vAnimationTextureData)
@@ -117,9 +118,11 @@ void JWSystemRender::DestroyComponent(SComponentRender& Component) noexcept
 
 void JWSystemRender::CreateSharedTexture(ESharedTextureType Type, STRING FileName) noexcept
 {
-	m_vpSharedSRV.push_back(nullptr);
+	m_vSharedTextureData.push_back(STextureData());
 
-	auto& current_srv = m_vpSharedSRV[m_vpSharedSRV.size() - 1];
+	auto& texture = m_vSharedTextureData[m_vSharedTextureData.size() - 1].Texture;
+	auto& texture_srv = m_vSharedTextureData[m_vSharedTextureData.size() - 1].TextureSRV;
+	auto& texture_size = m_vSharedTextureData[m_vSharedTextureData.size() - 1].TextureSize;
 
 	bool IsDDS{ false };
 	if (FileName.find(".dds") != std::string::npos)
@@ -134,28 +137,30 @@ void JWSystemRender::CreateSharedTexture(ESharedTextureType Type, STRING FileNam
 	case JWEngine::ESharedTextureType::Texture2D:
 		if (IsDDS)
 		{
-			CreateDDSTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &current_srv, 0);
+			CreateDDSTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &texture_srv, 0);
 		}
 		else
 		{
-			CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &current_srv, 0);
+			CreateWICTextureFromFile(m_pDX->GetDevice(), TextureFileName.c_str(), nullptr, &texture_srv, 0);
 		}
 		break;
 	case JWEngine::ESharedTextureType::TextureCubeMap:
 		if (IsDDS)
 		{
 			CreateDDSTextureFromFileEx(m_pDX->GetDevice(), TextureFileName.c_str(), 0, D3D11_USAGE_DEFAULT,
-				D3D11_BIND_SHADER_RESOURCE, 0, D3D11_RESOURCE_MISC_TEXTURECUBE, false, nullptr,
-				&current_srv);
+				D3D11_BIND_SHADER_RESOURCE, 0, D3D11_RESOURCE_MISC_TEXTURECUBE, false,
+				nullptr, &texture_srv);
 		}
 		break;
 	default:
 		break;
 	}
 
-	if (current_srv == nullptr)
+	if (texture_srv == nullptr)
 	{
-		m_vpSharedSRV.pop_back();
+		JW_RELEASE(texture);
+
+		m_vSharedTextureData.pop_back();
 	}
 }
 
@@ -170,9 +175,11 @@ void JWSystemRender::CreateSharedTextureFromSharedModel(size_t ModelIndex) noexc
 	ModelIndex = min(ModelIndex, m_vSharedModel.size() - 1);
 	const JWModel * ptr_model = &m_vSharedModel[ModelIndex];
 
-	m_vpSharedSRV.push_back(nullptr);
+	m_vSharedTextureData.push_back(STextureData());
 
-	auto & current_srv = m_vpSharedSRV[m_vpSharedSRV.size() - 1];
+	auto& texture = m_vSharedTextureData[m_vSharedTextureData.size() - 1].Texture;
+	auto& texture_srv = m_vSharedTextureData[m_vSharedTextureData.size() - 1].TextureSRV;
+	auto& texture_size = m_vSharedTextureData[m_vSharedTextureData.size() - 1].TextureSize;
 
 	bool IsDDS{ false };
 	if (ptr_model->GetTextureFileName().find(L".dds") != WSTRING::npos)
@@ -182,16 +189,18 @@ void JWSystemRender::CreateSharedTextureFromSharedModel(size_t ModelIndex) noexc
 
 	if (IsDDS)
 	{
-		CreateDDSTextureFromFile(m_pDX->GetDevice(), ptr_model->GetTextureFileName().c_str(), nullptr, &current_srv, 0);
+		CreateDDSTextureFromFile(m_pDX->GetDevice(), ptr_model->GetTextureFileName().c_str(), nullptr, &texture_srv, 0);
 	}
 	else
 	{
-		CreateWICTextureFromFile(m_pDX->GetDevice(), ptr_model->GetTextureFileName().c_str(), nullptr, &current_srv, 0);
+		CreateWICTextureFromFile(m_pDX->GetDevice(), ptr_model->GetTextureFileName().c_str(), nullptr, &texture_srv, 0);
 	}
 
-	if (current_srv == nullptr)
+	if (texture_srv == nullptr)
 	{
-		m_vpSharedSRV.pop_back();
+		JW_RELEASE(texture);
+
+		m_vSharedTextureData.pop_back();
 	}
 }
 
@@ -199,9 +208,9 @@ auto JWSystemRender::GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResour
 {
 	ID3D11ShaderResourceView* result{};
 
-	if (Index < m_vpSharedSRV.size())
+	if (Index < m_vSharedTextureData.size())
 	{
-		result = m_vpSharedSRV[Index];
+		result = m_vSharedTextureData[Index].TextureSRV;
 	}
 
 	return result;
