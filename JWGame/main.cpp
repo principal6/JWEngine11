@@ -170,6 +170,7 @@ int main()
 	ambient_light->CreateComponentPhysics();
 	ambient_light->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(1));
+	//ecs.DestroyEntityByName("ambient_light");
 
 	auto directional_light = ecs.CreateEntity("directional_light");
 	directional_light->CreateComponentTransform()
@@ -179,19 +180,18 @@ int main()
 	directional_light->CreateComponentPhysics();
 	directional_light->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(1));
+	//ecs.DestroyEntityByName("directional_light");
 
 	{
 		auto terrain = ecs.CreateEntity("terrain");
 		terrain->CreateComponentTransform()
 			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 			->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		//terrain->CreateComponentPhysics();
 		terrain->CreateComponentRender()
 			->SetTerrain(ecs.SystemRender().GetSharedTerrain(0))
 			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(1))
 			->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2))
 			->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
-		//ecs.SystemPhysics().SetBoundingSphere(terrain, 2.0f);
 	}
 
 	auto image_gamma = ecs.CreateEntity("IMG_Gamma");

@@ -153,6 +153,8 @@ void JWECS::DestroyEntityByIndex(uint32_t Index) noexcept
 {
 	if (Index < m_vpEntities.size())
 	{
+		m_mapEntityNames.erase(m_vpEntities[Index]->GetEntityName());
+		m_vpEntities[Index]->Destroy();
 		JW_DELETE(m_vpEntities[Index]);
 
 		uint32_t last_Index = static_cast<uint32_t>(m_vpEntities.size() - 1);
@@ -175,6 +177,8 @@ void JWECS::DestroyEntityByName(STRING EntityName) noexcept
 		{
 			auto index = find->second;
 
+			m_mapEntityNames.erase(m_vpEntities[index]->GetEntityName());
+			m_vpEntities[index]->Destroy();
 			JW_DELETE(m_vpEntities[index]);
 
 			uint32_t last_index = static_cast<uint32_t>(m_vpEntities.size() - 1);
@@ -207,6 +211,8 @@ void JWECS::DestroyEntityByType(EEntityType Type) noexcept
 		{
 			if (iter->GetEntityType() == Type)
 			{
+				m_mapEntityNames.erase(m_vpEntities[index]->GetEntityName());
+				m_vpEntities[index]->Destroy();
 				JW_DELETE(m_vpEntities[index]);
 
 				uint32_t last_index = static_cast<uint32_t>(m_vpEntities.size() - 1);

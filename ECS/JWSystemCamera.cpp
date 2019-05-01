@@ -66,6 +66,8 @@ void JWSystemCamera::DestroyComponent(SComponentCamera& Component) noexcept
 	if (slot < last_index)
 	{
 		m_vpComponents[slot] = m_vpComponents[last_index];
+		m_vpComponents[slot]->ComponentID = slot; // @important
+
 		m_vpComponents[last_index] = nullptr;
 	}
 
