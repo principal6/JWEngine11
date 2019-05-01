@@ -38,11 +38,12 @@ auto JWSystemPhysics::CreateComponent(JWEntity* pEntity) noexcept->SComponentPhy
 	auto transform = m_vpComponents[slot]->PtrEntity->GetComponentTransform();
 	if (transform)
 	{
-		m_vpComponents[slot]->BoundingSphereCenterPosition = m_vpComponents[slot]->BoundingSphereCenterOffset + transform->Position;
+		m_vpComponents[slot]->BoundingSphereData.Center =
+			m_vpComponents[slot]->BoundingSphereData.Offset + transform->Position;
 	}
 
 	// Add bounding volume instance into SystemRender
-	m_pECS->SystemRender().AddBoundingVolumeInstance(m_vpComponents[slot]->BoundingSphereRadius, m_vpComponents[slot]->BoundingSphereCenterPosition);
+	m_pECS->SystemRender().AddBoundingVolumeInstance(m_vpComponents[slot]->BoundingSphereData.Radius, m_vpComponents[slot]->BoundingSphereData.Center);
 
 	return *m_vpComponents[slot];
 }
@@ -84,15 +85,15 @@ void JWSystemPhysics::SetBoundingSphere(JWEntity* pEntity, float Radius, const X
 	if (physics == nullptr) { return; }
 
 	// Set the radius
-	physics->BoundingSphereRadius = Radius;
+	physics->BoundingSphereData.Radius = Radius;
 
 	// Set center position
 	auto transform = physics->PtrEntity->GetComponentTransform();
-	physics->BoundingSphereCenterOffset = XMLoadFloat3(&CenterOffset);
-	physics->BoundingSphereCenterPosition = physics->BoundingSphereCenterOffset + transform->Position;
+	physics->BoundingSphereData.Offset = XMLoadFloat3(&CenterOffset);
+	physics->BoundingSphereData.Center = physics->BoundingSphereData.Offset + transform->Position;
 	
 	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereRadius, physics->BoundingSphereCenterPosition);
+	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereData.Radius, physics->BoundingSphereData.Center);
 }
 
 void JWSystemPhysics::HideBoundingSphere(JWEntity* pEntity) noexcept
@@ -112,7 +113,7 @@ void JWSystemPhysics::UnhideBoundingSphere(JWEntity* pEntity) noexcept
 	if (physics == nullptr) { return; }
 
 	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereRadius, physics->BoundingSphereCenterPosition);
+	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereData.Radius, physics->BoundingSphereData.Center);
 }
 
 void JWSystemPhysics::UpdateBoundingSphere(JWEntity* pEntity) noexcept
@@ -124,11 +125,11 @@ void JWSystemPhysics::UpdateBoundingSphere(JWEntity* pEntity) noexcept
 	auto transform = physics->PtrEntity->GetComponentTransform();
 	if (transform)
 	{
-		physics->BoundingSphereCenterPosition = physics->BoundingSphereCenterOffset + transform->Position;
+		physics->BoundingSphereData.Center = physics->BoundingSphereData.Offset + transform->Position;
 	}
 
 	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereRadius, physics->BoundingSphereCenterPosition);
+	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereData.Radius, physics->BoundingSphereData.Center);
 }
 
 void JWSystemPhysics::Pick() noexcept
@@ -378,8 +379,8 @@ PRIVATE void JWSystemPhysics::PickEntityBySphere() noexcept
 					}
 				}
 
-				auto& radius = iter->BoundingSphereRadius;
-				auto center = iter->BoundingSphereCenterPosition;
+				auto& radius = iter->BoundingSphereData.Radius;
+				auto center = iter->BoundingSphereData.Center;
 
 				// Sphere equation
 				// (Px - Cx)©÷ + (Py - Cy)©÷ + (Pz - Cz)©÷ = r©÷

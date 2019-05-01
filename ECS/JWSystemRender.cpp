@@ -599,8 +599,8 @@ PRIVATE auto JWSystemRender::IsCulledByViewFrustum(const SComponentRender* pRend
 	m_pECS->SystemCamera().CaptureViewFrustum();
 	auto frustum = m_pECS->SystemCamera().GetCapturedViewFrustum();
 
-	auto& center_pos = physics->BoundingSphereCenterPosition;
-	auto radius = physics->BoundingSphereRadius;
+	auto& center_pos = physics->BoundingSphereData.Center;
+	auto radius = physics->BoundingSphereData.Radius;
 
 	// Left plane
 	auto lp_v0 = XMVector3Normalize(frustum.FLU - frustum.NLU);
@@ -690,7 +690,7 @@ void JWSystemRender::DrawNonInstancedBoundingVolumes(SComponentRender& Component
 		assert(transform);
 
 		const auto& position = transform->Position;
-		const auto& radius = physics->BoundingSphereRadius;
+		const auto& radius = physics->BoundingSphereData.Radius;
 		auto world_matrix{ XMMatrixScaling(radius, radius, radius) };
 		world_matrix *= XMMatrixTranslationFromVector(position);
 

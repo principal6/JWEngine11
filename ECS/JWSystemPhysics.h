@@ -9,16 +9,21 @@ namespace JWEngine
 
 	static constexpr float KDefBoundingSphereRadius = 1.0f;
 
-	struct SComponentPhysics
+	struct SBoundingSphereData
 	{
-		JWEntity*	PtrEntity{};
-		uint32_t	ComponentID{};
-
-		float		BoundingSphereRadius{ KDefBoundingSphereRadius };
-		XMVECTOR	BoundingSphereCenterPosition{};
+		float		Radius{ KDefBoundingSphereRadius };
+		XMVECTOR	Center{};
 
 		// This value is used to calculate BoundingSphereCenterPosition.
-		XMVECTOR	BoundingSphereCenterOffset{};
+		XMVECTOR	Offset{};
+	};
+
+	struct SComponentPhysics
+	{
+		JWEntity*			PtrEntity{};
+		uint32_t			ComponentID{};
+
+		SBoundingSphereData	BoundingSphereData{};
 	};
 
 	class JWSystemPhysics
