@@ -372,6 +372,9 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 		if (iter.ChildrenID[0] == -1)
 		{
 			// If this is a leaf node, build vertices.
+
+			iter.IsMeshNode = true;
+			++TerrainData.TerrainMeshCount;
 			
 			// Vertex
 			uint32_t vertex_offset{ iter.StartZ * (TerrainData.TerrainSizeX - 1) * 4 + iter.StartX * 4 };
@@ -428,6 +431,31 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 
 			// Create index buffer
 			m_pDX->CreateIndexBuffer(iter.IndexData.GetByteSize(), iter.IndexData.GetPtrData(), &iter.IndexBuffer);
+
+
+			// Calculate Normal vector representations
+			// Calculate normal line positions
+			size_t iterator_vertex{};
+			XMFLOAT3 second_vertex_position{};
+			for (const auto& vertex : ModelData.VertexData.vVerticesModel)
+			{
+				second_vertex_position.x = vertex.Position.x + vertex.Normal.x;
+				second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
+				second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
+
+				iter.NormalData.VertexData.AddVertex(SVertexModel(vertex.Position, KDefaultColorNormals));
+				iter.NormalData.VertexData.AddVertex(SVertexModel(second_vertex_position, KDefaultColorNormals));
+				iter.NormalData.IndexData.vIndices.push_back(
+					SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+				++iterator_vertex;
+			}
+
+			// Create vertex buffer for normals
+			m_pDX->CreateStaticVertexBuffer(
+				iter.NormalData.VertexData.GetVertexModelByteSize(), iter.NormalData.VertexData.GetVertexModelPtrData(), &iter.NormalVertexBuffer);
+
+			// Create index buffer for normals
+			m_pDX->CreateIndexBuffer(iter.NormalData.IndexData.GetByteSize(), iter.NormalData.IndexData.GetPtrData(), &iter.NormalIndexBuffer);
 
 		}
 	}

@@ -61,6 +61,11 @@ void JWSystemRender::Destroy() noexcept
 		{
 			iter.Destroy();
 		}
+
+		for (auto& iter : m_vSharedTerrain)
+		{
+			iter.Destroy();
+		}
 	}
 
 	m_TerrainGenerator.Destroy();
@@ -1198,15 +1203,18 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	case ERenderType::Terrain:
 		for (auto& iter : Component.PtrTerrain->QuadTree)
 		{
-			// Set IA vertex buffer
-			ptr_device_context->IASetVertexBuffers(
-				0, 1, &iter.VertexBuffer, iter.VertexData.GetPtrStrides(), iter.VertexData.GetPtrOffsets());
+			if (iter.IsMeshNode)
+			{
+				// Set IA vertex buffer
+				ptr_device_context->IASetVertexBuffers(
+					0, 1, &iter.VertexBuffer, iter.VertexData.GetPtrStrides(), iter.VertexData.GetPtrOffsets());
 
-			// Set IA index buffer
-			ptr_device_context->IASetIndexBuffer(iter.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+				// Set IA index buffer
+				ptr_device_context->IASetIndexBuffer(iter.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-			// Draw indexed
-			ptr_device_context->DrawIndexed(iter.IndexData.GetCount(), 0, 0);
+				// Draw indexed
+				ptr_device_context->DrawIndexed(iter.IndexData.GetCount(), 0, 0);
+			}
 		}
 		break;
 	default:
@@ -1223,7 +1231,9 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 {
 	auto& model = Component.PtrModel;
-	if (model == nullptr) { return; }
+	auto& terrain = Component.PtrTerrain;
+
+	if ((model == nullptr) && (terrain == nullptr)) { return; }
 
 	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
 	if (component_transform == nullptr) { return; }
@@ -1247,15 +1257,38 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 	// Set IA primitive topology
 	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::LineList);
 
-	// Set IA vertex buffer
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &model->NormalVertexBuffer,
-		model->NormalData.VertexData.GetPtrStrides(), model->NormalData.VertexData.GetPtrOffsets());
+	if (model)
+	{
+		// Set IA vertex buffer
+		m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &model->NormalVertexBuffer,
+			model->NormalData.VertexData.GetPtrStrides(), model->NormalData.VertexData.GetPtrOffsets());
 
-	// Set IA index buffer
-	m_pDX->GetDeviceContext()->IASetIndexBuffer(model->NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		// Set IA index buffer
+		m_pDX->GetDeviceContext()->IASetIndexBuffer(model->NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-	// Draw
-	m_pDX->GetDeviceContext()->DrawIndexed(model->NormalData.IndexData.GetCount(), 0, 0);
+		// Draw
+		m_pDX->GetDeviceContext()->DrawIndexed(model->NormalData.IndexData.GetCount(), 0, 0);
+	}
+
+	if (terrain)
+	{
+		for (auto& iter : terrain->QuadTree)
+		{
+			if (iter.IsMeshNode)
+			{
+				// Set IA vertex buffer
+				m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &iter.NormalVertexBuffer,
+					iter.NormalData.VertexData.GetPtrStrides(), iter.NormalData.VertexData.GetPtrOffsets());
+
+				// Set IA index buffer
+				m_pDX->GetDeviceContext()->IASetIndexBuffer(iter.NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+				// Draw
+				m_pDX->GetDeviceContext()->DrawIndexed(iter.NormalData.IndexData.GetCount(), 0, 0);
+			}
+		}
+	}
+	
 }
 
 void JWSystemRender::SetUniversalRasterizerState(ERasterizerState State) noexcept

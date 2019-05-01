@@ -662,6 +662,11 @@ namespace JWEngine
 		ID3D11Buffer*		VertexBuffer{};
 		ID3D11Buffer*		IndexBuffer{};
 
+		ID3D11Buffer*		NormalVertexBuffer{};
+		ID3D11Buffer*		NormalIndexBuffer{};
+		SLineModelData		NormalData{};
+
+		bool		IsMeshNode{ false };
 		XMFLOAT3	BoundingSphereCenterPosition{};
 		float		BoundingSphereRadius{};
 	};
@@ -669,8 +674,11 @@ namespace JWEngine
 	struct STerrainData
 	{
 		VECTOR<STerrainQuadTreeNode>	QuadTree{};
+
 		uint32_t						TerrainSizeX{};
 		uint32_t						TerrainSizeZ{};
+
+		uint32_t						TerrainMeshCount{};
 
 		void Destroy()
 		{
@@ -680,6 +688,9 @@ namespace JWEngine
 				{
 					JW_RELEASE(iter.VertexBuffer);
 					JW_RELEASE(iter.IndexBuffer);
+
+					JW_RELEASE(iter.NormalVertexBuffer);
+					JW_RELEASE(iter.NormalIndexBuffer);
 				}
 			}
 		}

@@ -16,6 +16,8 @@ namespace JWEngine
 
 		float		BoundingSphereRadius{ KDefBoundingSphereRadius };
 		XMVECTOR	BoundingSphereCenterPosition{};
+
+		// This value is used to calculate BoundingSphereCenterPosition.
 		XMVECTOR	BoundingSphereCenterOffset{};
 	};
 
