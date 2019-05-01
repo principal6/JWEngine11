@@ -81,7 +81,7 @@ int main()
 		ecs.SystemRender().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 	}
 	{
-		ecs.SystemRender().CreateSharedTerrainFromFile("heightmap_test_20x15.tif", 20.0f); // Shared Terrain #0
+		ecs.SystemRender().CreateSharedTerrainFromFile("heightmap_rgb_test_20x15.tif", 20.0f); // Shared Terrain #0
 	}
 
 	ecs.SystemRender().SetSystemRenderFlag(
