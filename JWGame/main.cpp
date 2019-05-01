@@ -55,8 +55,6 @@ int main()
 
 		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(2.0f, 16, 7)); // Shared Model #8 (Representation for debugging a 3d point)
-		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().TerrainGenerator().GenerateTerrainFromFile("heightmap_gray_128.tif", 20.0f)); // Shared Model #9 (Terrain)
 	}
 	{
 		// SharedImage2D
@@ -81,6 +79,9 @@ int main()
 	{
 		// Animations texture
 		ecs.SystemRender().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
+	}
+	{
+		ecs.SystemRender().CreateSharedTerrainFromFile("heightmap_test_20x15.tif", 20.0f); // Shared Terrain #0
 	}
 
 	ecs.SystemRender().SetSystemRenderFlag(
@@ -186,7 +187,7 @@ int main()
 			->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
 		//terrain->CreateComponentPhysics();
 		terrain->CreateComponentRender()
-			->SetModel(ecs.SystemRender().GetSharedModel(9))
+			->SetTerrain(ecs.SystemRender().GetSharedTerrain(0))
 			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(1))
 			->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2))
 			->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
@@ -293,6 +294,11 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 			->SetVertex(6, frustum.FRD, XMFLOAT4(1, 0, 0, 0.5f))
 			->SetVertex(7, frustum.NRD, XMFLOAT4(1, 0, 0, 0.5f))
 			->UpdateModel();
+	}
+
+	if (Character == 't')
+	{
+		ecs.GetEntityByName("ambient_light")->GetComponentTransform()->Translate(XMFLOAT3(0.1f, 0, 0));
 	}
 }
 

@@ -316,6 +316,27 @@ auto JWSystemRender::GetSharedImage2D(size_t Index) noexcept->JWImage*
 	return result;
 }
 
+auto JWSystemRender::CreateSharedTerrainFromFile(const STRING& FileName, float HeightFactor) noexcept->STerrainData*
+{
+	auto new_terrain = m_TerrainGenerator.GenerateTerrainFromFile(FileName, HeightFactor);
+
+	m_vSharedTerrain.push_back(new_terrain);
+
+	return &m_vSharedTerrain[m_vSharedTerrain.size() - 1];
+}
+
+auto JWSystemRender::GetSharedTerrain(size_t Index) noexcept->STerrainData*
+{
+	STerrainData* result{};
+
+	if (Index < m_vSharedTerrain.size())
+	{
+		result = &m_vSharedTerrain[Index];
+	}
+
+	return result;
+}
+
 void JWSystemRender::CreateAnimationTextureFromFile(STRING FileName) noexcept
 {
 	m_vAnimationTextureData.push_back(STextureData());
@@ -651,7 +672,7 @@ void JWSystemRender::DrawInstancedBoundingVolume() noexcept
 		m_BoundingVolume.ModelData.IndexData.GetCount(), m_BoundingVolume.ModelData.VertexData.GetInstanceCount(), 0, 0, 0);
 }
 
-void JWSystemRender::DrawBoundingVolumesNoInstancing(SComponentRender& Component) noexcept
+void JWSystemRender::DrawNonInstancedBoundingVolumes(SComponentRender& Component) noexcept
 {
 	auto entity = Component.PtrEntity;
 	auto transform = entity->GetComponentTransform();
@@ -1059,6 +1080,9 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 
 		m_VSCBFlags.FlagVS = 0;
 		break;
+	case ERenderType::Terrain:
+		m_VSCBFlags.FlagVS = 0;
+		break;
 	default:
 		break;
 	}
@@ -1079,6 +1103,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	auto& image = Component.PtrImage;
 	auto& line = Component.PtrLine;
 
+	// Set OM blend state
 	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency)
 	{
 		m_pDX->SetBlendState(EBlendState::Transprent);
@@ -1088,15 +1113,15 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 		m_pDX->SetBlendState(EBlendState::Opaque);
 	}
 
+	// Set IA primitive topology 
 	if ((type == ERenderType::Model_Static) || (type == ERenderType::Model_Dynamic) ||
-		(type == ERenderType::Model_Rigged) || (type == ERenderType::Image_2D))
+		(type == ERenderType::Model_Rigged) || (type == ERenderType::Image_2D) ||
+		(type == ERenderType::Terrain))
 	{
-		// Set IA primitive topology
 		m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 	}
 	else if ((type == ERenderType::Model_Line3D) || (type == ERenderType::Model_Line2D))
 	{
-		// Set IA primitive topology
 		m_pDX->SetPrimitiveTopology(EPrimitiveTopology::LineList);
 	}
 	
@@ -1169,6 +1194,20 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 
 		// Draw indexed
 		ptr_device_context->DrawIndexed(line->m_IndexData.GetCount(), 0, 0);
+		break;
+	case ERenderType::Terrain:
+		for (auto& iter : Component.PtrTerrain->QuadTree)
+		{
+			// Set IA vertex buffer
+			ptr_device_context->IASetVertexBuffers(
+				0, 1, &iter.VertexBuffer, iter.VertexData.GetPtrStrides(), iter.VertexData.GetPtrOffsets());
+
+			// Set IA index buffer
+			ptr_device_context->IASetIndexBuffer(iter.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+			// Draw indexed
+			ptr_device_context->DrawIndexed(iter.IndexData.GetCount(), 0, 0);
+		}
 		break;
 	default:
 		break;

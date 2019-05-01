@@ -462,9 +462,15 @@ void JWSystemPhysics::Execute() noexcept
 {
 	for (auto& iter : m_vpComponents)
 	{
-		if (iter)
+		auto transform{ iter->PtrEntity->GetComponentTransform() };
+		if (transform)
 		{
-			
+			if (transform->ShouldUpdateBoundingVolume)
+			{
+				UpdateBoundingSphere(iter->PtrEntity);
+
+				transform->ShouldUpdateBoundingVolume = false;
+			}
 		}
 	}
 }

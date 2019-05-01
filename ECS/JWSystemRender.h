@@ -88,6 +88,7 @@ namespace JWEngine
 		JWModel*					PtrModel{};
 		JWImage*					PtrImage{};
 		JWLineModel*				PtrLine{};
+		STerrainData*				PtrTerrain{};
 
 		// Texture used in PS
 		ID3D11ShaderResourceView*	PtrTextureDiffuse{};
@@ -163,6 +164,20 @@ namespace JWEngine
 				PtrImage = pImage2D;
 
 				RenderType = ERenderType::Image_2D;
+			}
+
+			return this;
+		}
+
+		auto SetTerrain(STerrainData* pTerrain) noexcept
+		{
+			assert(pTerrain);
+
+			if (RenderType == ERenderType::Invalid)
+			{
+				PtrTerrain = pTerrain;
+
+				RenderType = ERenderType::Terrain;
 			}
 
 			return this;
@@ -245,6 +260,9 @@ namespace JWEngine
 		auto CreateSharedImage2D(SPositionInt Position, SSizeInt Size) noexcept->JWImage*;
 		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
 
+		auto CreateSharedTerrainFromFile(const STRING& FileName, float HeightFactor) noexcept->STerrainData*;
+		auto GetSharedTerrain(size_t Index) noexcept->STerrainData*;
+
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
 		auto GetAnimationTexture(size_t Index) noexcept->STextureData*;
 		
@@ -266,7 +284,6 @@ namespace JWEngine
 		// Object getter
 		auto& BoundingVolume() noexcept { return m_BoundingVolume; }
 		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
-		auto& TerrainGenerator() noexcept { return m_TerrainGenerator; }
 
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;
@@ -289,7 +306,7 @@ namespace JWEngine
 		void DrawNormals(SComponentRender& Component) noexcept;
 		void DrawInstancedBoundingVolume() noexcept;
 		__declspec(deprecated("This function is deprecated. Use DrawInstancedBoundingVolume() instead."))
-			void DrawBoundingVolumesNoInstancing(SComponentRender& Component) noexcept;
+			void DrawNonInstancedBoundingVolumes(SComponentRender& Component) noexcept;
 		
 	private:
 		VECTOR<SComponentRender*>	m_vpComponents;
@@ -310,6 +327,7 @@ namespace JWEngine
 		VECTOR<JWModel>						m_vSharedModel;
 		VECTOR<JWLineModel>					m_vSharedLineModel;
 		VECTOR<JWImage>						m_vSharedImage2D;
+		VECTOR<STerrainData>				m_vSharedTerrain;
 
 		// Primitive maker (for shared resources)
 		JWPrimitiveMaker					m_PrimitiveMaker{};

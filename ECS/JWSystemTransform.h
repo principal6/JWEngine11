@@ -26,15 +26,27 @@ namespace JWEngine
 		XMMATRIX	WorldMatrix{};
 		EWorldMatrixCalculationOrder	WorldMatrixCalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 
+		// This will be 'false'd in JWSystemPhysics
+		bool		ShouldUpdateBoundingVolume{ false };
+
 		inline auto SetPosition(const XMVECTOR& _Position)
 		{
 			Position = _Position;
+			ShouldUpdateBoundingVolume = true;
 			return this;
 		}
 
 		inline auto SetPosition(const XMFLOAT3& _Position)
 		{
 			Position = XMVectorSet(_Position.x, _Position.y, _Position.z, 1);
+			ShouldUpdateBoundingVolume = true;
+			return this;
+		}
+
+		inline auto Translate(const XMFLOAT3& dPosition)
+		{
+			Position += XMVectorSet(dPosition.x, dPosition.y, dPosition.z, 0);
+			ShouldUpdateBoundingVolume = true;
 			return this;
 		}
 

@@ -23,8 +23,14 @@ void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_
 	float HeightFactor, SModelData& OutModelData) noexcept
 {
 	uint32_t color_count = 4;
-	uint32_t array_size = color_count * TextureWidth * TextureHeight;
+	uint32_t actual_texture_width = TextureWidth;
+	if (TextureWidth % 2)
+	{
+		++actual_texture_width;
+	}
+	uint32_t array_size = color_count * actual_texture_width * TextureHeight;
 	unsigned char* data = new unsigned char[array_size];
+	assert(data);
 
 	// Map the readable texture
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
@@ -48,37 +54,37 @@ void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_
 
 			// Ignore alpha value
 			v_y[0] = ConvertR8G8B8ToFloat(
-				data[(z * TextureWidth * color_count) + (x * color_count)],
-				data[(z * TextureWidth * color_count) + (x * color_count) + 1],
-				data[(z * TextureWidth * color_count) + (x * color_count) + 2],
+				data[(z * actual_texture_width * color_count) + (x * color_count)],
+				data[(z * actual_texture_width * color_count) + (x * color_count) + 1],
+				data[(z * actual_texture_width * color_count) + (x * color_count) + 2],
 				HeightFactor
 			);
 
 			v_y[1] = ConvertR8G8B8ToFloat(
-				data[(z * TextureWidth * color_count) + ((x + 1) * color_count)],
-				data[(z * TextureWidth * color_count) + ((x + 1) * color_count) + 1],
-				data[(z * TextureWidth * color_count) + ((x + 1) * color_count) + 2],
+				data[(z * actual_texture_width * color_count) + ((x + 1) * color_count)],
+				data[(z * actual_texture_width * color_count) + ((x + 1) * color_count) + 1],
+				data[(z * actual_texture_width * color_count) + ((x + 1) * color_count) + 2],
 				HeightFactor
 			);
 
 			v_y[2] = ConvertR8G8B8ToFloat(
-				data[((z + 1) * TextureWidth * color_count) + (x * color_count)],
-				data[((z + 1) * TextureWidth * color_count) + (x * color_count) + 1],
-				data[((z + 1) * TextureWidth * color_count) + (x * color_count) + 2],
+				data[((z + 1) * actual_texture_width * color_count) + (x * color_count)],
+				data[((z + 1) * actual_texture_width * color_count) + (x * color_count) + 1],
+				data[((z + 1) * actual_texture_width * color_count) + (x * color_count) + 2],
 				HeightFactor
 			);
 
 			v_y[3] = ConvertR8G8B8ToFloat(
-				data[((z + 1) * TextureWidth * color_count) + ((x + 1) * color_count)],
-				data[((z + 1) * TextureWidth * color_count) + ((x + 1) * color_count) + 1],
-				data[((z + 1) * TextureWidth * color_count) + ((x + 1) * color_count) + 2],
+				data[((z + 1) * actual_texture_width * color_count) + ((x + 1) * color_count)],
+				data[((z + 1) * actual_texture_width * color_count) + ((x + 1) * color_count) + 1],
+				data[((z + 1) * actual_texture_width * color_count) + ((x + 1) * color_count) + 2],
 				HeightFactor
 			);
 
-			OutModelData.VertexData.AddVertex(SVertexModel(v_x, v_y[0], v_z, 0, 0));
-			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[1], v_z, 1, 0));
-			OutModelData.VertexData.AddVertex(SVertexModel(v_x, v_y[2], v_z - 1, 0, 1));
-			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[3], v_z - 1, 1, 1));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x		 , v_y[0], v_z		 , 0, 0));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1.0f, v_y[1], v_z		 , 1, 0));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x		 , v_y[2], v_z - 1.0f, 0, 1));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1.0f, v_y[3], v_z - 1.0f, 1, 1));
 		}
 	}
 
@@ -143,8 +149,9 @@ void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, uint32_t T
 	JW_DELETE_ARRAY(data);
 }
 
-auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float HeightFactor) noexcept->SModelData
+auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float HeightFactor) noexcept->STerrainData
 {
+	STerrainData terrain_data{};
 	SModelData model_data{};
 
 	auto w_fn = StringToWstring(m_BaseDirectory + KAssetDirectory + FileName);
@@ -165,6 +172,9 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 		texture_size.Width = loaded_texture_desc.Width;
 		texture_size.Height = loaded_texture_desc.Height;
 
+		terrain_data.TerrainSizeX = texture_size.Width - 1;
+		terrain_data.TerrainSizeZ = texture_size.Height - 1;
+
 		// Modify texture description
 		loaded_texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
 		loaded_texture_desc.Usage = D3D11_USAGE_STAGING;
@@ -173,6 +183,11 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 		// Create texture for reading
 		ID3D11Texture2D* readable_texture{};
 		m_pDX->GetDevice()->CreateTexture2D(&loaded_texture_desc, nullptr, &readable_texture);
+
+		if (readable_texture == nullptr)
+		{
+			JW_ERROR_ABORT("Failed to create the readable texture.");
+		}
 
 		// Copy texture data
 		m_pDX->GetDeviceContext()->CopyResource(readable_texture, texture);
@@ -285,5 +300,135 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 	JW_RELEASE(texture);
 	JW_RELEASE(texture_srv);
 
-	return model_data;
+	// Create quad tree [2, 16] x [2, 16]
+	auto& tree = terrain_data.QuadTree;
+	tree.push_back(STerrainQuadTreeNode(0, -1));
+	tree[0].SizeX = terrain_data.TerrainSizeX;
+	tree[0].SizeZ = terrain_data.TerrainSizeZ;
+
+	BuildQuadTree(terrain_data, 0);
+	BuildQuadTreeMesh(terrain_data, model_data);
+
+	return terrain_data;
+}
+
+void JWTerrainGenerator::BuildQuadTree(STerrainData& TerrainData, int32_t CurrentNodeID) noexcept
+{
+	auto& tree = TerrainData.QuadTree;
+	auto size = static_cast<int32_t>(tree.size() - 1);
+	
+	if ((tree[CurrentNodeID].SizeX > KMaximumNodeSizeX) || (tree[CurrentNodeID].SizeZ > KMaximumNodeSizeZ) &&
+		(tree[CurrentNodeID].SizeX > KMinimumNodeSizeX) && (tree[CurrentNodeID].SizeZ > KMinimumNodeSizeZ))
+	{
+		// Add 4 children
+		tree.push_back(STerrainQuadTreeNode(size + 1, CurrentNodeID));
+		tree.push_back(STerrainQuadTreeNode(size + 2, CurrentNodeID));
+		tree.push_back(STerrainQuadTreeNode(size + 3, CurrentNodeID));
+		tree.push_back(STerrainQuadTreeNode(size + 4, CurrentNodeID));
+
+		// Save children's ID into current node.
+		tree[CurrentNodeID].ChildrenID[0] = size + 1;
+		tree[CurrentNodeID].ChildrenID[1] = size + 2;
+		tree[CurrentNodeID].ChildrenID[2] = size + 3;
+		tree[CurrentNodeID].ChildrenID[3] = size + 4;
+
+		auto& child_0 = tree[tree[CurrentNodeID].ChildrenID[0]];
+		auto& child_1 = tree[tree[CurrentNodeID].ChildrenID[1]];
+		auto& child_2 = tree[tree[CurrentNodeID].ChildrenID[2]];
+		auto& child_3 = tree[tree[CurrentNodeID].ChildrenID[3]];
+
+		child_0.SizeX = child_2.SizeX = tree[CurrentNodeID].SizeX / 2;
+		child_1.SizeX = child_3.SizeX = tree[CurrentNodeID].SizeX - child_0.SizeX;
+
+		child_0.SizeZ = child_1.SizeZ = tree[CurrentNodeID].SizeZ / 2;
+		child_2.SizeZ = child_3.SizeZ = tree[CurrentNodeID].SizeZ - child_0.SizeZ;
+
+		child_0.StartX = tree[CurrentNodeID].StartX;
+		child_0.StartZ = tree[CurrentNodeID].StartZ;
+
+		child_1.StartX = child_0.StartX + child_0.SizeX;
+		child_1.StartZ = child_0.StartZ;
+
+		child_2.StartX = child_0.StartX;
+		child_2.StartZ = child_0.StartZ + child_0.SizeZ;
+
+		child_3.StartX = child_0.StartX + child_0.SizeX;
+		child_3.StartZ = child_0.StartZ + child_0.SizeZ;
+
+		// Build tree recursively.
+		BuildQuadTree(TerrainData, size + 1);
+		BuildQuadTree(TerrainData, size + 2);
+		BuildQuadTree(TerrainData, size + 3);
+		BuildQuadTree(TerrainData, size + 4);
+	}
+}
+
+void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SModelData& ModelData) noexcept
+{
+	auto& tree = TerrainData.QuadTree;
+
+	for (auto& iter : tree)
+	{
+		if (iter.ChildrenID[0] == -1)
+		{
+			// If this is a leaf node, build vertices.
+			
+			// Vertex
+			uint32_t vertex_offset{ iter.StartZ * (TerrainData.TerrainSizeX - 1) * 4 + iter.StartX * 4 };
+			float max_y{};
+			float min_y{};
+			float max_x{};
+			float min_x{};
+			float max_z{};
+			float min_z{};
+
+			for (uint32_t z = iter.StartZ; z < iter.StartZ + iter.SizeZ; ++z)
+			{
+				for (uint32_t x = iter.StartX; x < iter.StartX + iter.SizeX; ++x)
+				{
+					vertex_offset = z * TerrainData.TerrainSizeX * 4 + x * 4;
+					
+					for (int i = 0; i < 4; ++i)
+					{
+						iter.VertexData.AddVertex(ModelData.VertexData.vVerticesModel[vertex_offset]);
+
+						max_y = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.y, max_y);
+						min_y = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.y, min_y);
+
+						max_x = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.x, max_x);
+						min_x = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.x, min_x);
+
+						max_z = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.z, max_z);
+						min_z = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.z, min_z);
+
+						++vertex_offset;
+					}
+				}
+			}
+
+			max_y = fabsf(max_y);
+			min_y = fabsf(min_y);
+			float radius = 1.4142135f; // SQRT(2)
+			radius = max(max_y, radius);
+			radius = max(min_y, radius);
+
+			iter.BoundingSphereCenterPosition = XMFLOAT3((min_x + max_x) / 2.0f, 0, (min_z + max_z) / 2.0f);
+			iter.BoundingSphereRadius = radius;
+			
+			// Index
+			for (uint32_t i = 0; i < iter.SizeX * iter.SizeZ; ++i)
+			{
+				iter.IndexData.vIndices.push_back(SIndexTriangle(i * 4	  , i * 4 + 1, i * 4 + 2));
+				iter.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
+			}
+
+			// Create vertex buffer
+			m_pDX->CreateStaticVertexBuffer(
+				iter.VertexData.GetVertexModelByteSize(), iter.VertexData.GetVertexModelPtrData(), &iter.VertexBuffer);
+
+			// Create index buffer
+			m_pDX->CreateIndexBuffer(iter.IndexData.GetByteSize(), iter.IndexData.GetPtrData(), &iter.IndexBuffer);
+
+		}
+	}
 }

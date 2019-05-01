@@ -485,6 +485,8 @@ namespace JWEngine
 		Model_Line2D,
 
 		Image_2D,
+
+		Terrain,
 	};
 
 	struct SModelNode
@@ -637,6 +639,50 @@ namespace JWEngine
 	{
 		SVertexDataModel VertexData{};
 		SIndexDataLine IndexData{};
+	};
+	
+	struct STerrainQuadTreeNode
+	{
+		STerrainQuadTreeNode() {};
+		STerrainQuadTreeNode(int32_t _NodeID, int32_t _ParentID = -1) : NodeID{ _NodeID }, ParentID{ _ParentID } {};
+
+		int32_t NodeID{};
+
+		int32_t ParentID{ -1 };
+		int32_t ChildrenID[4]{ -1, -1, -1, -1 };
+
+		uint32_t StartX{};
+		uint32_t StartZ{};
+		uint32_t SizeX{};
+		uint32_t SizeZ{};
+
+		SVertexDataModel	VertexData{};
+		SIndexDataTriangle	IndexData{};
+
+		ID3D11Buffer*		VertexBuffer{};
+		ID3D11Buffer*		IndexBuffer{};
+
+		XMFLOAT3	BoundingSphereCenterPosition{};
+		float		BoundingSphereRadius{};
+	};
+
+	struct STerrainData
+	{
+		VECTOR<STerrainQuadTreeNode>	QuadTree{};
+		uint32_t						TerrainSizeX{};
+		uint32_t						TerrainSizeZ{};
+
+		void Destroy()
+		{
+			if (QuadTree.size())
+			{
+				for (auto& iter : QuadTree)
+				{
+					JW_RELEASE(iter.VertexBuffer);
+					JW_RELEASE(iter.IndexBuffer);
+				}
+			}
+		}
 	};
 	
 	struct SVSCBSpace
