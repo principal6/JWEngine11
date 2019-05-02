@@ -53,7 +53,6 @@ float4 main(VS_OUTPUT_MODEL input) : SV_TARGET
 	if (InterpretFlag(FlagPS, FLAG_ID_USE_NORMAL_TEXTURE) == FLAG_ON)
 	{
 		float3 normal_map = TextureNormal.Sample(CurrentSampler, input.TexCoord).xyz;
-		//float3 normal_map = TextureNormal.SampleLevel(CurrentSampler, input.TexCoord, 2).xyz;
 
 		// Map normal from [0.0, 1.0] to [-1.0, 1.0]
 		normal_map = (normal_map * 2.0) - 1.0;
@@ -65,7 +64,6 @@ float4 main(VS_OUTPUT_MODEL input) : SV_TARGET
 	if (InterpretFlag(FlagPS, FLAG_ID_USE_DIFFUSE_TEXTURE) == FLAG_ON)
 	{
 		final_color = TextureDiffuse.Sample(CurrentSampler, input.TexCoord);
-		//final_color = TextureDiffuse.SampleLevel(CurrentSampler, input.TexCoord, 2);
 
 		// clip if alpha is less than 0.1
 		clip(final_color.a - 0.1);

@@ -7,23 +7,16 @@ namespace JWEngine
 	class JWEntity;
 	class JWECS;
 
-	static constexpr float KDefBoundingSphereRadius = 1.0f;
-
-	struct SBoundingSphereData
-	{
-		float		Radius{ KDefBoundingSphereRadius };
-		XMVECTOR	Center{};
-
-		// This value is used to calculate BoundingSphereCenterPosition.
-		XMVECTOR	Offset{};
-	};
-
 	struct SComponentPhysics
 	{
 		JWEntity*			PtrEntity{};
 		uint32_t			ComponentID{};
 
-		SBoundingSphereData	BoundingSphereData{};
+		// Unique bounding sphere that covers the whole entity
+		SBoundingSphereData			BoundingSphereData{};
+
+		// Subset of bounding spheres that cover a part of the entity
+		VECTOR<SBoundingSphereData>	SubBoundingSpheres{};
 	};
 
 	class JWSystemPhysics
@@ -43,6 +36,7 @@ namespace JWEngine
 		void HideBoundingSphere(JWEntity* pEntity) noexcept;
 		void UnhideBoundingSphere(JWEntity* pEntity) noexcept;
 		void UpdateBoundingSphere(JWEntity* pEntity) noexcept;
+		void SetSubBoundingSpheres(JWEntity* pEntity, const VECTOR<SBoundingSphereData>& vData) noexcept;
 
 		void Pick() noexcept;
 

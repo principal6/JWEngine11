@@ -19,7 +19,6 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// # ??			@ Height-map based terrain => quad-tree => frutum culling
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
 	// # Render		@ Sprite instancing
@@ -183,15 +182,19 @@ int main()
 	//ecs.DestroyEntityByName("directional_light");
 
 	{
+		auto terrain_data = ecs.SystemRender().GetSharedTerrain(0);
 		auto terrain = ecs.CreateEntity("terrain");
 		terrain->CreateComponentTransform()
 			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 			->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+		terrain->CreateComponentPhysics();
 		terrain->CreateComponentRender()
-			->SetTerrain(ecs.SystemRender().GetSharedTerrain(0))
+			->SetTerrain(terrain_data)
 			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(1))
 			->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2))
 			->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
+		ecs.SystemPhysics().SetBoundingSphere(terrain, terrain_data->WholeBoundingSphereRadius, terrain_data->WholeBoundingSphereOffset);
+		ecs.SystemPhysics().SetSubBoundingSpheres(terrain, terrain_data->SubBoundingSpheres);
 	}
 
 	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
@@ -244,10 +247,15 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 
 	if (VK == VK_F5)
 	{
-		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawCameras);
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawSubBoundingVolumes);
 	}
 
 	if (VK == VK_F6)
+	{
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawCameras);
+	}
+
+	if (VK == VK_F7)
 	{
 		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawViewFrustum);
 	}
@@ -391,20 +399,22 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	static WSTRING s_fps{};
 	static WSTRING s_anim_id{};
 	static WSTRING s_picked_entity{};
-	static WSTRING s_frustum_culled_entity_count{};
+	static WSTRING s_cull_count{};
+	static WSTRING s_cull_count2{};
 
 	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
 	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID, s_temp);
 	s_picked_entity = L"Picked Entity = " + StringToWstring(ecs.SystemPhysics().GetPickedEntityName());
-	s_frustum_culled_entity_count =
-		L"Frustum culled entities = " + ConvertIntToWSTRING(ecs.SystemRender().GetFrustumCulledEntityCount(), s_temp);
+	s_cull_count = L"Frustum culled entities = " + ConvertIntToWSTRING(ecs.SystemRender().GetFrustumCulledEntityCount(), s_temp);
+	s_cull_count2 = L"Frustum culled terrain nodes = " + ConvertIntToWSTRING(ecs.SystemRender().GetFrustumCulledTerrainNodeCount(), s_temp);
 
 	myGame.InstantText().BeginRendering();
 
 	myGame.InstantText().RenderText(s_fps, XMFLOAT2(10, 10), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_anim_id, XMFLOAT2(10, 30), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_picked_entity, XMFLOAT2(10, 50), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
-	myGame.InstantText().RenderText(s_frustum_culled_entity_count, XMFLOAT2(10, 70), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_cull_count, XMFLOAT2(10, 70), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_cull_count2, XMFLOAT2(10, 90), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 
 	myGame.InstantText().EndRendering();
 }

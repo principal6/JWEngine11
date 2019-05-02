@@ -51,10 +51,11 @@ namespace JWEngine
 	{
 		JWFlagSystemRenderOption_DrawNormals			= 0x01,
 		JWFlagSystemRenderOption_DrawBoundingVolumes	= 0x02,
-		JWFlagSystemRenderOption_DrawCameras			= 0x04,
-		JWFlagSystemRenderOption_DrawViewFrustum		= 0x08,
-		JWFlagSystemRenderOption_UseLighting			= 0x10,
-		JWFlagSystemRenderOption_UseFrustumCulling		= 0x20,
+		JWFlagSystemRenderOption_DrawSubBoundingVolumes = 0x04,
+		JWFlagSystemRenderOption_DrawCameras			= 0x08,
+		JWFlagSystemRenderOption_DrawViewFrustum		= 0x10,
+		JWFlagSystemRenderOption_UseLighting			= 0x20,
+		JWFlagSystemRenderOption_UseFrustumCulling		= 0x40,
 	};
 	using JWFlagSystemRenderOption = uint16_t;
 
@@ -280,6 +281,7 @@ namespace JWEngine
 		void ToggleWireFrame() noexcept;
 
 		auto GetFrustumCulledEntityCount() const noexcept { return m_FrustumCulledEntityCount; }
+		auto GetFrustumCulledTerrainNodeCount() const noexcept { return m_FrustumCulledTerrainNodeCount; }
 
 		// Object getter
 		auto& BoundingVolume() noexcept { return m_BoundingVolume; }
@@ -300,13 +302,14 @@ namespace JWEngine
 		inline void UpdateBoundingVolumes() noexcept;
 
 		// Frustum culling
-		auto IsCulledByViewFrustum(const SComponentRender* pRender) const noexcept->bool;
+		auto IsBSCulledByViewFrustum(const XMVECTOR& BSCenter, float BSRadius) const noexcept->bool;
+
+		void ExecuteComponent(SComponentRender& Component) noexcept;
 
 		void Draw(SComponentRender& Component) noexcept;
 		void DrawNormals(SComponentRender& Component) noexcept;
 		void DrawInstancedBoundingVolume() noexcept;
-		__declspec(deprecated("This function is deprecated. Use DrawInstancedBoundingVolume() instead."))
-			void DrawNonInstancedBoundingVolumes(SComponentRender& Component) noexcept;
+		void DrawNonInstancedBoundingVolumes(const XMVECTOR& Position, float Radius) noexcept;
 		
 	private:
 		VECTOR<SComponentRender*>	m_vpComponents;
@@ -341,6 +344,7 @@ namespace JWEngine
 		JWFlagSystemRenderOption	m_FlagSystemRenderOption{};
 		
 		mutable uint32_t			m_FrustumCulledEntityCount{};
+		mutable uint32_t			m_FrustumCulledTerrainNodeCount{};
 
 		// Terrain
 		JWTerrainGenerator			m_TerrainGenerator{};

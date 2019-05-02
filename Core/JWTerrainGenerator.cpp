@@ -206,6 +206,33 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 
 		if (are_vertices_loaded)
 		{
+			// Calculate the whole bounding sphere's radius and offset.
+			{
+				XMFLOAT3 max_pos{ -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX };
+				XMFLOAT3 min_pos{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX , D3D11_FLOAT32_MAX };
+
+				for (auto& iter : model_data.VertexData.vVerticesModel)
+				{
+					max_pos.x = max(max_pos.x, iter.Position.x);
+					max_pos.y = max(max_pos.y, iter.Position.y);
+					max_pos.z = max(max_pos.z, iter.Position.z);
+
+					min_pos.x = min(min_pos.x, iter.Position.x);
+					min_pos.y = min(min_pos.y, iter.Position.y);
+					min_pos.z = min(min_pos.z, iter.Position.z);
+				}
+
+				float dx = (max_pos.x - min_pos.x);
+				float dy = (max_pos.y - min_pos.y);
+				float dz = (max_pos.z - min_pos.z);
+				float radius = sqrtf(dx * dx + dy * dy + dz * dz) / 2.0f;
+
+				terrain_data.WholeBoundingSphereRadius = radius;
+				terrain_data.WholeBoundingSphereOffset.x = dx / 2.0f;
+				terrain_data.WholeBoundingSphereOffset.y = dy / 2.0f;
+				terrain_data.WholeBoundingSphereOffset.z = -dz / 2.0f;
+			}
+
 			// Index
 			for (uint32_t i = 0; i < (texture_size.Width - 1) * (texture_size.Height - 1); ++i)
 			{
@@ -378,12 +405,8 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 			
 			// Vertex
 			uint32_t vertex_offset{ iter.StartZ * (TerrainData.TerrainSizeX - 1) * 4 + iter.StartX * 4 };
-			float max_y{};
-			float min_y{};
-			float max_x{};
-			float min_x{};
-			float max_z{};
-			float min_z{};
+			XMFLOAT3 max_pos{ -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX };
+			XMFLOAT3 min_pos{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX , D3D11_FLOAT32_MAX };
 
 			for (uint32_t z = iter.StartZ; z < iter.StartZ + iter.SizeZ; ++z)
 			{
@@ -395,28 +418,30 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 					{
 						iter.VertexData.AddVertex(ModelData.VertexData.vVerticesModel[vertex_offset]);
 
-						max_y = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.y, max_y);
-						min_y = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.y, min_y);
+						max_pos.x = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.x, max_pos.x);
+						max_pos.y = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.y, max_pos.y);
+						max_pos.z = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.z, max_pos.z);
 
-						max_x = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.x, max_x);
-						min_x = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.x, min_x);
-
-						max_z = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.z, max_z);
-						min_z = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.z, min_z);
+						min_pos.x = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.x, min_pos.x);
+						min_pos.y = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.y, min_pos.y);
+						min_pos.z = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.z, min_pos.z);
 
 						++vertex_offset;
 					}
 				}
 			}
 
-			max_y = fabsf(max_y);
-			min_y = fabsf(min_y);
-			float radius = 1.4142135f; // SQRT(2)
-			radius = max(max_y, radius);
-			radius = max(min_y, radius);
+			float dx = (max_pos.x - min_pos.x);
+			float dy = (max_pos.y - min_pos.y);
+			float dz = (max_pos.z - min_pos.z);
+			float radius = sqrtf(dx * dx + dy * dy + dz * dz) / 2.0f;
 
-			iter.BoundingSphereCenterPosition = XMFLOAT3((min_x + max_x) / 2.0f, 0, (min_z + max_z) / 2.0f);
-			iter.BoundingSphereRadius = radius;
+			TerrainData.SubBoundingSpheres.push_back(SBoundingSphereData());
+			iter.SubBoundingSphereID = static_cast<uint32_t>(TerrainData.SubBoundingSpheres.size() - 1);
+
+			TerrainData.SubBoundingSpheres[iter.SubBoundingSphereID].Center = 
+				XMVectorSet(min_pos.x + dx / 2.0f, min_pos.y + dy / 2.0f, min_pos.z + dz / 2.0f, 1);
+			TerrainData.SubBoundingSpheres[iter.SubBoundingSphereID].Radius = radius;
 			
 			// Index
 			for (uint32_t i = 0; i < iter.SizeX * iter.SizeZ; ++i)

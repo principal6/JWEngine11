@@ -132,6 +132,16 @@ void JWSystemPhysics::UpdateBoundingSphere(JWEntity* pEntity) noexcept
 	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereData.Radius, physics->BoundingSphereData.Center);
 }
 
+void JWSystemPhysics::SetSubBoundingSpheres(JWEntity* pEntity, const VECTOR<SBoundingSphereData>& vData) noexcept
+{
+	if (pEntity == nullptr) { return; }
+	auto physics = pEntity->GetComponentPhysics();
+	if (physics == nullptr) { return; }
+
+	// Set sub-bounding-spheres
+	physics->SubBoundingSpheres = vData;
+}
+
 void JWSystemPhysics::Pick() noexcept
 {
 	CastPickingRay();

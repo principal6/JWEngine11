@@ -182,6 +182,7 @@ namespace JWEngine
 	static constexpr size_t KSizeTInvalid{ MAXSIZE_T };
 	static constexpr float KOrthographicNearZ{ 1.0f };
 	static constexpr float KOrthographicFarZ{ 100.0f };
+	static constexpr float KDefaultBoundingSphereRadius = 1.0f;
 
 	enum class EWorldMatrixCalculationOrder
 	{
@@ -641,20 +642,29 @@ namespace JWEngine
 		SIndexDataLine IndexData{};
 	};
 	
+	struct SBoundingSphereData
+	{
+		float		Radius{ KDefaultBoundingSphereRadius };
+		XMVECTOR	Center{};
+
+		// This value is used to calculate BoundingSphereCenterPosition.
+		XMVECTOR	Offset{};
+	};
+	
 	struct STerrainQuadTreeNode
 	{
 		STerrainQuadTreeNode() {};
 		STerrainQuadTreeNode(int32_t _NodeID, int32_t _ParentID = -1) : NodeID{ _NodeID }, ParentID{ _ParentID } {};
 
-		int32_t NodeID{};
+		int32_t		NodeID{};
 
-		int32_t ParentID{ -1 };
-		int32_t ChildrenID[4]{ -1, -1, -1, -1 };
+		int32_t		ParentID{ -1 };
+		int32_t		ChildrenID[4]{ -1, -1, -1, -1 };
 
-		uint32_t StartX{};
-		uint32_t StartZ{};
-		uint32_t SizeX{};
-		uint32_t SizeZ{};
+		uint32_t	StartX{};
+		uint32_t	StartZ{};
+		uint32_t	SizeX{};
+		uint32_t	SizeZ{};
 
 		SVertexDataModel	VertexData{};
 		SIndexDataTriangle	IndexData{};
@@ -666,11 +676,12 @@ namespace JWEngine
 		ID3D11Buffer*		NormalIndexBuffer{};
 		SLineModelData		NormalData{};
 
-		bool		IsMeshNode{ false };
-		XMFLOAT3	BoundingSphereCenterPosition{};
-		float		BoundingSphereRadius{};
-	};
+		bool				IsMeshNode{ false };
 
+		// This value is valid only when 'IsMeshNode' is 'true'
+		uint32_t			SubBoundingSphereID{};
+	};
+	
 	struct STerrainData
 	{
 		VECTOR<STerrainQuadTreeNode>	QuadTree{};
@@ -679,6 +690,11 @@ namespace JWEngine
 		uint32_t						TerrainSizeZ{};
 
 		uint32_t						TerrainMeshCount{};
+
+		XMFLOAT3						WholeBoundingSphereOffset{};
+		float							WholeBoundingSphereRadius{};
+
+		VECTOR<SBoundingSphereData>		SubBoundingSpheres{};
 
 		void Destroy()
 		{

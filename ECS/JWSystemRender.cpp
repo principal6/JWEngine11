@@ -435,6 +435,7 @@ PRIVATE inline void JWSystemRender::UpdateBoundingVolumes() noexcept
 void JWSystemRender::Execute() noexcept
 {
 	m_FrustumCulledEntityCount = 0;
+	m_FrustumCulledTerrainNodeCount = 0;
 
 	// Opaque drawing
 	m_pDX->SetBlendState(EBlendState::Opaque);
@@ -447,73 +448,11 @@ void JWSystemRender::Execute() noexcept
 			continue;
 		}
 
-		// Check flag - View frustum drawing
-		if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawViewFrustum))
-		{
-			if (iter->PtrEntity->GetEntityType() == EEntityType::ViewFrustum)
-			{
-				continue;
-			}
-		}
-
-		// Check flag - Camera drawing
-		auto camera = iter->PtrEntity->GetComponentCamera();
-		if (camera)
-		{
-			// This is a Camera entity.
-
-			if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawCameras))
-			{
-				continue;
-			}
-
-			if (camera->ComponentID == m_pECS->SystemCamera().GetCurrentCameraComponentID())
-			{
-				continue;
-			}
-		}
-
-		// Check flag - Frustum culling
-		if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_UseFrustumCulling)
-		{
-			if (IsCulledByViewFrustum(iter))
-			{
-				continue;
-			}
-		}
-
-		// Check flag - Rasterizer state
-		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_AlwaysSolidNoCull)
-		{
-			m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
-		}
-		else
-		{
-			m_pDX->SetRasterizerState(m_UniversalRasterizerState);
-		}
-
-		// Set depth stencil state for the component
-		m_pDX->SetDepthStencilState(iter->DepthStencilState);
-
-		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_UseGPUAnimation)
-		{
-			// GPU animation
-			// Real animationing occurs in vertex shader when Draw() is called.
-			AnimateOnGPU(*iter);
-		}
-		else
-		{
-			// CPU animation
-			AnimateOnCPU(*iter);
-		}
-
-		SetShaders(*iter);
-
-		Draw(*iter);
+		ExecuteComponent(*iter);
 	}
+	
 
-
-	// Bounding volume drawing
+	// Instanced bounding volume (Whole Bounding Sphere) drawing
 	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingVolumes)
 	{
 		DrawInstancedBoundingVolume();
@@ -531,85 +470,120 @@ void JWSystemRender::Execute() noexcept
 			continue;
 		}
 
-		// Check flag - View frustum drawing
-		if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawViewFrustum))
-		{
-			if (iter->PtrEntity->GetEntityType() == EEntityType::ViewFrustum)
-			{
-				continue;
-			}
-		}
-
-		// Check flag - Camera drawing
-		auto camera = iter->PtrEntity->GetComponentCamera();
-		if (camera)
-		{
-			// This is a Camera entity.
-
-			if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawCameras))
-			{
-				continue;
-			}
-
-			if (camera->ComponentID == m_pECS->SystemCamera().GetCurrentCameraComponentID())
-			{
-				continue;
-			}
-		}
-
-		// Check flag - Frustum culling
-		if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_UseFrustumCulling)
-		{
-			if (IsCulledByViewFrustum(iter))
-			{
-				continue;
-			}
-		}
-
-		// Check flag - Rasterizer state
-		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_AlwaysSolidNoCull)
-		{
-			m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
-		}
-		else
-		{
-			m_pDX->SetRasterizerState(m_UniversalRasterizerState);
-		}
-
-		// Set depth stencil state for the component
-		m_pDX->SetDepthStencilState(iter->DepthStencilState);
-
-		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_UseGPUAnimation)
-		{
-			// GPU animation
-			// Real animationing occurs in vertex shader when Draw() is called.
-			AnimateOnGPU(*iter);
-		}
-		else
-		{
-			// CPU animation
-			AnimateOnCPU(*iter);
-		}
-
-		SetShaders(*iter);
-
-		Draw(*iter);
+		ExecuteComponent(*iter);
 	}
 }
 
-PRIVATE auto JWSystemRender::IsCulledByViewFrustum(const SComponentRender* pRender) const noexcept->bool
+PRIVATE void JWSystemRender::ExecuteComponent(SComponentRender& Component) noexcept
 {
-	auto physics = pRender->PtrEntity->GetComponentPhysics();
-	if (physics == nullptr)
+	// Check transparency
+	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency)
 	{
-		return false;
+		return;
 	}
 
+	// Check flag - View frustum drawing
+	if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawViewFrustum))
+	{
+		if (Component.PtrEntity->GetEntityType() == EEntityType::ViewFrustum)
+		{
+			return;
+		}
+	}
+
+	// Check flag - Camera drawing
+	auto camera = Component.PtrEntity->GetComponentCamera();
+	if (camera)
+	{
+		// This is a Camera entity.
+
+		if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawCameras))
+		{
+			return;
+		}
+
+		if (camera->ComponentID == m_pECS->SystemCamera().GetCurrentCameraComponentID())
+		{
+			return;
+		}
+	}
+
+	// Check flag - Frustum culling
+	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_UseFrustumCulling)
+	{
+		auto physics = Component.PtrEntity->GetComponentPhysics();
+		if (physics)
+		{
+			if (IsBSCulledByViewFrustum(physics->BoundingSphereData.Center, physics->BoundingSphereData.Radius))
+			{
+				// Entity is culled!
+				++m_FrustumCulledEntityCount;
+
+				return;
+			}
+		}
+	}
+
+	// Check flag - Rasterizer state
+	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_AlwaysSolidNoCull)
+	{
+		m_pDX->SetRasterizerState(ERasterizerState::SolidNoCull);
+	}
+	else
+	{
+		m_pDX->SetRasterizerState(m_UniversalRasterizerState);
+	}
+
+	// Set depth stencil state for the component
+	m_pDX->SetDepthStencilState(Component.DepthStencilState);
+
+	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseGPUAnimation)
+	{
+		// GPU animation
+		// Real animationing occurs in vertex shader when Draw() is called.
+		AnimateOnGPU(Component);
+	}
+	else
+	{
+		// CPU animation
+		AnimateOnCPU(Component);
+	}
+
+	SetShaders(Component);
+
+	Draw(Component);
+
+	// Draw sub-bounding-spheres
+	if ((m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingVolumes) &&
+		(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawSubBoundingVolumes))
+	{
+		auto physics = Component.PtrEntity->GetComponentPhysics();
+		if (physics)
+		{
+			if (physics->SubBoundingSpheres.size())
+			{
+				// Sub-bounding-spheres get drawn here... (NOT INSTANCED!)
+
+				// Set RS State
+				m_pDX->SetRasterizerState(ERasterizerState::WireFrame);
+
+				for (auto& iter : physics->SubBoundingSpheres)
+				{
+					DrawNonInstancedBoundingVolumes(iter.Center, iter.Radius);
+				}
+			}
+		}
+	}
+}
+
+PRIVATE auto JWSystemRender::IsBSCulledByViewFrustum(const XMVECTOR& BSCenter, float BSRadius) const noexcept->bool
+{
+	const auto& center_pos = BSCenter;
+	const auto& radius = BSRadius;
+
+	// Get view frustum
 	m_pECS->SystemCamera().CaptureViewFrustum();
 	auto frustum = m_pECS->SystemCamera().GetCapturedViewFrustum();
-
-	auto& center_pos = physics->BoundingSphereData.Center;
-	auto radius = physics->BoundingSphereData.Radius;
 
 	// Left plane
 	auto lp_v0 = XMVector3Normalize(frustum.FLU - frustum.NLU);
@@ -622,9 +596,7 @@ PRIVATE auto JWSystemRender::IsCulledByViewFrustum(const SComponentRender* pRend
 
 	if (XMVector3Greater(distance, XMVectorZero()))
 	{
-		// Entity is out of the view frustum.
-		++m_FrustumCulledEntityCount;
-
+		// Bounding sphere is out of the view frustum.
 		return true;
 	}
 
@@ -639,9 +611,7 @@ PRIVATE auto JWSystemRender::IsCulledByViewFrustum(const SComponentRender* pRend
 
 	if (XMVector3Greater(distance, XMVectorZero()))
 	{
-		// Entity is out of the view frustum.
-		++m_FrustumCulledEntityCount;
-
+		// Bounding sphere is out of the view frustum.
 		return true;
 	}
 
@@ -688,48 +658,37 @@ void JWSystemRender::DrawInstancedBoundingVolume() noexcept
 		m_BoundingVolume.ModelData.IndexData.GetCount(), m_BoundingVolume.ModelData.VertexData.GetInstanceCount(), 0, 0, 0);
 }
 
-void JWSystemRender::DrawNonInstancedBoundingVolumes(SComponentRender& Component) noexcept
+void JWSystemRender::DrawNonInstancedBoundingVolumes(const XMVECTOR& Position, float Radius) noexcept
 {
-	auto entity = Component.PtrEntity;
-	auto transform = entity->GetComponentTransform();
-	auto physics = entity->GetComponentPhysics();
+	auto world_matrix{ XMMatrixScaling(Radius, Radius, Radius) };
+	world_matrix *= XMMatrixTranslationFromVector(Position);
 
-	if (physics)
-	{
-		assert(transform);
+	// Set VS Base
+	m_pDX->SetVS(EVertexShader::VSBase);
 
-		const auto& position = transform->Position;
-		const auto& radius = physics->BoundingSphereData.Radius;
-		auto world_matrix{ XMMatrixScaling(radius, radius, radius) };
-		world_matrix *= XMMatrixTranslationFromVector(position);
+	// Update VS constant buffer
+	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
+	m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
+	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
-		// Set VS Base
-		m_pDX->SetVS(EVertexShader::VSBase);
+	// Set PS Base
+	m_pDX->SetPS(EPixelShader::PSBase);
 
-		// Update VS constant buffer
-		m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
-		m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
-		m_pDX->UpdateVSCBSpace(m_VSCBSpace);
+	// Update PS constant buffer
+	m_pDX->UpdatePSCBFlags(0);
 
-		// Set PS Base
-		m_pDX->SetPS(EPixelShader::PSBase);
+	// Set IA primitive topology
+	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
-		// Update PS constant buffer
-		m_pDX->UpdatePSCBFlags(0);
+	// Set IA vertex buffer
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, m_BoundingVolume.ModelVertexBuffer,
+		m_BoundingVolume.ModelData.VertexData.GetPtrStrides(), m_BoundingVolume.ModelData.VertexData.GetPtrOffsets());
 
-		// Set IA primitive topology
-		m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+	// Set IA index buffer
+	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_BoundingVolume.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-		// Set IA vertex buffer
-		m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, m_BoundingVolume.ModelVertexBuffer,
-			m_BoundingVolume.ModelData.VertexData.GetPtrStrides(), m_BoundingVolume.ModelData.VertexData.GetPtrOffsets());
-
-		// Set IA index buffer
-		m_pDX->GetDeviceContext()->IASetIndexBuffer(m_BoundingVolume.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-		// Draw
-		m_pDX->GetDeviceContext()->DrawIndexed(m_BoundingVolume.ModelData.IndexData.GetCount(), 0, 0);
-	}
+	// Draw
+	m_pDX->GetDeviceContext()->DrawIndexed(m_BoundingVolume.ModelData.IndexData.GetCount(), 0, 0);
 }
 
 void JWSystemRender::AnimateOnGPU(SComponentRender& Component) noexcept
@@ -1119,6 +1078,8 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	auto& image = Component.PtrImage;
 	auto& line = Component.PtrLine;
 
+	bool should_cull{ false };
+
 	// Set OM blend state
 	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency)
 	{
@@ -1216,15 +1177,34 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 		{
 			if (iter.IsMeshNode)
 			{
-				// Set IA vertex buffer
-				ptr_device_context->IASetVertexBuffers(
-					0, 1, &iter.VertexBuffer, iter.VertexData.GetPtrStrides(), iter.VertexData.GetPtrOffsets());
+				should_cull = false;
 
-				// Set IA index buffer
-				ptr_device_context->IASetIndexBuffer(iter.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+				if (Component.PtrTerrain->SubBoundingSpheres.size())
+				{
+					if (IsBSCulledByViewFrustum(Component.PtrTerrain->SubBoundingSpheres[iter.SubBoundingSphereID].Center,
+						Component.PtrTerrain->SubBoundingSpheres[iter.SubBoundingSphereID].Radius))
+					{
+						should_cull = true;
 
-				// Draw indexed
-				ptr_device_context->DrawIndexed(iter.IndexData.GetCount(), 0, 0);
+						// Node is culled!
+						++m_FrustumCulledTerrainNodeCount;
+					}
+				}
+				
+				if (should_cull == false)
+				{
+					// This quad tree is not culled. So draw it!
+
+					// Set IA vertex buffer
+					ptr_device_context->IASetVertexBuffers(
+						0, 1, &iter.VertexBuffer, iter.VertexData.GetPtrStrides(), iter.VertexData.GetPtrOffsets());
+
+					// Set IA index buffer
+					ptr_device_context->IASetIndexBuffer(iter.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+					// Draw indexed
+					ptr_device_context->DrawIndexed(iter.IndexData.GetCount(), 0, 0);
+				}
 			}
 		}
 		break;
