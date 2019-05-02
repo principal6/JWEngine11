@@ -457,7 +457,6 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 			// Create index buffer
 			m_pDX->CreateIndexBuffer(iter.IndexData.GetByteSize(), iter.IndexData.GetPtrData(), &iter.IndexBuffer);
 
-
 			// Calculate Normal vector representations
 			// Calculate normal line positions
 			size_t iterator_vertex{};

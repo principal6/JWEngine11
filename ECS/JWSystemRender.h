@@ -252,7 +252,7 @@ namespace JWEngine
 
 		auto CreateSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*;
 		auto CreateDynamicSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*;
-		auto CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) noexcept->JWModel*;
+		auto CreateSharedModelFromFile(ESharedModelType Type, const STRING& FileName, const WSTRING& OverrideTextureFN = L"") noexcept->JWModel*;
 		auto GetSharedModel(size_t Index) noexcept->JWModel*;
 
 		auto CreateSharedLineModel() noexcept->JWLineModel*;

@@ -181,19 +181,21 @@ void JWSystemRender::CreateSharedTextureFromSharedModel(size_t ModelIndex) noexc
 	auto& texture_srv = m_vSharedTextureData[m_vSharedTextureData.size() - 1].TextureSRV;
 	auto& texture_size = m_vSharedTextureData[m_vSharedTextureData.size() - 1].TextureSize;
 
+	auto& texture_fn = ptr_model->GetTextureFileName();
+
 	bool IsDDS{ false };
-	if (ptr_model->GetTextureFileName().find(L".dds") != WSTRING::npos)
+	if (texture_fn.find(L".dds") != WSTRING::npos)
 	{
 		IsDDS = true;
 	}
 
 	if (IsDDS)
 	{
-		CreateDDSTextureFromFile(m_pDX->GetDevice(), ptr_model->GetTextureFileName().c_str(), nullptr, &texture_srv, 0);
+		CreateDDSTextureFromFile(m_pDX->GetDevice(), texture_fn.c_str(), (ID3D11Resource**)&texture, &texture_srv, 0);
 	}
 	else
 	{
-		CreateWICTextureFromFile(m_pDX->GetDevice(), ptr_model->GetTextureFileName().c_str(), nullptr, &texture_srv, 0);
+		CreateWICTextureFromFile(m_pDX->GetDevice(), texture_fn.c_str(), (ID3D11Resource**)&texture, &texture_srv, 0);
 	}
 
 	if (texture_srv == nullptr)
@@ -244,7 +246,7 @@ auto JWSystemRender::CreateDynamicSharedModelFromModelData(const SModelData& Mod
 	return &current_model;
 }
 
-auto JWSystemRender::CreateSharedModelFromFile(ESharedModelType Type, STRING FileName) noexcept->JWModel*
+auto JWSystemRender::CreateSharedModelFromFile(ESharedModelType Type, const STRING& FileName, const WSTRING& OverrideTextureFN) noexcept->JWModel*
 {
 	m_vSharedModel.push_back(JWModel());
 
@@ -266,6 +268,11 @@ auto JWSystemRender::CreateSharedModelFromFile(ESharedModelType Type, STRING Fil
 		break;
 	default:
 		break;
+	}
+
+	if (OverrideTextureFN.length())
+	{
+		current_model.ModelData.TextureFileNameW = StringToWstring(m_BaseDirectory + KAssetDirectory) + OverrideTextureFN;
 	}
 
 	return &current_model;

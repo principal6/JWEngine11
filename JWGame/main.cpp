@@ -34,7 +34,7 @@ int main()
 		// SharedModel
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.obj"); // Shared Model #0
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.obj"); // Shared Model #1
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X") // Shared Model #2
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X", L"Ezreal_mip.dds") // Shared Model #2
 			->AddAnimationFromFile("Ezreal_Punching.X")
 			->AddAnimationFromFile("Ezreal_Walk.X")
 			->BakeAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
@@ -80,7 +80,7 @@ int main()
 		ecs.SystemRender().CreateAnimationTextureFromFile("baked_animation.dds"); //AnimationTexture #0
 	}
 	{
-		ecs.SystemRender().CreateSharedTerrainFromFile("heightmap_rgb_test_20x15.tif", 20.0f); // Shared Terrain #0
+		ecs.SystemRender().CreateSharedTerrainFromFile("heightmap_gray_128.tif", 20.0f); // Shared Terrain #0
 	}
 
 	ecs.SystemRender().SetSystemRenderFlag(
