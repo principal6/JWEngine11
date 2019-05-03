@@ -339,9 +339,18 @@ auto JWSystemRender::GetSharedImage2D(size_t Index) noexcept->JWImage*
 	return result;
 }
 
-auto JWSystemRender::CreateSharedTerrainFromFile(const STRING& FileName, float HeightFactor) noexcept->STerrainData*
+auto JWSystemRender::CreateSharedTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor) noexcept->STerrainData*
 {
-	auto new_terrain = m_TerrainGenerator.GenerateTerrainFromFile(FileName, HeightFactor);
+	auto new_terrain = m_TerrainGenerator.GenerateTerrainFromHeightMap(HeightMapFN, HeightFactor);
+
+	m_vSharedTerrain.push_back(new_terrain);
+
+	return &m_vSharedTerrain[m_vSharedTerrain.size() - 1];
+}
+
+auto JWSystemRender::CreateSharedTerrainFromTRN(const STRING& FileName) noexcept->STerrainData*
+{
+	auto new_terrain = m_TerrainGenerator.LoadTerrainFromTRN(FileName);
 
 	m_vSharedTerrain.push_back(new_terrain);
 
@@ -1182,7 +1191,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	case ERenderType::Terrain:
 		for (auto& iter : Component.PtrTerrain->QuadTree)
 		{
-			if (iter.IsMeshNode)
+			if (iter.HasMeshes)
 			{
 				should_cull = false;
 
@@ -1272,7 +1281,7 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 	{
 		for (auto& iter : terrain->QuadTree)
 		{
-			if (iter.IsMeshNode)
+			if (iter.HasMeshes)
 			{
 				// Set IA vertex buffer
 				m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &iter.NormalVertexBuffer,

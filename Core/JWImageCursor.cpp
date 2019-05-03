@@ -25,8 +25,8 @@ void JWImageCursor::Create(JWDX& DX, XMFLOAT2 WindowSize) noexcept
 		m_VertexData.AddVertex(SVertexModel(0, -1, 0, 0, 1));
 		m_VertexData.AddVertex(SVertexModel(1, -1, 0, 1, 1));
 
-		m_IndexData.vIndices.push_back(SIndexTriangle(0, 1, 2));
-		m_IndexData.vIndices.push_back(SIndexTriangle(1, 3, 2));
+		m_IndexData.vFaces.push_back(SIndexTriangle(0, 1, 2));
+		m_IndexData.vFaces.push_back(SIndexTriangle(1, 3, 2));
 
 		// Create vertex buffer
 		m_pDX->CreateDynamicVertexBuffer(m_VertexData.GetVertexModelByteSize(), m_VertexData.GetVertexModelPtrData(), &m_VertexBuffer);

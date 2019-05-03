@@ -261,7 +261,8 @@ namespace JWEngine
 		auto CreateSharedImage2D(SPositionInt Position, SSizeInt Size) noexcept->JWImage*;
 		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
 
-		auto CreateSharedTerrainFromFile(const STRING& FileName, float HeightFactor) noexcept->STerrainData*;
+		auto CreateSharedTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor) noexcept->STerrainData*;
+		auto CreateSharedTerrainFromTRN(const STRING& FileName) noexcept->STerrainData*;
 		auto GetSharedTerrain(size_t Index) noexcept->STerrainData*;
 
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
@@ -286,6 +287,7 @@ namespace JWEngine
 		// Object getter
 		auto& BoundingVolume() noexcept { return m_BoundingVolume; }
 		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
+		auto& TerrainGenerator() noexcept { return m_TerrainGenerator; }
 
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;

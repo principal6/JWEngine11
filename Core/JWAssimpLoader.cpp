@@ -92,7 +92,7 @@ auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) 
 
 					if (indices_count == 3)
 					{
-						result.IndexData.vIndices.emplace_back(
+						result.IndexData.vFaces.emplace_back(
 							indices_offset + indices[0],
 							indices_offset + indices[1],
 							indices_offset + indices[2]
@@ -271,7 +271,7 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const STRING Directory
 				auto& indices = ai_mesh->mFaces[iterator_faces].mIndices;
 
 				assert(indices_count == 3);
-				OutModelData.IndexData.vIndices.emplace_back(
+				OutModelData.IndexData.vFaces.emplace_back(
 					indices_offset + indices[0],
 					indices_offset + indices[1],
 					indices_offset + indices[2]

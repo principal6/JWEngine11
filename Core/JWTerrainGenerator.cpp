@@ -1,5 +1,6 @@
 #include "JWTerrainGenerator.h"
 #include "JWDX.h"
+#include "../TinyXml2/tinyxml2.h"
 
 using namespace JWEngine;
 
@@ -88,9 +89,9 @@ PRIVATE void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture,
 			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1.0f, v_y[3], v_z - 1.0f, 1, 1));
 
 			v_map_id[0] = x + z * TextureWidth;
-			v_map_id[1] = x + 1 + (z + 1) * TextureWidth;
+			v_map_id[1] = (x + 1) + z * TextureWidth;
 			v_map_id[2] = x + (z + 1) * TextureWidth;
-			v_map_id[3] = x + 1 + (z + 1) * TextureWidth;
+			v_map_id[3] = (x + 1) + (z + 1) * TextureWidth;
 
 			OutVertexMap[v_map_id[0]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 4));
 			OutVertexMap[v_map_id[1]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 3));
@@ -157,9 +158,9 @@ PRIVATE void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, ui
 			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[3], v_z - 1, 1, 1));
 
 			v_map_id[0] = x + z * TextureWidth;
-			v_map_id[1] = x + 1 + (z + 1) * TextureWidth;
+			v_map_id[1] = (x + 1) + z * TextureWidth;
 			v_map_id[2] = x + (z + 1) * TextureWidth;
-			v_map_id[3] = x + 1 + (z + 1) * TextureWidth;
+			v_map_id[3] = (x + 1) + (z + 1) * TextureWidth;
 
 			OutVertexMap[v_map_id[0]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 4));
 			OutVertexMap[v_map_id[1]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 3));
@@ -171,13 +172,13 @@ PRIVATE void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, ui
 	JW_DELETE_ARRAY(data);
 }
 
-auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float HeightFactor) noexcept->STerrainData
+auto JWTerrainGenerator::GenerateTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor) noexcept->STerrainData
 {
 	SVertexMap vertex_map{};
 	STerrainData terrain_data{};
 	SModelData model_data{};
 
-	auto w_fn = StringToWstring(m_BaseDirectory + KAssetDirectory + FileName);
+	auto w_fn = StringToWstring(m_BaseDirectory + KAssetDirectory + HeightMapFN);
 
 	STextureData texture_data{};
 	auto& texture = texture_data.Texture;
@@ -197,6 +198,7 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 
 		terrain_data.TerrainSizeX = texture_size.Width - 1;
 		terrain_data.TerrainSizeZ = texture_size.Height - 1;
+		terrain_data.HeightFactor = HeightFactor;
 
 		// Modify texture description
 		loaded_texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
@@ -263,12 +265,12 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 			// Index
 			for (uint32_t i = 0; i < (texture_size.Width - 1) * (texture_size.Height - 1); ++i)
 			{
-				model_data.IndexData.vIndices.push_back(SIndexTriangle(i * 4	, i * 4 + 1, i * 4 + 2));
-				model_data.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
+				model_data.IndexData.vFaces.push_back(SIndexTriangle(i * 4	, i * 4 + 1, i * 4 + 2));
+				model_data.IndexData.vFaces.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
 			}
 
 			// Compute normals, tangents, bitangents
-			auto & v_indices = model_data.IndexData.vIndices;
+			auto & v_indices = model_data.IndexData.vFaces;
 			auto & v_vertices = model_data.VertexData.vVerticesModel;
 			XMVECTOR v_0{}, v_1{}, v_2{};
 			XMVECTOR e_0{}, e_1{}, e_2{};
@@ -386,6 +388,281 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 	return terrain_data;
 }
 
+void JWTerrainGenerator::SaveTerrainAsTRN(const STRING& TRNFileName, const STerrainData& TerrainData) noexcept
+{
+	using namespace tinyxml2;
+	tinyxml2::XMLDocument doc{};
+
+	auto root = doc.NewElement("jw_terrain_root");
+
+	auto terrain_info = doc.NewElement("terrain_info");
+	terrain_info->SetAttribute("size_x", TerrainData.TerrainSizeX);
+	terrain_info->SetAttribute("size_z", TerrainData.TerrainSizeZ);
+	terrain_info->SetAttribute("height_factor", TerrainData.HeightFactor);
+	terrain_info->SetAttribute("whole_bounding_sphere_offset_x", TerrainData.WholeBoundingSphereOffset.x);
+	terrain_info->SetAttribute("whole_bounding_sphere_offset_y", TerrainData.WholeBoundingSphereOffset.y);
+	terrain_info->SetAttribute("whole_bounding_sphere_offset_z", TerrainData.WholeBoundingSphereOffset.z);
+	terrain_info->SetAttribute("whole_bounding_sphere_radius", TerrainData.WholeBoundingSphereRadius);
+
+	auto quad_tree = doc.NewElement("quad_tree");
+	quad_tree->SetAttribute("node_count", static_cast<int>(TerrainData.QuadTree.size()));
+
+	for (auto& iter : TerrainData.QuadTree)
+	{
+		auto node = doc.NewElement("node");
+		node->SetAttribute("node_id", iter.NodeID);
+		node->SetAttribute("parent_id", iter.ParentID);
+		node->SetAttribute("children_id_0", iter.ChildrenID[0]);
+		node->SetAttribute("children_id_1", iter.ChildrenID[1]);
+		node->SetAttribute("children_id_2", iter.ChildrenID[2]);
+		node->SetAttribute("children_id_3", iter.ChildrenID[3]);
+		node->SetAttribute("start_x", iter.StartX);
+		node->SetAttribute("start_z", iter.StartZ);
+		node->SetAttribute("size_x", iter.SizeX);
+		node->SetAttribute("size_z", iter.SizeZ);
+		node->SetAttribute("has_meshes", iter.HasMeshes);
+		node->SetAttribute("sub_bounding_sphere_id", iter.SubBoundingSphereID);
+
+		if (iter.HasMeshes)
+		{
+			auto vertices = doc.NewElement("vertices");
+			vertices->SetAttribute("vertex_count", static_cast<int>(iter.VertexData.vVerticesModel.size()));
+			for (auto& vertex_iter : iter.VertexData.vVerticesModel)
+			{
+				auto vertex = doc.NewElement("vertex");
+
+				auto position = doc.NewElement("position");
+				position->SetAttribute("x", vertex_iter.Position.x);
+				position->SetAttribute("y", vertex_iter.Position.y);
+				position->SetAttribute("z", vertex_iter.Position.z);
+
+				auto texcoord = doc.NewElement("texcoord");
+				texcoord->SetAttribute("u", vertex_iter.TexCoord.x);
+				texcoord->SetAttribute("v", vertex_iter.TexCoord.y);
+				
+				auto normal = doc.NewElement("normal");
+				normal->SetAttribute("x", vertex_iter.Normal.x);
+				normal->SetAttribute("y", vertex_iter.Normal.y);
+				normal->SetAttribute("z", vertex_iter.Normal.z);
+
+				auto tangent = doc.NewElement("tangent");
+				tangent->SetAttribute("x", vertex_iter.Tangent.x);
+				tangent->SetAttribute("y", vertex_iter.Tangent.y);
+				tangent->SetAttribute("z", vertex_iter.Tangent.z);
+				
+				auto bitangent = doc.NewElement("bitangent");
+				bitangent->SetAttribute("x", vertex_iter.Bitangent.x);
+				bitangent->SetAttribute("y", vertex_iter.Bitangent.y);
+				bitangent->SetAttribute("z", vertex_iter.Bitangent.z);
+				
+				vertex->InsertEndChild(position);
+				vertex->InsertEndChild(texcoord);
+				vertex->InsertEndChild(normal);
+				vertex->InsertEndChild(tangent);
+				vertex->InsertEndChild(bitangent);
+
+				vertices->InsertEndChild(vertex);
+			}
+
+			auto faces = doc.NewElement("faces");
+			faces->SetAttribute("face_count", static_cast<int>(iter.IndexData.vFaces.size()));
+			for (auto& face_iter : iter.IndexData.vFaces)
+			{
+				auto face = doc.NewElement("face");
+				face->SetAttribute("_0", static_cast<int>(face_iter._0));
+				face->SetAttribute("_1", static_cast<int>(face_iter._1));
+				face->SetAttribute("_2", static_cast<int>(face_iter._2));
+				
+				faces->InsertEndChild(face);
+			}
+
+			node->InsertEndChild(vertices);
+			node->InsertEndChild(faces);
+		}
+		
+		quad_tree->InsertEndChild(node);
+	}
+
+	auto sub_bounding_spheres = doc.NewElement("sub_bounding_spheres");
+	sub_bounding_spheres->SetAttribute("count", static_cast<int>(TerrainData.SubBoundingSpheres.size()));
+
+	for (auto& iter : TerrainData.SubBoundingSpheres)
+	{
+		auto sub_bounding_sphere = doc.NewElement("sub_bounding_sphere");
+
+		auto center = doc.NewElement("center");
+		center->SetAttribute("x", XMVectorGetX(iter.Center));
+		center->SetAttribute("y", XMVectorGetY(iter.Center));
+		center->SetAttribute("z", XMVectorGetZ(iter.Center));
+
+		auto offset = doc.NewElement("offset");
+		offset->SetAttribute("x", XMVectorGetX(iter.Offset));
+		offset->SetAttribute("y", XMVectorGetY(iter.Offset));
+		offset->SetAttribute("z", XMVectorGetZ(iter.Offset));
+
+		auto radius = doc.NewElement("radius");
+		radius->SetText(iter.Radius);
+
+		sub_bounding_sphere->InsertEndChild(center);
+		sub_bounding_sphere->InsertEndChild(offset);
+		sub_bounding_sphere->InsertEndChild(radius);
+
+		sub_bounding_spheres->InsertEndChild(sub_bounding_sphere);
+	}
+
+	root->InsertEndChild(terrain_info);
+	root->InsertEndChild(quad_tree);
+	root->InsertEndChild(sub_bounding_spheres);
+	
+	doc.InsertFirstChild(root);
+	doc.SaveFile((m_BaseDirectory + KAssetDirectory + TRNFileName).c_str());
+}
+
+auto JWTerrainGenerator::LoadTerrainFromTRN(const STRING& TRNFileName) noexcept->STerrainData
+{
+	STerrainData terrain_data{};
+	SModelData model_data{};
+
+	using namespace tinyxml2;
+	tinyxml2::XMLDocument doc{};
+	doc.LoadFile((m_BaseDirectory + KAssetDirectory + TRNFileName).c_str());
+
+	auto root = doc.FirstChildElement();
+
+	auto terrain_info = root->FirstChildElement();
+	terrain_data.TerrainSizeX = terrain_info->IntAttribute("size_x");
+	terrain_data.TerrainSizeZ = terrain_info->IntAttribute("size_z");
+	terrain_data.HeightFactor = terrain_info->FloatAttribute("height_factor");
+	terrain_data.WholeBoundingSphereOffset.x = terrain_info->FloatAttribute("whole_bounding_sphere_offset_x");
+	terrain_data.WholeBoundingSphereOffset.y = terrain_info->FloatAttribute("whole_bounding_sphere_offset_y");
+	terrain_data.WholeBoundingSphereOffset.z = terrain_info->FloatAttribute("whole_bounding_sphere_offset_z");
+	terrain_data.WholeBoundingSphereRadius = terrain_info->FloatAttribute("whole_bounding_sphere_radius");
+
+	auto quad_tree = terrain_info->NextSiblingElement();
+	auto node_count = quad_tree->IntAttribute("node_count");
+	if (node_count)
+	{
+		auto loading_node = quad_tree->FirstChildElement();
+
+		for (int i = 0; i < node_count; ++i)
+		{
+			terrain_data.QuadTree.push_back(STerrainQuadTreeNode());
+			auto& current_node = terrain_data.QuadTree[terrain_data.QuadTree.size() - 1];
+
+			current_node.NodeID = loading_node->IntAttribute("node_id");
+			current_node.ParentID = loading_node->IntAttribute("parent_id");
+			current_node.ChildrenID[0] = loading_node->IntAttribute("children_id_0");
+			current_node.ChildrenID[1] = loading_node->IntAttribute("children_id_1");
+			current_node.ChildrenID[2] = loading_node->IntAttribute("children_id_2");
+			current_node.ChildrenID[3] = loading_node->IntAttribute("children_id_3");
+			current_node.StartX = loading_node->IntAttribute("start_x");
+			current_node.StartZ = loading_node->IntAttribute("start_z");
+			current_node.SizeX = loading_node->IntAttribute("size_x");
+			current_node.SizeZ = loading_node->IntAttribute("size_z");
+			current_node.HasMeshes = loading_node->BoolAttribute("has_meshes");
+			current_node.SubBoundingSphereID = loading_node->IntAttribute("sub_bounding_sphere_id");
+
+			if (current_node.HasMeshes)
+			{
+				auto vertices = loading_node->FirstChildElement();
+				auto vertex_count = vertices->IntAttribute("vertex_count");
+				auto loading_vertex = vertices->FirstChildElement();
+				for (int i = 0; i < vertex_count; ++i)
+				{
+					SVertexModel current_vertex{};
+
+					auto position = loading_vertex->FirstChildElement();
+					current_vertex.Position.x = position->FloatAttribute("x");
+					current_vertex.Position.y = position->FloatAttribute("y");
+					current_vertex.Position.z = position->FloatAttribute("z");
+
+					auto texcoord = position->NextSiblingElement();
+					current_vertex.TexCoord.x = texcoord->FloatAttribute("u");
+					current_vertex.TexCoord.y = texcoord->FloatAttribute("v");
+
+					auto normal = texcoord->NextSiblingElement();
+					current_vertex.Normal.x = normal->FloatAttribute("x");
+					current_vertex.Normal.y = normal->FloatAttribute("y");
+					current_vertex.Normal.z = normal->FloatAttribute("z");
+					
+					auto tangent = normal->NextSiblingElement();
+					current_vertex.Tangent.x = tangent->FloatAttribute("x");
+					current_vertex.Tangent.y = tangent->FloatAttribute("y");
+					current_vertex.Tangent.z = tangent->FloatAttribute("z");
+
+					auto bitangent = tangent->NextSiblingElement();
+					current_vertex.Bitangent.x = bitangent->FloatAttribute("x");
+					current_vertex.Bitangent.y = bitangent->FloatAttribute("y");
+					current_vertex.Bitangent.z = bitangent->FloatAttribute("z");
+
+					current_node.VertexData.AddVertex(current_vertex);
+
+					loading_vertex = loading_vertex->NextSiblingElement();
+				}
+
+				auto faces = vertices->NextSiblingElement();
+				auto face_count = faces->IntAttribute("face_count");
+				auto loading_face = faces->FirstChildElement();
+				for (int i = 0; i < face_count; ++i)
+				{
+					SIndexTriangle current_face = SIndexTriangle(
+						loading_face->IntAttribute("_0"),
+						loading_face->IntAttribute("_1"),
+						loading_face->IntAttribute("_2"));
+
+					current_node.IndexData.vFaces.emplace_back(current_face);
+
+					loading_face = loading_face->NextSiblingElement();
+				}
+
+				// Create vertex buffer
+				m_pDX->CreateStaticVertexBuffer(
+					current_node.VertexData.GetVertexModelByteSize(), current_node.VertexData.GetVertexModelPtrData(), &current_node.VertexBuffer);
+
+				// Create index buffer
+				m_pDX->CreateIndexBuffer(current_node.IndexData.GetByteSize(), current_node.IndexData.GetPtrData(), &current_node.IndexBuffer);
+			}
+
+			loading_node = loading_node->NextSiblingElement();
+		}
+	}
+
+	auto sub_bounding_spheres = quad_tree->NextSiblingElement();
+	auto sub_bounding_sphere_count = sub_bounding_spheres->IntAttribute("count");
+	if (sub_bounding_sphere_count)
+	{
+		auto loading_sub_bs = sub_bounding_spheres->FirstChildElement();
+
+		for (int i = 0; i < sub_bounding_sphere_count; ++i)
+		{
+			SBoundingSphereData current_sub_bs{};
+
+			auto center = loading_sub_bs->FirstChildElement();
+			current_sub_bs.Center = XMVectorSet(
+				center->FloatAttribute("x"),
+				center->FloatAttribute("y"),
+				center->FloatAttribute("z"),
+				1);
+
+			auto offset = center->NextSiblingElement();
+			current_sub_bs.Offset = XMVectorSet(
+				offset->FloatAttribute("x"),
+				offset->FloatAttribute("y"),
+				offset->FloatAttribute("z"),
+				1);
+
+			auto radius = offset->NextSiblingElement();
+			current_sub_bs.Radius = radius->FloatText();
+			
+			terrain_data.SubBoundingSpheres.emplace_back(current_sub_bs);
+
+			loading_sub_bs = loading_sub_bs->NextSiblingElement();
+		}
+	}
+
+	return terrain_data;
+}
+
 void JWTerrainGenerator::BuildQuadTree(STerrainData& TerrainData, int32_t CurrentNodeID) noexcept
 {
 	auto& tree = TerrainData.QuadTree;
@@ -446,9 +723,7 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 		if (iter.ChildrenID[0] == -1)
 		{
 			// If this is a leaf node, build vertices.
-
-			iter.IsMeshNode = true;
-			++TerrainData.TerrainMeshCount;
+			iter.HasMeshes = true;
 			
 			// Vertex
 			uint32_t vertex_offset{ iter.StartZ * (TerrainData.TerrainSizeX - 1) * 4 + iter.StartX * 4 };
@@ -493,8 +768,8 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 			// Index
 			for (uint32_t i = 0; i < iter.SizeX * iter.SizeZ; ++i)
 			{
-				iter.IndexData.vIndices.push_back(SIndexTriangle(i * 4	  , i * 4 + 1, i * 4 + 2));
-				iter.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
+				iter.IndexData.vFaces.push_back(SIndexTriangle(i * 4	  , i * 4 + 1, i * 4 + 2));
+				iter.IndexData.vFaces.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
 			}
 
 			// Create vertex buffer

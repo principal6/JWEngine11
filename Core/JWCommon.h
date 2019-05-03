@@ -456,12 +456,12 @@ namespace JWEngine
 
 	struct SIndexDataTriangle
 	{
-		VECTOR<SIndexTriangle> vIndices;
+		VECTOR<SIndexTriangle> vFaces;
 
-		void Clear() noexcept { vIndices.clear(); };
-		auto GetCount() const noexcept { return static_cast<UINT>(vIndices.size() * 3); };
+		void Clear() noexcept { vFaces.clear(); };
+		auto GetCount() const noexcept { return static_cast<UINT>(vFaces.size() * 3); };
 		auto GetByteSize() const noexcept { return static_cast<UINT>(GetCount() * sizeof(DWORD)); };
-		auto GetPtrData() const noexcept { return &vIndices[0]; };
+		auto GetPtrData() const noexcept { return &vFaces[0]; };
 	};
 
 	struct SIndexDataLine
@@ -666,20 +666,19 @@ namespace JWEngine
 		uint32_t	SizeX{};
 		uint32_t	SizeZ{};
 
-		SVertexDataModel	VertexData{};
-		SIndexDataTriangle	IndexData{};
+		bool				HasMeshes{ false };
+
+		// This value is valid only when 'IsMeshNode' is 'true'
+		int32_t				SubBoundingSphereID{ -1 };
 
 		ID3D11Buffer*		VertexBuffer{};
 		ID3D11Buffer*		IndexBuffer{};
+		SVertexDataModel	VertexData{};
+		SIndexDataTriangle	IndexData{};
 
 		ID3D11Buffer*		NormalVertexBuffer{};
 		ID3D11Buffer*		NormalIndexBuffer{};
 		SLineModelData		NormalData{};
-
-		bool				IsMeshNode{ false };
-
-		// This value is valid only when 'IsMeshNode' is 'true'
-		uint32_t			SubBoundingSphereID{};
 	};
 	
 	struct STerrainData
@@ -688,8 +687,7 @@ namespace JWEngine
 
 		uint32_t						TerrainSizeX{};
 		uint32_t						TerrainSizeZ{};
-
-		uint32_t						TerrainMeshCount{};
+		float							HeightFactor{};
 
 		XMFLOAT3						WholeBoundingSphereOffset{};
 		float							WholeBoundingSphereRadius{};

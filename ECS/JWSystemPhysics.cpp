@@ -223,7 +223,7 @@ PRIVATE void JWSystemPhysics::PickEntityByTriangle() noexcept
 				assert(ptr_index_data);
 				assert(ptr_vertex_data);
 
-				const auto& indices{ ptr_index_data->vIndices };
+				const auto& indices{ ptr_index_data->vFaces };
 				const auto& vertices{ ptr_vertex_data->vVerticesModel };
 
 				// Iterate all the triangles in the model

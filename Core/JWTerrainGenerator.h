@@ -43,7 +43,11 @@ namespace JWEngine
 		// Supported format:
 		// TIF(R8G8B8, non-compressed, non-layered)
 		// TIF(R8, non-compressed, non-layered)
-		auto GenerateTerrainFromFile(const STRING& FileName, float HeightFactor = 1.0f) noexcept->STerrainData;
+		auto GenerateTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor = 1.0f) noexcept->STerrainData;
+
+		void SaveTerrainAsTRN(const STRING& TRNFileName, const STerrainData& TerrainData) noexcept;
+
+		auto LoadTerrainFromTRN(const STRING& TRNFileName) noexcept->STerrainData;
 
 		inline auto ConvertR8G8B8ToFloat(unsigned char R, unsigned char G, unsigned char B, float division_factor) noexcept->float;
 		inline auto ConvertR8ToFloat(unsigned char R, float division_factor) noexcept->float;

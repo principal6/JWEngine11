@@ -82,7 +82,10 @@ int main()
 	}
 	{
 		// Terrain
-		ecs.SystemRender().CreateSharedTerrainFromFile("heightmap_gray_128.tif", 20.0f); // Shared Terrain #0
+		//auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_rgb_test_20x15.tif", 20.0f);
+		//ecs.SystemRender().TerrainGenerator().SaveTerrainAsTRN("heightmap_rgb_test_20x15.trn", *terrain);
+
+		ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_rgb_test_20x15.trn"); // Shared Terrain #0
 	}
 
 	ecs.SystemRender().SetSystemRenderFlag(

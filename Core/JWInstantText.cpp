@@ -60,13 +60,13 @@ PRIVATE void JWInstantText::CreateInstantTextVertexBuffer() noexcept
 
 PRIVATE void JWInstantText::CreateInstantTextIndexBuffer() noexcept
 {
-	m_IndexData.vIndices.clear();
-	m_IndexData.vIndices.reserve(KMaxInsantTextLength * 2);
+	m_IndexData.vFaces.clear();
+	m_IndexData.vFaces.reserve(KMaxInsantTextLength * 2);
 
 	for (int iterator_count = 0; iterator_count < KMaxInsantTextLength; ++iterator_count)
 	{
-		m_IndexData.vIndices.push_back(SIndexTriangle(iterator_count * 4,     iterator_count * 4 + 1, iterator_count * 4 + 2));
-		m_IndexData.vIndices.push_back(SIndexTriangle(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));
+		m_IndexData.vFaces.push_back(SIndexTriangle(iterator_count * 4,     iterator_count * 4 + 1, iterator_count * 4 + 2));
+		m_IndexData.vFaces.push_back(SIndexTriangle(iterator_count * 4 + 1, iterator_count * 4 + 3, iterator_count * 4 + 2));
 	}
 
 	// Create index buffer

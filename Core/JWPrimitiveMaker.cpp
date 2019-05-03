@@ -18,7 +18,7 @@ auto JWPrimitiveMaker::MakeTriangle(const XMFLOAT3& A, const XMFLOAT3& B, const 
 	/*
 	** Index
 	*/
-	result.IndexData.vIndices.push_back(SIndexTriangle(0, 1, 2));
+	result.IndexData.vFaces.push_back(SIndexTriangle(0, 1, 2));
 	
 	return result;
 }
@@ -40,8 +40,8 @@ auto JWPrimitiveMaker::MakeQuad(const XMFLOAT3& A, const XMFLOAT3& B, const XMFL
 	/*
 	** Index
 	*/
-	result.IndexData.vIndices.push_back(SIndexTriangle(0, 1, 3));
-	result.IndexData.vIndices.push_back(SIndexTriangle(1, 2, 3));
+	result.IndexData.vFaces.push_back(SIndexTriangle(0, 1, 3));
+	result.IndexData.vFaces.push_back(SIndexTriangle(1, 2, 3));
 
 	return result;
 }
@@ -69,8 +69,8 @@ auto JWPrimitiveMaker::MakeSquare(float Size, XMFLOAT2 UVMap) noexcept->SModelDa
 	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 4; ++i)
 	{
 		// Clock-wise winding
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 2));
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 2));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
 	}
 
 	return result;
@@ -104,7 +104,7 @@ auto JWPrimitiveMaker::MakeCircle(float Radius, uint8_t Detail) noexcept->SModel
 	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
 	}
 
 	return result;
@@ -167,8 +167,8 @@ auto JWPrimitiveMaker::MakeCube(float Size) noexcept->SModelData
 	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 4; ++i)
 	{
 		// Clock-wise winding
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 2));
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 2));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
 	}
 
 	return result;
@@ -226,8 +226,8 @@ auto JWPrimitiveMaker::MakeHexahedron(const XMFLOAT3& NA, const XMFLOAT3& NB, co
 	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 4; ++i)
 	{
 		// Clock-wise winding
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 3));
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 2, i * 4 + 3));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 4, i * 4 + 1, i * 4 + 3));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 2, i * 4 + 3));
 	}
 
 	return result;
@@ -275,14 +275,14 @@ auto JWPrimitiveMaker::MakePyramid(float Height, float Width) noexcept->SModelDa
 	/*
 	** Index
 	*/
-	result.IndexData.vIndices.push_back(SIndexTriangle(0, 1, 2));
-	result.IndexData.vIndices.push_back(SIndexTriangle(1, 3, 2));
+	result.IndexData.vFaces.push_back(SIndexTriangle(0, 1, 2));
+	result.IndexData.vFaces.push_back(SIndexTriangle(1, 3, 2));
 
 	int ind_offset = 4;
 	for (unsigned int i = 0; i < (result.VertexData.GetVertexCount() - 4) / 3; ++i)
 	{
 		// Clock-wise winding
-		result.IndexData.vIndices.push_back(SIndexTriangle(ind_offset + i * 3, ind_offset + i * 3 + 2, ind_offset + i * 3 + 1));
+		result.IndexData.vFaces.push_back(SIndexTriangle(ind_offset + i * 3, ind_offset + i * 3 + 2, ind_offset + i * 3 + 1));
 	}
 
 	return result;
@@ -325,7 +325,7 @@ auto JWPrimitiveMaker::MakeCone(float Height, float Radius, uint8_t Detail) noex
 	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
 	}
 
 	return result;
@@ -384,7 +384,7 @@ auto JWPrimitiveMaker::MakeCylinder(float Height, float Radius, uint8_t Detail) 
 	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
 	}
 
 	return result;
@@ -545,7 +545,7 @@ auto JWPrimitiveMaker::MakeSphere(float Radius, uint8_t VerticalDetail, uint8_t 
 	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
 	}
 
 	return result;
@@ -781,7 +781,7 @@ auto JWPrimitiveMaker::MakeCapsule(float Height, float Radius, uint8_t VerticalD
 	for (unsigned int i = 0; i < result.VertexData.GetVertexCount() / 3; ++i)
 	{
 		// Clock-wise winding
-		result.IndexData.vIndices.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
+		result.IndexData.vFaces.push_back(SIndexTriangle(i * 3, i * 3 + 2, i * 3 + 1));
 	}
 
 	return result;
