@@ -54,7 +54,8 @@ int main()
 			ecs.SystemRender().PrimitiveMaker().MakeHexahedron()); // Shared Model #7 (View Frustum representation)
 
 		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeSphere(2.0f, 16, 7)); // Shared Model #8 (Representation for debugging a 3d point)
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.05f, 16, 7, XMFLOAT3(0, 1, 0), XMFLOAT3(0, 1, 0))
+		); // Shared Model #8 (Representation for debugging a 3d point)
 	}
 	{
 		// SharedImage2D
@@ -398,7 +399,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	auto& ecs = myGame.ECS();
 
 	// 3D Point for debugging
-	//ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->SetPosition(...);
+	ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->SetPosition(ecs.SystemPhysics().GetPickedPointPosition());
 
 	// ECS entity Skybox
 	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(ecs.SystemCamera().GetCurrentCameraPosition());

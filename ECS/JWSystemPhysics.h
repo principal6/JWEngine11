@@ -48,8 +48,11 @@ namespace JWEngine
 		auto GetPickedEntityName() const noexcept->const STRING&;
 		auto GetPickedEntity() const noexcept { return m_pPickedEntity; }
 
-		// Only available when Triangle picking is chosen. (experimental)
+		// Only available when Triangle picking is done.
 		auto GetPickedTrianglePosition(uint32_t PositionIndex) const noexcept->const XMVECTOR&;
+
+		// Only available when Triangle picking is done.
+		auto& GetPickedPointPosition() const noexcept { return m_PickedPoint; };
 
 		void Execute() noexcept;
 
@@ -80,6 +83,7 @@ namespace JWEngine
 		XMVECTOR					m_PickingRayOrigin{};
 		XMVECTOR					m_PickingRayDirection{};
 		XMVECTOR					m_PickedTriangle[3]{};
+		XMVECTOR					m_PickedPoint{};
 		STRING						m_PickedEntityName{};
 		JWEntity*					m_pPickedEntity{};
 		int32_t						m_PickedSubBSID{ -1 };

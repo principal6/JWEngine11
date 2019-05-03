@@ -327,6 +327,8 @@ PRIVATE __forceinline auto JWSystemPhysics::PickTriangle(const XMVECTOR& V0, con
 		// Check if the point is in the triangle
 		if (IsPointInTriangle(point_on_plane, V0, V1, V2))
 		{
+			m_PickedPoint = point_on_plane;
+
 			m_PickedTriangle[0] = V0;
 			m_PickedTriangle[1] = V1;
 			m_PickedTriangle[2] = V2;
