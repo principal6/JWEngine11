@@ -19,7 +19,7 @@ inline auto JWTerrainGenerator::ConvertR8ToFloat(unsigned char R, float division
 	return static_cast<float>(R) / division_factor;
 }
 
-void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
+PRIVATE void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
 	float HeightFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept
 {
 	uint32_t color_count = 4;
@@ -43,6 +43,7 @@ void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_
 	float		v_x{};
 	float		v_z{};
 	float		v_y[4]{};
+	uint32_t	v_map_id[4]{};
 
 	// Vertex
 	for (uint32_t z = 0; z < TextureHeight - 1; ++z)
@@ -86,17 +87,22 @@ void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_
 			OutModelData.VertexData.AddVertex(SVertexModel(v_x		 , v_y[2], v_z - 1.0f, 0, 1));
 			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1.0f, v_y[3], v_z - 1.0f, 1, 1));
 
-			OutVertexMap[(x)	 + (z)	   * TextureWidth].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 4));
-			OutVertexMap[(x + 1) + (z)	   * TextureWidth].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 3));
-			OutVertexMap[(x)	 + (z + 1) * TextureWidth].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 2));
-			OutVertexMap[(x + 1) + (z + 1) * TextureWidth].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 1));
+			v_map_id[0] = x + z * TextureWidth;
+			v_map_id[1] = x + 1 + (z + 1) * TextureWidth;
+			v_map_id[2] = x + (z + 1) * TextureWidth;
+			v_map_id[3] = x + 1 + (z + 1) * TextureWidth;
+
+			OutVertexMap[v_map_id[0]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 4));
+			OutVertexMap[v_map_id[1]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 3));
+			OutVertexMap[v_map_id[2]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 2));
+			OutVertexMap[v_map_id[3]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 1));
 		}
 	}
 
 	JW_DELETE_ARRAY(data);
 }
 
-void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
+PRIVATE void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
 	float HeightFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept
 {
 	uint32_t color_count = 1;
@@ -114,6 +120,7 @@ void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, uint32_t T
 	float		v_x{};
 	float		v_z{};
 	float		v_y[4]{};
+	uint32_t	v_map_id[4]{};
 
 	// Vertex
 	for (uint32_t z = 0; z < TextureHeight - 1; ++z)
@@ -149,10 +156,15 @@ void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, uint32_t T
 			OutModelData.VertexData.AddVertex(SVertexModel(v_x, v_y[2], v_z - 1, 0, 1));
 			OutModelData.VertexData.AddVertex(SVertexModel(v_x + 1, v_y[3], v_z - 1, 1, 1));
 
-			OutVertexMap[(x)	 + (z)	   * TextureWidth].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 4));
-			OutVertexMap[(x + 1) + (z)	   * TextureWidth].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 3));
-			OutVertexMap[(x)	 + (z + 1) * TextureWidth].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 2));
-			OutVertexMap[(x + 1) + (z + 1) * TextureWidth].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 1));
+			v_map_id[0] = x + z * TextureWidth;
+			v_map_id[1] = x + 1 + (z + 1) * TextureWidth;
+			v_map_id[2] = x + (z + 1) * TextureWidth;
+			v_map_id[3] = x + 1 + (z + 1) * TextureWidth;
+
+			OutVertexMap[v_map_id[0]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 4));
+			OutVertexMap[v_map_id[1]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 3));
+			OutVertexMap[v_map_id[2]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 2));
+			OutVertexMap[v_map_id[3]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 1));
 		}
 	}
 
@@ -204,8 +216,8 @@ auto JWTerrainGenerator::GenerateTerrainFromFile(const STRING& FileName, float H
 		m_pDX->GetDeviceContext()->CopyResource(readable_texture, texture);
 
 		// Load vertices from the texture
-		vertex_map.reserve(texture_size.Width * texture_size.Height);
-		vertex_map.resize(texture_size.Width * texture_size.Height);
+		vertex_map.reserve(static_cast<uint64_t>(texture_size.Width) * texture_size.Height);
+		vertex_map.resize(static_cast<uint64_t>(texture_size.Width) * texture_size.Height);
 
 		bool are_vertices_loaded{ false };
 		if (loaded_texture_desc.Format == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB)
