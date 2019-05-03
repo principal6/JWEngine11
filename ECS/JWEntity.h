@@ -21,6 +21,7 @@ namespace JWEngine
 		MainSprite,
 		ViewFrustum,
 		Point3D,
+		MainTerrain,
 	};
 
 	class JWEntity

@@ -49,7 +49,7 @@ int main()
 
 		ecs.SystemRender().CreateDynamicSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeTriangle(
-				XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(-1, -1, 0))); // Shared Model #6 (Picked triangle) == Legacy
+				XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0))); // Shared Model #6 (Picked triangle)
 		ecs.SystemRender().CreateDynamicSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeHexahedron()); // Shared Model #7 (View Frustum representation)
 
@@ -188,7 +188,7 @@ int main()
 
 	{
 		auto terrain_data = ecs.SystemRender().GetSharedTerrain(0);
-		auto terrain = ecs.CreateEntity("terrain");
+		auto terrain = ecs.CreateEntity(EEntityType::MainTerrain);
 		terrain->CreateComponentTransform()
 			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
 			->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
@@ -347,8 +347,18 @@ JW_FUNCTION_ON_INPUT(OnInput)
 	// Mouse left button pressed
 	if (DeviceState.CurrentMouse.rgbButtons[0])
 	{
-		ecs.SystemPhysics().Pick();
-		
+		if (ecs.SystemPhysics().Pick())
+		{
+			auto picked_entity = ecs.SystemPhysics().GetPickedEntity();
+			if (picked_entity->GetEntityType() == EEntityType::MainTerrain)
+			{
+				if (ecs.SystemPhysics().PickSubBoundingSphere())
+				{
+					ecs.SystemPhysics().PickTerrainTriangle();
+				}
+			}
+		}
+
 		// ECS entity Ray
 		ecs.GetEntityByType(EEntityType::PickingRay)->GetComponentRender()->PtrLine
 			->SetLine3DOriginDirection(0, ecs.SystemPhysics().GetPickingRayOrigin(), ecs.SystemPhysics().GetPickingRayDirection())
@@ -406,7 +416,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	static WSTRING s_picked_entity{};
 	static WSTRING s_cull_count{};
 	static WSTRING s_cull_count2{};
-
+	
 	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
 	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID, s_temp);
 	s_picked_entity = L"Picked Entity = " + StringToWstring(ecs.SystemPhysics().GetPickedEntityName());

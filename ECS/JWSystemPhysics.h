@@ -38,12 +38,15 @@ namespace JWEngine
 		void UpdateBoundingSphere(JWEntity* pEntity) noexcept;
 		void SetSubBoundingSpheres(JWEntity* pEntity, const VECTOR<SBoundingSphereData>& vData) noexcept;
 
-		void Pick() noexcept;
+		auto Pick() noexcept->bool;
+		auto PickSubBoundingSphere() noexcept->bool;
+		void PickTerrainTriangle() noexcept;
 
 		auto GetPickingRayOrigin() const noexcept->const XMVECTOR&;
 		auto GetPickingRayDirection() const noexcept->const XMVECTOR&;
 		
-		auto GetPickedEntityName() const noexcept->const STRING &;
+		auto GetPickedEntityName() const noexcept->const STRING&;
+		auto GetPickedEntity() const noexcept { return m_pPickedEntity; }
 
 		// Only available when Triangle picking is chosen. (experimental)
 		auto GetPickedTrianglePosition(uint32_t PositionIndex) const noexcept->const XMVECTOR&;
@@ -54,12 +57,13 @@ namespace JWEngine
 		void CastPickingRay() noexcept;
 
 		// Picking #0 Triangle picking (experimental)
-		void PickEntityByTriangle() noexcept;
-		__forceinline auto PickTriangle(XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2, XMVECTOR& t_cmp) noexcept->bool;
-		__forceinline auto IsPointInTriangle(XMVECTOR& Point, XMVECTOR& V0, XMVECTOR& V1, XMVECTOR& V2) noexcept->bool;
+		auto PickEntityByTriangle() noexcept->bool;
+		__forceinline auto PickTriangle(const XMVECTOR& V0, const XMVECTOR& V1, const XMVECTOR& V2, XMVECTOR& t_cmp) noexcept->bool;
+		__forceinline auto IsPointInTriangle(const XMVECTOR& Point, const XMVECTOR& V0, const XMVECTOR& V1, const XMVECTOR& V2) noexcept->bool;
 
 		// Picking #1 Sphere picking (realistic choice)
-		void PickEntityBySphere() noexcept;
+		auto PickEntityBySphere() noexcept->bool;
+		__forceinline auto IsSpherePicked(const XMVECTOR& Center, float Radius) noexcept->bool;
 
 	private:
 		VECTOR<SComponentPhysics*>	m_vpComponents;
@@ -78,5 +82,6 @@ namespace JWEngine
 		XMVECTOR					m_PickedTriangle[3]{};
 		STRING						m_PickedEntityName{};
 		JWEntity*					m_pPickedEntity{};
+		int32_t						m_PickedSubBSID{ -1 };
 	};
 };
