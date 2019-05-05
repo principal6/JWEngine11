@@ -237,29 +237,22 @@ auto JWTerrainGenerator::GenerateTerrainFromHeightMap(const STRING& HeightMapFN,
 		{
 			// Calculate the whole bounding sphere's radius and offset.
 			{
-				XMFLOAT3 max_pos{ -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX };
-				XMFLOAT3 min_pos{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX , D3D11_FLOAT32_MAX };
+				XMVECTOR max_v{ -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, 1.0f };
+				XMVECTOR min_v{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX , D3D11_FLOAT32_MAX, 1.0f };
 
 				for (auto& iter : model_data.VertexData.vVerticesModel)
 				{
-					max_pos.x = max(max_pos.x, iter.Position.x);
-					max_pos.y = max(max_pos.y, iter.Position.y);
-					max_pos.z = max(max_pos.z, iter.Position.z);
-
-					min_pos.x = min(min_pos.x, iter.Position.x);
-					min_pos.y = min(min_pos.y, iter.Position.y);
-					min_pos.z = min(min_pos.z, iter.Position.z);
+					max_v = XMVectorMax(max_v, iter.Position);
+					min_v = XMVectorMin(min_v, iter.Position);
 				}
 
-				float dx = (max_pos.x - min_pos.x);
-				float dy = (max_pos.y - min_pos.y);
-				float dz = (max_pos.z - min_pos.z);
-				float radius = sqrtf(dx * dx + dy * dy + dz * dz) / 2.0f;
-
-				terrain_data.WholeBoundingSphereRadius = radius;
-				terrain_data.WholeBoundingSphereOffset.x = dx / 2.0f;
-				terrain_data.WholeBoundingSphereOffset.y = dy / 2.0f;
-				terrain_data.WholeBoundingSphereOffset.z = -dz / 2.0f;
+				auto d = max_v - min_v;
+				auto r = XMVector3Length(d) / 2.0f;
+				
+				terrain_data.WholeBoundingSphereRadius = XMVectorGetX(r);
+				terrain_data.WholeBoundingSphereOffset.x = XMVectorGetX(d) / 2.0f;
+				terrain_data.WholeBoundingSphereOffset.y = XMVectorGetY(d) / 2.0f;
+				terrain_data.WholeBoundingSphereOffset.z = -XMVectorGetZ(d) / 2.0f;
 			}
 
 			// Index
@@ -272,68 +265,49 @@ auto JWTerrainGenerator::GenerateTerrainFromHeightMap(const STRING& HeightMapFN,
 			// Compute normals, tangents, bitangents
 			auto & v_indices = model_data.IndexData.vFaces;
 			auto & v_vertices = model_data.VertexData.vVerticesModel;
-			XMVECTOR v_0{}, v_1{}, v_2{};
 			XMVECTOR e_0{}, e_1{}, e_2{};
 			XMVECTOR normal{};
 			float du_0{}, du_1{}, dv_0{}, dv_1{};
 			float det{};
 			float length{};
-			XMFLOAT3 tangent{}, bitangent{};
+			XMVECTOR tangent{}, bitangent{};
 			
 			for (auto& iter : v_indices)
 			{
 				// #0 Normal
 
 				// Get vertices of this face
-				v_0 = XMLoadFloat3(&v_vertices[iter._0].Position);
-				v_1 = XMLoadFloat3(&v_vertices[iter._1].Position);
-				v_2 = XMLoadFloat3(&v_vertices[iter._2].Position);
-
-				// Get edges to compute Normal vector.
-				e_0 = v_1 - v_0;
-				e_1 = v_2 - v_0;
+				const auto& v_0 = v_vertices[iter._0].Position;
+				const auto& v_1 = v_vertices[iter._1].Position;
+				const auto& v_2 = v_vertices[iter._2].Position;
 
 				// Calculate Normal vector.
+				e_0 = v_1 - v_0;
+				e_1 = v_2 - v_0;
 				normal = XMVector3Normalize(XMVector3Cross(e_0, e_1));
-
-				XMStoreFloat3(&v_vertices[iter._0].Normal, normal);
-				XMStoreFloat3(&v_vertices[iter._1].Normal, normal);
-				XMStoreFloat3(&v_vertices[iter._2].Normal, normal);
-
+				v_vertices[iter._0].Normal = normal;
+				v_vertices[iter._1].Normal = normal;
+				v_vertices[iter._2].Normal = normal;
+				
 
 				// #1 Tangent & Bitangent
-
+				
 				// Additional edge for computing Tangent & Bitangent vectors.
 				e_2 = v_2 - v_1;
 
 				// u = TexCoord.x
-				du_0 = v_vertices[iter._1].TexCoord.x - v_vertices[iter._0].TexCoord.x;
-				du_1 = v_vertices[iter._2].TexCoord.x - v_vertices[iter._1].TexCoord.x;
+				du_0 = XMVectorGetX(v_vertices[iter._1].TexCoord - v_vertices[iter._0].TexCoord);
+				du_1 = XMVectorGetX(v_vertices[iter._2].TexCoord - v_vertices[iter._1].TexCoord);
 
 				// v = TexCoord.y
-				dv_0 = v_vertices[iter._1].TexCoord.y - v_vertices[iter._0].TexCoord.y;
-				dv_1 = v_vertices[iter._2].TexCoord.y - v_vertices[iter._1].TexCoord.y;
+				dv_0 = XMVectorGetY(v_vertices[iter._1].TexCoord - v_vertices[iter._0].TexCoord);
+				dv_1 = XMVectorGetY(v_vertices[iter._2].TexCoord - v_vertices[iter._1].TexCoord);
 
 				// Get inverse matrix of 2x2 UV matrix
 				det = du_0 * dv_1 - du_1 * dv_0;
 				
-				tangent.x = det * (XMVectorGetX(e_0) * dv_1 + XMVectorGetX(e_2) * -dv_0);
-				tangent.y = det * (XMVectorGetY(e_0) * dv_1 + XMVectorGetY(e_2) * -dv_0);
-				tangent.z = det * (XMVectorGetZ(e_0) * dv_1 + XMVectorGetZ(e_2) * -dv_0);
-				length = sqrtf(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z);
-				
-				tangent.x = tangent.x / length;
-				tangent.y = tangent.y / length;
-				tangent.z = tangent.z / length;
-				
-				bitangent.x = det * (XMVectorGetX(e_0) * -du_1 + XMVectorGetX(e_2) * du_0);
-				bitangent.y = det * (XMVectorGetY(e_0) * -du_1 + XMVectorGetY(e_2) * du_0);
-				bitangent.z = det * (XMVectorGetZ(e_0) * -du_1 + XMVectorGetZ(e_2) * du_0);
-				length = sqrtf(bitangent.x * bitangent.x + bitangent.y * bitangent.y + bitangent.z * bitangent.z);
-
-				bitangent.x = bitangent.x / length;
-				bitangent.y = bitangent.y / length;
-				bitangent.z = bitangent.z / length;
+				tangent = XMVector3Normalize(det * (e_0 * dv_1 + e_2 * -dv_0));
+				bitangent = XMVector3Normalize(det * (e_0 * -du_1 + e_2 * du_0));
 
 				v_vertices[iter._0].Tangent = tangent;
 				v_vertices[iter._1].Tangent = tangent;
@@ -352,7 +326,7 @@ auto JWTerrainGenerator::GenerateTerrainFromHeightMap(const STRING& HeightMapFN,
 				for (uint32_t i = 0; i < iter.VertexCount; ++i)
 				{
 					// For every face that contains the same vertex
-					averaged_normal += XMLoadFloat3(&v_vertices[iter.VertexID[i]].Normal);
+					averaged_normal += v_vertices[iter.VertexID[i]].Normal;
 				}
 
 				// Normalize
@@ -360,7 +334,7 @@ auto JWTerrainGenerator::GenerateTerrainFromHeightMap(const STRING& HeightMapFN,
 				
 				for (uint32_t i = 0; i < iter.VertexCount; ++i)
 				{
-					XMStoreFloat3(&v_vertices[iter.VertexID[i]].Normal, averaged_normal);
+					v_vertices[iter.VertexID[i]].Normal = averaged_normal;
 				}
 			}
 		}
@@ -432,28 +406,28 @@ void JWTerrainGenerator::SaveTerrainAsTRN(const STRING& TRNFileName, const STerr
 				auto vertex = doc.NewElement("vertex");
 
 				auto position = doc.NewElement("position");
-				position->SetAttribute("x", vertex_iter.Position.x);
-				position->SetAttribute("y", vertex_iter.Position.y);
-				position->SetAttribute("z", vertex_iter.Position.z);
+				position->SetAttribute("x", XMVectorGetX(vertex_iter.Position));
+				position->SetAttribute("y", XMVectorGetY(vertex_iter.Position));
+				position->SetAttribute("z", XMVectorGetZ(vertex_iter.Position));
 
 				auto texcoord = doc.NewElement("texcoord");
-				texcoord->SetAttribute("u", vertex_iter.TexCoord.x);
-				texcoord->SetAttribute("v", vertex_iter.TexCoord.y);
+				position->SetAttribute("u", XMVectorGetX(vertex_iter.TexCoord));
+				position->SetAttribute("v", XMVectorGetY(vertex_iter.TexCoord));
 				
 				auto normal = doc.NewElement("normal");
-				normal->SetAttribute("x", vertex_iter.Normal.x);
-				normal->SetAttribute("y", vertex_iter.Normal.y);
-				normal->SetAttribute("z", vertex_iter.Normal.z);
+				normal->SetAttribute("x", XMVectorGetX(vertex_iter.Normal));
+				normal->SetAttribute("y", XMVectorGetY(vertex_iter.Normal));
+				normal->SetAttribute("z", XMVectorGetZ(vertex_iter.Normal));
 
 				auto tangent = doc.NewElement("tangent");
-				tangent->SetAttribute("x", vertex_iter.Tangent.x);
-				tangent->SetAttribute("y", vertex_iter.Tangent.y);
-				tangent->SetAttribute("z", vertex_iter.Tangent.z);
+				tangent->SetAttribute("x", XMVectorGetX(vertex_iter.Tangent));
+				tangent->SetAttribute("y", XMVectorGetY(vertex_iter.Tangent));
+				tangent->SetAttribute("z", XMVectorGetZ(vertex_iter.Tangent));
 				
 				auto bitangent = doc.NewElement("bitangent");
-				bitangent->SetAttribute("x", vertex_iter.Bitangent.x);
-				bitangent->SetAttribute("y", vertex_iter.Bitangent.y);
-				bitangent->SetAttribute("z", vertex_iter.Bitangent.z);
+				bitangent->SetAttribute("x", XMVectorGetX(vertex_iter.Bitangent));
+				bitangent->SetAttribute("y", XMVectorGetY(vertex_iter.Bitangent));
+				bitangent->SetAttribute("z", XMVectorGetZ(vertex_iter.Bitangent));
 				
 				vertex->InsertEndChild(position);
 				vertex->InsertEndChild(texcoord);
@@ -572,28 +546,24 @@ auto JWTerrainGenerator::LoadTerrainFromTRN(const STRING& TRNFileName) noexcept-
 					SVertexModel current_vertex{};
 
 					auto position = loading_vertex->FirstChildElement();
-					current_vertex.Position.x = position->FloatAttribute("x");
-					current_vertex.Position.y = position->FloatAttribute("y");
-					current_vertex.Position.z = position->FloatAttribute("z");
-
+					current_vertex.Position =
+						XMVectorSet(position->FloatAttribute("x"), position->FloatAttribute("y"), position->FloatAttribute("z"), 1.0f);
+					
 					auto texcoord = position->NextSiblingElement();
-					current_vertex.TexCoord.x = texcoord->FloatAttribute("u");
-					current_vertex.TexCoord.y = texcoord->FloatAttribute("v");
+					current_vertex.TexCoord =
+						XMVectorSet(position->FloatAttribute("u"), position->FloatAttribute("v"), 0, 0);
 
 					auto normal = texcoord->NextSiblingElement();
-					current_vertex.Normal.x = normal->FloatAttribute("x");
-					current_vertex.Normal.y = normal->FloatAttribute("y");
-					current_vertex.Normal.z = normal->FloatAttribute("z");
+					current_vertex.Normal =
+						XMVectorSet(normal->FloatAttribute("x"), normal->FloatAttribute("y"), normal->FloatAttribute("z"), 0.0f);
 					
 					auto tangent = normal->NextSiblingElement();
-					current_vertex.Tangent.x = tangent->FloatAttribute("x");
-					current_vertex.Tangent.y = tangent->FloatAttribute("y");
-					current_vertex.Tangent.z = tangent->FloatAttribute("z");
+					current_vertex.Tangent =
+						XMVectorSet(tangent->FloatAttribute("x"), tangent->FloatAttribute("y"), tangent->FloatAttribute("z"), 0.0f);
 
 					auto bitangent = tangent->NextSiblingElement();
-					current_vertex.Bitangent.x = bitangent->FloatAttribute("x");
-					current_vertex.Bitangent.y = bitangent->FloatAttribute("y");
-					current_vertex.Bitangent.z = bitangent->FloatAttribute("z");
+					current_vertex.Bitangent =
+						XMVectorSet(bitangent->FloatAttribute("x"), bitangent->FloatAttribute("y"), bitangent->FloatAttribute("z"), 0.0f);
 
 					current_node.VertexData.AddVertex(current_vertex);
 
@@ -727,9 +697,9 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 			
 			// Vertex
 			uint32_t vertex_offset{ iter.StartZ * (TerrainData.TerrainSizeX - 1) * 4 + iter.StartX * 4 };
-			XMFLOAT3 max_pos{ -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX };
-			XMFLOAT3 min_pos{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX , D3D11_FLOAT32_MAX };
-
+			XMVECTOR max_v{ XMVectorSet(-D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, 1.0f) };
+			XMVECTOR min_v{ XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX , D3D11_FLOAT32_MAX, 1.0f) };
+			
 			for (uint32_t z = iter.StartZ; z < iter.StartZ + iter.SizeZ; ++z)
 			{
 				for (uint32_t x = iter.StartX; x < iter.StartX + iter.SizeX; ++x)
@@ -740,35 +710,28 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 					{
 						iter.VertexData.AddVertex(ModelData.VertexData.vVerticesModel[vertex_offset]);
 
-						max_pos.x = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.x, max_pos.x);
-						max_pos.y = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.y, max_pos.y);
-						max_pos.z = max(ModelData.VertexData.vVerticesModel[vertex_offset].Position.z, max_pos.z);
-
-						min_pos.x = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.x, min_pos.x);
-						min_pos.y = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.y, min_pos.y);
-						min_pos.z = min(ModelData.VertexData.vVerticesModel[vertex_offset].Position.z, min_pos.z);
+						max_v = XMVectorMax(max_v, ModelData.VertexData.vVerticesModel[vertex_offset].Position);
+						min_v = XMVectorMin(min_v, ModelData.VertexData.vVerticesModel[vertex_offset].Position);
 
 						++vertex_offset;
 					}
 				}
 			}
 
-			float dx = (max_pos.x - min_pos.x);
-			float dy = (max_pos.y - min_pos.y);
-			float dz = (max_pos.z - min_pos.z);
-			float radius = sqrtf(dx * dx + dy * dy + dz * dz) / 2.0f;
-
+			auto d = max_v - min_v;
+			auto r = XMVector3Length(d) / 2.0f;
+			auto center = min_v + d / 2.0f;
+			
 			TerrainData.SubBoundingSpheres.push_back(SBoundingSphereData());
 			iter.SubBoundingSphereID = static_cast<uint32_t>(TerrainData.SubBoundingSpheres.size() - 1);
 
-			TerrainData.SubBoundingSpheres[iter.SubBoundingSphereID].Center = 
-				XMVectorSet(min_pos.x + dx / 2.0f, min_pos.y + dy / 2.0f, min_pos.z + dz / 2.0f, 1);
-			TerrainData.SubBoundingSpheres[iter.SubBoundingSphereID].Radius = radius;
+			TerrainData.SubBoundingSpheres[iter.SubBoundingSphereID].Center = center;
+			TerrainData.SubBoundingSpheres[iter.SubBoundingSphereID].Radius = XMVectorGetX(r);
 			
 			// Index
 			for (uint32_t i = 0; i < iter.SizeX * iter.SizeZ; ++i)
 			{
-				iter.IndexData.vFaces.push_back(SIndexTriangle(i * 4	  , i * 4 + 1, i * 4 + 2));
+				iter.IndexData.vFaces.push_back(SIndexTriangle(i * 4	, i * 4 + 1, i * 4 + 2));
 				iter.IndexData.vFaces.push_back(SIndexTriangle(i * 4 + 1, i * 4 + 3, i * 4 + 2));
 			}
 
@@ -782,17 +745,14 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 			// Calculate Normal vector representations
 			// Calculate normal line positions
 			size_t iterator_vertex{};
-			XMFLOAT3 second_vertex_position{};
 			for (const auto& vertex : ModelData.VertexData.vVerticesModel)
-			{
-				second_vertex_position.x = vertex.Position.x + vertex.Normal.x;
-				second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
-				second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
-
+			{	
 				iter.NormalData.VertexData.AddVertex(SVertexModel(vertex.Position, KDefaultColorNormals));
-				iter.NormalData.VertexData.AddVertex(SVertexModel(second_vertex_position, KDefaultColorNormals));
+				iter.NormalData.VertexData.AddVertex(SVertexModel(vertex.Position + vertex.Normal, KDefaultColorNormals));
+
 				iter.NormalData.IndexData.vIndices.push_back(
 					SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+
 				++iterator_vertex;
 			}
 

@@ -1,5 +1,4 @@
 #pragma once
-#include "JWCommon.h"
 
 // Math functions for DirectX11
 
@@ -8,6 +7,16 @@ namespace JWEngine
 	using namespace DirectX;
 
 	static const auto KZeroVector = XMVectorZero();
+
+	__forceinline auto __vectorcall GetTriangleNormal(const XMVECTOR& EdgeAB, const XMVECTOR& EdgeAC)->XMVECTOR
+	{
+		return XMVector3Normalize(XMVector3Cross(EdgeAB, EdgeAC));
+	}
+
+	__forceinline auto __vectorcall GetTriangleNormal(const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC)->XMVECTOR
+	{
+		return XMVector3Normalize(XMVector3Cross(TriB - TriA, TriC - TriA));
+	}
 
 	// Returns distance and projected point vector
 	__forceinline auto __vectorcall ProjectPointOntoPlane(
@@ -28,17 +37,14 @@ namespace JWEngine
 
 		auto check_0 = XMVector3Cross(edge_bc, (Point - TriB));
 		auto check_1 = XMVector3Cross(edge_bc, (TriA - TriB));
-
 		if (XMVector3Greater(XMVector3Dot(check_0, check_1), KZeroVector))
 		{
 			check_0 = XMVector3Cross(edge_ac, (Point - TriA));
-			check_1 = XMVector3Cross(edge_ac, (TriB - TriA));
-
+			check_1 = XMVector3Cross(edge_ac, edge_ab);
 			if (XMVector3Greater(XMVector3Dot(check_0, check_1), KZeroVector))
 			{
 				check_0 = XMVector3Cross(edge_ab, (Point - TriA));
-				check_1 = XMVector3Cross(edge_ab, (TriC - TriA));
-
+				check_1 = XMVector3Cross(edge_ab, edge_ac);
 				if (XMVector3Greater(XMVector3Dot(check_0, check_1), KZeroVector))
 				{
 					return true;
@@ -74,35 +80,41 @@ namespace JWEngine
 	//           Dot(V, N) - Dot(P0, N)
 	// =>  t  = ------------------------
 	//                 Dot(P1, N)
-	__forceinline auto __vectorcall IntersectRayTriangle(XMVECTOR& OutPointOnPlane, XMVECTOR& OutCmpT,
+	__forceinline auto __vectorcall IntersectRayTriangle(XMVECTOR& OutPointOnPlane, XMVECTOR& OutOldT,
 		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection,
 		const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC) noexcept->bool
 	{
-		auto triangle_normal = XMVector3Normalize(XMVector3Cross(TriB - TriA, TriC - TriA));
-		auto plane_d = -XMVector3Dot(triangle_normal, TriA);
+		auto triangle_normal = GetTriangleNormal(TriA, TriB, TriC);
+		auto plane_d = -XMVector3Dot(TriA, triangle_normal);
 
 		auto ray_origin_norm = XMVector3Dot(RayOrigin, triangle_normal);
 		auto ray_direction_norm = XMVector3Dot(RayDirection, triangle_normal);
-		XMVECTOR t{};
-
+		XMVECTOR new_t{};
 		if (XMVector3NotEqual(ray_direction_norm, KZeroVector))
 		{
-			t = (-plane_d - ray_origin_norm) / ray_direction_norm;
+			new_t = (-plane_d -ray_origin_norm) / ray_direction_norm;
 		}
 
 		// 't' should be positive for the picking to be in front of the camera!
 		// (if it's negative, the picking is occuring behind the camera)
 		// We will store the minimum of t values, which means that it's the closest picking to the camera.
-		if ((XMVector3Greater(t, KZeroVector)) && (XMVector3Less(t, OutCmpT)))
+		if ((XMVector3Greater(new_t, KZeroVector)) && (XMVector3Less(new_t, OutOldT)))
 		{
-			OutPointOnPlane = RayOrigin + t * RayDirection;
+			// Save the point on plane.
+			OutPointOnPlane = RayOrigin + new_t * RayDirection;
 
 			// Check if the point is in the triangle
 			if (IsPointInsideTriangle(OutPointOnPlane, TriA, TriB, TriC))
 			{
-				OutCmpT = t;
+				//OutPointOnPlane = RayOrigin + new_t * RayDirection;
+				OutOldT = new_t;
 				return true;
 			}
+		}
+		else
+		{
+			// Save the point on plane.
+			OutPointOnPlane = RayOrigin + OutOldT * RayDirection;
 		}
 
 		return false;

@@ -53,7 +53,7 @@ int main()
 			ecs.SystemRender().PrimitiveMaker().MakeHexahedron()); // Shared Model #7 (View Frustum representation)
 
 		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.05f, 16, 7, XMFLOAT3(0, 1, 0), XMFLOAT3(0, 1, 0))
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.04f, 8, 3, XMFLOAT3(0, 1, 0), XMFLOAT3(0, 1, 0))
 		); // Shared Model #8 (Representation for debugging a 3d point)
 	}
 	{
@@ -82,10 +82,10 @@ int main()
 	}
 	{
 		// Terrain
-		//auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_rgb_test_20x15.tif", 20.0f);
+		auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_rgb_test_20x15.tif", 20.0f);
 		//ecs.SystemRender().TerrainGenerator().SaveTerrainAsTRN("heightmap_rgb_test_20x15.trn", *terrain);
 
-		ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_rgb_test_20x15.trn"); // Shared Terrain #0
+		//ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_rgb_test_20x15.trn"); // Shared Terrain #0
 	}
 
 	ecs.SystemRender().SetSystemRenderFlag(
@@ -347,7 +347,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 	// Mouse left button pressed
 	if (DeviceState.CurrentMouse.rgbButtons[0])
 	{
-		if (ecs.SystemPhysics().Pick())
+		if (ecs.SystemPhysics().PickEntity())
 		{
 			auto picked_entity = ecs.SystemPhysics().GetPickedEntity();
 			if (picked_entity->GetEntityType() == EEntityType::MainTerrain)
@@ -364,15 +364,10 @@ JW_FUNCTION_ON_INPUT(OnInput)
 			->SetLine3DOriginDirection(0, ecs.SystemPhysics().GetPickingRayOrigin(), ecs.SystemPhysics().GetPickingRayDirection())
 			->UpdateLines();
 
-		XMFLOAT3 tri_a{}, tri_b{}, tri_c{};
-		XMStoreFloat3(&tri_a, ecs.SystemPhysics().GetPickedTriangleVertex(0));
-		XMStoreFloat3(&tri_b, ecs.SystemPhysics().GetPickedTriangleVertex(1));
-		XMStoreFloat3(&tri_c, ecs.SystemPhysics().GetPickedTriangleVertex(2));
-		
 		ecs.GetEntityByType(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
-			->SetVertex(0, tri_a, XMFLOAT4(1, 1, 1, 1))
-			->SetVertex(1, tri_b, XMFLOAT4(1, 0, 0, 1))
-			->SetVertex(2, tri_c, XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(0, ecs.SystemPhysics().GetPickedTriangleVertex(0), XMFLOAT4(1, 1, 1, 1))
+			->SetVertex(1, ecs.SystemPhysics().GetPickedTriangleVertex(1), XMFLOAT4(1, 0, 0, 1))
+			->SetVertex(2, ecs.SystemPhysics().GetPickedTriangleVertex(2), XMFLOAT4(0, 1, 0, 1))
 			->UpdateModel();
 	}
 

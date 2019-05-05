@@ -47,28 +47,27 @@ auto JWAssimpLoader::LoadNonRiggedModel(STRING Directory, STRING ModelFileName) 
 			{
 				size_t mesh_vertices_count{ scene->mMeshes[mesh_index]->mNumVertices };
 
-				XMFLOAT3 position{};
-				XMFLOAT2 texcoord{};
-				XMFLOAT3 normal{};
+				XMVECTOR position{};
+				XMVECTOR texcoord{};
+				XMVECTOR normal{};
 
 				XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
 				XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
 
 				for (size_t iterator_vertices{}; iterator_vertices < mesh_vertices_count; ++iterator_vertices)
 				{
-					position = ConvertaiVector3DToXMFLOAT3(scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
+					position = ConvertaiVector3DToXMVECTORCoord(scene->mMeshes[mesh_index]->mVertices[iterator_vertices]);
 
 					if (scene->mMeshes[mesh_index]->mTextureCoords[0] == nullptr)
 					{
 						// No texture coordinates in model file
-						texcoord = XMFLOAT2(0, 0);
 					}
 					else
 					{
-						texcoord = ConvertaiVector3DToXMFLOAT2(scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
+						texcoord = ConvertaiVector3DToXMVECTORTexCoord(scene->mMeshes[mesh_index]->mTextureCoords[0][iterator_vertices]);
 					}
 
-					normal = ConvertaiVector3DToXMFLOAT3(scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
+					normal = ConvertaiVector3DToXMVECTORNormal(scene->mMeshes[mesh_index]->mNormals[iterator_vertices]);
 
 					result.VertexData.AddVertex(SVertexModel(position, texcoord, normal, diffuse, specular));
 				}
@@ -245,18 +244,18 @@ PRIVATE void JWAssimpLoader::BuildMeshesAndBonesFromNodes(const STRING Directory
 
 			// #1 Model must have positions
 			assert(ai_mesh->HasPositions());
-			XMFLOAT3 position{};
-			XMFLOAT3 normal{};
-			XMFLOAT2 texcoord{};
+			XMVECTOR position{};
+			XMVECTOR normal{};
+			XMVECTOR texcoord{};
 
 			XMFLOAT4 diffuse{ ConvertaiColor4DToXMFLOAT4(ai_diffuse) };
 			XMFLOAT4 specular{ ConvertaiColor4DToXMFLOAT4(ai_specular) };
 
 			for (unsigned int vertex_id = 0; vertex_id < ai_mesh->mNumVertices; ++vertex_id)
 			{
-				position = ConvertaiVector3DToXMFLOAT3(ai_mesh->mVertices[vertex_id]);
-				normal = ConvertaiVector3DToXMFLOAT3(ai_mesh->mNormals[vertex_id]);
-				texcoord = ConvertaiVector3DToXMFLOAT2(ai_mesh->mTextureCoords[0][vertex_id]);
+				position = ConvertaiVector3DToXMVECTORCoord(ai_mesh->mVertices[vertex_id]);
+				normal = ConvertaiVector3DToXMVECTORNormal(ai_mesh->mNormals[vertex_id]);
+				texcoord = ConvertaiVector3DToXMVECTORTexCoord(ai_mesh->mTextureCoords[0][vertex_id]);
 
 				// Needs rigging!
 				OutModelData.VertexData.AddVertex(SVertexModel(position, texcoord, normal, diffuse, specular), true);

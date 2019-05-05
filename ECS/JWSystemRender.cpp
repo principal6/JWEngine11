@@ -453,9 +453,9 @@ void JWSystemRender::Execute() noexcept
 	m_FrustumCulledEntityCount = 0;
 	m_FrustumCulledTerrainNodeCount = 0;
 
-	// Opaque drawing
-	m_pDX->SetBlendState(EBlendState::Opaque);
 
+	// #0 Opaque drawing
+	m_pDX->SetBlendState(EBlendState::Opaque);
 	for (auto& iter : m_vpComponents)
 	{
 		// Check transparency
@@ -468,16 +468,15 @@ void JWSystemRender::Execute() noexcept
 	}
 	
 
-	// Instanced bounding volume (Whole Bounding Sphere) drawing
+	// #1 Instanced bounding volume (Whole Bounding Sphere) drawing
 	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingVolumes)
 	{
 		DrawInstancedBoundingVolume();
 	}
 
 
-	// Transparent drawing
+	// #2 Transparent drawing
 	m_pDX->SetBlendState(EBlendState::Transprent);
-
 	for (auto& iter : m_vpComponents)
 	{
 		// Check transparency
@@ -492,12 +491,6 @@ void JWSystemRender::Execute() noexcept
 
 PRIVATE void JWSystemRender::ExecuteComponent(SComponentRender& Component) noexcept
 {
-	// Check transparency
-	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency)
-	{
-		return;
-	}
-
 	// Check flag - View frustum drawing
 	if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawViewFrustum))
 	{

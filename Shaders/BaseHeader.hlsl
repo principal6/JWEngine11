@@ -10,9 +10,9 @@ struct VS_INPUT_MODEL
 	// Model data
 	float4 Position : POSITION;
 	float2 TexCoord : TEXCOORD;
-	float3 Normal	: NORMAL;
-	float3 Tangent	: TANGENT;
-	float3 Bitangent: BITANGENT;
+	float4 Normal	: NORMAL;
+	float4 Tangent	: TANGENT;
+	float4 Bitangent: BITANGENT;
 	float4 Diffuse	: DIFFUSE;
 	float4 Specular	: SPECULAR;
 

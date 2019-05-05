@@ -64,7 +64,7 @@ VS_OUTPUT_MODEL main(VS_INPUT_MODEL input)
 
 	uint temp_flag = Flag;
 
-	float4 position_result = input.Position;
+	float4 position_result = float4(input.Position.xyz, 1.0);
 
 	// Check if the model is instanced
 	if (temp_flag == EVS_INSTANCED)
@@ -76,7 +76,7 @@ VS_OUTPUT_MODEL main(VS_INPUT_MODEL input)
 		temp_flag -= EVS_INSTANCED;
 	}
 
-	float4 normal_result = float4(input.Normal.xyz, 0);
+	float4 normal_result = float4(input.Normal.xyz, 0.0);
 
 	// Check if the model is rigged
 	if (temp_flag > EVS_NO_ANIMATION)
@@ -112,8 +112,8 @@ VS_OUTPUT_MODEL main(VS_INPUT_MODEL input)
 	output.Position = mul(position_result, WVP);
 	output.WorldPosition = mul(position_result, World).xyz;
 	output.Normal = normalize(mul(normal_result, World).xyz);
-	output.Tangent = normalize(mul(float4(input.Tangent.xyz, 0), World).xyz);
-	output.Bitangent = normalize(mul(float4(input.Bitangent.xyz, 0), World).xyz);
+	output.Tangent = normalize(mul(input.Tangent, World).xyz);
+	output.Bitangent = normalize(mul(input.Bitangent, World).xyz);
 
 	output.TexCoord = input.TexCoord;
 	output.Diffuse = input.Diffuse;

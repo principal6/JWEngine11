@@ -56,17 +56,13 @@ PRIVATE void JWImage::UpdateScreenPositionAndSize() noexcept
 	float window_width = m_pDX->GetWindowSize().x;
 	float window_height = m_pDX->GetWindowSize().y;
 
-	m_VertexData.vVerticesModel[0].Position.x = -window_width/2 + m_Position.x;
-	m_VertexData.vVerticesModel[0].Position.y = window_height/2 - m_Position.y;
+	auto x_0 = -window_width / 2 + m_Position.x;
+	auto y_0 = window_height / 2 - m_Position.y;
 
-	m_VertexData.vVerticesModel[1].Position.x = m_VertexData.vVerticesModel[0].Position.x + m_Size.x;
-	m_VertexData.vVerticesModel[1].Position.y = m_VertexData.vVerticesModel[0].Position.y;
-
-	m_VertexData.vVerticesModel[2].Position.x = m_VertexData.vVerticesModel[0].Position.x;
-	m_VertexData.vVerticesModel[2].Position.y = m_VertexData.vVerticesModel[0].Position.y - m_Size.y;
-
-	m_VertexData.vVerticesModel[3].Position.x = m_VertexData.vVerticesModel[0].Position.x + m_Size.x;
-	m_VertexData.vVerticesModel[3].Position.y = m_VertexData.vVerticesModel[0].Position.y - m_Size.y;
-
+	m_VertexData.vVerticesModel[0].Position = XMVectorSet(x_0, y_0, 0, 0);
+	m_VertexData.vVerticesModel[1].Position = XMVectorSet(x_0 + m_Size.x, y_0, 0, 0);
+	m_VertexData.vVerticesModel[2].Position = XMVectorSet(x_0, y_0 - m_Size.y, 0, 0);
+	m_VertexData.vVerticesModel[3].Position = XMVectorSet(x_0 + m_Size.x, y_0 - m_Size.y, 0, 0);
+	
 	m_pDX->UpdateDynamicResource(m_VertexBuffer, m_VertexData.GetVertexModelPtrData(), m_VertexData.GetVertexModelByteSize());
 }

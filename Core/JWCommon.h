@@ -232,23 +232,23 @@ namespace JWEngine
 	static constexpr D3D11_INPUT_ELEMENT_DESC KInputElementDescriptionModel[] =
 	{
 		// Vertex buffer #0 (VertexModel)
-		{ "POSITION"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD"	, 0, DXGI_FORMAT_R32G32_FLOAT	, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "NORMAL"		, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TANGENT"		, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "BITANGENT"	, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "DIFFUSE"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 56, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "SPECULAR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 0, 72, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TANGENT"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "BITANGENT"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 64, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "DIFFUSE"		, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 80, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "SPECULAR"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 96, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 
 		// Vertex buffer #1 (VertexRigging)
-		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT	, 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // int BoneID[4]
-		{ "BLENDWEIGHT"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT	, 1, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // float Weight[4]
+		{ "BLENDINDICES", 0, DXGI_FORMAT_R32G32B32A32_UINT , 1, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // int BoneID[4]
+		{ "BLENDWEIGHT"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 }, // float Weight[4]
 
 		// Vertex buffer #2 (Instance buffer)
-		{ "INST_WORLD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-		{ "INST_WORLD", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-		{ "INST_WORLD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-		{ "INST_WORLD", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 48, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		{ "INST_WORLD"	, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 0, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		{ "INST_WORLD"	, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 16, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		{ "INST_WORLD"	, 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 32, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+		{ "INST_WORLD"	, 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 2, 48, D3D11_INPUT_PER_INSTANCE_DATA, 1 },
 	};
 
 	struct SVertexText
@@ -275,36 +275,19 @@ namespace JWEngine
 	struct SVertexModel
 	{
 		SVertexModel() {};
-		SVertexModel(XMFLOAT3 _Position) :
-			Position{ _Position } {};
-		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates) :
-			Position{ _Position }, TexCoord{ _TextureCoordinates } {};
-		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal) :
-			Position{ _Position }, TexCoord{ _TextureCoordinates }, Normal{ _Normal } {};
-		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse) :
-			Position{ _Position }, TexCoord{ _TextureCoordinates }, Normal{ _Normal }, Diffuse{ _ColorDiffuse } {};
-		SVertexModel(XMFLOAT3 _Position, XMFLOAT2 _TextureCoordinates, XMFLOAT3 _Normal, XMFLOAT4 _ColorDiffuse, XMFLOAT4 _Specular) :
-			Position{ _Position }, TexCoord{ _TextureCoordinates }, Normal{ _Normal }, Diffuse{ _ColorDiffuse }, Specular{ _Specular } {};
-		SVertexModel(XMFLOAT3 _Position, XMFLOAT4 _ColorDiffuse) : // For drawing model's normals or JWLineModel
-			Position{ _Position }, Diffuse{ _ColorDiffuse } {};
-		SVertexModel(float x, float y, float z) :
-			Position{ x, y, z } {};
-		SVertexModel(float x, float y, float z, float u, float v) :
-			Position{ x, y, z }, TexCoord{ u, v } {};
-		SVertexModel(float x, float y, float z, float r, float g, float b, float a) :
-			Position{ x, y, z }, Diffuse{ r, g, b, a } {};
-		SVertexModel(float x, float y, float z, float u, float v, float r, float g, float b, float a) :
-			Position{ x, y, z }, TexCoord{ u, v }, Diffuse{ r, g, b, a } {};
-		SVertexModel(float x, float y, float z, float u, float v, float nx, float ny, float nz) :
-			Position{ x, y, z }, TexCoord{ u, v }, Normal{ nx, ny, nz } {};
-		SVertexModel(float x, float y, float z, float u, float v, float nx, float ny, float nz, float dr, float dg, float db, float da) :
-			Position{ x, y, z }, TexCoord{ u, v }, Normal{ nx, ny, nz }, Diffuse{ dr, dg, db, da } {};
+		SVertexModel(float x, float y, float z) : Position{ x, y, z, 1.0f } {};
+		SVertexModel(float x, float y, float z, float u, float v) : Position{ x, y, z, 1.0f }, TexCoord{ u, v, 0, 0 } {};
+		SVertexModel(float x, float y, float z, float u, float v, float cr, float cg, float cb, float ca) :
+			Position{ x, y, z, 1.0f }, TexCoord{ u, v, 0, 0 }, Diffuse{ cr, cg, cb, ca } {};
+		SVertexModel(XMVECTOR _Position, XMFLOAT4 _Diffuse) : Position{ _Position }, Diffuse{ _Diffuse } {};
+		SVertexModel(XMVECTOR _Position, XMVECTOR _TexCoord, XMVECTOR _Normal, XMFLOAT4 _Diffuse, XMFLOAT4 _Specular) :
+			Position{ _Position }, TexCoord{ _TexCoord }, Normal{ _Normal }, Diffuse{ _Diffuse }, Specular{ _Specular } {};
 
-		XMFLOAT3 Position{};
-		XMFLOAT2 TexCoord{};
-		XMFLOAT3 Normal{};
-		XMFLOAT3 Tangent{};
-		XMFLOAT3 Bitangent{};
+		XMVECTOR Position{};
+		XMVECTOR TexCoord{};
+		XMVECTOR Normal{};
+		XMVECTOR Tangent{};
+		XMVECTOR Bitangent{};
 		XMFLOAT4 Diffuse{ 0.0f, 0.0f, 0.0f, 1.0f };
 		XMFLOAT4 Specular{};
 	};

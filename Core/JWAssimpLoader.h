@@ -18,6 +18,21 @@ namespace JWEngine
 	{
 		return XMFLOAT3(input.x, input.y, input.z);
 	}
+
+	inline auto ConvertaiVector3DToXMVECTORTexCoord(aiVector3D input)->XMVECTOR
+	{
+		return XMVectorSet(input.x, input.y, 0, 0);
+	}
+
+	inline auto ConvertaiVector3DToXMVECTORCoord(aiVector3D input)->XMVECTOR
+	{
+		return XMVectorSet(input.x, input.y, input.z, 1.0f);
+	}
+
+	inline auto ConvertaiVector3DToXMVECTORNormal(aiVector3D input)->XMVECTOR
+	{
+		return XMVectorSet(input.x, input.y, input.z, 0.0f);
+	}
 	
 	inline auto ConvertaiMatrix4x4ToXMMATRIX(const aiMatrix4x4& input)->XMMATRIX
 	{

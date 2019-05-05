@@ -6,14 +6,14 @@ auto JWPrimitiveMaker::MakeTriangle(const XMFLOAT3& A, const XMFLOAT3& B, const 
 {
 	SModelData result{};
 
-	XMFLOAT3 Color[3] = { {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
+	XMFLOAT4 Color[3] = { {1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1} };
 
 	/*
 	** Vertex
 	*/
-	result.VertexData.AddVertex(SVertexModel(A.x, A.y, A.z, Color[0].x, Color[0].y, Color[0].z, 1.0f));
-	result.VertexData.AddVertex(SVertexModel(B.x, B.y, B.z, Color[1].x, Color[1].y, Color[1].z, 1.0f));
-	result.VertexData.AddVertex(SVertexModel(C.x, C.y, C.z, Color[2].x, Color[2].y, Color[2].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&A), Color[0]));
+	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&B), Color[1]));
+	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&C), Color[2]));
 
 	/*
 	** Index
@@ -27,15 +27,15 @@ auto JWPrimitiveMaker::MakeQuad(const XMFLOAT3& A, const XMFLOAT3& B, const XMFL
 {
 	SModelData result{};
 
-	XMFLOAT3 Color[4] = { {1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {1, 1, 1} };
+	XMFLOAT4 Color[4] = { {1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1}, {1, 1, 1, 1} };
 
 	/*
 	** Vertex
 	*/
-	result.VertexData.AddVertex(SVertexModel(A.x, A.y, A.z, Color[0].x, Color[0].y, Color[0].z, 1.0f));
-	result.VertexData.AddVertex(SVertexModel(B.x, B.y, B.z, Color[1].x, Color[1].y, Color[1].z, 1.0f));
-	result.VertexData.AddVertex(SVertexModel(C.x, C.y, C.z, Color[2].x, Color[2].y, Color[2].z, 1.0f));
-	result.VertexData.AddVertex(SVertexModel(D.x, D.y, D.z, Color[3].x, Color[3].y, Color[3].z, 1.0f));
+	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&A), Color[0]));
+	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&B), Color[1]));
+	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&C), Color[2]));
+	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&D), Color[3]));
 
 	/*
 	** Index
@@ -185,40 +185,40 @@ auto JWPrimitiveMaker::MakeHexahedron(const XMFLOAT3& NA, const XMFLOAT3& NB, co
 	** Vertex
 	*/
 	// Near plane
-	result.VertexData.AddVertex(SVertexModel(NA, Color));
-	result.VertexData.AddVertex(SVertexModel(NB, Color));
-	result.VertexData.AddVertex(SVertexModel(NC, Color));
-	result.VertexData.AddVertex(SVertexModel(ND, Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(NA.x, NA.y, NA.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(NB.x, NB.y, NB.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(NC.x, NC.y, NC.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(ND.x, ND.y, ND.z, 1), Color));
 
 	// Far plane
-	result.VertexData.AddVertex(SVertexModel(FA, Color));
-	result.VertexData.AddVertex(SVertexModel(FB, Color));
-	result.VertexData.AddVertex(SVertexModel(FC, Color));
-	result.VertexData.AddVertex(SVertexModel(FD, Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FA.x, FA.y, FA.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FB.x, FB.y, FB.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FC.x, FC.y, FC.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FD.x, FD.y, FD.z, 1), Color));
 
 	// Upper plane
-	result.VertexData.AddVertex(SVertexModel(FA, Color));
-	result.VertexData.AddVertex(SVertexModel(FB, Color));
-	result.VertexData.AddVertex(SVertexModel(NB, Color));
-	result.VertexData.AddVertex(SVertexModel(NA, Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FA.x, FA.y, FA.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FB.x, FB.y, FB.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(NB.x, NB.y, NB.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(NA.x, NA.y, NA.z, 1), Color));
 
 	// Lower plane
-	result.VertexData.AddVertex(SVertexModel(FC, Color));
-	result.VertexData.AddVertex(SVertexModel(FD, Color));
-	result.VertexData.AddVertex(SVertexModel(ND, Color));
-	result.VertexData.AddVertex(SVertexModel(NC, Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FC.x, FC.y, FC.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FD.x, FD.y, FD.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(ND.x, ND.y, ND.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(NC.x, NC.y, NC.z, 1), Color));
 
 	// Left plane
-	result.VertexData.AddVertex(SVertexModel(FA, Color));
-	result.VertexData.AddVertex(SVertexModel(NA, Color));
-	result.VertexData.AddVertex(SVertexModel(ND, Color));
-	result.VertexData.AddVertex(SVertexModel(FD, Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FA.x, FA.y, FA.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(NA.x, NA.y, NA.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(ND.x, ND.y, ND.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FD.x, FD.y, FD.z, 1), Color));
 
 	// Right plane
-	result.VertexData.AddVertex(SVertexModel(NB, Color));
-	result.VertexData.AddVertex(SVertexModel(FB, Color));
-	result.VertexData.AddVertex(SVertexModel(FC, Color));
-	result.VertexData.AddVertex(SVertexModel(NC, Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(NB.x, NB.y, NB.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FB.x, FB.y, FB.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(FC.x, FC.y, FC.z, 1), Color));
+	result.VertexData.AddVertex(SVertexModel(XMVectorSet(NC.x, NC.y, NC.z, 1), Color));
 
 	/*
 	** Index

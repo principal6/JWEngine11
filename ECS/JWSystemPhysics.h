@@ -38,15 +38,16 @@ namespace JWEngine
 		void UpdateBoundingSphere(JWEntity* pEntity) noexcept;
 		void SetSubBoundingSpheres(JWEntity* pEntity, const VECTOR<SBoundingSphereData>& vData) noexcept;
 
-		auto Pick() noexcept->bool;
+		auto PickEntity() noexcept->bool;
 		auto PickSubBoundingSphere() noexcept->bool;
 		void PickTerrainTriangle() noexcept;
 
+		auto IsEntityPicked() const noexcept { return m_IsEntityPicked; };
 		const auto GetPickedEntity() const noexcept { return m_pPickedEntity; };
+		const auto& GetPickedEntityName() const noexcept { return m_PickedEntityName; };
 
 		const auto& GetPickingRayOrigin() const noexcept { return m_PickingRayOrigin; };
 		const auto& GetPickingRayDirection() const noexcept { return m_PickingRayDirection; };
-		const auto& GetPickedEntityName() const noexcept { return m_PickedEntityName; };
 		
 		// Only available when Triangle picking is done.
 		const auto& GetPickedTriangleVertex(uint32_t PositionIndex) const noexcept { return m_PickedTriangle[min(PositionIndex, 2)]; };
@@ -81,8 +82,11 @@ namespace JWEngine
 		XMVECTOR					m_PickingRayDirection{};
 		XMVECTOR					m_PickedTriangle[3]{};
 		XMVECTOR					m_PickedPoint{};
+		int32_t						m_PickedSubBSID{ -1 };
+
+		bool						m_IsEntityPicked{ false };
 		STRING						m_PickedEntityName{};
 		JWEntity*					m_pPickedEntity{};
-		int32_t						m_PickedSubBSID{ -1 };
+		
 	};
 };

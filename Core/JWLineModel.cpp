@@ -67,20 +67,20 @@ void JWLineModel::Make3DGrid(float XSize, float ZSize, float GridInterval) noexc
 		}
 
 		// X Axis
-		m_VertexData.AddVertex(SVertexModel(XMFLOAT3(-KAxisLength / 2.0f, 0, 0), KXAxisColor));
-		m_VertexData.AddVertex(SVertexModel(XMFLOAT3(+KAxisLength / 2.0f, 0, 0), KXAxisColor));
+		m_VertexData.AddVertex(SVertexModel(XMVectorSet(-KAxisLength / 2.0f, 0, 0, 1.0f), KXAxisColor));
+		m_VertexData.AddVertex(SVertexModel(XMVectorSet(+KAxisLength / 2.0f, 0, 0, 1.0f), KXAxisColor));
 		m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 		++total_grid_count;
 
 		// Y Axis
-		m_VertexData.AddVertex(SVertexModel(XMFLOAT3(0, -KAxisLength / 2.0f, 0), KYAxisColor));
-		m_VertexData.AddVertex(SVertexModel(XMFLOAT3(0, +KAxisLength / 2.0f, 0), KYAxisColor));
+		m_VertexData.AddVertex(SVertexModel(XMVectorSet(0, -KAxisLength / 2.0f, 0, 1.0f), KYAxisColor));
+		m_VertexData.AddVertex(SVertexModel(XMVectorSet(0, +KAxisLength / 2.0f, 0, 1.0f), KYAxisColor));
 		m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 		++total_grid_count;
 
 		// Z Axis
-		m_VertexData.AddVertex(SVertexModel(XMFLOAT3(0, 0, -KAxisLength / 2.0f), KZAxisColor));
-		m_VertexData.AddVertex(SVertexModel(XMFLOAT3(0, 0, +KAxisLength / 2.0f), KZAxisColor));
+		m_VertexData.AddVertex(SVertexModel(XMVectorSet(0, 0, -KAxisLength / 2.0f, 1.0f), KZAxisColor));
+		m_VertexData.AddVertex(SVertexModel(XMVectorSet(0, 0, +KAxisLength / 2.0f, 1.0f), KZAxisColor));
 		m_IndexData.vIndices.push_back(SIndexLine(total_grid_count * 2, total_grid_count * 2 + 1));
 		++total_grid_count;
 
@@ -98,8 +98,8 @@ auto JWLineModel::AddLine3D(XMFLOAT3 StartPosition, XMFLOAT3 EndPosition, XMFLOA
 	
 	if (m_RenderType == ERenderType::Model_Line3D)
 	{
-		m_VertexData.AddVertex(SVertexModel(StartPosition, Color));
-		m_VertexData.AddVertex(SVertexModel(EndPosition, Color));
+		m_VertexData.AddVertex(SVertexModel(XMVectorSet(StartPosition.x, StartPosition.y, StartPosition.z, 1), Color));
+		m_VertexData.AddVertex(SVertexModel(XMVectorSet(EndPosition.x, EndPosition.y, EndPosition.z, 1), Color));
 		m_IndexData.vIndices.push_back(SIndexLine(m_VertexData.GetVertexCount() - 2, m_VertexData.GetVertexCount() - 1));
 	}
 
@@ -118,10 +118,9 @@ auto JWLineModel::AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Co
 		float window_width = m_pDX->GetWindowSize().x;
 		float window_height = m_pDX->GetWindowSize().y;
 
-		XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
-		XMFLOAT3 position_b = position_a;
-		position_b.x += Length.x;
-		position_b.y += Length.y;
+		XMVECTOR length = XMLoadFloat2(&Length);
+		XMVECTOR position_a = XMVectorSet(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0, 1.0f);
+		XMVECTOR position_b = position_a + length;
 
 		m_VertexData.AddVertex(SVertexModel(position_a, Color));
 		m_VertexData.AddVertex(SVertexModel(position_b, Color));
@@ -148,9 +147,9 @@ auto JWLineModel::SetLine3DPosition(size_t Line3DIndex, XMFLOAT3 StartPosition, 
 		{
 			Line3DIndex = min(Line3DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
-			m_VertexData.vVerticesModel[Line3DIndex * 2].Position = StartPosition;
+			m_VertexData.vVerticesModel[Line3DIndex * 2].Position = XMVectorSet(StartPosition.x, StartPosition.y, StartPosition.z, 1);
 
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position = EndPosition;
+			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position = XMVectorSet(EndPosition.x, EndPosition.y, EndPosition.z, 1);
 		}
 	}
 
@@ -165,10 +164,10 @@ auto JWLineModel::SetLine3DPosition(size_t Line3DIndex, XMFLOAT3 StartPosition, 
 		{
 			Line3DIndex = min(Line3DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
-			m_VertexData.vVerticesModel[Line3DIndex * 2].Position = StartPosition;
+			m_VertexData.vVerticesModel[Line3DIndex * 2].Position = XMVectorSet(StartPosition.x, StartPosition.y, StartPosition.z, 1);
 			m_VertexData.vVerticesModel[Line3DIndex * 2].Diffuse = Color;
 
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position = EndPosition;
+			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position = XMVectorSet(EndPosition.x, EndPosition.y, EndPosition.z, 1);
 			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Diffuse = Color;
 		}
 	}
@@ -186,16 +185,9 @@ auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, 
 
 			Line3DIndex = min(Line3DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
-			m_VertexData.vVerticesModel[Line3DIndex * 2].Position.x = XMVectorGetX(Origin);
-			m_VertexData.vVerticesModel[Line3DIndex * 2].Position.y = XMVectorGetY(Origin);
-			m_VertexData.vVerticesModel[Line3DIndex * 2].Position.z = XMVectorGetZ(Origin);
-
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position.x =
-				m_VertexData.vVerticesModel[Line3DIndex * 2].Position.x + XMVectorGetX(Direction) * line_length;
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position.y =
-				m_VertexData.vVerticesModel[Line3DIndex * 2].Position.y + XMVectorGetY(Direction) * line_length;
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position.z =
-				m_VertexData.vVerticesModel[Line3DIndex * 2].Position.z + XMVectorGetZ(Direction) * line_length;
+			m_VertexData.vVerticesModel[Line3DIndex * 2].Position = Origin;
+			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position = 
+				m_VertexData.vVerticesModel[Line3DIndex * 2].Position + Direction * line_length;
 		}
 	}
 
@@ -212,17 +204,11 @@ auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, 
 
 			Line3DIndex = min(Line3DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
-			m_VertexData.vVerticesModel[Line3DIndex * 2].Position.x = XMVectorGetX(Origin);
-			m_VertexData.vVerticesModel[Line3DIndex * 2].Position.y = XMVectorGetY(Origin);
-			m_VertexData.vVerticesModel[Line3DIndex * 2].Position.z = XMVectorGetZ(Origin);
+			m_VertexData.vVerticesModel[Line3DIndex * 2].Position = Origin;
 			m_VertexData.vVerticesModel[Line3DIndex * 2].Diffuse = Color;
 
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position.x =
-				m_VertexData.vVerticesModel[Line3DIndex * 2].Position.x + XMVectorGetX(Direction) * line_length;
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position.y = 
-				m_VertexData.vVerticesModel[Line3DIndex * 2].Position.y + XMVectorGetY(Direction) * line_length;
-			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position.z = 
-				m_VertexData.vVerticesModel[Line3DIndex * 2].Position.z + XMVectorGetZ(Direction) * line_length;
+			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position =
+				m_VertexData.vVerticesModel[Line3DIndex * 2].Position + Direction * line_length;
 			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Diffuse = Color;
 		}
 	}
@@ -241,11 +227,10 @@ auto JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2
 			float window_width = m_pDX->GetWindowSize().x;
 			float window_height = m_pDX->GetWindowSize().y;
 
-			XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
-			XMFLOAT3 position_b = position_a;
-			position_b.x += Length.x;
-			position_b.y += Length.y;
-
+			XMVECTOR length = XMLoadFloat2(&Length);
+			XMVECTOR position_a = XMVectorSet(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0, 1.0f);
+			XMVECTOR position_b = position_a + length;
+			
 			m_VertexData.vVerticesModel[Line2DIndex * 2].Position = position_a;
 
 			m_VertexData.vVerticesModel[Line2DIndex * 2 + 1].Position = position_b;
@@ -266,10 +251,9 @@ auto JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2
 			float window_width = m_pDX->GetWindowSize().x;
 			float window_height = m_pDX->GetWindowSize().y;
 
-			XMFLOAT3 position_a = XMFLOAT3(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0);
-			XMFLOAT3 position_b = position_a;
-			position_b.x += Length.x;
-			position_b.y += Length.y;
+			XMVECTOR length = XMLoadFloat2(&Length);
+			XMVECTOR position_a = XMVectorSet(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0, 1.0f);
+			XMVECTOR position_b = position_a + length;
 
 			m_VertexData.vVerticesModel[Line2DIndex * 2].Position = position_a;
 			m_VertexData.vVerticesModel[Line2DIndex * 2].Diffuse = Color;

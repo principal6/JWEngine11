@@ -90,7 +90,7 @@ void JWSystemPhysics::SetBoundingSphere(JWEntity* pEntity, float Radius, const X
 
 	// Set center position
 	auto transform = physics->PtrEntity->GetComponentTransform();
-	physics->BoundingSphereData.Offset = XMLoadFloat3(&CenterOffset);
+	physics->BoundingSphereData.Offset = XMVectorSet(CenterOffset.x, CenterOffset.y, CenterOffset.z, 1);
 	physics->BoundingSphereData.Center = physics->BoundingSphereData.Offset + transform->Position;
 	
 	// Update the data into SystemRender
@@ -143,13 +143,25 @@ void JWSystemPhysics::SetSubBoundingSpheres(JWEntity* pEntity, const VECTOR<SBou
 	physics->SubBoundingSpheres = vData;
 }
 
-auto JWSystemPhysics::Pick() noexcept->bool
+auto JWSystemPhysics::PickEntity() noexcept->bool
 {
 	m_pPickedEntity = nullptr;
+	m_IsEntityPicked = false;
+	m_PickedEntityName.clear();
 
 	CastPickingRay();
 
-	if (PickEntityBySphere()) { return true; }
+	if (m_vpComponents.size() == 0)
+	{
+		return false;
+	}
+
+	if (PickEntityBySphere())
+	{
+		m_IsEntityPicked = true;
+		return true;
+	}
+
 	return false;
 }
 
@@ -190,83 +202,82 @@ PRIVATE __forceinline void JWSystemPhysics::CastPickingRay() noexcept
 
 PRIVATE auto JWSystemPhysics::PickEntityByTriangle() noexcept->bool
 {
-	m_PickedEntityName.clear();
+	XMVECTOR old_t{ XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX) };
 
-	if (m_vpComponents.size())
+	for (auto iter : m_vpComponents)
 	{
-		XMVECTOR t_cmp{ XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0) };
+		auto& entity = iter->PtrEntity;
 
-		for (auto iter : m_vpComponents)
+		auto transform{ entity->GetComponentTransform() };
+		auto render{ entity->GetComponentRender() };
+		auto type{ entity->GetEntityType() };
+
+		if (type != EEntityType::UserDefined)
 		{
-			auto entity = iter->PtrEntity;
+			// MainSprite, MainTerrain need to be picked
+			if (!(
+				(type == EEntityType::MainSprite) ||
+				(type == EEntityType::MainTerrain)
+				))
+			{
+				continue;
+			}
+		}
 
-			auto transform{ entity->GetComponentTransform() };
-			auto render{ entity->GetComponentRender() };
-			auto type{ entity->GetEntityType() };
+		if (transform)
+		{
+			auto model_type = render->PtrModel->GetRenderType();
 
-			if (type != EEntityType::UserDefined)
+			SIndexDataTriangle* ptr_index_data{};
+			SVertexDataModel* ptr_vertex_data{};
+
+			if ((model_type == ERenderType::Model_Dynamic) || (model_type == ERenderType::Model_Static))
+			{
+				ptr_index_data = &render->PtrModel->ModelData.IndexData;
+				ptr_vertex_data = &render->PtrModel->ModelData.VertexData;
+			}
+			else if (model_type == ERenderType::Model_Rigged)
+			{
+				ptr_index_data = &render->PtrModel->ModelData.IndexData;
+				ptr_vertex_data = &render->PtrModel->ModelData.VertexData;
+			}
+			else
 			{
 				continue;
 			}
 
-			if (transform)
+			assert(ptr_index_data);
+			assert(ptr_vertex_data);
+
+			const auto& faces{ ptr_index_data->vFaces };
+			const auto& vertices{ ptr_vertex_data->vVerticesModel };
+
+			// Iterate all the triangles in the model
+			for (auto triangle : faces)
 			{
-				auto model_type = render->PtrModel->GetRenderType();
-				XMVECTOR t{};
+				// Move vertices from local space to world space!
+				auto v0 = XMVector3TransformCoord(vertices[triangle._0].Position, transform->WorldMatrix);
+				auto v1 = XMVector3TransformCoord(vertices[triangle._1].Position, transform->WorldMatrix);
+				auto v2 = XMVector3TransformCoord(vertices[triangle._2].Position, transform->WorldMatrix);
 
-				SIndexDataTriangle* ptr_index_data{};
-				SVertexDataModel* ptr_vertex_data{};
-
-				if ((model_type == ERenderType::Model_Dynamic) || (model_type == ERenderType::Model_Static))
+				if (IntersectRayTriangle(m_PickedPoint, old_t,
+					m_PickingRayOrigin, m_PickingRayDirection,
+					v0, v1, v2))
 				{
-					ptr_index_data = &render->PtrModel->ModelData.IndexData;
-					ptr_vertex_data = &render->PtrModel->ModelData.VertexData;
-				}
-				else if (model_type == ERenderType::Model_Rigged)
-				{
-					ptr_index_data = &render->PtrModel->ModelData.IndexData;
-					ptr_vertex_data = &render->PtrModel->ModelData.VertexData;
-				}
-				else
-				{
-					continue;
-				}
+					m_pPickedEntity = entity;
 
-				assert(ptr_index_data);
-				assert(ptr_vertex_data);
-
-				const auto& faces{ ptr_index_data->vFaces };
-				const auto& vertices{ ptr_vertex_data->vVerticesModel };
-
-				// Iterate all the triangles in the model
-				for (auto triangle : faces)
-				{
-					auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
-					auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
-					auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
-
-					// Move vertices from local space to world space!
-					v0 = XMVector3TransformCoord(v0, transform->WorldMatrix);
-					v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
-					v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
-
-					if (IntersectRayTriangle(m_PickedPoint, t_cmp, m_PickingRayOrigin, m_PickingRayDirection, v0, v1, v2))
-					{
-						m_pPickedEntity = entity;
-
-						m_PickedTriangle[0] = v0;
-						m_PickedTriangle[1] = v1;
-						m_PickedTriangle[2] = v2;
-					}
+					m_PickedTriangle[0] = v0;
+					m_PickedTriangle[1] = v1;
+					m_PickedTriangle[2] = v2;
 				}
 			}
 		}
+	}
 
-		if (m_pPickedEntity)
-		{
-			m_PickedEntityName = m_pPickedEntity->GetEntityName();
-			return true;
-		}
+	if (m_pPickedEntity)
+	{
+		m_PickedEntityName = m_pPickedEntity->GetEntityName();
+		return true;
 	}
 
 	return false;
@@ -274,50 +285,44 @@ PRIVATE auto JWSystemPhysics::PickEntityByTriangle() noexcept->bool
 
 PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
 {
-	m_PickedEntityName.clear();
-
-	if (m_vpComponents.size())
+	for (auto iter : m_vpComponents)
 	{
-		for (auto iter : m_vpComponents)
+		auto entity = iter->PtrEntity;
+
+		auto transform{ entity->GetComponentTransform() };
+		auto type{ entity->GetEntityType() };
+
+		if (type != EEntityType::UserDefined)
 		{
-			auto entity = iter->PtrEntity;
-
-			auto transform{ entity->GetComponentTransform() };
-			auto type{ entity->GetEntityType() };
-
-			if (type != EEntityType::UserDefined)
+			// MainSprite, MainTerrain need to be picked
+			if (!(
+				(type == EEntityType::MainSprite) ||
+				(type == EEntityType::MainTerrain)
+				))
 			{
-				// MainSprite, MainTerrain need to be picked
-				if (!(
-					(type == EEntityType::MainSprite) ||
-					(type == EEntityType::MainTerrain)
-					))
+				continue;
+			}
+		}
+
+		if (transform)
+		{
+			auto camera{ entity->GetComponentCamera() };
+			if (camera)
+			{
+				// @important
+				// You must be UNABLE to pick the current camera!
+				if (m_pECS->SystemCamera().GetCurrentCameraComponentID() == camera->ComponentID)
 				{
 					continue;
 				}
 			}
 
-			if (transform)
-			{
-				auto camera{ entity->GetComponentCamera() };
-				if (camera)
-				{
-					// @important
-					// You must not be able to pick the current camera!
-					if (m_pECS->SystemCamera().GetCurrentCameraComponentID() == camera->ComponentID)
-					{
-						continue;
-					}
-				}
-
-				const auto& center = iter->BoundingSphereData.Center;
-				const auto& radius = iter->BoundingSphereData.Radius;
+			const auto& center = iter->BoundingSphereData.Center;
+			const auto& radius = iter->BoundingSphereData.Radius;
 				
-				if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, center, radius))
-				{
-					m_pPickedEntity = entity;
-					m_PickedEntityName = entity->GetEntityName();
-				}
+			if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, center, radius))
+			{
+				m_pPickedEntity = entity;
 			}
 		}
 	}
@@ -372,20 +377,18 @@ void JWSystemPhysics::PickTerrainTriangle() noexcept
 		}
 		if (picked_node == nullptr) { return; }
 		
-		XMVECTOR t_cmp{ XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0) };
+		XMVECTOR old_t{ XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX) };
 		const auto& faces{ picked_node->IndexData.vFaces };
 		const auto& vertices{ picked_node->VertexData.vVerticesModel };
 		for (auto triangle : faces)
 		{
-			auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
-			auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
-			auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
-
-			if (IntersectRayTriangle(m_PickedPoint, t_cmp, m_PickingRayOrigin, m_PickingRayDirection, v0, v1, v2))
+			if (IntersectRayTriangle(m_PickedPoint, old_t, 
+				m_PickingRayOrigin, m_PickingRayDirection,
+				vertices[triangle._0].Position, vertices[triangle._1].Position, vertices[triangle._2].Position))
 			{
-				m_PickedTriangle[0] = v0;
-				m_PickedTriangle[1] = v1;
-				m_PickedTriangle[2] = v2;
+				m_PickedTriangle[0] = vertices[triangle._0].Position;
+				m_PickedTriangle[1] = vertices[triangle._1].Position;
+				m_PickedTriangle[2] = vertices[triangle._2].Position;
 			}
 		}
 	}

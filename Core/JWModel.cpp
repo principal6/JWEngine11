@@ -329,16 +329,13 @@ PRIVATE void JWModel::CreateNormalVertexIndexBuffers() noexcept
 
 	// Calculate normal line positions
 	size_t iterator_vertex{};
-	XMFLOAT3 second_vertex_position{};
 	for (const auto& vertex : ModelData.VertexData.vVerticesModel)
 	{
-		second_vertex_position.x = vertex.Position.x + vertex.Normal.x;
-		second_vertex_position.y = vertex.Position.y + vertex.Normal.y;
-		second_vertex_position.z = vertex.Position.z + vertex.Normal.z;
-
 		NormalData.VertexData.AddVertex(SVertexModel(vertex.Position, KDefaultColorNormals));
-		NormalData.VertexData.AddVertex(SVertexModel(second_vertex_position, KDefaultColorNormals));
+		NormalData.VertexData.AddVertex(SVertexModel(vertex.Position + vertex.Normal, KDefaultColorNormals));
+
 		NormalData.IndexData.vIndices.push_back(SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
+
 		++iterator_vertex;
 	}
 
@@ -358,7 +355,7 @@ auto JWModel::SetVertex(uint32_t VertexIndex, const XMVECTOR& Position, const XM
 			return this;
 		}
 
-		XMStoreFloat3(&ModelData.VertexData.vVerticesModel[VertexIndex].Position, Position);
+		ModelData.VertexData.vVerticesModel[VertexIndex].Position = Position;
 		ModelData.VertexData.vVerticesModel[VertexIndex].Diffuse = Color;
 	}
 
@@ -374,7 +371,7 @@ auto JWModel::SetVertex(uint32_t VertexIndex, const XMFLOAT3& Position, const XM
 			return this;
 		}
 
-		ModelData.VertexData.vVerticesModel[VertexIndex].Position = Position;
+		ModelData.VertexData.vVerticesModel[VertexIndex].Position = XMVectorSet(Position.x, Position.y, Position.z, 1);
 		ModelData.VertexData.vVerticesModel[VertexIndex].Diffuse = Color;
 	}
 
