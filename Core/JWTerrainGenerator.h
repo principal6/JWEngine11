@@ -6,8 +6,8 @@ namespace JWEngine
 {
 	// @warning:
 	// If MaximumNodeSize is too small, it takes really long to generate the terrain!
-	static constexpr int KMaximumNodeSizeX = 32;
-	static constexpr int KMaximumNodeSizeZ = 32;
+	static constexpr int KMaximumNodeSizeX = 16;
+	static constexpr int KMaximumNodeSizeZ = 16;
 	static constexpr int KMinimumNodeSizeX = 2;
 	static constexpr int KMinimumNodeSizeZ = 2;
 

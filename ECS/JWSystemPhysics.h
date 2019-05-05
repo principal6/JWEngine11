@@ -82,7 +82,7 @@ namespace JWEngine
 		XMVECTOR					m_PickingRayDirection{};
 		XMVECTOR					m_PickedTriangle[3]{};
 		XMVECTOR					m_PickedPoint{};
-		int32_t						m_PickedSubBSID{ -1 };
+		VECTOR<uint32_t>			m_vPickedSubBSID{};
 
 		bool						m_IsEntityPicked{ false };
 		STRING						m_PickedEntityName{};

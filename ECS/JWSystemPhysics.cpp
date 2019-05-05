@@ -342,15 +342,21 @@ auto JWSystemPhysics::PickSubBoundingSphere() noexcept->bool
 	auto physics = m_pPickedEntity->GetComponentPhysics();
 	if (physics == nullptr) { return false; }
 
-	m_PickedSubBSID = -1;
+	// Clear
+	m_vPickedSubBSID.clear();
+	
 	auto& sub_bs = physics->SubBoundingSpheres;
-	for (int id = 0; id < sub_bs.size(); ++id)
+	for (uint32_t id = 0; id < sub_bs.size(); ++id)
 	{
 		if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, sub_bs[id].Center, sub_bs[id].Radius))
 		{
-			m_PickedSubBSID = id;
-			return true;
+			m_vPickedSubBSID.emplace_back(id);
 		}
+	}
+
+	if (m_vPickedSubBSID.size())
+	{
+		return true;
 	}
 
 	return false;
@@ -366,29 +372,27 @@ void JWSystemPhysics::PickTerrainTriangle() noexcept
 		auto ptr_terrain = render->PtrTerrain;
 		if (ptr_terrain == nullptr) { return; }
 		
-		STerrainQuadTreeNode* picked_node{};
-		for (auto& iter : ptr_terrain->QuadTree)
-		{
-			if (iter.SubBoundingSphereID == m_PickedSubBSID)
-			{
-				picked_node = &iter;
-				break;
-			}
-		}
-		if (picked_node == nullptr) { return; }
-		
 		XMVECTOR old_t{ XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX) };
-		const auto& faces{ picked_node->IndexData.vFaces };
-		const auto& vertices{ picked_node->VertexData.vVerticesModel };
-		for (auto triangle : faces)
+		for (auto& bs : m_vPickedSubBSID)
 		{
-			if (IntersectRayTriangle(m_PickedPoint, old_t, 
-				m_PickingRayOrigin, m_PickingRayDirection,
-				vertices[triangle._0].Position, vertices[triangle._1].Position, vertices[triangle._2].Position))
+			for (auto& node : ptr_terrain->QuadTree)
 			{
-				m_PickedTriangle[0] = vertices[triangle._0].Position;
-				m_PickedTriangle[1] = vertices[triangle._1].Position;
-				m_PickedTriangle[2] = vertices[triangle._2].Position;
+				if (node.SubBoundingSphereID == bs)
+				{
+					const auto& faces{ node.IndexData.vFaces };
+					const auto& vertices{ node.VertexData.vVerticesModel };
+					for (auto triangle : faces)
+					{
+						if (IntersectRayTriangle(m_PickedPoint, old_t,
+							m_PickingRayOrigin, m_PickingRayDirection,
+							vertices[triangle._0].Position, vertices[triangle._1].Position, vertices[triangle._2].Position))
+						{
+							m_PickedTriangle[0] = vertices[triangle._0].Position;
+							m_PickedTriangle[1] = vertices[triangle._1].Position;
+							m_PickedTriangle[2] = vertices[triangle._2].Position;
+						}
+					}
+				}
 			}
 		}
 	}
