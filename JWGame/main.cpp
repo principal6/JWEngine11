@@ -19,6 +19,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
+	// # Terrain	@ AABB Picking is better for tree structured terrain... (Regions overlap when using bounding spheres)
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
 	// # Render		@ Sprite instancing
