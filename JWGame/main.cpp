@@ -53,7 +53,7 @@ int main()
 			ecs.SystemRender().PrimitiveMaker().MakeHexahedron()); // Shared Model #7 (View Frustum representation)
 
 		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.04f, 8, 3, XMFLOAT3(0, 1, 0), XMFLOAT3(0, 1, 0))
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(0, 1, 0), XMFLOAT3(0, 1, 0))
 		); // Shared Model #8 (Representation for debugging a 3d point)
 	}
 	{
@@ -82,10 +82,10 @@ int main()
 	}
 	{
 		// Terrain
-		auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_rgb_test_20x15.tif", 20.0f);
-		//ecs.SystemRender().TerrainGenerator().SaveTerrainAsTRN("heightmap_rgb_test_20x15.trn", *terrain);
+		//auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_gray_128.tif", 20.0f);
+		//ecs.SystemRender().TerrainGenerator().SaveTerrainAsTRN("heightmap_gray_128.trn", *terrain);
 
-		//ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_rgb_test_20x15.trn"); // Shared Terrain #0
+		ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_gray_128.trn"); // Shared Terrain #0
 	}
 
 	ecs.SystemRender().SetSystemRenderFlag(
@@ -178,7 +178,7 @@ int main()
 
 	auto directional_light = ecs.CreateEntity("directional_light");
 	directional_light->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(3.0f, 3.0f, 3.0f));
+		->SetPosition(XMFLOAT3(3.0f, 3.0f, -3.0f));
 	directional_light->CreateComponentLight()
 		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, -1.0f, -1.0f), 0.6f);
 	directional_light->CreateComponentPhysics();

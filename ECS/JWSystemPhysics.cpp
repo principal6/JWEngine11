@@ -285,6 +285,7 @@ PRIVATE auto JWSystemPhysics::PickEntityByTriangle() noexcept->bool
 
 PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
 {
+	XMVECTOR old_t{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX };
 	for (auto iter : m_vpComponents)
 	{
 		auto entity = iter->PtrEntity;
@@ -320,8 +321,9 @@ PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
 			const auto& center = iter->BoundingSphereData.Center;
 			const auto& radius = iter->BoundingSphereData.Radius;
 				
-			if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, center, radius))
+			if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, center, radius, old_t))
 			{
+				m_PickedPoint = m_PickingRayOrigin + old_t * m_PickingRayDirection;
 				m_pPickedEntity = entity;
 			}
 		}
@@ -330,6 +332,7 @@ PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
 	if (m_pPickedEntity)
 	{
 		m_PickedEntityName = m_pPickedEntity->GetEntityName();
+		m_PickedPoint = m_PickingRayOrigin + old_t * m_PickingRayDirection;
 		return true;
 	}
 
@@ -346,9 +349,10 @@ auto JWSystemPhysics::PickSubBoundingSphere() noexcept->bool
 	m_vPickedSubBSID.clear();
 	
 	auto& sub_bs = physics->SubBoundingSpheres;
+	XMVECTOR old_t{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX };
 	for (uint32_t id = 0; id < sub_bs.size(); ++id)
 	{
-		if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, sub_bs[id].Center, sub_bs[id].Radius))
+		if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, sub_bs[id].Center, sub_bs[id].Radius, old_t))
 		{
 			m_vPickedSubBSID.emplace_back(id);
 		}
@@ -395,6 +399,8 @@ void JWSystemPhysics::PickTerrainTriangle() noexcept
 				}
 			}
 		}
+
+		m_PickedPoint = m_PickingRayOrigin + old_t * m_PickingRayDirection;
 	}
 }
 

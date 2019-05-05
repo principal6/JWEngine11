@@ -160,7 +160,8 @@ namespace JWEngine
 	// And if, b©÷ - 4ac ¡Ã 0
 	// then, the ray hit the sphere!
 	__forceinline auto __vectorcall IntersectRaySphere(
-		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection, const XMVECTOR& Center, float Radius) noexcept->bool
+		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection, const XMVECTOR& Center, float Radius,
+		XMVECTOR& OldT) noexcept->bool
 	{
 		auto r = XMVectorSet(Radius, Radius, Radius, 1.0f);
 		auto vector_co = RayOrigin - Center;
@@ -170,9 +171,22 @@ namespace JWEngine
 		auto c = XMVector3Dot(vector_co, vector_co) - r * r;
 		auto discriminant = b * b - 4.0f * a * c;
 
-		if (XMVector3GreaterOrEqual(discriminant, KZeroVector))
+		if (XMVector3Greater(discriminant, KZeroVector))
 		{
-			return true;
+			// Smaller T
+			auto new_t = XMVectorSetW((-b -XMVectorSqrt(discriminant)) / (2 * a), 1.0f);
+
+			if (XMVector3Less(new_t, KZeroVector))
+			{
+				// Bigger T
+				new_t = XMVectorSetW((-b +XMVectorSqrt(discriminant)) / (2 * a), 1.0f);
+			}
+
+			if ((XMVector3Greater(new_t, KZeroVector)) && (XMVector3Less(new_t, OldT)))
+			{
+				OldT = new_t;
+				return true;
+			}
 		}
 
 		return false;
