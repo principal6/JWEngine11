@@ -1,4 +1,5 @@
 #include "JWECS.h"
+#include "../Core/JWMath.h"
 
 using namespace JWEngine;
 
@@ -144,34 +145,37 @@ void JWSystemPhysics::SetSubBoundingSpheres(JWEntity* pEntity, const VECTOR<SBou
 
 auto JWSystemPhysics::Pick() noexcept->bool
 {
-	bool result{ false };
-
 	m_pPickedEntity = nullptr;
 
 	CastPickingRay();
 
-	if (PickEntityBySphere())
-	{
-		result = true;
-	}
-
-	return result;
+	if (PickEntityBySphere()) { return true; }
+	return false;
 }
 
-PRIVATE void JWSystemPhysics::CastPickingRay() noexcept
+PRIVATE __forceinline void JWSystemPhysics::CastPickingRay() noexcept
 {
 	// Get mouse cursor position in screen space (in client rect)
 	GetCursorPos(&m_MouseClientPosition);
 	ScreenToClient(m_hWnd, &m_MouseClientPosition);
 
 	// Normalize mouse cursor position
+	// x = [-1.0, 1.0]
+	// y = [-1.0, 1.0]
 	m_NormalizedMousePosition.x = (static_cast<float>(m_MouseClientPosition.x) / m_WindowSize.x) * 2.0f - 1.0f;
 	m_NormalizedMousePosition.y = (static_cast<float>(m_MouseClientPosition.y) / m_WindowSize.y) * 2.0f - 1.0f;
 
-	auto MatrixView = m_pECS->SystemCamera().CurrentViewMatrix();
-	auto MatrixProjection = m_pECS->SystemCamera().CurrentProjectionMatrix();
+	const auto& MatrixView = m_pECS->SystemCamera().CurrentViewMatrix();
+	const auto& MatrixProjection = m_pECS->SystemCamera().CurrentProjectionMatrix();
 
+	// Origin of the picking ray
+	// (x, y, z) = (0, 0, 0)
 	m_PickingRayViewSpacePosition = XMVectorSet(0, 0, 0.001f, 0);
+
+	// Direction of the picking ray
+	// x = [0, ScreenWidth]
+	// y = [0, ScreenHeight]
+	// z = 1.0
 	m_PickingRayViewSpaceDirection = XMVectorSet(
 		+m_NormalizedMousePosition.x / XMVectorGetX(MatrixProjection.r[0]),
 		-m_NormalizedMousePosition.y / XMVectorGetY(MatrixProjection.r[1]),
@@ -186,8 +190,6 @@ PRIVATE void JWSystemPhysics::CastPickingRay() noexcept
 
 PRIVATE auto JWSystemPhysics::PickEntityByTriangle() noexcept->bool
 {
-	bool result{ false };
-
 	m_PickedEntityName.clear();
 
 	if (m_vpComponents.size())
@@ -248,9 +250,13 @@ PRIVATE auto JWSystemPhysics::PickEntityByTriangle() noexcept->bool
 					v1 = XMVector3TransformCoord(v1, transform->WorldMatrix);
 					v2 = XMVector3TransformCoord(v2, transform->WorldMatrix);
 
-					if (PickTriangle(v0, v1, v2, t_cmp))
+					if (IntersectRayTriangle(m_PickedPoint, t_cmp, m_PickingRayOrigin, m_PickingRayDirection, v0, v1, v2))
 					{
 						m_pPickedEntity = entity;
+
+						m_PickedTriangle[0] = v0;
+						m_PickedTriangle[1] = v1;
+						m_PickedTriangle[2] = v2;
 					}
 				}
 			}
@@ -259,116 +265,11 @@ PRIVATE auto JWSystemPhysics::PickEntityByTriangle() noexcept->bool
 		if (m_pPickedEntity)
 		{
 			m_PickedEntityName = m_pPickedEntity->GetEntityName();
-			
-			result = true;
-		}
-	}
-
-	return result;
-}
-
-PRIVATE __forceinline auto JWSystemPhysics::PickTriangle(const XMVECTOR& V0, const XMVECTOR& V1, const XMVECTOR& V2, XMVECTOR& t_cmp) noexcept->bool
-{
-	// Calculate edge vectors from vertex positions
-	auto edge0 = V1 - V0;
-	auto edge1 = V2 - V0;
-
-	// Calculate face normal from edge vectors,
-	// using cross product of vectors
-	auto normal = XMVector3Normalize(XMVector3Cross(edge0, edge1));
-
-	// Calculate plane equation  # Ax + By + Cz + D = 0
-	// # A, B, C = Face normal's xyz coord
-	// # x, y, z = Any point in the plane, so we can just use V0
-	// # Ax + By + Cz = Dot(normal, point) = Dot(N, P)
-	// # D = -(Ax + By + Cz) = -Dot(normal, v0) = -Dot(N, V0)
-	//
-	// @ Plane equation for a point P
-	// Dot(N, P) = Dot(N, V0)
-	auto D = -XMVector3Dot(normal, V0);
-
-	// Get ray's equation (which is a parametric equation of a line)
-	//
-	// L = P0 + t * P1
-	//   = ray_origin + t * ray_direction
-	//
-	// @ N: plane normal  @ V = given vertex in the plane  @ L = line vector
-	//
-	// L = (P0x + P1x * t, P0y + P1y * t, P0z + P1z * t)
-	//
-	// Dot(N, L) = Dot(N, V)
-	// => (P0x + P1x * t) * Nx + (P0y + P1y * t) * Ny + (P0z + P1z * t) * Nz = (Vx) * Nx + (Vy) * Ny + (Vz) * Nz
-	// => (P1x * t) * Nx + (P1y * t) * Ny + (P1z * t) * Nz = (Vx - P0x) * Nx + (Vy - P0y) * Ny + (Vz - P0z) * Nz
-	// => (P1x * Nx) * t + (P1y * Ny) * t + (P1z * Nz) * t = (Vx - P0x) * Nx + (Vy - P0y) * Ny + (Vz - P0z) * Nz
-	// => Dot(P1, N) * t = Dot(V, N) - Dot(P0, N)
-	//
-	//           Dot(V, N) - Dot(P0, N)
-	// =>  t  = ------------------------
-	//                 Dot(P1, N)
-	//
-	auto p0_norm = XMVector3Dot(m_PickingRayOrigin, normal);
-	auto p1_norm = XMVector3Dot(m_PickingRayDirection, normal);
-	XMVECTOR zero{ XMVectorZero() };
-	XMVECTOR t{};
-
-	// For vectorization we use vectors to compare values
-	if (XMVector3NotEqual(p1_norm, zero))
-	{
-		t = (-D - p0_norm) / p1_norm;
-	}
-
-	// 't' should be positive for the picking to be in front of the camera!
-	// (if it's negative, the picking is occuring behind the camera)
-	// We will store the minimum of t values, which means that it's the closest picking to the camera.
-	if ((XMVector3Greater(t, zero)) && (XMVector3Less(t, t_cmp)))
-	{
-		auto point_on_plane = m_PickingRayOrigin + t * m_PickingRayDirection;
-
-		// Check if the point is in the triangle
-		if (IsPointInTriangle(point_on_plane, V0, V1, V2))
-		{
-			m_PickedPoint = point_on_plane;
-
-			m_PickedTriangle[0] = V0;
-			m_PickedTriangle[1] = V1;
-			m_PickedTriangle[2] = V2;
-
-			t_cmp = t;
-			
 			return true;
 		}
 	}
 
 	return false;
-}
-
-PRIVATE __forceinline auto JWSystemPhysics::IsPointInTriangle(const XMVECTOR& Point, const XMVECTOR& V0, const XMVECTOR& V1, const XMVECTOR& V2) noexcept->bool
-{
-	bool result{ false };
-
-	auto zero = XMVectorZero();
-	auto check_0 = XMVector3Cross((V2 - V1), (Point - V1));
-	auto check_1 = XMVector3Cross((V2 - V1), (V0 - V1));
-
-	if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
-	{
-		check_0 = XMVector3Cross((V2 - V0), (Point - V0));
-		check_1 = XMVector3Cross((V2 - V0), (V1 - V0));
-
-		if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
-		{
-			check_0 = XMVector3Cross((V1 - V0), (Point - V0));
-			check_1 = XMVector3Cross((V1 - V0), (V2 - V0));
-
-			if (XMVector3Greater(XMVector3Dot(check_0, check_1), zero))
-			{
-				// In triangle!
-				result = true;
-			}
-		}
-	}
-
-	return result;
 }
 
 PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
@@ -412,7 +313,7 @@ PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
 				const auto& center = iter->BoundingSphereData.Center;
 				const auto& radius = iter->BoundingSphereData.Radius;
 				
-				if (IsSpherePicked(center, radius))
+				if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, center, radius))
 				{
 					m_pPickedEntity = entity;
 					m_PickedEntityName = entity->GetEntityName();
@@ -430,85 +331,20 @@ PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
 	return false;
 }
 
-PRIVATE __forceinline auto JWSystemPhysics::IsSpherePicked(const XMVECTOR& Center, float Radius) noexcept->bool
-{
-	// Sphere equation
-	// (Px - Cx)©÷ + (Py - Cy)©÷ + (Pz - Cz)©÷ = r©÷
-	// Dot(P - C, P - C) = r©÷
-	// # P = any point on the sphere  # C = center of the sphere  # r = radius of the sphere
-	//
-	// Line's parametric equation
-	// L = O + tD
-	// (L for Line, O for Ray Origin, D for Ray Direction)
-	//
-	// Line-Sphere intersection (which is the simultaneous equation of the two equations)
-	// Dot(L - C, L - C) = r©÷
-	// Dot(O + tD - C, O + tD - C) = r©÷
-	// (Ox + t*Dx - Cx)©÷ + (Oy + t*Dy - Cy)©÷ + (Oz + t*Dz - Cz)©÷ = r©÷
-	// (Ox + t*Dx - Cx)©÷ + (Oy + t*Dy - Cy)©÷ + (Oz + t*Dz - Cz)©÷ - r©÷ = 0
-	//
-	// Now, let's expand the equation
-	// Ox©÷ + t©÷Dx©÷ + Cx©÷ + 2tOxDx -2OxCx -2tDxCx + Oy©÷ + t©÷Dy©÷ + Cy©÷ + 2tOyDy -2OyCy -2tDyCy
-	//  + Oz©÷ + t©÷Dz©÷ + Cz©÷ + 2tOzDz -2OzCz -2tDzCz - r©÷ = 0
-	//
-	// Let's simplify it using Dot()
-	// Dot(O, O) + t©÷Dot(D, D) + Dot(C, C) + 2tDot(O, D) - 2Dot(O, C) - 2tDot(D, C) - r©÷ = 0
-	//
-	// Let's rearrange it by 't'
-	// t©÷Dot(D, D) + 2t(Dot(D, O) - Dot(D, C)) + Dot(O, O) - 2Dot(O, C) + Dot(C, C) - r©÷ = 0
-	//
-	// Optimize Dot() #0
-	// t©÷Dot(D, D) + 2t(Dot(D, O - C)) + Dot(O, O) - 2Dot(O, C) + Dot(C, C) - r©÷ = 0
-	//
-	// Optimize Dot() #1
-	// t©÷Dot(D, D) + 2t(Dot(D, O - C)) + Dot(O - C, O - C) - r©÷ = 0
-	//
-	// That wil give us the following quadratic equation
-	// at©÷ + bt + c = 0
-	// # a = Dot(D, D)  # b = 2 * Dot(D, O - C)  # c = Dot(O - C, O - C) - r©÷
-	//
-	// discriminant of quadratic equation: b©÷ - 4ac
-	//
-	// And if, b©÷ - 4ac ¡Ã 0
-	// then, the ray hit the sphere!
-
-	auto r = XMVectorSet(Radius, Radius, Radius, 1.0f);
-	auto a = XMVector3Dot(m_PickingRayDirection, m_PickingRayDirection);
-	auto b = 2.0f * XMVector3Dot(m_PickingRayDirection, m_PickingRayOrigin - Center);
-	auto c = XMVector3Dot(m_PickingRayOrigin - Center, m_PickingRayOrigin - Center) - r * r;
-	auto discriminant = b * b - 4.0f * a * c;
-
-	XMVECTOR t{};
-	if (XMVector3GreaterOrEqual(discriminant, XMVectorZero()))
-	{
-		return true;
-	}
-
-	return false;
-}
-
 auto JWSystemPhysics::PickSubBoundingSphere() noexcept->bool
 {
-	if (m_pPickedEntity)
+	if (m_pPickedEntity == nullptr) { return false; }
+	auto physics = m_pPickedEntity->GetComponentPhysics();
+	if (physics == nullptr) { return false; }
+
+	m_PickedSubBSID = -1;
+	auto& sub_bs = physics->SubBoundingSpheres;
+	for (int id = 0; id < sub_bs.size(); ++id)
 	{
-		auto physics = m_pPickedEntity->GetComponentPhysics();
-		if (physics)
+		if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, sub_bs[id].Center, sub_bs[id].Radius))
 		{
-			auto& sub_bs = physics->SubBoundingSpheres;
-
-			m_PickedSubBSID = -1;
-
-			int32_t id{};
-			for (auto& iter : sub_bs)
-			{
-				if (IsSpherePicked(iter.Center, iter.Radius))
-				{
-					m_PickedSubBSID = id;
-					return true;
-				}
-
-				++id;
-			}
+			m_PickedSubBSID = id;
+			return true;
 		}
 	}
 
@@ -520,62 +356,39 @@ void JWSystemPhysics::PickTerrainTriangle() noexcept
 	if (m_pPickedEntity)
 	{
 		auto render = m_pPickedEntity->GetComponentRender();
-		
+		if (render == nullptr) { return; }
+
 		auto ptr_terrain = render->PtrTerrain;
-		if (ptr_terrain)
+		if (ptr_terrain == nullptr) { return; }
+		
+		STerrainQuadTreeNode* picked_node{};
+		for (auto& iter : ptr_terrain->QuadTree)
 		{
-			STerrainQuadTreeNode* picked_node{};
-			for (auto& iter : ptr_terrain->QuadTree)
+			if (iter.SubBoundingSphereID == m_PickedSubBSID)
 			{
-				if (iter.SubBoundingSphereID == m_PickedSubBSID)
-				{
-					picked_node = &iter;
-					break;
-				}
+				picked_node = &iter;
+				break;
 			}
+		}
+		if (picked_node == nullptr) { return; }
+		
+		XMVECTOR t_cmp{ XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0) };
+		const auto& faces{ picked_node->IndexData.vFaces };
+		const auto& vertices{ picked_node->VertexData.vVerticesModel };
+		for (auto triangle : faces)
+		{
+			auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
+			auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
+			auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
 
-			if (picked_node)
+			if (IntersectRayTriangle(m_PickedPoint, t_cmp, m_PickingRayOrigin, m_PickingRayDirection, v0, v1, v2))
 			{
-				XMVECTOR t_cmp{ XMVectorSet(FLT_MAX, FLT_MAX, FLT_MAX, 0) };
-
-				const auto& faces{ picked_node->IndexData.vFaces };
-				const auto& vertices{ picked_node->VertexData.vVerticesModel };
-
-				// Iterate all the triangles in the node
-				for (auto triangle : faces)
-				{
-					auto v0 = XMLoadFloat3(&vertices[triangle._0].Position);
-					auto v1 = XMLoadFloat3(&vertices[triangle._1].Position);
-					auto v2 = XMLoadFloat3(&vertices[triangle._2].Position);
-
-					PickTriangle(v0, v1, v2, t_cmp);
-				}
+				m_PickedTriangle[0] = v0;
+				m_PickedTriangle[1] = v1;
+				m_PickedTriangle[2] = v2;
 			}
 		}
 	}
-}
-
-
-auto JWSystemPhysics::GetPickingRayOrigin() const noexcept->const XMVECTOR& 
-{ 
-	return m_PickingRayOrigin; 
-}
-
-auto JWSystemPhysics::GetPickingRayDirection() const noexcept->const XMVECTOR&
-{ 
-	return m_PickingRayDirection;
-}
-
-auto JWSystemPhysics::GetPickedEntityName() const noexcept->const STRING&
-{
-	return m_PickedEntityName;
-}
-
-auto JWSystemPhysics::GetPickedTrianglePosition(uint32_t PositionIndex) const noexcept->const XMVECTOR&
-{
-	PositionIndex = min(PositionIndex, 2);
-
-	return m_PickedTriangle[PositionIndex];
 }
 
 void JWSystemPhysics::Execute() noexcept

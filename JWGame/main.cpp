@@ -365,9 +365,9 @@ JW_FUNCTION_ON_INPUT(OnInput)
 			->UpdateLines();
 
 		XMFLOAT3 tri_a{}, tri_b{}, tri_c{};
-		XMStoreFloat3(&tri_a, ecs.SystemPhysics().GetPickedTrianglePosition(0));
-		XMStoreFloat3(&tri_b, ecs.SystemPhysics().GetPickedTrianglePosition(1));
-		XMStoreFloat3(&tri_c, ecs.SystemPhysics().GetPickedTrianglePosition(2));
+		XMStoreFloat3(&tri_a, ecs.SystemPhysics().GetPickedTriangleVertex(0));
+		XMStoreFloat3(&tri_b, ecs.SystemPhysics().GetPickedTriangleVertex(1));
+		XMStoreFloat3(&tri_c, ecs.SystemPhysics().GetPickedTriangleVertex(2));
 		
 		ecs.GetEntityByType(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
 			->SetVertex(0, tri_a, XMFLOAT4(1, 1, 1, 1))
@@ -398,7 +398,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	auto& ecs = myGame.ECS();
 
 	// 3D Point for debugging
-	ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->SetPosition(ecs.SystemPhysics().GetPickedPointPosition());
+	ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->SetPosition(ecs.SystemPhysics().GetPickedPoint());
 
 	// ECS entity Skybox
 	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(ecs.SystemCamera().GetCurrentCameraPosition());

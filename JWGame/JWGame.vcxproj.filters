@@ -438,6 +438,9 @@
     <ClInclude Include="..\Core\JWTerrainGenerator.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\Core\JWMath.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\DirectXTK\SimpleMath.inl">
