@@ -339,9 +339,9 @@ auto JWSystemRender::GetSharedImage2D(size_t Index) noexcept->JWImage*
 	return result;
 }
 
-auto JWSystemRender::CreateSharedTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor) noexcept->STerrainData*
+auto JWSystemRender::CreateSharedTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor, float XYSizeFactor) noexcept->STerrainData*
 {
-	auto new_terrain = m_TerrainGenerator.GenerateTerrainFromHeightMap(HeightMapFN, HeightFactor);
+	auto new_terrain = m_TerrainGenerator.GenerateTerrainFromHeightMap(HeightMapFN, HeightFactor, XYSizeFactor);
 
 	m_vSharedTerrain.push_back(new_terrain);
 

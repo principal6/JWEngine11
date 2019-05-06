@@ -6,8 +6,8 @@ namespace JWEngine
 {
 	// @warning:
 	// If MaximumNodeSize is too small, it takes really long to generate the terrain!
-	static constexpr int KMaximumNodeSizeX = 32;
-	static constexpr int KMaximumNodeSizeZ = 32;
+	static constexpr int KMaximumNodeSizeX = 24;
+	static constexpr int KMaximumNodeSizeZ = 24;
 	static constexpr int KMinimumNodeSizeX = 2;
 	static constexpr int KMinimumNodeSizeZ = 2;
 
@@ -43,7 +43,7 @@ namespace JWEngine
 		// Supported format:
 		// TIF(R8G8B8, non-compressed, non-layered)
 		// TIF(R8, non-compressed, non-layered)
-		auto GenerateTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor = 1.0f) noexcept->STerrainData;
+		auto GenerateTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor = 1.0f, float XYSizeFactor = 1.0f) noexcept->STerrainData;
 
 		void SaveTerrainAsTRN(const STRING& TRNFileName, const STerrainData& TerrainData) noexcept;
 
@@ -54,9 +54,9 @@ namespace JWEngine
 
 	private:
 		void LoadGray8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
-			float HeightFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept;
+			float HeightFactor, float XYSizeFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept;
 		void LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
-			float HeightFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept;
+			float HeightFactor, float XYSizeFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept;
 
 		void BuildQuadTree(STerrainData& TerrainData, int32_t CurrentNodeID) noexcept;
 		void BuildQuadTreeMesh(STerrainData& TerrainData, const SModelData& ModelData) noexcept;

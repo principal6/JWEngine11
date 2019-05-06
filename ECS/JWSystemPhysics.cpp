@@ -321,7 +321,7 @@ PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
 			const auto& center = iter->BoundingSphereData.Center;
 			const auto& radius = iter->BoundingSphereData.Radius;
 				
-			if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, center, radius, old_t))
+			if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, center, radius, &old_t))
 			{
 				m_PickedPoint = m_PickingRayOrigin + old_t * m_PickingRayDirection;
 				m_pPickedEntity = entity;
@@ -350,11 +350,11 @@ auto JWSystemPhysics::PickSubBoundingSphere() noexcept->bool
 	
 	auto& sub_bs = physics->SubBoundingSpheres;
 	XMVECTOR old_t{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX };
-	for (uint32_t id = 0; id < sub_bs.size(); ++id)
+	for (uint32_t id = static_cast<uint32_t>(sub_bs.size()); id > 0; --id)
 	{
-		if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, sub_bs[id].Center, sub_bs[id].Radius, old_t))
+		if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, sub_bs[id - 1].Center, sub_bs[id - 1].Radius))
 		{
-			m_vPickedSubBSID.emplace_back(id);
+			m_vPickedSubBSID.push_back(id - 1);
 		}
 	}
 

@@ -261,7 +261,7 @@ namespace JWEngine
 		auto CreateSharedImage2D(SPositionInt Position, SSizeInt Size) noexcept->JWImage*;
 		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
 
-		auto CreateSharedTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor) noexcept->STerrainData*;
+		auto CreateSharedTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor, float XYSizeFactor) noexcept->STerrainData*;
 		auto CreateSharedTerrainFromTRN(const STRING& FileName) noexcept->STerrainData*;
 		auto GetSharedTerrain(size_t Index) noexcept->STerrainData*;
 

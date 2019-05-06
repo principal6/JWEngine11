@@ -671,6 +671,7 @@ namespace JWEngine
 		uint32_t						TerrainSizeX{};
 		uint32_t						TerrainSizeZ{};
 		float							HeightFactor{};
+		float							XYSizeFactor{};
 
 		XMFLOAT3						WholeBoundingSphereOffset{};
 		float							WholeBoundingSphereRadius{};

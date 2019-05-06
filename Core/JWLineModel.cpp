@@ -175,40 +175,37 @@ auto JWLineModel::SetLine3DPosition(size_t Line3DIndex, XMFLOAT3 StartPosition, 
 	return this;
 }
 
-auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, XMVECTOR Direction) noexcept->JWLineModel*
+auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, XMVECTOR Direction, float LineLength) noexcept->JWLineModel*
 {
 	if (m_VertexData.GetVertexCount())
 	{
 		if (m_RenderType == ERenderType::Model_Line3D)
 		{
-			constexpr float line_length = 100.0f;
-
 			Line3DIndex = min(Line3DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
 			m_VertexData.vVerticesModel[Line3DIndex * 2].Position = Origin;
 			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position = 
-				m_VertexData.vVerticesModel[Line3DIndex * 2].Position + Direction * line_length;
+				m_VertexData.vVerticesModel[Line3DIndex * 2].Position + Direction * LineLength;
 		}
 	}
 
 	return this;
 }
 
-auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, XMVECTOR Direction, XMFLOAT4 Color) noexcept->JWLineModel*
+auto JWLineModel::SetLine3DOriginDirection(size_t Line3DIndex, XMVECTOR Origin, XMVECTOR Direction,
+	float LineLength, XMFLOAT4 Color) noexcept->JWLineModel*
 {
 	if (m_VertexData.GetVertexCount())
 	{
 		if (m_RenderType == ERenderType::Model_Line3D)
 		{
-			constexpr float line_length = 100.0f;
-
 			Line3DIndex = min(Line3DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
 			m_VertexData.vVerticesModel[Line3DIndex * 2].Position = Origin;
 			m_VertexData.vVerticesModel[Line3DIndex * 2].Diffuse = Color;
 
 			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Position =
-				m_VertexData.vVerticesModel[Line3DIndex * 2].Position + Direction * line_length;
+				m_VertexData.vVerticesModel[Line3DIndex * 2].Position + Direction * LineLength;
 			m_VertexData.vVerticesModel[Line3DIndex * 2 + 1].Diffuse = Color;
 		}
 	}

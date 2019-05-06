@@ -19,7 +19,6 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// # Terrain	@ AABB Picking is better for tree structured terrain... (Regions overlap when using bounding spheres)
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
 	// # Render		@ Sprite instancing
@@ -83,10 +82,10 @@ int main()
 	}
 	{
 		// Terrain
-		//auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_gray_128.tif", 20.0f);
-		//ecs.SystemRender().TerrainGenerator().SaveTerrainAsTRN("heightmap_gray_128.trn", *terrain);
+		auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_gray_128.tif", 10.0f, 2.0f);
+		ecs.SystemRender().TerrainGenerator().SaveTerrainAsTRN("heightmap_gray_128.trn", *terrain);
 
-		ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_gray_128.trn"); // Shared Terrain #0
+		//ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_gray_128.trn"); // Shared Terrain #0
 	}
 
 	ecs.SystemRender().SetSystemRenderFlag(
@@ -362,7 +361,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 		// ECS entity Ray
 		ecs.GetEntityByType(EEntityType::PickingRay)->GetComponentRender()->PtrLine
-			->SetLine3DOriginDirection(0, ecs.SystemPhysics().GetPickingRayOrigin(), ecs.SystemPhysics().GetPickingRayDirection())
+			->SetLine3DOriginDirection(0, ecs.SystemPhysics().GetPickingRayOrigin(), ecs.SystemPhysics().GetPickingRayDirection(), 400.0f)
 			->UpdateLines();
 
 		ecs.GetEntityByType(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel

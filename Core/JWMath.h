@@ -6,7 +6,8 @@ namespace JWEngine
 {
 	using namespace DirectX;
 
-	static const auto KZeroVector = XMVectorZero();
+	static const auto KVectorZero = XMVectorZero();
+	static const auto KVectorMax = XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
 
 	__forceinline auto __vectorcall GetTriangleNormal(const XMVECTOR& EdgeAB, const XMVECTOR& EdgeAC)->XMVECTOR
 	{
@@ -37,15 +38,15 @@ namespace JWEngine
 
 		auto check_0 = XMVector3Cross(edge_bc, (Point - TriB));
 		auto check_1 = XMVector3Cross(edge_bc, (TriA - TriB));
-		if (XMVector3Greater(XMVector3Dot(check_0, check_1), KZeroVector))
+		if (XMVector3Greater(XMVector3Dot(check_0, check_1), KVectorZero))
 		{
 			check_0 = XMVector3Cross(edge_ac, (Point - TriA));
 			check_1 = XMVector3Cross(edge_ac, edge_ab);
-			if (XMVector3Greater(XMVector3Dot(check_0, check_1), KZeroVector))
+			if (XMVector3Greater(XMVector3Dot(check_0, check_1), KVectorZero))
 			{
 				check_0 = XMVector3Cross(edge_ab, (Point - TriA));
 				check_1 = XMVector3Cross(edge_ab, edge_ac);
-				if (XMVector3Greater(XMVector3Dot(check_0, check_1), KZeroVector))
+				if (XMVector3Greater(XMVector3Dot(check_0, check_1), KVectorZero))
 				{
 					return true;
 				}
@@ -90,7 +91,7 @@ namespace JWEngine
 		auto ray_origin_norm = XMVector3Dot(RayOrigin, triangle_normal);
 		auto ray_direction_norm = XMVector3Dot(RayDirection, triangle_normal);
 		XMVECTOR new_t{};
-		if (XMVector3NotEqual(ray_direction_norm, KZeroVector))
+		if (XMVector3NotEqual(ray_direction_norm, KVectorZero))
 		{
 			new_t = (-plane_d -ray_origin_norm) / ray_direction_norm;
 		}
@@ -98,7 +99,7 @@ namespace JWEngine
 		// 't' should be positive for the picking to be in front of the camera!
 		// (if it's negative, the picking is occuring behind the camera)
 		// We will store the minimum of t values, which means that it's the closest picking to the camera.
-		if ((XMVector3Greater(new_t, KZeroVector)) && (XMVector3Less(new_t, OutOldT)))
+		if ((XMVector3Greater(new_t, KVectorZero)) && (XMVector3Less(new_t, OutOldT)))
 		{
 			// Save the point on plane.
 			OutPointOnPlane = RayOrigin + new_t * RayDirection;
@@ -161,7 +162,7 @@ namespace JWEngine
 	// then, the ray hit the sphere!
 	__forceinline auto __vectorcall IntersectRaySphere(
 		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection, const XMVECTOR& Center, float Radius,
-		XMVECTOR& OldT) noexcept->bool
+		XMVECTOR* PtrOutOldT = nullptr) noexcept->bool
 	{
 		auto r = XMVectorSet(Radius, Radius, Radius, 1.0f);
 		auto vector_co = RayOrigin - Center;
@@ -171,22 +172,33 @@ namespace JWEngine
 		auto c = XMVector3Dot(vector_co, vector_co) - r * r;
 		auto discriminant = b * b - 4.0f * a * c;
 
-		if (XMVector3Greater(discriminant, KZeroVector))
+		if (XMVector3Greater(discriminant, KVectorZero))
 		{
 			// Smaller T
 			auto new_t = XMVectorSetW((-b -XMVectorSqrt(discriminant)) / (2 * a), 1.0f);
 
-			if (XMVector3Less(new_t, KZeroVector))
+			if (XMVector3Less(new_t, KVectorZero))
 			{
 				// Bigger T
 				new_t = XMVectorSetW((-b +XMVectorSqrt(discriminant)) / (2 * a), 1.0f);
 			}
 
-			if ((XMVector3Greater(new_t, KZeroVector)) && (XMVector3Less(new_t, OldT)))
+			if (PtrOutOldT)
 			{
-				OldT = new_t;
-				return true;
+				if ((XMVector3Greater(new_t, KVectorZero)) && (XMVector3Less(new_t, *PtrOutOldT)))
+				{
+					*PtrOutOldT = new_t;
+					return true;
+				}
 			}
+			else
+			{
+				if (XMVector3Greater(new_t, KVectorZero))
+				{
+					return true;
+				}
+			}
+			
 		}
 
 		return false;
