@@ -74,7 +74,9 @@ void JWDX::Destroy() noexcept
 	// Release the COM objects we created.
 
 	// States
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SamplerStateAnisotropic);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SamplerStateMinMagMipPointWrap);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SamplerStateMinMagMipLinearWrapBias2);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_SamplerStateMinMagMipLinearWrap);
 
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_BlendStateOpaque);
@@ -454,6 +456,7 @@ PRIVATE void JWDX::CreateSamplerStates() noexcept
 {
 	D3D11_SAMPLER_DESC sampler_description{};
 	sampler_description.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampler_description.Filter = D3D11_FILTER_ANISOTROPIC;
 	sampler_description.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_description.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	sampler_description.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -478,6 +481,11 @@ PRIVATE void JWDX::CreateSamplerStates() noexcept
 	sampler_description.MipLODBias = 0;
 
 	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateMinMagMipPointWrap);
+
+	sampler_description.Filter = D3D11_FILTER_ANISOTROPIC;
+	sampler_description.MaxAnisotropy = 16;
+	sampler_description.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateAnisotropic);
 }
 
 PRIVATE void JWDX::CreateDefaultViewport() noexcept
@@ -613,11 +621,14 @@ void JWDX::SetPSSamplerState(ESamplerState State) noexcept
 	case JWEngine::ESamplerState::MinMagMipLinearWrap:
 		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateMinMagMipLinearWrap);
 		break;
-	case JWEngine::ESamplerState::MinMagMipLinearWrapBias1:
+	case JWEngine::ESamplerState::MinMagMipLinearWrapBias2:
 		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateMinMagMipLinearWrapBias2);
 		break;
 	case JWEngine::ESamplerState::MinMagMipPointWrap:
 		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateMinMagMipPointWrap);
+		break;
+	case JWEngine::ESamplerState::Anisotropic:
+		m_DeviceContext11->PSSetSamplers(0, 1, &m_SamplerStateAnisotropic);
 		break;
 	default:
 		break;

@@ -35,8 +35,9 @@ namespace JWEngine
 	{
 		Invalid,
 		MinMagMipLinearWrap,
-		MinMagMipLinearWrapBias1,
+		MinMagMipLinearWrapBias2,
 		MinMagMipPointWrap,
+		Anisotropic,
 	};
 
 	enum class EDepthStencilState
@@ -233,6 +234,7 @@ namespace JWEngine
 		ID3D11SamplerState*			m_SamplerStateMinMagMipLinearWrap{};
 		ID3D11SamplerState*			m_SamplerStateMinMagMipLinearWrapBias2{};
 		ID3D11SamplerState*			m_SamplerStateMinMagMipPointWrap{};
+		ID3D11SamplerState*			m_SamplerStateAnisotropic{};
 
 		EPrimitiveTopology			m_CurrentPrimitiveTopology{ EPrimitiveTopology::Invalid };
 	};

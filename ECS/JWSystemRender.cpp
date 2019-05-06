@@ -1012,7 +1012,14 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 	}
 
 	// Set PS texture sampler
-	m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
+	if (Component.PtrTerrain)
+	{
+		m_pDX->SetPSSamplerState(ESamplerState::Anisotropic);
+	}
+	else
+	{
+		m_pDX->SetPSSamplerState(ESamplerState::MinMagMipLinearWrap);
+	}
 
 	// Set VS
 	m_pDX->SetVS(Component.VertexShader);
