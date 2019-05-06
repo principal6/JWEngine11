@@ -10,28 +10,39 @@ void JWTerrainGenerator::Create(JWDX& DX, const STRING& BaseDirectory) noexcept
 	m_BaseDirectory = BaseDirectory;
 }
 
-inline auto JWTerrainGenerator::ConvertR8G8B8ToFloat(unsigned char R, unsigned char G, unsigned char B, float division_factor) noexcept->float
+inline auto JWTerrainGenerator::ConvertR8G8B8ToFloat(unsigned char R, unsigned char G, unsigned char B, float factor) noexcept->float
 {
-	return static_cast<float>(R + G * 256 + B * 65536) / division_factor;
+	return (static_cast<float>(R + G * UINT8_MAX + B * UINT16_MAX) / (UINT16_MAX * 2)) * factor;
 }
 
-inline auto JWTerrainGenerator::ConvertR8ToFloat(unsigned char R, float division_factor) noexcept->float
+inline auto JWTerrainGenerator::ConvertR8ToFloat(unsigned char R, float factor) noexcept->float
 {
-	return static_cast<float>(R) / division_factor;
+	return (static_cast<float>(R) / UINT8_MAX) * factor;
 }
 
-PRIVATE void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
+inline auto JWTerrainGenerator::ConvertR16ToFloat(unsigned short R, float factor) noexcept->float
+{
+	return (static_cast<float>(R) / UINT16_MAX) * factor;
+}
+
+PRIVATE void JWTerrainGenerator::LoadR8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
 	float HeightFactor, float XYSizeFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept
 {
-	uint32_t color_count = 1;
-	uint32_t array_size = color_count * TextureWidth * TextureHeight;
-	unsigned char* data = new unsigned char[array_size];
+	static constexpr auto pixel_byte_size = sizeof(unsigned char);
+	static constexpr uint32_t color_count = 1;
+	uint32_t texture_row_size{};
+	uint32_t array_size{};
+	unsigned char* data{};
 
 	// Map the readable texture
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
 	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(Texture, 0, D3D11_MAP_READ, 0, &mapped_subresource)))
 	{
-		memcpy(data, mapped_subresource.pData, sizeof(unsigned char) * array_size);
+		texture_row_size = mapped_subresource.RowPitch / (pixel_byte_size * color_count);
+		array_size = mapped_subresource.DepthPitch / pixel_byte_size;
+		data = new unsigned char[array_size];
+
+		memcpy(data, mapped_subresource.pData, pixel_byte_size * array_size);
 		m_pDX->GetDeviceContext()->Unmap(Texture, 0);
 	}
 
@@ -50,22 +61,22 @@ PRIVATE void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, ui
 
 			// Ignore alpha value
 			v_y[0] = ConvertR8ToFloat(
-				data[(z * TextureWidth * color_count) + (x * color_count)],
+				data[(z * texture_row_size * color_count) + (x * color_count)],
 				HeightFactor
 			);
 
 			v_y[1] = ConvertR8ToFloat(
-				data[(z * TextureWidth * color_count) + ((x + 1) * color_count)],
+				data[(z * texture_row_size * color_count) + ((x + 1) * color_count)],
 				HeightFactor
 			);
 
 			v_y[2] = ConvertR8ToFloat(
-				data[((z + 1) * TextureWidth * color_count) + (x * color_count)],
+				data[((z + 1) * texture_row_size * color_count) + (x * color_count)],
 				HeightFactor
 			);
 
 			v_y[3] = ConvertR8ToFloat(
-				data[((z + 1) * TextureWidth * color_count) + ((x + 1) * color_count)],
+				data[((z + 1) * texture_row_size * color_count) + ((x + 1) * color_count)],
 				HeightFactor
 			);
 
@@ -89,24 +100,99 @@ PRIVATE void JWTerrainGenerator::LoadGray8UnormData(ID3D11Texture2D* Texture, ui
 	JW_DELETE_ARRAY(data);
 }
 
-PRIVATE void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
+PRIVATE void JWTerrainGenerator::LoadR16UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
 	float HeightFactor, float XYSizeFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept
 {
-	uint32_t color_count = 4;
-	uint32_t actual_texture_width = TextureWidth;
-	if (TextureWidth % 2)
-	{
-		++actual_texture_width;
-	}
-	uint32_t array_size = color_count * actual_texture_width * TextureHeight;
-	unsigned char* data = new unsigned char[array_size];
-	assert(data);
+	static constexpr auto pixel_byte_size = sizeof(unsigned short);
+	static constexpr uint32_t color_count = 1;
+	uint32_t texture_row_size{};
+	uint32_t array_size{};
+	unsigned short* data{};
 
 	// Map the readable texture
 	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
 	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(Texture, 0, D3D11_MAP_READ, 0, &mapped_subresource)))
 	{
-		memcpy(data, mapped_subresource.pData, sizeof(unsigned char) * array_size);
+		texture_row_size = mapped_subresource.RowPitch / (pixel_byte_size * color_count);
+		array_size = mapped_subresource.DepthPitch / pixel_byte_size;
+		data = new unsigned short[array_size];
+
+		memcpy(data, mapped_subresource.pData, pixel_byte_size * array_size);
+		m_pDX->GetDeviceContext()->Unmap(Texture, 0);
+	}
+
+	float		v_x{};
+	float		v_z{};
+	float		v_y[4]{};
+	uint32_t	v_map_id[4]{};
+
+	// Vertex
+	for (uint32_t z = 0; z < TextureHeight - 1; ++z)
+	{
+		for (uint32_t x = 0; x < TextureWidth - 1; ++x)
+		{
+			v_x = static_cast<float>(x) * XYSizeFactor;
+			v_z = -static_cast<float>(z) * XYSizeFactor;
+
+			// Ignore alpha value
+			v_y[0] = ConvertR16ToFloat(
+				data[(z * texture_row_size * color_count) + (x * color_count)],
+				HeightFactor
+			);
+
+			v_y[1] = ConvertR16ToFloat(
+				data[(z * texture_row_size * color_count) + ((x + 1) * color_count)],
+				HeightFactor
+			);
+
+			v_y[2] = ConvertR16ToFloat(
+				data[((z + 1) * texture_row_size * color_count) + (x * color_count)],
+				HeightFactor
+			);
+
+			v_y[3] = ConvertR16ToFloat(
+				data[((z + 1) * texture_row_size * color_count) + ((x + 1) * color_count)],
+				HeightFactor
+			);
+
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x, v_y[0], v_z, 0, 0));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x + XYSizeFactor, v_y[1], v_z, 1, 0));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x, v_y[2], v_z - XYSizeFactor, 0, 1));
+			OutModelData.VertexData.AddVertex(SVertexModel(v_x + XYSizeFactor, v_y[3], v_z - XYSizeFactor, 1, 1));
+
+			v_map_id[0] = x + z * TextureWidth;
+			v_map_id[1] = (x + 1) + z * TextureWidth;
+			v_map_id[2] = x + (z + 1) * TextureWidth;
+			v_map_id[3] = (x + 1) + (z + 1) * TextureWidth;
+
+			OutVertexMap[v_map_id[0]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 4));
+			OutVertexMap[v_map_id[1]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 3));
+			OutVertexMap[v_map_id[2]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 2));
+			OutVertexMap[v_map_id[3]].AddVertexID(static_cast<int32_t>(OutModelData.VertexData.vVerticesModel.size() - 1));
+		}
+	}
+
+	JW_DELETE_ARRAY(data);
+}
+
+PRIVATE void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
+	float HeightFactor, float XYSizeFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept
+{
+	static constexpr auto pixel_byte_size = sizeof(unsigned char);
+	static constexpr uint32_t color_count = 4;
+	uint32_t texture_row_size{};
+	uint32_t array_size{};
+	unsigned char* data{};
+
+	// Map the readable texture
+	D3D11_MAPPED_SUBRESOURCE mapped_subresource{};
+	if (SUCCEEDED(m_pDX->GetDeviceContext()->Map(Texture, 0, D3D11_MAP_READ, 0, &mapped_subresource)))
+	{
+		texture_row_size = mapped_subresource.RowPitch / (pixel_byte_size * color_count);
+		array_size = mapped_subresource.DepthPitch / pixel_byte_size;
+		data = new unsigned char[array_size];
+
+		memcpy(data, mapped_subresource.pData, pixel_byte_size * array_size);
 		m_pDX->GetDeviceContext()->Unmap(Texture, 0);
 	}
 
@@ -125,30 +211,30 @@ PRIVATE void JWTerrainGenerator::LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture,
 
 			// Ignore alpha value
 			v_y[0] = ConvertR8G8B8ToFloat(
-				data[(z * actual_texture_width * color_count) + (x * color_count)],
-				data[(z * actual_texture_width * color_count) + (x * color_count) + 1],
-				data[(z * actual_texture_width * color_count) + (x * color_count) + 2],
+				data[(z * texture_row_size * color_count) + (x * color_count)],
+				data[(z * texture_row_size * color_count) + (x * color_count) + 1],
+				data[(z * texture_row_size * color_count) + (x * color_count) + 2],
 				HeightFactor
 			);
 
 			v_y[1] = ConvertR8G8B8ToFloat(
-				data[(z * actual_texture_width * color_count) + ((x + 1) * color_count)],
-				data[(z * actual_texture_width * color_count) + ((x + 1) * color_count) + 1],
-				data[(z * actual_texture_width * color_count) + ((x + 1) * color_count) + 2],
+				data[(z * texture_row_size * color_count) + ((x + 1) * color_count)],
+				data[(z * texture_row_size * color_count) + ((x + 1) * color_count) + 1],
+				data[(z * texture_row_size * color_count) + ((x + 1) * color_count) + 2],
 				HeightFactor
 			);
 
 			v_y[2] = ConvertR8G8B8ToFloat(
-				data[((z + 1) * actual_texture_width * color_count) + (x * color_count)],
-				data[((z + 1) * actual_texture_width * color_count) + (x * color_count) + 1],
-				data[((z + 1) * actual_texture_width * color_count) + (x * color_count) + 2],
+				data[((z + 1) * texture_row_size * color_count) + (x * color_count)],
+				data[((z + 1) * texture_row_size * color_count) + (x * color_count) + 1],
+				data[((z + 1) * texture_row_size * color_count) + (x * color_count) + 2],
 				HeightFactor
 			);
 
 			v_y[3] = ConvertR8G8B8ToFloat(
-				data[((z + 1) * actual_texture_width * color_count) + ((x + 1) * color_count)],
-				data[((z + 1) * actual_texture_width * color_count) + ((x + 1) * color_count) + 1],
-				data[((z + 1) * actual_texture_width * color_count) + ((x + 1) * color_count) + 2],
+				data[((z + 1) * texture_row_size * color_count) + ((x + 1) * color_count)],
+				data[((z + 1) * texture_row_size * color_count) + ((x + 1) * color_count) + 1],
+				data[((z + 1) * texture_row_size * color_count) + ((x + 1) * color_count) + 2],
 				HeightFactor
 			);
 
@@ -230,7 +316,12 @@ auto JWTerrainGenerator::GenerateTerrainFromHeightMap(const STRING& HeightMapFN,
 		}
 		else if (loaded_texture_desc.Format == DXGI_FORMAT_R8_UNORM)
 		{
-			LoadGray8UnormData(readable_texture, texture_size.Width, texture_size.Height, HeightFactor, XYSizeFactor, model_data, vertex_map);
+			LoadR8UnormData(readable_texture, texture_size.Width, texture_size.Height, HeightFactor, XYSizeFactor, model_data, vertex_map);
+			are_vertices_loaded = true;
+		}
+		else if (loaded_texture_desc.Format == DXGI_FORMAT_R16_UNORM)
+		{
+			LoadR16UnormData(readable_texture, texture_size.Width, texture_size.Height, HeightFactor, XYSizeFactor, model_data, vertex_map);
 			are_vertices_loaded = true;
 		}
 
@@ -641,8 +732,8 @@ void JWTerrainGenerator::BuildQuadTree(STerrainData& TerrainData, int32_t Curren
 	auto& tree = TerrainData.QuadTree;
 	auto size = static_cast<int32_t>(tree.size() - 1);
 	
-	if ((tree[CurrentNodeID].SizeX > KMaximumNodeSizeX) || (tree[CurrentNodeID].SizeZ > KMaximumNodeSizeZ) &&
-		(tree[CurrentNodeID].SizeX > KMinimumNodeSizeX) && (tree[CurrentNodeID].SizeZ > KMinimumNodeSizeZ))
+	if ((tree[CurrentNodeID].SizeX > KMaximumNodeSize) || (tree[CurrentNodeID].SizeZ > KMaximumNodeSize) &&
+		(tree[CurrentNodeID].SizeX > KMinimumNodeSize) && (tree[CurrentNodeID].SizeZ > KMinimumNodeSize))
 	{
 		// Add 4 children
 		tree.push_back(STerrainQuadTreeNode(size + 1, CurrentNodeID));
@@ -745,6 +836,8 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 			// Create index buffer
 			m_pDX->CreateIndexBuffer(iter.IndexData.GetByteSize(), iter.IndexData.GetPtrData(), &iter.IndexBuffer);
 
+			/*
+			// @warning: This is so slow...!!!!
 			// Calculate Normal vector representations
 			// Calculate normal line positions
 			size_t iterator_vertex{};
@@ -765,7 +858,7 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 
 			// Create index buffer for normals
 			m_pDX->CreateIndexBuffer(iter.NormalData.IndexData.GetByteSize(), iter.NormalData.IndexData.GetPtrData(), &iter.NormalIndexBuffer);
-
+			*/
 		}
 	}
 }

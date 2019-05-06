@@ -10,7 +10,7 @@ namespace JWEngine
 	
 	constexpr float	KDefFOV{ XM_PIDIV4 };
 	constexpr float	KDefZNear{ 0.1f };
-	constexpr float	KDefZFar{ 400.0f };
+	constexpr float	KDefZFar{ 1000.0f };
 	
 	constexpr float	KDefMoveFactor{ 0.02f };
 	constexpr float	KDefRotateFactor{ 0.01f };

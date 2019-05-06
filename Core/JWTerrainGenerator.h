@@ -5,11 +5,9 @@
 namespace JWEngine
 {
 	// @warning:
-	// If MaximumNodeSize is too small, it takes really long to generate the terrain!
-	static constexpr int KMaximumNodeSizeX = 24;
-	static constexpr int KMaximumNodeSizeZ = 24;
-	static constexpr int KMinimumNodeSizeX = 2;
-	static constexpr int KMinimumNodeSizeZ = 2;
+	// If MaximumNodeSize is too small, it takes longer to generate the terrain!
+	static constexpr int KMaximumNodeSize = 16;
+	static constexpr int KMinimumNodeSize = 2;
 
 	static constexpr int KMaxVertexMapIDCount = 4;
 
@@ -49,12 +47,18 @@ namespace JWEngine
 
 		auto LoadTerrainFromTRN(const STRING& TRNFileName) noexcept->STerrainData;
 
-		inline auto ConvertR8G8B8ToFloat(unsigned char R, unsigned char G, unsigned char B, float division_factor) noexcept->float;
-		inline auto ConvertR8ToFloat(unsigned char R, float division_factor) noexcept->float;
+		inline auto ConvertR8G8B8ToFloat(unsigned char R, unsigned char G, unsigned char B, float factor) noexcept->float;
+		inline auto ConvertR8ToFloat(unsigned char R, float factor) noexcept->float;
+		inline auto ConvertR16ToFloat(unsigned short R, float factor) noexcept->float;
 
 	private:
-		void LoadGray8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
+		// Gray scale 8-bit
+		void LoadR8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
 			float HeightFactor, float XYSizeFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept;
+		// Gray scale 16-bit
+		void LoadR16UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
+			float HeightFactor, float XYSizeFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept;
+		// RGB 8-bit
 		void LoadR8G8B8A8UnormData(ID3D11Texture2D* Texture, uint32_t TextureWidth, uint32_t TextureHeight,
 			float HeightFactor, float XYSizeFactor, SModelData& OutModelData, SVertexMap& OutVertexMap) noexcept;
 

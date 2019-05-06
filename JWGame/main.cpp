@@ -82,10 +82,10 @@ int main()
 	}
 	{
 		// Terrain
-		auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_gray_128.tif", 10.0f, 2.0f);
-		ecs.SystemRender().TerrainGenerator().SaveTerrainAsTRN("heightmap_gray_128.trn", *terrain);
+		//auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_gray_128.tif", 100.0f, 4.0f);
+		//ecs.SystemRender().TerrainGenerator().SaveTerrainAsTRN("heightmap_gray_128.trn", *terrain);
 
-		//ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_gray_128.trn"); // Shared Terrain #0
+		ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_gray_128.trn"); // Shared Terrain #0
 	}
 
 	ecs.SystemRender().SetSystemRenderFlag(
@@ -361,7 +361,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 
 		// ECS entity Ray
 		ecs.GetEntityByType(EEntityType::PickingRay)->GetComponentRender()->PtrLine
-			->SetLine3DOriginDirection(0, ecs.SystemPhysics().GetPickingRayOrigin(), ecs.SystemPhysics().GetPickingRayDirection(), 400.0f)
+			->SetLine3DOriginDirection(0, ecs.SystemPhysics().GetPickingRayOrigin(), ecs.SystemPhysics().GetPickingRayDirection(), 1000.0f)
 			->UpdateLines();
 
 		ecs.GetEntityByType(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
