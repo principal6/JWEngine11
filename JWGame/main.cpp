@@ -19,7 +19,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
-	// # Terrain	@ Use SComponentTransform
+	// # Terrain	@ Use SComponentTransform (partially done... only for translation!)
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
 	// # Render		@ Sprite instancing
@@ -195,7 +195,7 @@ int main()
 		auto terrain = ecs.CreateEntity(EEntityType::MainTerrain);
 		terrain->CreateComponentTransform()
 			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-			->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
+			->SetPosition(XMFLOAT3(0.0f, -10.0f, 0.0f));
 		terrain->CreateComponentPhysics();
 		terrain->CreateComponentRender()
 			->SetTerrain(terrain_data)
@@ -368,10 +368,11 @@ JW_FUNCTION_ON_INPUT(OnInput)
 			->SetLine3DOriginDirection(0, ecs.SystemPhysics().GetPickingRayOrigin(), ecs.SystemPhysics().GetPickingRayDirection(), 1000.0f)
 			->UpdateLines();
 
+		static const auto KPickedTriangleDisplacement = XMVectorSet(0, 0.01f, 0, 0);
 		ecs.GetEntityByType(EEntityType::PickedTriangle)->GetComponentRender()->PtrModel
-			->SetVertex(0, ecs.SystemPhysics().GetPickedTriangleVertex(0), XMFLOAT4(1, 1, 1, 1))
-			->SetVertex(1, ecs.SystemPhysics().GetPickedTriangleVertex(1), XMFLOAT4(1, 0, 0, 1))
-			->SetVertex(2, ecs.SystemPhysics().GetPickedTriangleVertex(2), XMFLOAT4(0, 1, 0, 1))
+			->SetVertex(0, ecs.SystemPhysics().GetPickedTriangleVertex(0) + KPickedTriangleDisplacement, XMFLOAT4(0, 0.8f, 0.2f, 1))
+			->SetVertex(1, ecs.SystemPhysics().GetPickedTriangleVertex(1) + KPickedTriangleDisplacement, XMFLOAT4(0, 0.8f, 0.2f, 1))
+			->SetVertex(2, ecs.SystemPhysics().GetPickedTriangleVertex(2) + KPickedTriangleDisplacement, XMFLOAT4(0, 0.8f, 0.2f, 1))
 			->UpdateModel();
 	}
 

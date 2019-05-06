@@ -141,6 +141,16 @@ void JWSystemPhysics::SetSubBoundingSpheres(JWEntity* pEntity, const VECTOR<SBou
 
 	// Set sub-bounding-spheres
 	physics->SubBoundingSpheres = vData;
+
+	// Transform sub-bounding-spheres
+	auto transform = pEntity->GetComponentTransform();
+	if (transform)
+	{
+		for (auto& iter : physics->SubBoundingSpheres)
+		{
+			iter.Center += transform->Position;
+		}
+	}
 }
 
 auto JWSystemPhysics::PickEntity() noexcept->bool
@@ -347,7 +357,7 @@ auto JWSystemPhysics::PickSubBoundingSphere() noexcept->bool
 
 	// Clear
 	m_vPickedSubBSID.clear();
-	
+
 	auto& sub_bs = physics->SubBoundingSpheres;
 	XMVECTOR old_t{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX };
 	for (uint32_t id = static_cast<uint32_t>(sub_bs.size()); id > 0; --id)
@@ -375,7 +385,10 @@ void JWSystemPhysics::PickTerrainTriangle() noexcept
 
 		auto ptr_terrain = render->PtrTerrain;
 		if (ptr_terrain == nullptr) { return; }
+
+		auto transform = m_pPickedEntity->GetComponentTransform();
 		
+		XMVECTOR v[3]{};
 		XMVECTOR old_t{ XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX) };
 		for (auto& bs : m_vPickedSubBSID)
 		{
@@ -387,13 +400,21 @@ void JWSystemPhysics::PickTerrainTriangle() noexcept
 					const auto& vertices{ node.VertexData.vVerticesModel };
 					for (auto triangle : faces)
 					{
+						if (transform)
+						{
+							// Move vertices from local space to world space!
+							v[0] = XMVector3TransformCoord(vertices[triangle._0].Position, transform->WorldMatrix);
+							v[1] = XMVector3TransformCoord(vertices[triangle._1].Position, transform->WorldMatrix);
+							v[2] = XMVector3TransformCoord(vertices[triangle._2].Position, transform->WorldMatrix);
+						}
+
 						if (IntersectRayTriangle(m_PickedPoint, old_t,
 							m_PickingRayOrigin, m_PickingRayDirection,
-							vertices[triangle._0].Position, vertices[triangle._1].Position, vertices[triangle._2].Position))
+							v[0], v[1], v[2]))
 						{
-							m_PickedTriangle[0] = vertices[triangle._0].Position;
-							m_PickedTriangle[1] = vertices[triangle._1].Position;
-							m_PickedTriangle[2] = vertices[triangle._2].Position;
+							m_PickedTriangle[0] = v[0];
+							m_PickedTriangle[1] = v[1];
+							m_PickedTriangle[2] = v[2];
 						}
 					}
 				}
