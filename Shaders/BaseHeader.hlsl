@@ -39,8 +39,9 @@ struct VS_OUTPUT_MODEL
 	float4 Position			: SV_POSITION;
 	float2 TexCoord			: TEXCOORD;
 	float3 Normal			: NORMAL0;
-	float3 Tangent			: NORMAL1;
-	float3 Bitangent		: NORMAL2;
+	float4 WVPNormal		: NORMAL1;	// This will be used in GS
+	float3 Tangent			: NORMAL2;
+	float3 Bitangent		: NORMAL3;
 	float4 Diffuse			: COLOR0;
 	float4 Specular			: COLOR1;
 	float3 WorldPosition	: COLOR2;

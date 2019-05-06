@@ -8,12 +8,21 @@ auto JWPrimitiveMaker::MakeTriangle(const XMFLOAT3& A, const XMFLOAT3& B, const 
 
 	XMFLOAT4 Color[3] = { {1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1} };
 
+	auto v_a = XMLoadFloat3(&A);
+	auto v_b = XMLoadFloat3(&B);
+	auto v_c = XMLoadFloat3(&C);
+
+	auto edge_ab = v_b - v_a;
+	auto edge_ac = v_c - v_a;
+
+	auto normal = XMVector3Normalize(XMVector3Cross(edge_ab, edge_ac));
+
 	/*
 	** Vertex
 	*/
-	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&A), Color[0]));
-	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&B), Color[1]));
-	result.VertexData.AddVertex(SVertexModel(XMLoadFloat3(&C), Color[2]));
+	result.VertexData.AddVertex(SVertexModel(v_a, normal, Color[0]));
+	result.VertexData.AddVertex(SVertexModel(v_b, normal, Color[1]));
+	result.VertexData.AddVertex(SVertexModel(v_c, normal, Color[2]));
 
 	/*
 	** Index

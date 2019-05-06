@@ -45,13 +45,8 @@ namespace JWEngine
 		ID3D11Buffer*		ModelIndexBuffer{};
 		SModelData			ModelData{};
 
-		ID3D11Buffer*		NormalVertexBuffer{};
-		ID3D11Buffer*		NormalIndexBuffer{};
-		SLineModelData		NormalData{};
-
 	private:
 		void CreateModelVertexIndexBuffers() noexcept;
-		void CreateNormalVertexIndexBuffers() noexcept;
 
 		// ---------------------------------
 		// --- Animation related methods ---

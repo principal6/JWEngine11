@@ -112,6 +112,7 @@ VS_OUTPUT_MODEL main(VS_INPUT_MODEL input)
 	output.Position = mul(position_result, WVP);
 	output.WorldPosition = mul(position_result, World).xyz;
 	output.Normal = normalize(mul(normal_result, World).xyz);
+	output.WVPNormal = normalize(mul(input.Normal, WVP)); // This will be used in GS
 	output.Tangent = normalize(mul(input.Tangent, World).xyz);
 	output.Bitangent = normalize(mul(input.Bitangent, World).xyz);
 

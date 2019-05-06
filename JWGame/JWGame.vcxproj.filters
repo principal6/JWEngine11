@@ -472,5 +472,8 @@
     <FxCompile Include="..\Shaders\VSBase.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="..\Shaders\GSNormal.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

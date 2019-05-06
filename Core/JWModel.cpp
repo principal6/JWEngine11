@@ -20,9 +20,6 @@ void JWModel::Destroy() noexcept
 		JW_RELEASE(ModelVertexBuffer[i]);
 	}
 	JW_RELEASE(ModelIndexBuffer);
-
-	JW_RELEASE(NormalVertexBuffer);
-	JW_RELEASE(NormalIndexBuffer);
 }
 
 void JWModel::CreateMeshBuffers(const SModelData& Data, ERenderType Type) noexcept
@@ -40,9 +37,6 @@ void JWModel::CreateMeshBuffers(const SModelData& Data, ERenderType Type) noexce
 
 		// Create model's vertex & index buffers
 		CreateModelVertexIndexBuffers();
-
-		// Create normal's vertex & index buffers
-		CreateNormalVertexIndexBuffers();
 	}
 }
 
@@ -319,31 +313,6 @@ PRIVATE void JWModel::CreateModelVertexIndexBuffers() noexcept
 
 	// Create index buffer
 	m_pDX->CreateIndexBuffer(ModelData.IndexData.GetByteSize(), ModelData.IndexData.GetPtrData(), &ModelIndexBuffer);
-}
-
-PRIVATE void JWModel::CreateNormalVertexIndexBuffers() noexcept
-{
-	// Clear data
-	NormalData.VertexData.Clear();
-	NormalData.IndexData.Clear();
-
-	// Calculate normal line positions
-	size_t iterator_vertex{};
-	for (const auto& vertex : ModelData.VertexData.vVerticesModel)
-	{
-		NormalData.VertexData.AddVertex(SVertexModel(vertex.Position, KDefaultColorNormals));
-		NormalData.VertexData.AddVertex(SVertexModel(vertex.Position + vertex.Normal, KDefaultColorNormals));
-
-		NormalData.IndexData.vIndices.push_back(SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
-
-		++iterator_vertex;
-	}
-
-	// Create vertex buffer for normals
-	m_pDX->CreateStaticVertexBuffer(NormalData.VertexData.GetVertexModelByteSize(), NormalData.VertexData.GetVertexModelPtrData(), &NormalVertexBuffer);
-
-	// Create index buffer for normals
-	m_pDX->CreateIndexBuffer(NormalData.IndexData.GetByteSize(), NormalData.IndexData.GetPtrData(), &NormalIndexBuffer);
 }
 
 auto JWModel::SetVertex(uint32_t VertexIndex, const XMVECTOR& Position, const XMFLOAT4& Color) noexcept->JWModel*

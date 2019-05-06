@@ -280,6 +280,7 @@ namespace JWEngine
 		SVertexModel(float x, float y, float z, float u, float v, float cr, float cg, float cb, float ca) :
 			Position{ x, y, z, 1.0f }, TexCoord{ u, v, 0, 0 }, Diffuse{ cr, cg, cb, ca } {};
 		SVertexModel(XMVECTOR _Position, XMFLOAT4 _Diffuse) : Position{ _Position }, Diffuse{ _Diffuse } {};
+		SVertexModel(XMVECTOR _Position, XMVECTOR _Normal, XMFLOAT4 _Diffuse) : Position{ _Position }, Normal{ _Normal }, Diffuse{ _Diffuse } {};
 		SVertexModel(XMVECTOR _Position, XMVECTOR _TexCoord, XMVECTOR _Normal, XMFLOAT4 _Diffuse, XMFLOAT4 _Specular) :
 			Position{ _Position }, TexCoord{ _TexCoord }, Normal{ _Normal }, Diffuse{ _Diffuse }, Specular{ _Specular } {};
 
@@ -658,10 +659,6 @@ namespace JWEngine
 		ID3D11Buffer*		IndexBuffer{};
 		SVertexDataModel	VertexData{};
 		SIndexDataTriangle	IndexData{};
-
-		ID3D11Buffer*		NormalVertexBuffer{};
-		ID3D11Buffer*		NormalIndexBuffer{};
-		SLineModelData		NormalData{};
 	};
 	
 	struct STerrainData
@@ -686,9 +683,6 @@ namespace JWEngine
 				{
 					JW_RELEASE(iter.VertexBuffer);
 					JW_RELEASE(iter.IndexBuffer);
-
-					JW_RELEASE(iter.NormalVertexBuffer);
-					JW_RELEASE(iter.NormalIndexBuffer);
 				}
 			}
 		}
@@ -743,7 +737,7 @@ namespace JWEngine
 		uint32_t	NextFrame{};
 		float		DeltaTime{};
 	};
-	
+
 	// @important
 	enum EFLAGPS : uint32_t
 	{

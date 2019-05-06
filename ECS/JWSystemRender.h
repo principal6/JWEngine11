@@ -9,10 +9,6 @@
 
 namespace JWEngine
 {
-	//class JWModel;
-	//class JWLineModel;
-	//class JWImage;
-	//class JWPrimitiveMaker;
 	class JWEntity;
 	class JWECS;
 
@@ -44,6 +40,7 @@ namespace JWEngine
 		JWFlagComponentRenderOption_GetLit						= 0x0020,
 		JWFlagComponentRenderOption_DrawTPose					= 0x0040,
 		JWFlagComponentRenderOption_AlwaysSolidNoCull			= 0x0080,
+		JWFlagComponentRenderOption_NeverDrawNormals			= 0x0100,
 	};
 	using JWFlagComponentRenderOption = uint32_t;
 

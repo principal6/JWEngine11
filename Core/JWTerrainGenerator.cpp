@@ -835,30 +835,6 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 
 			// Create index buffer
 			m_pDX->CreateIndexBuffer(iter.IndexData.GetByteSize(), iter.IndexData.GetPtrData(), &iter.IndexBuffer);
-
-			/*
-			// @warning: This is so slow...!!!!
-			// Calculate Normal vector representations
-			// Calculate normal line positions
-			size_t iterator_vertex{};
-			for (const auto& vertex : ModelData.VertexData.vVerticesModel)
-			{	
-				iter.NormalData.VertexData.AddVertex(SVertexModel(vertex.Position, KDefaultColorNormals));
-				iter.NormalData.VertexData.AddVertex(SVertexModel(vertex.Position + vertex.Normal, KDefaultColorNormals));
-
-				iter.NormalData.IndexData.vIndices.push_back(
-					SIndexLine(static_cast<UINT>(iterator_vertex * 2), static_cast<UINT>(iterator_vertex * 2 + 1)));
-
-				++iterator_vertex;
-			}
-
-			// Create vertex buffer for normals
-			m_pDX->CreateStaticVertexBuffer(
-				iter.NormalData.VertexData.GetVertexModelByteSize(), iter.NormalData.VertexData.GetVertexModelPtrData(), &iter.NormalVertexBuffer);
-
-			// Create index buffer for normals
-			m_pDX->CreateIndexBuffer(iter.NormalData.IndexData.GetByteSize(), iter.NormalData.IndexData.GetPtrData(), &iter.NormalIndexBuffer);
-			*/
 		}
 	}
 }

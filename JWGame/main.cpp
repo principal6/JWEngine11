@@ -138,7 +138,9 @@ int main()
 		main_sprite->CreateComponentRender()
 			->SetModel(ecs.SystemRender().GetSharedModel(2))
 			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(4))
-			->SetRenderFlag(JWFlagComponentRenderOption_UseDiffuseTexture | JWFlagComponentRenderOption_GetLit | JWFlagComponentRenderOption_UseAnimationInterpolation)
+			->SetRenderFlag(
+				JWFlagComponentRenderOption_UseDiffuseTexture | JWFlagComponentRenderOption_GetLit | 
+				JWFlagComponentRenderOption_UseAnimationInterpolation)
 			->SetAnimationTexture(ecs.SystemRender().GetAnimationTexture(0))
 			->SetAnimation(3);
 		ecs.SystemPhysics().SetBoundingSphere(main_sprite, 3.0f, XMFLOAT3(0, 0, 0));
@@ -152,7 +154,8 @@ int main()
 		->SetModel(ecs.SystemRender().GetSharedModel(3))
 		->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(0))
 		->SetVertexShader(EVertexShader::VSSkyMap)
-		->SetPixelShader(EPixelShader::PSSkyMap);
+		->SetPixelShader(EPixelShader::PSSkyMap)
+		->AddRenderFlag(JWFlagComponentRenderOption_NeverDrawNormals);
 
 	{
 		auto jars = ecs.CreateEntity("jars");

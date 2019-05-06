@@ -13,6 +13,7 @@ namespace JWEngine
 		TriangleList,
 		TriangleStrip,
 		LineList,
+		LineStrip,
 	};
 
 	enum class ERasterizerState
@@ -54,6 +55,12 @@ namespace JWEngine
 		VSIntantText,
 	};
 
+	enum class EGeometryShader
+	{
+		None,
+		GSNormal,
+	};
+
 	enum class EPixelShader
 	{
 		Invalid,
@@ -91,6 +98,7 @@ namespace JWEngine
 		void SetPSSamplerState(ESamplerState State) noexcept;
 
 		void SetVS(EVertexShader VS) noexcept;
+		void SetGS(EGeometryShader GS) noexcept;
 		void SetPS(EPixelShader PS) noexcept;
 
 		// Update VS constant buffers
@@ -116,12 +124,14 @@ namespace JWEngine
 		void CreateDeviceAndSwapChain(HWND hWnd) noexcept;
 
 		// VS Shader & input layout creation
-		// Called in Create()
 		void CreateVSBase() noexcept;
 		void CreateVSRaw() noexcept;
 		void CreateVSSkyMap() noexcept;
 		void CreateVSInstantText() noexcept;
 		void CreateAndSetVSCBs() noexcept;
+
+		// GS Shader creation
+		void CreateGSNormal() noexcept;
 
 		// PS Shader creation
 		void CreatePSBase() noexcept;
@@ -162,37 +172,40 @@ namespace JWEngine
 		ID3D11Device*			m_Device11{};
 		ID3D11DeviceContext*	m_DeviceContext11{};
 
-		// Shader and input layout
-		ID3D11InputLayout*	m_VSBaseInputLayout{};
-		ID3D10Blob*			m_VSBaseBuffer{};
-		ID3D11VertexShader*	m_VSBase{};
-		ID3D10Blob*			m_VSRawBuffer{};
-		ID3D11VertexShader*	m_VSRaw{};
-		ID3D10Blob*			m_VSSkyMapBuffer{};
-		ID3D11VertexShader*	m_VSSkyMap{};
-		ID3D11InputLayout*	m_VSInstantTextInputLayout{};
-		ID3D10Blob*			m_VSInstantTextBlob{};
-		ID3D11VertexShader*	m_VSInstantText{};
-		ID3D10Blob*			m_PSBaseBuffer{};
-		ID3D11PixelShader*	m_PSBase{};
-		ID3D10Blob*			m_PSRawBuffer{};
-		ID3D11PixelShader*	m_PSRaw{};
-		ID3D10Blob*			m_PSSkyMapBuffer{};
-		ID3D11PixelShader*	m_PSSkyMap{};
-		ID3D10Blob*			m_PSInstantTextBlob{};
-		ID3D11PixelShader*	m_PSInstantText{};
-		EVertexShader		m_CurrentVS{ EVertexShader::Invalid };
-		EPixelShader		m_CurrentPS{ EPixelShader::Invalid };
+		// Shaders and input layouts
+		ID3D11InputLayout*		m_VSBaseInputLayout{};
+		ID3D10Blob*				m_VSBaseBuffer{};
+		ID3D11VertexShader*		m_VSBase{};
+		ID3D10Blob*				m_VSRawBuffer{};
+		ID3D11VertexShader*		m_VSRaw{};
+		ID3D10Blob*				m_VSSkyMapBuffer{};
+		ID3D11VertexShader*		m_VSSkyMap{};
+		ID3D11InputLayout*		m_VSInstantTextInputLayout{};
+		ID3D10Blob*				m_VSInstantTextBlob{};
+		ID3D11VertexShader*		m_VSInstantText{};
+		ID3D10Blob*				m_GSNormalBuffer{};
+		ID3D11GeometryShader*	m_GSNormal{};
+		ID3D10Blob*				m_PSBaseBuffer{};
+		ID3D11PixelShader*		m_PSBase{};
+		ID3D10Blob*				m_PSRawBuffer{};
+		ID3D11PixelShader*		m_PSRaw{};
+		ID3D10Blob*				m_PSSkyMapBuffer{};
+		ID3D11PixelShader*		m_PSSkyMap{};
+		ID3D10Blob*				m_PSInstantTextBlob{};
+		ID3D11PixelShader*		m_PSInstantText{};
+		EVertexShader			m_CurrentVS{ EVertexShader::Invalid };
+		EGeometryShader			m_CurrentGS{ EGeometryShader::None };
+		EPixelShader			m_CurrentPS{ EPixelShader::Invalid };
 
-		// Shader constant buffer
-		ID3D11Buffer*		m_VSCBSpace{};
-		ID3D11Buffer*		m_VSCBFlags{};
-		ID3D11Buffer*		m_VSCBCPUAnimationData{};
-		ID3D11Buffer*		m_VSCBGPUAnimationData{};
-		ID3D11Buffer*		m_PSCBFlags{};
-		ID3D11Buffer*		m_PSCBLights{};
-		ID3D11Buffer*		m_PSCBCamera{};
-		SPSCBCamera			m_PSCBCameraData{};
+		// Shader constant buffers
+		ID3D11Buffer*			m_VSCBSpace{};
+		ID3D11Buffer*			m_VSCBFlags{};
+		ID3D11Buffer*			m_VSCBCPUAnimationData{};
+		ID3D11Buffer*			m_VSCBGPUAnimationData{};
+		ID3D11Buffer*			m_PSCBFlags{};
+		ID3D11Buffer*			m_PSCBLights{};
+		ID3D11Buffer*			m_PSCBCamera{};
+		SPSCBCamera				m_PSCBCameraData{};
 
 		ID3D11DepthStencilView*		m_DepthStencilView11{};
 		ID3D11RenderTargetView*		m_RenderTargetView11{};

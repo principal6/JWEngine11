@@ -28,6 +28,9 @@ void JWDX::Create(HWND hWnd, XMFLOAT2 WindowSize, STRING Directory, const SClear
 		CreateVSInstantText();
 		CreateAndSetVSCBs();
 
+		// Create GS shaders
+		CreateGSNormal();
+
 		// Create PS shaders and constant buffers
 		CreatePSBase();
 		CreatePSRaw();
@@ -109,6 +112,10 @@ void JWDX::Destroy() noexcept
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSBase);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSBaseBuffer);
 
+	// GS
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_GSNormal);
+	JW_RELEASE_CHECK_REFERENCE_COUNT(m_GSNormalBuffer);
+
 	// VS
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSInstantTextInputLayout);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_VSInstantText);
@@ -164,10 +171,10 @@ PRIVATE void JWDX::CreateVSBase() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSBase.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSBaseBuffer, nullptr);
 
-	// Create shader
+	// Create vertex shader
 	m_Device11->CreateVertexShader(m_VSBaseBuffer->GetBufferPointer(), m_VSBaseBuffer->GetBufferSize(), nullptr, &m_VSBase);
 
 	// Create input layout
@@ -180,22 +187,22 @@ PRIVATE void JWDX::CreateVSRaw() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSRaw.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSRawBuffer, nullptr);
 
-	// Create shader
+	// Create vertex shader
 	m_Device11->CreateVertexShader(m_VSRawBuffer->GetBufferPointer(), m_VSRawBuffer->GetBufferSize(), nullptr, &m_VSRaw);
 }
 
 PRIVATE void JWDX::CreateVSSkyMap() noexcept
 {
-	// Compile shader from file (SkyMap)
+	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSSkyMap.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSSkyMapBuffer, nullptr);
 
-	// Create shader (SkyMap)
+	// Create vertex shader
 	m_Device11->CreateVertexShader(m_VSSkyMapBuffer->GetBufferPointer(), m_VSSkyMapBuffer->GetBufferSize(), nullptr, &m_VSSkyMap);
 }
 
@@ -204,10 +211,10 @@ PRIVATE void JWDX::CreateVSInstantText() noexcept
 {
 	// Compile Shaders from shader file
 	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\VSInstantText.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_5_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "vs_4_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_VSInstantTextBlob, nullptr);
 
-	// Create the shader
+	// Create vertex shader
 	m_Device11->CreateVertexShader(m_VSInstantTextBlob->GetBufferPointer(), m_VSInstantTextBlob->GetBufferSize(), nullptr, &m_VSInstantText);
 
 	// Create input layout
@@ -215,15 +222,27 @@ PRIVATE void JWDX::CreateVSInstantText() noexcept
 		m_VSInstantTextBlob->GetBufferPointer(), m_VSInstantTextBlob->GetBufferSize(), &m_VSInstantTextInputLayout);
 }
 
+PRIVATE void JWDX::CreateGSNormal() noexcept
+{
+	// Compile shader from file
+	WSTRING shader_file_name;
+	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\GSNormal.hlsl";
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "gs_4_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_GSNormalBuffer, nullptr);
+
+	// Create geometry shader
+	m_Device11->CreateGeometryShader(m_GSNormalBuffer->GetBufferPointer(), m_GSNormalBuffer->GetBufferSize(), nullptr, &m_GSNormal);
+}
+
 PRIVATE void JWDX::CreatePSBase() noexcept
 {
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSBase.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSBaseBuffer, nullptr);
 
-	// Create shader
+	// Create pixel shader
 	m_Device11->CreatePixelShader(m_PSBaseBuffer->GetBufferPointer(), m_PSBaseBuffer->GetBufferSize(), nullptr, &m_PSBase);
 }
 
@@ -232,22 +251,22 @@ PRIVATE void JWDX::CreatePSRaw() noexcept
 	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSRaw.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSRawBuffer, nullptr);
 
-	// Create shader
+	// Create pixel shader
 	m_Device11->CreatePixelShader(m_PSRawBuffer->GetBufferPointer(), m_PSRawBuffer->GetBufferSize(), nullptr, &m_PSRaw);
 }
 
 PRIVATE void JWDX::CreatePSSkyMap() noexcept
 {
-	// Compile shader from file (SkyMap)
+	// Compile shader from file
 	WSTRING shader_file_name;
 	shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSSkyMap.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSSkyMapBuffer, nullptr);
 
-	// Create shader (SkyMap)
+	// Create pixel shader
 	m_Device11->CreatePixelShader(m_PSSkyMapBuffer->GetBufferPointer(), m_PSSkyMapBuffer->GetBufferSize(), nullptr, &m_PSSkyMap);
 }
 
@@ -255,10 +274,10 @@ PRIVATE void JWDX::CreatePSInstantText() noexcept
 {
 	// Compile Shaders from shader file
 	WSTRING shader_file_name = StringToWstring(m_BaseDirectory) + L"Shaders\\PSInstantText.hlsl";
-	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_5_0",
+	D3DCompileFromFile(shader_file_name.c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "main", "ps_4_0",
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &m_PSInstantTextBlob, nullptr);
 
-	// Create the shader
+	// Create pixel shader
 	m_Device11->CreatePixelShader(m_PSInstantTextBlob->GetBufferPointer(), m_PSInstantTextBlob->GetBufferSize(), nullptr, &m_PSInstantText);
 }
 
@@ -610,7 +629,7 @@ void JWDX::SetPrimitiveTopology(EPrimitiveTopology Topology) noexcept
 	if (m_CurrentPrimitiveTopology == Topology) { return; }
 
 	m_CurrentPrimitiveTopology = Topology;
-
+	
 	switch (m_CurrentPrimitiveTopology)
 	{
 	case JWEngine::EPrimitiveTopology::TriangleList:
@@ -621,6 +640,9 @@ void JWDX::SetPrimitiveTopology(EPrimitiveTopology Topology) noexcept
 		break;
 	case JWEngine::EPrimitiveTopology::LineList:
 		m_DeviceContext11->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+		break;
+	case JWEngine::EPrimitiveTopology::LineStrip:
+		m_DeviceContext11->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP);
 		break;
 	default:
 		break;
@@ -649,7 +671,6 @@ void JWDX::SetDepthStencilState(EDepthStencilState State) noexcept
 void JWDX::SetVS(EVertexShader VS) noexcept
 {
 	if (m_CurrentVS == VS) { return; }
-
 	m_CurrentVS = VS;
 
 	switch (m_CurrentVS)
@@ -675,10 +696,27 @@ void JWDX::SetVS(EVertexShader VS) noexcept
 	}
 }
 
+void JWDX::SetGS(EGeometryShader GS) noexcept
+{
+	if (m_CurrentGS == GS) { return; }
+	m_CurrentGS = GS;
+
+	switch (m_CurrentGS)
+	{
+	case JWEngine::EGeometryShader::None:
+		m_DeviceContext11->GSSetShader(nullptr, nullptr, 0);
+		break;
+	case JWEngine::EGeometryShader::GSNormal:
+		m_DeviceContext11->GSSetShader(m_GSNormal, nullptr, 0);
+		break;
+	default:
+		break;
+	}
+}
+
 void JWDX::SetPS(EPixelShader PS) noexcept
 {
 	if (m_CurrentPS == PS) { return; }
-
 	m_CurrentPS = PS;
 
 	switch (m_CurrentPS)

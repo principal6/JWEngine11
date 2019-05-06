@@ -455,6 +455,7 @@ void JWSystemRender::Execute() noexcept
 
 
 	// #0 Opaque drawing
+	// Set OM blend state
 	m_pDX->SetBlendState(EBlendState::Opaque);
 	for (auto& iter : m_vpComponents)
 	{
@@ -476,6 +477,7 @@ void JWSystemRender::Execute() noexcept
 
 
 	// #2 Transparent drawing
+	// Set OM blend state
 	m_pDX->SetBlendState(EBlendState::Transprent);
 	for (auto& iter : m_vpComponents)
 	{
@@ -1089,16 +1091,6 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 
 	bool should_cull{ false };
 
-	// Set OM blend state
-	if (Component.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency)
-	{
-		m_pDX->SetBlendState(EBlendState::Transprent);
-	}
-	else
-	{
-		m_pDX->SetBlendState(EBlendState::Opaque);
-	}
-
 	// Set IA primitive topology 
 	if ((type == ERenderType::Model_Static) || (type == ERenderType::Model_Dynamic) ||
 		(type == ERenderType::Model_Rigged) || (type == ERenderType::Image_2D) ||
@@ -1147,6 +1139,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 
 		// Draw indexed
 		ptr_device_context->DrawIndexed(model->ModelData.IndexData.GetCount(), 0, 0);
+
 		break;
 	case ERenderType::Image_2D:
 		// Set IA vertex buffer
@@ -1222,7 +1215,8 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	}
 
 	// Draw normals
-	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawNormals)
+	if ((m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawNormals) &&
+		(!(Component.FlagComponentRenderOption & JWFlagComponentRenderOption_NeverDrawNormals)))
 	{
 		DrawNormals(Component);
 	}
@@ -1235,39 +1229,19 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 
 	if ((model == nullptr) && (terrain == nullptr)) { return; }
 
-	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
-	if (component_transform == nullptr) { return; }
-	
-	const auto& world_matrix{ component_transform->WorldMatrix };
-	
-	// Set VS Base
-	m_pDX->SetVS(EVertexShader::VSBase);
-
-	// Update VS constant buffer
-	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
-	m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
-	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
-
-	// Set PS Base
-	m_pDX->SetPS(EPixelShader::PSBase);
-
 	// Update PS constant buffer
 	m_pDX->UpdatePSCBFlags(0);
 
 	// Set IA primitive topology
-	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::LineList);
+	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::LineStrip);
+
+	// Set GS for normal line generation
+	m_pDX->SetGS(EGeometryShader::GSNormal);
 
 	if (model)
 	{
-		// Set IA vertex buffer
-		m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &model->NormalVertexBuffer,
-			model->NormalData.VertexData.GetPtrStrides(), model->NormalData.VertexData.GetPtrOffsets());
-
-		// Set IA index buffer
-		m_pDX->GetDeviceContext()->IASetIndexBuffer(model->NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
 		// Draw
-		m_pDX->GetDeviceContext()->DrawIndexed(model->NormalData.IndexData.GetCount(), 0, 0);
+		m_pDX->GetDeviceContext()->Draw(model->ModelData.VertexData.GetVertexCount() * 2, 0);
 	}
 
 	if (terrain)
@@ -1277,18 +1251,17 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 			if (iter.HasMeshes)
 			{
 				// Set IA vertex buffer
-				m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, &iter.NormalVertexBuffer,
-					iter.NormalData.VertexData.GetPtrStrides(), iter.NormalData.VertexData.GetPtrOffsets());
-
-				// Set IA index buffer
-				m_pDX->GetDeviceContext()->IASetIndexBuffer(iter.NormalIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+				m_pDX->GetDeviceContext()->IASetVertexBuffers(
+					0, 1, &iter.VertexBuffer, iter.VertexData.GetPtrStrides(), iter.VertexData.GetPtrOffsets());
 
 				// Draw
-				m_pDX->GetDeviceContext()->DrawIndexed(iter.NormalData.IndexData.GetCount(), 0, 0);
+				m_pDX->GetDeviceContext()->Draw(iter.VertexData.GetVertexCount() * 2, 0);
 			}
 		}
 	}
 	
+	// Reset GS
+	m_pDX->SetGS(EGeometryShader::None);
 }
 
 void JWSystemRender::SetUniversalRasterizerState(ERasterizerState State) noexcept
