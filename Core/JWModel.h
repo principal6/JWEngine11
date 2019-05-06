@@ -21,6 +21,10 @@ namespace JWEngine
 		// ---------------------------------
 		// --- Animation related methods ---
 		auto AddAnimationFromFile(STRING FileName) noexcept->JWModel*;
+
+		// Before calling this function,
+		// first you must add all the animations you want to bake into texture
+		// by calling AddAnimationFromFile()
 		auto BakeAnimationTexture(SSizeInt TextureSize, STRING FileName) noexcept->JWModel*;
 
 		// Only available when it's dynamic model

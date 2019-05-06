@@ -37,8 +37,8 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.obj"); // Shared Model #1
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X", L"Ezreal_mip.dds") // Shared Model #2
 			->AddAnimationFromFile("Ezreal_Punching.X")
-			->AddAnimationFromFile("Ezreal_Walk.X")
-			->BakeAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
+			->AddAnimationFromFile("Ezreal_Walk.X");
+			//->BakeAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
 
 		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(100.0f, 16, 7)); // Shared Model #3 (Sphere for Sky)
