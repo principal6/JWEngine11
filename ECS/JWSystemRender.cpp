@@ -14,11 +14,11 @@ void JWSystemRender::Create(JWECS& ECS, JWDX& DX, STRING BaseDirectory) noexcept
 	// Set base directory.
 	m_BaseDirectory = BaseDirectory;
 
-	// Bounding volume (with instance buffer)
+	// Bounding ellipsoid (with instance buffer)
 	JWPrimitiveMaker primitive{};
-	m_BoundingVolume.Create(DX, BaseDirectory);
-	m_BoundingVolume.CreateMeshBuffers(primitive.MakeSphere(1.0f, 16, 7), ERenderType::Model_Static);
-	m_BoundingVolume.CreateInstanceBuffer();
+	m_BoundingEllipsoid.Create(DX, BaseDirectory);
+	m_BoundingEllipsoid.CreateMeshBuffers(primitive.MakeSphere(1.0f, 16, 7), ERenderType::Model_Static);
+	m_BoundingEllipsoid.CreateInstanceBuffer();
 
 	// Terrain
 	m_TerrainGenerator.Create(DX, BaseDirectory);
@@ -71,7 +71,7 @@ void JWSystemRender::Destroy() noexcept
 
 	m_TerrainGenerator.Destroy();
 
-	m_BoundingVolume.Destroy();
+	m_BoundingEllipsoid.Destroy();
 }
 
 auto JWSystemRender::CreateComponent(JWEntity* pEntity) noexcept->SComponentRender&
@@ -408,44 +408,38 @@ auto JWSystemRender::GetAnimationTexture(size_t Index) noexcept->STextureData*
 	return result;
 }
 
-void JWSystemRender::AddBoundingVolumeInstance(float Radius, const XMVECTOR& Translation) noexcept
+void JWSystemRender::AddBoundingEllipsoidInstance(const XMMATRIX& WorldMatrix) noexcept
 {
-	auto instance = m_pECS->SystemRender().BoundingVolume().ModelData.VertexData.PushInstance();
-
-	auto mat_s = XMMatrixScaling(Radius, Radius, Radius);
-	auto mat_t = XMMatrixTranslationFromVector(Translation);
+	auto instance = m_pECS->SystemRender().BoundingEllipsoid().ModelData.VertexData.PushInstance();
 
 	// Set the world matrix of the instance
-	instance->World = XMMatrixIdentity() * mat_s * mat_t;
+	instance->World = WorldMatrix;
 
-	UpdateBoundingVolumes();
+	UpdateBoundingEllipsoidInstanceBuffer();
 }
 
-void JWSystemRender::EraseBoundingVolumeInstance(uint32_t InstanceID) noexcept
+void JWSystemRender::EraseBoundingEllipsoidInstance(uint32_t InstanceID) noexcept
 {
-	m_pECS->SystemRender().BoundingVolume().ModelData.VertexData.EraseInstanceAt(InstanceID);
+	m_pECS->SystemRender().BoundingEllipsoid().ModelData.VertexData.EraseInstanceAt(InstanceID);
 
-	UpdateBoundingVolumes();
+	UpdateBoundingEllipsoidInstanceBuffer();
 }
 
-void JWSystemRender::UpdateBoundingVolumeInstance(uint32_t InstanceID, float Radius, const XMVECTOR& Translation) noexcept
+void JWSystemRender::UpdateBoundingEllipsoidInstance(uint32_t InstanceID, const XMMATRIX& WorldMatrix) noexcept
 {
-	auto instance = m_pECS->SystemRender().BoundingVolume().ModelData.VertexData.GetInstance(InstanceID);
-
-	auto mat_s = XMMatrixScaling(Radius, Radius, Radius);
-	auto mat_t = XMMatrixTranslationFromVector(Translation);
+	auto instance = m_pECS->SystemRender().BoundingEllipsoid().ModelData.VertexData.GetInstance(InstanceID);
 
 	// Set the world matrix of the instance
-	instance->World = XMMatrixIdentity() * mat_s * mat_t;
+	instance->World = WorldMatrix;
 
-	UpdateBoundingVolumes();
+	UpdateBoundingEllipsoidInstanceBuffer();
 }
 
-PRIVATE inline void JWSystemRender::UpdateBoundingVolumes() noexcept
+PRIVATE inline void JWSystemRender::UpdateBoundingEllipsoidInstanceBuffer() noexcept
 {
-	m_pDX->UpdateDynamicResource(m_BoundingVolume.ModelVertexBuffer[KVBIDInstancing],
-		m_BoundingVolume.ModelData.VertexData.GetInstancePtrData(),
-		m_BoundingVolume.ModelData.VertexData.GetInstanceByteSize());
+	m_pDX->UpdateDynamicResource(m_BoundingEllipsoid.ModelVertexBuffer[KVBIDInstancing],
+		m_BoundingEllipsoid.ModelData.VertexData.GetInstancePtrData(),
+		m_BoundingEllipsoid.ModelData.VertexData.GetInstanceByteSize());
 }
 
 void JWSystemRender::Execute() noexcept
@@ -469,10 +463,10 @@ void JWSystemRender::Execute() noexcept
 	}
 	
 
-	// #1 Instanced bounding volume (Whole Bounding Sphere) drawing
-	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingVolumes)
+	// #1 Instanced (whole) bounding ellipsoid drawing
+	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingEllipsoids)
 	{
-		DrawInstancedBoundingVolume();
+		DrawInstancedBoundingEllipsoids();
 	}
 
 
@@ -525,7 +519,7 @@ PRIVATE void JWSystemRender::ExecuteComponent(SComponentRender& Component) noexc
 		auto physics = Component.PtrEntity->GetComponentPhysics();
 		if (physics)
 		{
-			if (IsBSCulledByViewFrustum(physics->BoundingSphereData.Center, physics->BoundingSphereData.Radius))
+			if (IsUnitSphereCulledByViewFrustum(physics->BoundingEllipsoid.EllipsoidWorld))
 			{
 				// Entity is culled!
 				++m_FrustumCulledEntityCount;
@@ -564,50 +558,59 @@ PRIVATE void JWSystemRender::ExecuteComponent(SComponentRender& Component) noexc
 
 	Draw(Component);
 
-	// Draw sub-bounding-spheres
-	if ((m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingVolumes) &&
-		(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawSubBoundingVolumes))
+	// Draw sub-bounding-ellipsoids
+	if ((m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingEllipsoids) &&
+		(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawSubBoundingEllipsoids))
 	{
 		auto physics = Component.PtrEntity->GetComponentPhysics();
 		if (physics)
 		{
-			if (physics->SubBoundingSpheres.size())
+			if (physics->SubBoundingEllipsoids.size())
 			{
-				// Sub-bounding-spheres get drawn here... (NOT INSTANCED!)
+				// Sub-bounding-ellipsoids get drawn here... (NOT INSTANCED!)
 
 				// Set RS State
 				m_pDX->SetRasterizerState(ERasterizerState::WireFrame);
 
-				for (auto& iter : physics->SubBoundingSpheres)
+				for (auto& iter : physics->SubBoundingEllipsoids)
 				{
-					DrawNonInstancedBoundingVolumes(iter.Center, iter.Radius);
+					DrawNonInstancedBoundingEllipsoids(iter.EllipsoidWorld);
 				}
 			}
 		}
 	}
 }
 
-PRIVATE auto JWSystemRender::IsBSCulledByViewFrustum(const XMVECTOR& BSCenter, float BSRadius) const noexcept->bool
+PRIVATE auto JWSystemRender::IsUnitSphereCulledByViewFrustum(const XMMATRIX& EllipsoidWorld) const noexcept->bool
 {
-	const auto& center_pos = BSCenter;
-	const auto& radius = BSRadius;
-
 	// Get view frustum
 	m_pECS->SystemCamera().CaptureViewFrustum();
 	auto frustum = m_pECS->SystemCamera().GetCapturedViewFrustum();
+
+	auto inv_ellipsoid_world = XMMatrixInverse(nullptr, EllipsoidWorld);
+
+	// Transform view frustum into ellipsoid space
+	frustum.FLD = XMVector3TransformCoord(frustum.FLD, inv_ellipsoid_world);
+	frustum.FLU = XMVector3TransformCoord(frustum.FLU, inv_ellipsoid_world);
+	frustum.FRD = XMVector3TransformCoord(frustum.FRD, inv_ellipsoid_world);
+	frustum.FRU = XMVector3TransformCoord(frustum.FRU, inv_ellipsoid_world);
+	frustum.NLD = XMVector3TransformCoord(frustum.NLD, inv_ellipsoid_world);
+	frustum.NLU = XMVector3TransformCoord(frustum.NLU, inv_ellipsoid_world);
+	frustum.NRD = XMVector3TransformCoord(frustum.NRD, inv_ellipsoid_world);
+	frustum.NRU = XMVector3TransformCoord(frustum.NRU, inv_ellipsoid_world);
 
 	// Left plane
 	auto lp_v0 = XMVector3Normalize(frustum.FLU - frustum.NLU);
 	auto lp_v1 = XMVector3Normalize(frustum.FLD - frustum.NLU);
 	auto lp_vn = XMVector3Normalize(XMVector3Cross(lp_v1, lp_v0)); // @important
 
-	auto cmp_pos = center_pos + (-lp_vn) * radius;
+	auto cmp_pos = -lp_vn;
 	auto cmp_vec = XMVector3Normalize(cmp_pos - frustum.NLU);
 	auto distance = XMVector3Dot(cmp_vec, lp_vn);
 
 	if (XMVector3Greater(distance, XMVectorZero()))
 	{
-		// Bounding sphere is out of the view frustum.
+		// Bounding ellipsoid is out of the view frustum.
 		return true;
 	}
 
@@ -616,20 +619,20 @@ PRIVATE auto JWSystemRender::IsBSCulledByViewFrustum(const XMVECTOR& BSCenter, f
 	auto rp_v1 = XMVector3Normalize(frustum.FRD - frustum.NRU);
 	auto rp_vn = XMVector3Normalize(XMVector3Cross(rp_v0, rp_v1)); // @important
 
-	cmp_pos = center_pos + (-rp_vn) * radius;
+	cmp_pos = -rp_vn;
 	cmp_vec = XMVector3Normalize(cmp_pos - frustum.NRU);
 	distance = XMVector3Dot(cmp_vec, rp_vn);
 
 	if (XMVector3Greater(distance, XMVectorZero()))
 	{
-		// Bounding sphere is out of the view frustum.
+		// Bounding ellipsoid is out of the view frustum.
 		return true;
 	}
 
 	return false;
 }
 
-void JWSystemRender::DrawInstancedBoundingVolume() noexcept
+void JWSystemRender::DrawInstancedBoundingEllipsoids() noexcept
 {
 	auto world_matrix{ XMMatrixIdentity() };
 
@@ -658,28 +661,25 @@ void JWSystemRender::DrawInstancedBoundingVolume() noexcept
 	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
 	// Set IA vertex buffer
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 3, m_BoundingVolume.ModelVertexBuffer,
-		m_BoundingVolume.ModelData.VertexData.GetPtrStrides(), m_BoundingVolume.ModelData.VertexData.GetPtrOffsets());
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 3, m_BoundingEllipsoid.ModelVertexBuffer,
+		m_BoundingEllipsoid.ModelData.VertexData.GetPtrStrides(), m_BoundingEllipsoid.ModelData.VertexData.GetPtrOffsets());
 
 	// Set IA index buffer
-	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_BoundingVolume.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_BoundingEllipsoid.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Draw indexed instanced
 	m_pDX->GetDeviceContext()->DrawIndexedInstanced(
-		m_BoundingVolume.ModelData.IndexData.GetCount(), m_BoundingVolume.ModelData.VertexData.GetInstanceCount(), 0, 0, 0);
+		m_BoundingEllipsoid.ModelData.IndexData.GetCount(), m_BoundingEllipsoid.ModelData.VertexData.GetInstanceCount(), 0, 0, 0);
 }
 
-void JWSystemRender::DrawNonInstancedBoundingVolumes(const XMVECTOR& Position, float Radius) noexcept
+void JWSystemRender::DrawNonInstancedBoundingEllipsoids(const XMMATRIX& EllipsoidWorld) noexcept
 {
-	auto world_matrix{ XMMatrixScaling(Radius, Radius, Radius) };
-	world_matrix *= XMMatrixTranslationFromVector(Position);
-
 	// Set VS Base
 	m_pDX->SetVS(EVertexShader::VSBase);
 
 	// Update VS constant buffer
-	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
-	m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
+	m_VSCBSpace.WVP = XMMatrixTranspose(EllipsoidWorld * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
+	m_VSCBSpace.World = XMMatrixTranspose(EllipsoidWorld);
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Set PS Base
@@ -692,14 +692,14 @@ void JWSystemRender::DrawNonInstancedBoundingVolumes(const XMVECTOR& Position, f
 	m_pDX->SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
 	// Set IA vertex buffer
-	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, m_BoundingVolume.ModelVertexBuffer,
-		m_BoundingVolume.ModelData.VertexData.GetPtrStrides(), m_BoundingVolume.ModelData.VertexData.GetPtrOffsets());
+	m_pDX->GetDeviceContext()->IASetVertexBuffers(0, 1, m_BoundingEllipsoid.ModelVertexBuffer,
+		m_BoundingEllipsoid.ModelData.VertexData.GetPtrStrides(), m_BoundingEllipsoid.ModelData.VertexData.GetPtrOffsets());
 
 	// Set IA index buffer
-	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_BoundingVolume.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	m_pDX->GetDeviceContext()->IASetIndexBuffer(m_BoundingEllipsoid.ModelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 	// Draw
-	m_pDX->GetDeviceContext()->DrawIndexed(m_BoundingVolume.ModelData.IndexData.GetCount(), 0, 0);
+	m_pDX->GetDeviceContext()->DrawIndexed(m_BoundingEllipsoid.ModelData.IndexData.GetCount(), 0, 0);
 }
 
 void JWSystemRender::AnimateOnGPU(SComponentRender& Component) noexcept
@@ -1096,6 +1096,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	auto& image = Component.PtrImage;
 	auto& line = Component.PtrLine;
 
+	auto physics = Component.PtrEntity->GetComponentPhysics();
 	bool should_cull{ false };
 
 	// Set IA primitive topology 
@@ -1188,15 +1189,17 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 			{
 				should_cull = false;
 
-				if (Component.PtrTerrain->SubBoundingSpheres.size())
+				if (physics)
 				{
-					if (IsBSCulledByViewFrustum(Component.PtrTerrain->SubBoundingSpheres[iter.SubBoundingSphereID].Center,
-						Component.PtrTerrain->SubBoundingSpheres[iter.SubBoundingSphereID].Radius))
+					if (physics->SubBoundingEllipsoids.size())
 					{
-						should_cull = true;
+						if (IsUnitSphereCulledByViewFrustum(physics->SubBoundingEllipsoids[iter.SubBoundingEllipsoidID].EllipsoidWorld))
+						{
+							should_cull = true;
 
-						// Node is culled!
-						++m_FrustumCulledTerrainNodeCount;
+							// Node is culled!
+							++m_FrustumCulledTerrainNodeCount;
+						}
 					}
 				}
 				

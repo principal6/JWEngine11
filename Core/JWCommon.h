@@ -182,7 +182,7 @@ namespace JWEngine
 	static constexpr size_t KSizeTInvalid{ MAXSIZE_T };
 	static constexpr float KOrthographicNearZ{ 1.0f };
 	static constexpr float KOrthographicFarZ{ 100.0f };
-	static constexpr float KDefaultBoundingSphereRadius = 1.0f;
+	static constexpr float KDefaultBoundingEllipsoidRadius = 1.0f;
 
 	enum class EWorldMatrixCalculationOrder
 	{
@@ -625,14 +625,22 @@ namespace JWEngine
 		SVertexDataModel VertexData{};
 		SIndexDataLine IndexData{};
 	};
-	
-	struct SBoundingSphereData
-	{
-		float		Radius{ KDefaultBoundingSphereRadius };
-		XMVECTOR	Center{};
 
-		// This value is used to calculate BoundingSphereCenterPosition.
+	struct SBoundingEllipsoidData
+	{
+		SBoundingEllipsoidData() {};
+		SBoundingEllipsoidData(float _RadiusX, float _RadiusY, float _RadiusZ, float _OffsetX = 0, float _OffsetY = 0, float _OffsetZ = 0) :
+			RadiusX{ _RadiusX }, RadiusY{ _RadiusY }, RadiusZ{ _RadiusZ }, Offset{ _OffsetX, _OffsetY, _OffsetZ, 0.0f } {};
+
+		float		RadiusX{ KDefaultBoundingEllipsoidRadius };
+		float		RadiusY{ KDefaultBoundingEllipsoidRadius };
+		float		RadiusZ{ KDefaultBoundingEllipsoidRadius };
+
+		// Offset is optional.
+		// Default value = (0, 0, 0)
 		XMVECTOR	Offset{};
+
+		XMMATRIX	EllipsoidWorld{};
 	};
 	
 	struct STerrainQuadTreeNode
@@ -653,7 +661,7 @@ namespace JWEngine
 		bool				HasMeshes{ false };
 
 		// This value is valid only when 'IsMeshNode' is 'true'
-		int32_t				SubBoundingSphereID{ -1 };
+		int32_t				SubBoundingEllipsoidID{ -1 };
 
 		ID3D11Buffer*		VertexBuffer{};
 		ID3D11Buffer*		IndexBuffer{};
@@ -670,10 +678,8 @@ namespace JWEngine
 		float							HeightFactor{};
 		float							XYSizeFactor{};
 
-		XMFLOAT3						WholeBoundingSphereOffset{};
-		float							WholeBoundingSphereRadius{};
-
-		VECTOR<SBoundingSphereData>		SubBoundingSpheres{};
+		SBoundingEllipsoidData			WholeBoundingEllipsoid{};
+		VECTOR<SBoundingEllipsoidData>	SubBoundingEllipsoids{};
 
 		void Destroy()
 		{

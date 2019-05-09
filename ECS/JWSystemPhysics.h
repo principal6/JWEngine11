@@ -12,11 +12,11 @@ namespace JWEngine
 		JWEntity*			PtrEntity{};
 		uint32_t			ComponentID{};
 
-		// Unique bounding sphere that covers the whole entity
-		SBoundingSphereData			BoundingSphereData{};
+		// Unique bounding ellipsoid that covers the whole entity.
+		SBoundingEllipsoidData			BoundingEllipsoid{};
 
-		// Subset of bounding spheres that cover a part of the entity
-		VECTOR<SBoundingSphereData>	SubBoundingSpheres{};
+		// Subset of bounding ellipsoids that cover parts of the entity.
+		VECTOR<SBoundingEllipsoidData>	SubBoundingEllipsoids{};
 	};
 
 	class JWSystemPhysics
@@ -32,14 +32,13 @@ namespace JWEngine
 		void DestroyComponent(SComponentPhysics& Component) noexcept;
 
 		// Component setting
-		void SetBoundingSphere(JWEntity* pEntity, float Radius, const XMFLOAT3& CenterOffset = XMFLOAT3(0, 0, 0)) noexcept;
-		void HideBoundingSphere(JWEntity* pEntity) noexcept;
-		void UnhideBoundingSphere(JWEntity* pEntity) noexcept;
-		void UpdateBoundingSphere(JWEntity* pEntity) noexcept;
-		void SetSubBoundingSpheres(JWEntity* pEntity, const VECTOR<SBoundingSphereData>& vData) noexcept;
+		void SetBoundingEllipsoid(JWEntity* pEntity, const SBoundingEllipsoidData& Data) noexcept;
+		void HideBoundingEllipsoid(JWEntity* pEntity) noexcept;
+		void UpdateBoundingEllipsoid(JWEntity* pEntity) noexcept;
+		void SetSubBoundingEllipsoids(JWEntity* pEntity, const VECTOR<SBoundingEllipsoidData>& vData) noexcept;
 
 		auto PickEntity() noexcept->bool;
-		auto PickSubBoundingSphere() noexcept->bool;
+		auto PickSubBoundingEllipsoid() noexcept->bool;
 		void PickTerrainTriangle() noexcept;
 
 		auto IsEntityPicked() const noexcept { return m_IsEntityPicked; };
@@ -63,8 +62,8 @@ namespace JWEngine
 		// Picking #0 Triangle picking (experimental)
 		auto PickEntityByTriangle() noexcept->bool;
 
-		// Picking #1 Sphere picking (realistic choice)
-		auto PickEntityBySphere() noexcept->bool;
+		// Picking #1 Ellipsoid picking (realistic choice)
+		auto PickEntityByEllipsoid() noexcept->bool;
 
 	private:
 		VECTOR<SComponentPhysics*>	m_vpComponents;
@@ -82,7 +81,7 @@ namespace JWEngine
 		XMVECTOR					m_PickingRayDirection{};
 		XMVECTOR					m_PickedTriangle[3]{};
 		XMVECTOR					m_PickedPoint{};
-		VECTOR<uint32_t>			m_vPickedSubBSID{};
+		VECTOR<uint32_t>			m_vPickedSubBoundingEllipsoidID{};
 
 		bool						m_IsEntityPicked{ false };
 		STRING						m_PickedEntityName{};

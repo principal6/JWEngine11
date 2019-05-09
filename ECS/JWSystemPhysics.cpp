@@ -35,24 +35,26 @@ auto JWSystemPhysics::CreateComponent(JWEntity* pEntity) noexcept->SComponentPhy
 	m_vpComponents[slot]->ComponentID = slot;
 	m_vpComponents[slot]->PtrEntity = pEntity;
 
-	// Set center position
+	// Set world matrix of bounding ellipsoid
 	auto transform = m_vpComponents[slot]->PtrEntity->GetComponentTransform();
-	if (transform)
-	{
-		m_vpComponents[slot]->BoundingSphereData.Center =
-			m_vpComponents[slot]->BoundingSphereData.Offset + transform->Position;
-	}
+	const auto& bounding_ellipsoid = m_vpComponents[slot]->BoundingEllipsoid;
 
-	// Add bounding volume instance into SystemRender
-	m_pECS->SystemRender().AddBoundingVolumeInstance(m_vpComponents[slot]->BoundingSphereData.Radius, m_vpComponents[slot]->BoundingSphereData.Center);
+	auto temp_center = bounding_ellipsoid.Offset;
+	if (transform) { temp_center += transform->Position; }
+	
+	auto mat_scaling = XMMatrixScaling(bounding_ellipsoid.RadiusX, bounding_ellipsoid.RadiusY, bounding_ellipsoid.RadiusZ);
+	auto mat_translation = XMMatrixTranslationFromVector(temp_center);
+
+	// Add bounding ellipsoid instance into SystemRender
+	m_pECS->SystemRender().AddBoundingEllipsoidInstance(mat_scaling * mat_translation);
 
 	return *m_vpComponents[slot];
 }
 
 void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 {
-	// Erase bounding volume instance in SystemRender
-	m_pECS->SystemRender().EraseBoundingVolumeInstance(Component.ComponentID);
+	// Erase bounding ellipsoid instance in SystemRender
+	m_pECS->SystemRender().EraseBoundingEllipsoidInstance(Component.ComponentID);
 
 	uint32_t slot{};
 	for (const auto& iter : m_vpComponents)
@@ -71,7 +73,7 @@ void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 	if (slot < last_index)
 	{
 		m_vpComponents[slot] = m_vpComponents[last_index];
-		m_vpComponents[slot]->ComponentID = slot; // @important
+		m_vpComponents[slot]->ComponentID = slot; // @important!!
 
 		m_vpComponents[last_index] = nullptr;
 	}
@@ -79,77 +81,73 @@ void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
-void JWSystemPhysics::SetBoundingSphere(JWEntity* pEntity, float Radius, const XMFLOAT3& CenterOffset) noexcept
+void JWSystemPhysics::SetBoundingEllipsoid(JWEntity* pEntity, const SBoundingEllipsoidData& Data) noexcept
 {
 	if (pEntity == nullptr) { return; }
 	auto physics = pEntity->GetComponentPhysics();
 	if (physics == nullptr) { return; }
 
-	// Set the radius
-	physics->BoundingSphereData.Radius = Radius;
+	// Set the radius (RadiusX,Y,Z)
+	physics->BoundingEllipsoid.RadiusX = Data.RadiusX;
+	physics->BoundingEllipsoid.RadiusY = Data.RadiusY;
+	physics->BoundingEllipsoid.RadiusZ = Data.RadiusZ;
 
-	// Set center position
-	auto transform = physics->PtrEntity->GetComponentTransform();
-	physics->BoundingSphereData.Offset = XMVectorSet(CenterOffset.x, CenterOffset.y, CenterOffset.z, 1);
-	physics->BoundingSphereData.Center = physics->BoundingSphereData.Offset + transform->Position;
-	
-	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereData.Radius, physics->BoundingSphereData.Center);
+	// Set the offset
+	physics->BoundingEllipsoid.Offset = Data.Offset;
+
+	UpdateBoundingEllipsoid(pEntity);
 }
 
-void JWSystemPhysics::HideBoundingSphere(JWEntity* pEntity) noexcept
-{
-	if (pEntity == nullptr) { return; }
-	auto physics = pEntity->GetComponentPhysics();
-	if (physics == nullptr) { return; }
-
-	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, 0, XMVectorZero());
-}
-
-void JWSystemPhysics::UnhideBoundingSphere(JWEntity* pEntity) noexcept
-{
-	if (pEntity == nullptr) { return; }
-	auto physics = pEntity->GetComponentPhysics();
-	if (physics == nullptr) { return; }
-
-	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereData.Radius, physics->BoundingSphereData.Center);
-}
-
-void JWSystemPhysics::UpdateBoundingSphere(JWEntity* pEntity) noexcept
+void JWSystemPhysics::HideBoundingEllipsoid(JWEntity* pEntity) noexcept
 {
 	auto physics = pEntity->GetComponentPhysics();
 	if (physics == nullptr) { return; }
 
-	// Set center position
-	auto transform = physics->PtrEntity->GetComponentTransform();
-	if (transform)
-	{
-		physics->BoundingSphereData.Center = physics->BoundingSphereData.Offset + transform->Position;
-	}
+	auto& bounding_ellipsoid = physics->BoundingEllipsoid;
+	bounding_ellipsoid.EllipsoidWorld = XMMatrixScaling(0, 0, 0);
 
 	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingVolumeInstance(physics->ComponentID, physics->BoundingSphereData.Radius, physics->BoundingSphereData.Center);
+	m_pECS->SystemRender().UpdateBoundingEllipsoidInstance(physics->ComponentID, bounding_ellipsoid.EllipsoidWorld);
 }
 
-void JWSystemPhysics::SetSubBoundingSpheres(JWEntity* pEntity, const VECTOR<SBoundingSphereData>& vData) noexcept
+void JWSystemPhysics::UpdateBoundingEllipsoid(JWEntity* pEntity) noexcept
 {
-	if (pEntity == nullptr) { return; }
 	auto physics = pEntity->GetComponentPhysics();
 	if (physics == nullptr) { return; }
 
-	// Set sub-bounding-spheres
-	physics->SubBoundingSpheres = vData;
-
-	// Transform sub-bounding-spheres
+	// Calculate world matrix of the bounding ellipsoid
 	auto transform = pEntity->GetComponentTransform();
-	if (transform)
+	auto& bounding_ellipsoid = physics->BoundingEllipsoid;
+
+	auto temp_center = bounding_ellipsoid.Offset;
+	if (transform) { temp_center += transform->Position; }
+
+	auto mat_scaling = XMMatrixScaling(bounding_ellipsoid.RadiusX, bounding_ellipsoid.RadiusY, bounding_ellipsoid.RadiusZ);
+	auto mat_translation = XMMatrixTranslationFromVector(temp_center);
+	bounding_ellipsoid.EllipsoidWorld = mat_scaling * mat_translation;
+
+	// Update the data into SystemRender
+	m_pECS->SystemRender().UpdateBoundingEllipsoidInstance(physics->ComponentID, bounding_ellipsoid.EllipsoidWorld);
+}
+
+void JWSystemPhysics::SetSubBoundingEllipsoids(JWEntity* pEntity, const VECTOR<SBoundingEllipsoidData>& vData) noexcept
+{
+	if (pEntity == nullptr) { return; }
+	auto physics = pEntity->GetComponentPhysics();
+	if (physics == nullptr) { return; }
+
+	// Set sub-bounding-ellipsoids
+	physics->SubBoundingEllipsoids = vData;
+
+	// Calculate world matrix of the bounding ellipsoid
+	auto transform = pEntity->GetComponentTransform();
+	auto entity_position = transform->Position;
+
+	for (auto& iter : physics->SubBoundingEllipsoids)
 	{
-		for (auto& iter : physics->SubBoundingSpheres)
-		{
-			iter.Center += transform->Position;
-		}
+		auto mat_scaling = XMMatrixScaling(iter.RadiusX, iter.RadiusY, iter.RadiusZ);
+		auto mat_translation = XMMatrixTranslationFromVector(entity_position + iter.Offset);
+		iter.EllipsoidWorld = mat_scaling * mat_translation;
 	}
 }
 
@@ -166,7 +164,7 @@ auto JWSystemPhysics::PickEntity() noexcept->bool
 		return false;
 	}
 
-	if (PickEntityBySphere())
+	if (PickEntityByEllipsoid())
 	{
 		m_IsEntityPicked = true;
 		return true;
@@ -293,7 +291,7 @@ PRIVATE auto JWSystemPhysics::PickEntityByTriangle() noexcept->bool
 	return false;
 }
 
-PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
+PRIVATE auto JWSystemPhysics::PickEntityByEllipsoid() noexcept->bool
 {
 	XMVECTOR old_t{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX };
 	for (auto iter : m_vpComponents)
@@ -328,10 +326,12 @@ PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
 				}
 			}
 
-			const auto& center = iter->BoundingSphereData.Center;
-			const auto& radius = iter->BoundingSphereData.Radius;
-				
-			if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, center, radius, &old_t))
+			// Transform ray into ellipsoid space
+			auto inv_ellipsoid_world = XMMatrixInverse(nullptr, iter->BoundingEllipsoid.EllipsoidWorld);
+			auto e_ray_origin = XMVector3TransformCoord(m_PickingRayOrigin, inv_ellipsoid_world);
+			auto e_ray_direction = XMVector3TransformNormal(m_PickingRayDirection, inv_ellipsoid_world);
+
+			if (IntersectRayUnitSphere(e_ray_origin, e_ray_direction, &old_t))
 			{
 				m_PickedPoint = m_PickingRayOrigin + old_t * m_PickingRayDirection;
 				m_pPickedEntity = entity;
@@ -349,26 +349,38 @@ PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
 	return false;
 }
 
-auto JWSystemPhysics::PickSubBoundingSphere() noexcept->bool
+auto JWSystemPhysics::PickSubBoundingEllipsoid() noexcept->bool
 {
 	if (m_pPickedEntity == nullptr) { return false; }
 	auto physics = m_pPickedEntity->GetComponentPhysics();
 	if (physics == nullptr) { return false; }
+	auto transform = m_pPickedEntity->GetComponentTransform();
+	if (transform == nullptr) { return false; }
 
-	// Clear
-	m_vPickedSubBSID.clear();
+	// Clear array
+	m_vPickedSubBoundingEllipsoidID.clear();
 
-	auto& sub_bs = physics->SubBoundingSpheres;
-	XMVECTOR old_t{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX };
-	for (uint32_t id = static_cast<uint32_t>(sub_bs.size()); id > 0; --id)
+	auto& sub_bounding_ellipsoids = physics->SubBoundingEllipsoids;
+
+	static XMMATRIX inv_ellipsoid_world{};
+	static XMVECTOR e_ray_origin{};
+	static XMVECTOR e_ray_direction{};
+
+	for (uint32_t id = static_cast<uint32_t>(sub_bounding_ellipsoids.size()); id > 0; --id)
 	{
-		if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, sub_bs[id - 1].Center, sub_bs[id - 1].Radius))
+		// Transform ray into ellipsoid space
+		inv_ellipsoid_world = XMMatrixInverse(nullptr, sub_bounding_ellipsoids[id - 1].EllipsoidWorld);
+		e_ray_origin = XMVector3TransformCoord(m_PickingRayOrigin, inv_ellipsoid_world);
+		e_ray_direction = XMVector3TransformNormal(m_PickingRayDirection, inv_ellipsoid_world);
+
+		// @important: NO old_t comparison!
+		if (IntersectRayUnitSphere(e_ray_origin, e_ray_direction))
 		{
-			m_vPickedSubBSID.push_back(id - 1);
+			m_vPickedSubBoundingEllipsoidID.push_back(id - 1);
 		}
 	}
 
-	if (m_vPickedSubBSID.size())
+	if (m_vPickedSubBoundingEllipsoidID.size())
 	{
 		return true;
 	}
@@ -390,11 +402,11 @@ void JWSystemPhysics::PickTerrainTriangle() noexcept
 		
 		XMVECTOR v[3]{};
 		XMVECTOR old_t{ XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX) };
-		for (auto& bs : m_vPickedSubBSID)
+		for (auto& bs : m_vPickedSubBoundingEllipsoidID)
 		{
 			for (auto& node : ptr_terrain->QuadTree)
 			{
-				if (node.SubBoundingSphereID == bs)
+				if (node.SubBoundingEllipsoidID == bs)
 				{
 					const auto& faces{ node.IndexData.vFaces };
 					const auto& vertices{ node.VertexData.vVerticesModel };
@@ -432,11 +444,11 @@ void JWSystemPhysics::Execute() noexcept
 		auto transform{ iter->PtrEntity->GetComponentTransform() };
 		if (transform)
 		{
-			if (transform->ShouldUpdateBoundingVolume)
+			if (transform->ShouldUpdateBoundingEllipsoid)
 			{
-				UpdateBoundingSphere(iter->PtrEntity);
+				UpdateBoundingEllipsoid(iter->PtrEntity);
 
-				transform->ShouldUpdateBoundingVolume = false;
+				transform->ShouldUpdateBoundingEllipsoid = false;
 			}
 		}
 	}

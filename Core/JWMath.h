@@ -203,4 +203,47 @@ namespace JWEngine
 
 		return false;
 	}
+
+	__forceinline auto __vectorcall IntersectRayUnitSphere(
+		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection, XMVECTOR* PtrOutOldT = nullptr) noexcept->bool
+	{
+		auto r = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);
+		auto vector_co = RayOrigin;
+
+		auto a = XMVector3Dot(RayDirection, RayDirection);
+		auto b = 2.0f * XMVector3Dot(RayDirection, vector_co);
+		auto c = XMVector3Dot(vector_co, vector_co) - r * r;
+		auto discriminant = b * b - 4.0f * a * c;
+
+		if (XMVector3Greater(discriminant, KVectorZero))
+		{
+			// Smaller T
+			auto new_t = XMVectorSetW((-b - XMVectorSqrt(discriminant)) / (2 * a), 1.0f);
+
+			if (XMVector3Less(new_t, KVectorZero))
+			{
+				// Bigger T
+				new_t = XMVectorSetW((-b + XMVectorSqrt(discriminant)) / (2 * a), 1.0f);
+			}
+
+			if (PtrOutOldT)
+			{
+				if ((XMVector3Greater(new_t, KVectorZero)) && (XMVector3Less(new_t, *PtrOutOldT)))
+				{
+					*PtrOutOldT = new_t;
+					return true;
+				}
+			}
+			else
+			{
+				if (XMVector3Greater(new_t, KVectorZero))
+				{
+					return true;
+				}
+			}
+
+		}
+
+		return false;
+	}
 };

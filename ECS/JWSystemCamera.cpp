@@ -163,12 +163,12 @@ void JWSystemCamera::SetCurrentCamera(size_t ComponentID) noexcept
 
 	if (m_pCurrentCamera)
 	{
-		m_pECS->SystemPhysics().UnhideBoundingSphere(m_pCurrentCamera->PtrEntity);
+		m_pECS->SystemPhysics().UpdateBoundingEllipsoid(m_pCurrentCamera->PtrEntity);
 	}
 
 	m_pCurrentCamera = m_vpComponents[ComponentID];
 
-	m_pECS->SystemPhysics().HideBoundingSphere(m_pCurrentCamera->PtrEntity);
+	m_pECS->SystemPhysics().HideBoundingEllipsoid(m_pCurrentCamera->PtrEntity);
 
 	RotateCurrentCamera(0, 0, 0);
 	UpdateCurrentCameraViewMatrix();
@@ -245,9 +245,9 @@ void JWSystemCamera::MoveCurrentCamera(ECameraDirection Direction) noexcept
 		break;
 	}
 
-	// Update Camera's bounding sphere position & hide it.
-	m_pECS->SystemPhysics().UpdateBoundingSphere(m_pCurrentCamera->PtrEntity);
-	m_pECS->SystemPhysics().HideBoundingSphere(m_pCurrentCamera->PtrEntity);
+	// Update Camera's bounding ellipsoid position & hide it.
+	m_pECS->SystemPhysics().UpdateBoundingEllipsoid(m_pCurrentCamera->PtrEntity);
+	m_pECS->SystemPhysics().HideBoundingEllipsoid(m_pCurrentCamera->PtrEntity);
 
 	UpdateCurrentCameraViewMatrix();
 }

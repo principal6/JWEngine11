@@ -47,8 +47,8 @@ namespace JWEngine
 	enum EFLAGSystemRenderOption : uint16_t
 	{
 		JWFlagSystemRenderOption_DrawNormals			= 0x01,
-		JWFlagSystemRenderOption_DrawBoundingVolumes	= 0x02,
-		JWFlagSystemRenderOption_DrawSubBoundingVolumes = 0x04,
+		JWFlagSystemRenderOption_DrawBoundingEllipsoids	= 0x02,
+		JWFlagSystemRenderOption_DrawSubBoundingEllipsoids = 0x04,
 		JWFlagSystemRenderOption_DrawCameras			= 0x08,
 		JWFlagSystemRenderOption_DrawViewFrustum		= 0x10,
 		JWFlagSystemRenderOption_UseLighting			= 0x20,
@@ -265,10 +265,10 @@ namespace JWEngine
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
 		auto GetAnimationTexture(size_t Index) noexcept->STextureData*;
 		
-		// Bounidng volume
-		void AddBoundingVolumeInstance(float Radius, const XMVECTOR& Translation) noexcept;
-		void EraseBoundingVolumeInstance(uint32_t InstanceID) noexcept;
-		void UpdateBoundingVolumeInstance(uint32_t InstanceID, float Radius, const XMVECTOR& Translation) noexcept;
+		// Bounidng ellipsoid
+		void AddBoundingEllipsoidInstance(const XMMATRIX& WorldMatrix) noexcept;
+		void EraseBoundingEllipsoidInstance(uint32_t InstanceID) noexcept;
+		void UpdateBoundingEllipsoidInstance(uint32_t InstanceID, const XMMATRIX& WorldMatrix) noexcept;
 
 		void Execute() noexcept;
 
@@ -282,7 +282,7 @@ namespace JWEngine
 		auto GetFrustumCulledTerrainNodeCount() const noexcept { return m_FrustumCulledTerrainNodeCount; }
 
 		// Object getter
-		auto& BoundingVolume() noexcept { return m_BoundingVolume; }
+		auto& BoundingEllipsoid() noexcept { return m_BoundingEllipsoid; }
 		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
 		auto& TerrainGenerator() noexcept { return m_TerrainGenerator; }
 
@@ -297,18 +297,18 @@ namespace JWEngine
 		void UpdateNodeTPoseIntoBones(float AnimationTime, SModelData& ModelData,
 			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
 
-		// Bounding volume
-		inline void UpdateBoundingVolumes() noexcept;
+		// Bounding ellipsoid
+		inline void UpdateBoundingEllipsoidInstanceBuffer() noexcept;
 
 		// Frustum culling
-		auto IsBSCulledByViewFrustum(const XMVECTOR& BSCenter, float BSRadius) const noexcept->bool;
+		auto IsUnitSphereCulledByViewFrustum(const XMMATRIX& EllipsoidWorld) const noexcept->bool;
 
 		void ExecuteComponent(SComponentRender& Component) noexcept;
 
 		void Draw(SComponentRender& Component) noexcept;
 		void DrawNormals(SComponentRender& Component) noexcept;
-		void DrawInstancedBoundingVolume() noexcept;
-		void DrawNonInstancedBoundingVolumes(const XMVECTOR& Position, float Radius) noexcept;
+		void DrawInstancedBoundingEllipsoids() noexcept;
+		void DrawNonInstancedBoundingEllipsoids(const XMMATRIX& EllipsoidWorld) noexcept;
 		
 	private:
 		VECTOR<SComponentRender*>	m_vpComponents;
@@ -334,8 +334,8 @@ namespace JWEngine
 		// Primitive maker (for shared resources)
 		JWPrimitiveMaker					m_PrimitiveMaker{};
 
-		// Bounding volume
-		JWModel						m_BoundingVolume{};
+		// Bounding ellipsoid
+		JWModel						m_BoundingEllipsoid{};
 
 		ERasterizerState			m_UniversalRasterizerState{ ERasterizerState::SolidNoCull };
 		ERasterizerState			m_OldUniversalRasterizerState{ ERasterizerState::SolidNoCull };

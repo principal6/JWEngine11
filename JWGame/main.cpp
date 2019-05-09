@@ -98,18 +98,6 @@ int main()
 	debug_point->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(8));
 
-	auto camera_0 = ecs.CreateEntity("camera_0");
-	camera_0->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(3, 12, 3))
-		->RotatePitchYawRoll(XM_PIDIV2, 0, 0, true);
-	camera_0->CreateComponentPhysics();
-	camera_0->CreateComponentCamera()
-		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
-	camera_0->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(5));
-
-	ecs.SystemCamera().SetCurrentCamera(0);
-
 	auto view_frustum = ecs.CreateEntity(EEntityType::ViewFrustum);
 	view_frustum->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(7))
@@ -128,24 +116,6 @@ int main()
 	ray->CreateComponentRender()
 		->SetLineModel(ecs.SystemRender().GetSharedLineModel(1));
 
-	{
-		auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
-		main_sprite->CreateComponentTransform()
-			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-			->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
-			->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
-		main_sprite->CreateComponentPhysics();
-		main_sprite->CreateComponentRender()
-			->SetModel(ecs.SystemRender().GetSharedModel(2))
-			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(4))
-			->SetRenderFlag(
-				JWFlagComponentRenderOption_UseDiffuseTexture | JWFlagComponentRenderOption_GetLit | 
-				JWFlagComponentRenderOption_UseAnimationInterpolation)
-			->SetAnimationTexture(ecs.SystemRender().GetAnimationTexture(0))
-			->SetAnimation(3);
-		ecs.SystemPhysics().SetBoundingSphere(main_sprite, 3.0f, XMFLOAT3(0, 0, 0));
-	}
-
 	auto sky_sphere = ecs.CreateEntity(EEntityType::Sky);
 	sky_sphere->CreateComponentTransform()
 		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
@@ -158,6 +128,52 @@ int main()
 		->AddRenderFlag(JWFlagComponentRenderOption_NeverDrawNormals);
 
 	{
+		auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
+		main_sprite->CreateComponentTransform()
+			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+			->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
+			->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
+		main_sprite->CreateComponentPhysics();
+		main_sprite->CreateComponentRender()
+			->SetModel(ecs.SystemRender().GetSharedModel(2))
+			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(4))
+			->SetRenderFlag(
+				JWFlagComponentRenderOption_UseDiffuseTexture | JWFlagComponentRenderOption_GetLit |
+				JWFlagComponentRenderOption_UseAnimationInterpolation)
+			->SetAnimationTexture(ecs.SystemRender().GetAnimationTexture(0))
+			->SetAnimation(3);
+		ecs.SystemPhysics().SetBoundingEllipsoid(main_sprite, SBoundingEllipsoidData(3.0f, 3.0f, 3.0f));
+	}
+
+	{
+		auto terrain_data = ecs.SystemRender().GetSharedTerrain(0);
+		auto terrain = ecs.CreateEntity(EEntityType::MainTerrain);
+		terrain->CreateComponentTransform()
+			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
+			->SetPosition(XMFLOAT3(0.0f, -10.0f, 0.0f));
+		terrain->CreateComponentPhysics();
+		terrain->CreateComponentRender()
+			->SetTerrain(terrain_data)
+			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(1))
+			->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2))
+			->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
+		ecs.SystemPhysics().SetBoundingEllipsoid(terrain, terrain_data->WholeBoundingEllipsoid);
+		ecs.SystemPhysics().SetSubBoundingEllipsoids(terrain, terrain_data->SubBoundingEllipsoids);
+	}
+
+	auto camera_0 = ecs.CreateEntity("camera_0");
+	camera_0->CreateComponentTransform()
+		->SetPosition(XMFLOAT3(3, 12, 3))
+		->RotatePitchYawRoll(XM_PIDIV2, 0, 0, true);
+	camera_0->CreateComponentPhysics();
+	camera_0->CreateComponentCamera()
+		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
+	camera_0->CreateComponentRender()
+		->SetModel(ecs.SystemRender().GetSharedModel(5));
+
+	ecs.SystemCamera().SetCurrentCamera(0);
+
+	{
 		auto jars = ecs.CreateEntity("jars");
 		jars->CreateComponentTransform()
 			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
@@ -167,7 +183,7 @@ int main()
 		jars->CreateComponentRender()
 			->SetModel(ecs.SystemRender().GetSharedModel(0))
 			->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
-		ecs.SystemPhysics().SetBoundingSphere(jars, 1.1f, XMFLOAT3(0, 0.7f, 0.3f));
+		ecs.SystemPhysics().SetBoundingEllipsoid(jars, SBoundingEllipsoidData(1.1f, 1.1f, 1.1f, 0, 0.7f, 0.3f));
 	}
 
 	auto ambient_light = ecs.CreateEntity("ambient_light");
@@ -189,22 +205,6 @@ int main()
 	directional_light->CreateComponentRender()
 		->SetModel(ecs.SystemRender().GetSharedModel(1));
 	//ecs.DestroyEntityByName("directional_light");
-
-	{
-		auto terrain_data = ecs.SystemRender().GetSharedTerrain(0);
-		auto terrain = ecs.CreateEntity(EEntityType::MainTerrain);
-		terrain->CreateComponentTransform()
-			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-			->SetPosition(XMFLOAT3(0.0f, -10.0f, 0.0f));
-		terrain->CreateComponentPhysics();
-		terrain->CreateComponentRender()
-			->SetTerrain(terrain_data)
-			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(1))
-			->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2))
-			->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
-		ecs.SystemPhysics().SetBoundingSphere(terrain, terrain_data->WholeBoundingSphereRadius, terrain_data->WholeBoundingSphereOffset);
-		ecs.SystemPhysics().SetSubBoundingSpheres(terrain, terrain_data->SubBoundingSpheres);
-	}
 
 	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
 	image_gamma->CreateComponentRender()
@@ -251,12 +251,12 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 
 	if (VK == VK_F4)
 	{
-		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawBoundingVolumes);
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawBoundingEllipsoids);
 	}
 
 	if (VK == VK_F5)
 	{
-		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawSubBoundingVolumes);
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawSubBoundingEllipsoids);
 	}
 
 	if (VK == VK_F6)
@@ -356,7 +356,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 			auto picked_entity = ecs.SystemPhysics().GetPickedEntity();
 			if (picked_entity->GetEntityType() == EEntityType::MainTerrain)
 			{
-				if (ecs.SystemPhysics().PickSubBoundingSphere())
+				if (ecs.SystemPhysics().PickSubBoundingEllipsoid())
 				{
 					ecs.SystemPhysics().PickTerrainTriangle();
 				}
@@ -406,9 +406,6 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	// ECS execute systems
 	ecs.ExecuteSystems();
 
-	// ECS entity Sprite info
-	const auto& anim_state = ecs.GetEntityByType(EEntityType::MainSprite)->GetComponentRender()->AnimationState;
-	
 	// Text
 	static WSTRING s_temp{};
 	static WSTRING s_fps{};
@@ -416,9 +413,18 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	static WSTRING s_picked_entity{};
 	static WSTRING s_cull_count{};
 	static WSTRING s_cull_count2{};
+
+	uint32_t anim_id{};
+	// ECS entity Sprite info
+	auto main_sprite = ecs.GetEntityByType(EEntityType::MainSprite);
+	if (main_sprite)
+	{
+		const auto& anim_state = main_sprite->GetComponentRender()->AnimationState;
+		anim_id = anim_state.CurrAnimationID;
+	}
 	
 	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
-	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_state.CurrAnimationID, s_temp);
+	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_id, s_temp);
 	s_picked_entity = L"Picked Entity = " + StringToWstring(ecs.SystemPhysics().GetPickedEntityName());
 	s_cull_count = L"Frustum culled entities = " + ConvertIntToWSTRING(ecs.SystemRender().GetFrustumCulledEntityCount(), s_temp);
 	s_cull_count2 = L"Frustum culled terrain nodes = " + ConvertIntToWSTRING(ecs.SystemRender().GetFrustumCulledTerrainNodeCount(), s_temp);
