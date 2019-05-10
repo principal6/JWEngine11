@@ -19,6 +19,7 @@ int main()
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
 	// TODO:
+	// # Physics	@ Fix picking object behind terrain..!!
 	// # Terrain	@ Use SComponentTransform (partially done... only for translation!)
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
@@ -108,11 +109,13 @@ int main()
 		render->SetRenderFlag(JWFlagComponentRenderOption_UseTransparency);
 	}
 
+	/*
 	auto grid = ecs.CreateEntity(EEntityType::Grid);
 	{
 		auto render = grid->CreateComponentRender();
 		render->SetLineModel(ecs.SystemRender().GetSharedLineModel(0));
 	}
+	*/
 
 	auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
 	{
@@ -145,11 +148,11 @@ int main()
 	{
 		auto transform = main_sprite->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(-10.0f, 0.0f, 0.0f, 1.0f);
-		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
+		transform->Position = XMVectorSet(0.0f, 2.8f, 0.0f, 1.0f);
+		transform->ScalingFactor = { 0.02f, 0.02f, 0.02f };
 
 		auto physics = main_sprite->CreateComponentPhysics();
-		physics->BoundingEllipsoid = SBoundingEllipsoidData(3.0f, 3.0f, 3.0f);
+		physics->BoundingEllipsoid = SBoundingEllipsoidData(2.0f, 3.6f, 2.0f, 0.0f, -0.4f, 0.0f);
 
 		auto render = main_sprite->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(2));
@@ -167,7 +170,7 @@ int main()
 		
 		auto transform = terrain->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(0.0f, -10.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(-10.0f, -10.0f, 10.0f, 1.0f);
 
 		auto physics = terrain->CreateComponentPhysics();
 		physics->BoundingEllipsoid = terrain_data->WholeBoundingEllipsoid;
@@ -199,7 +202,7 @@ int main()
 	{
 		auto transform = jars->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(10.0f, 0.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(10.0f, 2.0f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
 
 		auto physics = jars->CreateComponentPhysics();
@@ -213,7 +216,7 @@ int main()
 	auto ambient_light = ecs.CreateEntity("ambient_light");
 	{
 		auto transform = ambient_light->CreateComponentTransform();
-		transform->Position = XMVectorSet(0.0f, 5.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(0.0f, 10.0f, 0.0f, 1.0f);
 		
 		auto light = ambient_light->CreateComponentLight();
 		light->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
@@ -229,7 +232,7 @@ int main()
 	auto directional_light = ecs.CreateEntity("directional_light");
 	{
 		auto transform = directional_light->CreateComponentTransform();
-		transform->Position = XMVectorSet(3.0f, 3.0f, -3.0f, 1.0f);
+		transform->Position = XMVectorSet(3.0f, 10.0f, -3.0f, 1.0f);
 
 		auto light = directional_light->CreateComponentLight();
 		light->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, -1.0f, -1.0f), 0.6f);
@@ -252,7 +255,7 @@ int main()
 	auto cam = ecs.CreateEntity("camera_1");
 	{
 		auto transform = cam->CreateComponentTransform();
-		transform->Position = XMVectorSet(0.0f, 2.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(0.0f, 12.0f, 0.0f, 1.0f);
 		
 		auto physics = cam->CreateComponentPhysics();
 		
