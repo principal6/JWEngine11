@@ -2,6 +2,12 @@
 
 using namespace JWEngine;
 
+void JWSystemTransform::Create(JWECS& ECS) noexcept
+{
+	// Set JWECS pointer.
+	m_pECS = &ECS;
+}
+
 void JWSystemTransform::Destroy() noexcept
 {
 	if (m_vpComponents.size())
@@ -13,7 +19,7 @@ void JWSystemTransform::Destroy() noexcept
 	}
 }
 
-auto JWSystemTransform::CreateComponent(JWEntity* pEntity) noexcept->SComponentTransform&
+PRIVATE auto JWSystemTransform::CreateComponent(JWEntity& Entity) noexcept->SComponentTransform&
 {
 	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
 	
@@ -23,12 +29,12 @@ auto JWSystemTransform::CreateComponent(JWEntity* pEntity) noexcept->SComponentT
 	// @important
 	// Save component ID & pointer to Entity
 	m_vpComponents[slot]->ComponentID = slot;
-	m_vpComponents[slot]->PtrEntity = pEntity;
+	m_vpComponents[slot]->PtrEntity = &Entity;
 
 	return *m_vpComponents[slot];
 }
 
-void JWSystemTransform::DestroyComponent(SComponentTransform& Component) noexcept
+PRIVATE void JWSystemTransform::DestroyComponent(SComponentTransform& Component) noexcept
 {
 	uint32_t slot{};
 	for (const auto& iter : m_vpComponents)

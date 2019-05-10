@@ -31,12 +31,6 @@ namespace JWEngine
 		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentPhysics&;
 		void DestroyComponent(SComponentPhysics& Component) noexcept;
 
-		// Component setting
-		void SetBoundingEllipsoid(JWEntity* pEntity, const SBoundingEllipsoidData& Data) noexcept;
-		void HideBoundingEllipsoid(JWEntity* pEntity) noexcept;
-		void UpdateBoundingEllipsoid(JWEntity* pEntity) noexcept;
-		void SetSubBoundingEllipsoids(JWEntity* pEntity, const VECTOR<SBoundingEllipsoidData>& vData) noexcept;
-
 		auto PickEntity() noexcept->bool;
 		auto PickSubBoundingEllipsoid() noexcept->bool;
 		void PickTerrainTriangle() noexcept;
@@ -64,6 +58,8 @@ namespace JWEngine
 
 		// Picking #1 Ellipsoid picking (realistic choice)
 		auto PickEntityByEllipsoid() noexcept->bool;
+
+		void UpdateBoundingEllipsoid(SComponentPhysics& Physics) noexcept;
 
 	private:
 		VECTOR<SComponentPhysics*>	m_vpComponents;

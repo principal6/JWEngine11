@@ -46,7 +46,7 @@ void JWEntity::Destroy() noexcept
 
 auto JWEntity::CreateComponentTransform() noexcept->SComponentTransform*
 {
-	return m_pComponentTransform = &m_pECS->SystemTransform().CreateComponent(this);
+	return m_pComponentTransform = &m_pECS->SystemTransform().CreateComponent(*this);
 }
 
 auto JWEntity::CreateComponentLight() noexcept->SComponentLight*

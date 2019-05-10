@@ -81,76 +81,6 @@ void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 	m_vpComponents.pop_back();
 }
 
-void JWSystemPhysics::SetBoundingEllipsoid(JWEntity* pEntity, const SBoundingEllipsoidData& Data) noexcept
-{
-	if (pEntity == nullptr) { return; }
-	auto physics = pEntity->GetComponentPhysics();
-	if (physics == nullptr) { return; }
-
-	// Set the radius (RadiusX,Y,Z)
-	physics->BoundingEllipsoid.RadiusX = Data.RadiusX;
-	physics->BoundingEllipsoid.RadiusY = Data.RadiusY;
-	physics->BoundingEllipsoid.RadiusZ = Data.RadiusZ;
-
-	// Set the offset
-	physics->BoundingEllipsoid.Offset = Data.Offset;
-
-	UpdateBoundingEllipsoid(pEntity);
-}
-
-void JWSystemPhysics::HideBoundingEllipsoid(JWEntity* pEntity) noexcept
-{
-	auto physics = pEntity->GetComponentPhysics();
-	if (physics == nullptr) { return; }
-
-	auto& bounding_ellipsoid = physics->BoundingEllipsoid;
-	bounding_ellipsoid.EllipsoidWorld = XMMatrixScaling(0, 0, 0);
-
-	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingEllipsoidInstance(physics->ComponentID, bounding_ellipsoid.EllipsoidWorld);
-}
-
-void JWSystemPhysics::UpdateBoundingEllipsoid(JWEntity* pEntity) noexcept
-{
-	auto physics = pEntity->GetComponentPhysics();
-	if (physics == nullptr) { return; }
-
-	// Calculate world matrix of the bounding ellipsoid
-	auto transform = pEntity->GetComponentTransform();
-	auto& bounding_ellipsoid = physics->BoundingEllipsoid;
-
-	auto temp_center = bounding_ellipsoid.Offset;
-	if (transform) { temp_center += transform->Position; }
-
-	auto mat_scaling = XMMatrixScaling(bounding_ellipsoid.RadiusX, bounding_ellipsoid.RadiusY, bounding_ellipsoid.RadiusZ);
-	auto mat_translation = XMMatrixTranslationFromVector(temp_center);
-	bounding_ellipsoid.EllipsoidWorld = mat_scaling * mat_translation;
-
-	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingEllipsoidInstance(physics->ComponentID, bounding_ellipsoid.EllipsoidWorld);
-}
-
-void JWSystemPhysics::SetSubBoundingEllipsoids(JWEntity* pEntity, const VECTOR<SBoundingEllipsoidData>& vData) noexcept
-{
-	if (pEntity == nullptr) { return; }
-	auto physics = pEntity->GetComponentPhysics();
-	if (physics == nullptr) { return; }
-
-	// Set sub-bounding-ellipsoids
-	physics->SubBoundingEllipsoids = vData;
-
-	// Calculate world matrix of the bounding ellipsoid
-	auto transform = pEntity->GetComponentTransform();
-	auto entity_position = transform->Position;
-
-	for (auto& iter : physics->SubBoundingEllipsoids)
-	{
-		auto mat_scaling = XMMatrixScaling(iter.RadiusX, iter.RadiusY, iter.RadiusZ);
-		auto mat_translation = XMMatrixTranslationFromVector(entity_position + iter.Offset);
-		iter.EllipsoidWorld = mat_scaling * mat_translation;
-	}
-}
-
 auto JWSystemPhysics::PickEntity() noexcept->bool
 {
 	m_pPickedEntity = nullptr;
@@ -441,15 +371,36 @@ void JWSystemPhysics::Execute() noexcept
 {
 	for (auto& iter : m_vpComponents)
 	{
+		UpdateBoundingEllipsoid(*iter);
+
 		auto transform{ iter->PtrEntity->GetComponentTransform() };
 		if (transform)
 		{
-			if (transform->ShouldUpdateBoundingEllipsoid)
+			// Calculate world matrix of the bounding ellipsoid
+			auto entity_position = transform->Position;
+			for (auto& curr_subbe : iter->SubBoundingEllipsoids)
 			{
-				UpdateBoundingEllipsoid(iter->PtrEntity);
-
-				transform->ShouldUpdateBoundingEllipsoid = false;
+				auto mat_scaling = XMMatrixScaling(curr_subbe.RadiusX, curr_subbe.RadiusY, curr_subbe.RadiusZ);
+				auto mat_translation = XMMatrixTranslationFromVector(entity_position + curr_subbe.Offset);
+				curr_subbe.EllipsoidWorld = mat_scaling * mat_translation;
 			}
 		}
 	}
+}
+
+PRIVATE void JWSystemPhysics::UpdateBoundingEllipsoid(SComponentPhysics& Physics) noexcept
+{
+	// Calculate world matrix of the bounding ellipsoid
+	auto transform = Physics.PtrEntity->GetComponentTransform();
+	auto& bounding_ellipsoid = Physics.BoundingEllipsoid;
+
+	auto temp_center = bounding_ellipsoid.Offset;
+	if (transform) { temp_center += transform->Position; }
+
+	auto mat_scaling = XMMatrixScaling(bounding_ellipsoid.RadiusX, bounding_ellipsoid.RadiusY, bounding_ellipsoid.RadiusZ);
+	auto mat_translation = XMMatrixTranslationFromVector(temp_center);
+	bounding_ellipsoid.EllipsoidWorld = mat_scaling * mat_translation;
+
+	// Update the data into SystemRender
+	m_pECS->SystemRender().UpdateBoundingEllipsoidInstance(Physics.ComponentID, bounding_ellipsoid.EllipsoidWorld);
 }

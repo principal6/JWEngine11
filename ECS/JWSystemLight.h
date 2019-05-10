@@ -6,6 +6,7 @@ namespace JWEngine
 {
 	class JWDX;
 	class JWEntity;
+	class JWECS;
 
 	static constexpr const char* KLightModelFileName{ "lightbulb.obj" };
 
@@ -74,7 +75,7 @@ namespace JWEngine
 		JWSystemLight() = default;
 		~JWSystemLight() = default;
 
-		void Create(JWDX& DX) noexcept;
+		void Create(JWECS& ECS, JWDX& DX) noexcept;
 		void Destroy() noexcept;
 
 		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentLight&;
@@ -85,6 +86,7 @@ namespace JWEngine
 	private:
 		VECTOR<SComponentLight*>	m_vpComponents;
 
+		JWECS*						m_pECS{};
 		JWDX*						m_pDX{};
 		bool						m_ShouldUpdate{ false };
 		SPSCBLights					m_PSCBLights{};

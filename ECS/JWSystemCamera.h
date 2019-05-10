@@ -124,6 +124,7 @@ namespace JWEngine
 		void Execute() noexcept;
 
 		void SetCurrentCamera(size_t ComponentID) noexcept;
+		auto GetCurrentCamera() const noexcept { return m_pCurrentCamera; }
 		auto GetCurrentCameraComponentID() const noexcept { return m_pCurrentCamera->ComponentID; }
 		
 		// NORMALLY

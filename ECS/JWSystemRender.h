@@ -228,7 +228,6 @@ namespace JWEngine
 			return this;
 		}
 	};
-	
 
 	class JWSystemRender
 	{

@@ -8,8 +8,8 @@ void JWECS::Create(JWDX& DX, JWWin32Window& Window, STRING BaseDirectory) noexce
 	m_pDX = &DX;
 	m_BaseDirectory = BaseDirectory;
 
-	m_SystemTransform.Create();
-	m_SystemLight.Create(DX);
+	m_SystemTransform.Create(*this);
+	m_SystemLight.Create(*this, DX);
 	m_SystemPhysics.Create(*this, Window.GethWnd(), Window.GetWindowSize());
 	m_SystemCamera.Create(*this, DX, Window.GetWindowSize());
 	m_SystemRender.Create(*this, DX, BaseDirectory);

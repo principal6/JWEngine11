@@ -9,18 +9,20 @@ namespace JWEngine
 	static const auto KVectorZero = XMVectorZero();
 	static const auto KVectorMax = XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
 
-	__forceinline auto __vectorcall GetTriangleNormal(const XMVECTOR& EdgeAB, const XMVECTOR& EdgeAC)->XMVECTOR
+	static const auto KMatrixIdentity = XMMatrixIdentity();
+	
+	static auto __vectorcall GetTriangleNormal(const XMVECTOR& EdgeAB, const XMVECTOR& EdgeAC)->XMVECTOR
 	{
 		return XMVector3Normalize(XMVector3Cross(EdgeAB, EdgeAC));
 	}
 
-	__forceinline auto __vectorcall GetTriangleNormal(const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC)->XMVECTOR
+	static auto __vectorcall GetTriangleNormal(const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC)->XMVECTOR
 	{
 		return XMVector3Normalize(XMVector3Cross(TriB - TriA, TriC - TriA));
 	}
 
 	// Returns distance and projected point vector
-	__forceinline auto __vectorcall ProjectPointOntoPlane(
+	static auto __vectorcall ProjectPointOntoPlane(
 		float& OutDistance, const XMVECTOR& Point, const XMVECTOR& PlanePoint, const XMVECTOR& PlaneNormal)->XMVECTOR
 	{
 		auto dist = XMVector3Dot(Point - PlanePoint, PlaneNormal);
@@ -29,7 +31,7 @@ namespace JWEngine
 		return (Point - PlaneNormal * dist);
 	}
 
-	__forceinline auto __vectorcall IsPointInsideTriangle(
+	static auto __vectorcall IsPointInsideTriangle(
 		const XMVECTOR& Point, const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC)->bool
 	{
 		auto edge_bc = TriC - TriB;
@@ -81,7 +83,7 @@ namespace JWEngine
 	//           Dot(V, N) - Dot(P0, N)
 	// =>  t  = ------------------------
 	//                 Dot(P1, N)
-	__forceinline auto __vectorcall IntersectRayTriangle(XMVECTOR& OutPointOnPlane, XMVECTOR& OutOldT,
+	static auto __vectorcall IntersectRayTriangle(XMVECTOR& OutPointOnPlane, XMVECTOR& OutOldT,
 		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection,
 		const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC) noexcept->bool
 	{
@@ -160,7 +162,7 @@ namespace JWEngine
 	//
 	// And if, b©÷ - 4ac ¡Ã 0
 	// then, the ray hit the sphere!
-	__forceinline auto __vectorcall IntersectRaySphere(
+	static auto __vectorcall IntersectRaySphere(
 		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection, const XMVECTOR& Center, float Radius,
 		XMVECTOR* PtrOutOldT = nullptr) noexcept->bool
 	{
@@ -204,7 +206,7 @@ namespace JWEngine
 		return false;
 	}
 
-	__forceinline auto __vectorcall IntersectRayUnitSphere(
+	static auto __vectorcall IntersectRayUnitSphere(
 		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection, XMVECTOR* PtrOutOldT = nullptr) noexcept->bool
 	{
 		auto r = XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f);

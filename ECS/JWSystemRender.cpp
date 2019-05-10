@@ -1,5 +1,6 @@
 #include "JWECS.h"
 #include "../Core/JWAssimpLoader.h"
+#include "../Core/JWMath.h"
 
 using namespace JWEngine;
 
@@ -634,8 +635,16 @@ PRIVATE auto JWSystemRender::IsUnitSphereCulledByViewFrustum(const XMMATRIX& Ell
 
 void JWSystemRender::DrawInstancedBoundingEllipsoids() noexcept
 {
-	auto world_matrix{ XMMatrixIdentity() };
-
+	auto current_camera = m_pECS->SystemCamera().GetCurrentCamera();
+	if (current_camera)
+	{
+		auto physics = current_camera->PtrEntity->GetComponentPhysics();
+		if (physics)
+		{
+			UpdateBoundingEllipsoidInstance(physics->ComponentID, XMMatrixScaling(0, 0, 0));
+		}
+	}
+	
 	// Set RS State
 	m_pDX->SetRasterizerState(ERasterizerState::WireFrame);
 
@@ -643,8 +652,8 @@ void JWSystemRender::DrawInstancedBoundingEllipsoids() noexcept
 	m_pDX->SetVS(EVertexShader::VSBase);
 	
 	// Update VS constant buffer #0
-	m_VSCBSpace.WVP = XMMatrixTranspose(world_matrix * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
-	m_VSCBSpace.World = XMMatrixTranspose(world_matrix);
+	m_VSCBSpace.WVP = XMMatrixTranspose(KMatrixIdentity * m_pECS->SystemCamera().CurrentViewProjectionMatrix());
+	m_VSCBSpace.World = XMMatrixTranspose(KMatrixIdentity);
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Update VS constant buffer #1

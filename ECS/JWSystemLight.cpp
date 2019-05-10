@@ -3,8 +3,11 @@
 
 using namespace JWEngine;
 
-void JWSystemLight::Create(JWDX& DX) noexcept
+void JWSystemLight::Create(JWECS& ECS, JWDX& DX) noexcept
 {
+	// Set JWECS pointer.
+	m_pECS = &ECS;
+
 	// Set JWDX pointer.
 	m_pDX = &DX;
 }

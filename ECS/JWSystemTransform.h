@@ -1,21 +1,22 @@
 #pragma once
 
 #include "../Core/JWCommon.h"
+#include "../Core/JWMath.h"
 
 namespace JWEngine
 {
 	class JWEntity;
+	class JWECS;
 
-	const XMVECTOR	KDefUp{ XMVectorSet(0, 1, 0, 0) };
+	static const XMVECTOR	KDefUp{ XMVectorSet(0, 1, 0, 0) };
 
 	struct SComponentTransform
 	{
 		JWEntity*	PtrEntity{};
 		uint32_t	ComponentID{};
 
+		XMVECTOR	Position{ KVectorZero };
 		XMFLOAT3	ScalingFactor{ 1.0f, 1.0f, 1.0f };
-
-		XMVECTOR	Position{ XMVectorZero() };
 
 		// Rotation calculation order is always Roll -> Pitch -> Yaw
 		XMFLOAT3	PitchYawRoll{ 0, 0, 0 };
@@ -26,41 +27,9 @@ namespace JWEngine
 		XMMATRIX	WorldMatrix{};
 		EWorldMatrixCalculationOrder	WorldMatrixCalculationOrder{ EWorldMatrixCalculationOrder::ScaleRotTrans };
 
-		// This will be 'false'd in JWSystemPhysics
-		bool		ShouldUpdateBoundingEllipsoid{ false };
-
-		inline auto SetPosition(const XMVECTOR& _Position)
+		inline void SetPitchYawRoll(const XMFLOAT3& _PitchYawRoll, bool IsCamera = false)
 		{
-			Position = _Position;
-			ShouldUpdateBoundingEllipsoid = true;
-			return this;
-		}
-
-		inline auto SetPosition(const XMFLOAT3& _Position)
-		{
-			Position = XMVectorSet(_Position.x, _Position.y, _Position.z, 1);
-			ShouldUpdateBoundingEllipsoid = true;
-			return this;
-		}
-
-		inline auto Translate(const XMFLOAT3& dPosition)
-		{
-			Position += XMVectorSet(dPosition.x, dPosition.y, dPosition.z, 0);
-			ShouldUpdateBoundingEllipsoid = true;
-			return this;
-		}
-
-		inline auto SetScalingFactor(const XMFLOAT3& _ScalingFactor)
-		{
-			ScalingFactor = _ScalingFactor;
-			return this;
-		}
-
-		inline auto SetPitchYawRoll(float dPitch, float dYaw, float dRoll, bool IsCamera = false)
-		{
-			PitchYawRoll.x = dPitch;
-			PitchYawRoll.y = dYaw;
-			PitchYawRoll.z = dRoll;
+			PitchYawRoll = _PitchYawRoll;
 
 			if (IsCamera)
 			{
@@ -71,15 +40,13 @@ namespace JWEngine
 			auto rotation_matrix = XMMatrixRotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
 			Forward = XMVector3TransformNormal(Up, rotation_matrix);
 			Right = XMVector3Normalize(XMVector3Cross(Up, Forward));
-
-			return this;
 		}
 
-		inline auto RotatePitchYawRoll(float dPitch, float dYaw, float dRoll, bool IsCamera = false)
+		inline void RotatePitchYawRoll(const XMFLOAT3& _PitchYawRoll, bool IsCamera = false)
 		{
-			PitchYawRoll.x += dPitch;
-			PitchYawRoll.y += dYaw;
-			PitchYawRoll.z += dRoll;
+			PitchYawRoll.x += _PitchYawRoll.x;
+			PitchYawRoll.y += _PitchYawRoll.y;
+			PitchYawRoll.z += _PitchYawRoll.z;
 
 			if (IsCamera)
 			{
@@ -90,32 +57,29 @@ namespace JWEngine
 			auto rotation_matrix = XMMatrixRotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
 			Forward = XMVector3TransformNormal(Up, rotation_matrix);
 			Right = XMVector3Normalize(XMVector3Cross(Up, Forward));
-
-			return this;
-		}
-
-		inline auto SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder _Order)
-		{
-			WorldMatrixCalculationOrder = _Order;
-			return this;
 		}
 	};
 
 	class JWSystemTransform
 	{
+		friend class JWEntity;
+
 	public:
 		JWSystemTransform() = default;
 		~JWSystemTransform() = default;
 
-		void Create() noexcept {};
+		void Create(JWECS& ECS) noexcept;
 		void Destroy() noexcept;
-
-		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentTransform&;
-		void DestroyComponent(SComponentTransform& Component) noexcept;
 
 		void Execute() noexcept;
 
+	// Only accesible for JWEntity
 	private:
+		auto CreateComponent(JWEntity& Entity) noexcept->SComponentTransform&;
+		void DestroyComponent(SComponentTransform& Component) noexcept;
+
+	private:
+		JWECS*							m_pECS{};
 		VECTOR<SComponentTransform*>	m_vpComponents;
 	};
 };

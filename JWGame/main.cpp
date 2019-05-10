@@ -28,9 +28,9 @@ int main()
 
 	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "megt20all", &myLogger);
 	//myGame.LoadCursorImage("cursor_default.png");
-	
+
 	// ECS Shared resources
-	auto& ecs = myGame.ECS();
+	auto & ecs = myGame.ECS();
 	{
 		// SharedModel
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.obj"); // Shared Model #0
@@ -38,7 +38,7 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X", L"Ezreal_mip.dds") // Shared Model #2
 			->AddAnimationFromFile("Ezreal_Punching.X")
 			->AddAnimationFromFile("Ezreal_Walk.X");
-			//->BakeAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
+		//->BakeAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
 
 		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(100.0f, 16, 7)); // Shared Model #3 (Sphere for Sky)
@@ -93,132 +93,177 @@ int main()
 		JWFlagSystemRenderOption_UseLighting | JWFlagSystemRenderOption_DrawCameras | JWFlagSystemRenderOption_UseFrustumCulling);
 
 	auto debug_point = ecs.CreateEntity(EEntityType::Point3D);
-	debug_point->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(0, 0, 10.0f));
-	debug_point->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(8));
-
-	auto view_frustum = ecs.CreateEntity(EEntityType::ViewFrustum);
-	view_frustum->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(7))
-		->SetRenderFlag(JWFlagComponentRenderOption_UseTransparency);
-
-	auto grid = ecs.CreateEntity(EEntityType::Grid);
-	grid->CreateComponentRender()
-		->SetLineModel(ecs.SystemRender().GetSharedLineModel(0));
-
-	auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
-	picked_tri->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(6))
-		->SetRenderFlag(JWFlagComponentRenderOption_AlwaysSolidNoCull);
-
-	auto ray = ecs.CreateEntity(EEntityType::PickingRay);
-	ray->CreateComponentRender()
-		->SetLineModel(ecs.SystemRender().GetSharedLineModel(1));
-
-	auto sky_sphere = ecs.CreateEntity(EEntityType::Sky);
-	sky_sphere->CreateComponentTransform()
-		->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-		->SetPosition(XMFLOAT3(0.0f, 0.0f, 0.0f));
-	sky_sphere->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(3))
-		->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(0))
-		->SetVertexShader(EVertexShader::VSSkyMap)
-		->SetPixelShader(EPixelShader::PSSkyMap)
-		->AddRenderFlag(JWFlagComponentRenderOption_NeverDrawNormals);
-
 	{
-		auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
-		main_sprite->CreateComponentTransform()
-			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-			->SetPosition(XMFLOAT3(-10.0f, 0.0f, 0.0f))
-			->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
-		main_sprite->CreateComponentPhysics();
-		main_sprite->CreateComponentRender()
-			->SetModel(ecs.SystemRender().GetSharedModel(2))
-			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(4))
-			->SetRenderFlag(
-				JWFlagComponentRenderOption_UseDiffuseTexture | JWFlagComponentRenderOption_GetLit |
-				JWFlagComponentRenderOption_UseAnimationInterpolation)
-			->SetAnimationTexture(ecs.SystemRender().GetAnimationTexture(0))
-			->SetAnimation(3);
-		ecs.SystemPhysics().SetBoundingEllipsoid(main_sprite, SBoundingEllipsoidData(3.0f, 3.0f, 3.0f));
+		auto transform = debug_point->CreateComponentTransform();
+		transform->Position = XMVectorSet(0.0f, 0.0f, 10.0f, 1.0f);
+
+		auto render = debug_point->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(8));
 	}
 
+	auto view_frustum = ecs.CreateEntity(EEntityType::ViewFrustum);
+	{
+		auto render = view_frustum->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(7));
+		render->SetRenderFlag(JWFlagComponentRenderOption_UseTransparency);
+	}
+
+	auto grid = ecs.CreateEntity(EEntityType::Grid);
+	{
+		auto render = grid->CreateComponentRender();
+		render->SetLineModel(ecs.SystemRender().GetSharedLineModel(0));
+	}
+
+	auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
+	{
+		auto render = picked_tri->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(6));
+		render->SetRenderFlag(JWFlagComponentRenderOption_AlwaysSolidNoCull);
+	}
+
+	auto ray = ecs.CreateEntity(EEntityType::PickingRay);
+	{
+		auto render = ray->CreateComponentRender();
+		render->SetLineModel(ecs.SystemRender().GetSharedLineModel(1));
+	}
+
+	auto sky_sphere = ecs.CreateEntity(EEntityType::Sky);
+	{
+		auto transform = sky_sphere->CreateComponentTransform();
+		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
+		transform->Position = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+
+		auto render = sky_sphere->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(3));
+		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(0));
+		render->SetVertexShader(EVertexShader::VSSkyMap);
+		render->SetPixelShader(EPixelShader::PSSkyMap);
+		render->AddRenderFlag(JWFlagComponentRenderOption_NeverDrawNormals);
+	}
+
+	auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
+	{
+		auto transform = main_sprite->CreateComponentTransform();
+		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
+		transform->Position = XMVectorSet(-10.0f, 0.0f, 0.0f, 1.0f);
+		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
+
+		auto physics = main_sprite->CreateComponentPhysics();
+		physics->BoundingEllipsoid = SBoundingEllipsoidData(3.0f, 3.0f, 3.0f);
+
+		auto render = main_sprite->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(2));
+		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(4));
+		render->SetRenderFlag(
+			JWFlagComponentRenderOption_UseDiffuseTexture | JWFlagComponentRenderOption_GetLit |
+			JWFlagComponentRenderOption_UseAnimationInterpolation);
+		render->SetAnimationTexture(ecs.SystemRender().GetAnimationTexture(0));
+		render->SetAnimation(3);
+	}
+
+	auto terrain = ecs.CreateEntity(EEntityType::MainTerrain);
 	{
 		auto terrain_data = ecs.SystemRender().GetSharedTerrain(0);
-		auto terrain = ecs.CreateEntity(EEntityType::MainTerrain);
-		terrain->CreateComponentTransform()
-			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-			->SetPosition(XMFLOAT3(0.0f, -10.0f, 0.0f));
-		terrain->CreateComponentPhysics();
-		terrain->CreateComponentRender()
-			->SetTerrain(terrain_data)
-			->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(1))
-			->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2))
-			->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
-		ecs.SystemPhysics().SetBoundingEllipsoid(terrain, terrain_data->WholeBoundingEllipsoid);
-		ecs.SystemPhysics().SetSubBoundingEllipsoids(terrain, terrain_data->SubBoundingEllipsoids);
+		
+		auto transform = terrain->CreateComponentTransform();
+		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
+		transform->Position = XMVectorSet(0.0f, -10.0f, 0.0f, 1.0f);
+
+		auto physics = terrain->CreateComponentPhysics();
+		physics->BoundingEllipsoid = terrain_data->WholeBoundingEllipsoid;
+		physics->SubBoundingEllipsoids = terrain_data->SubBoundingEllipsoids;
+
+		auto render = terrain->CreateComponentRender();
+		render->SetTerrain(terrain_data);
+		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(1));
+		render->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2));
+		render->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 
 	auto camera_0 = ecs.CreateEntity("camera_0");
-	camera_0->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(3, 12, 3))
-		->RotatePitchYawRoll(XM_PIDIV2, 0, 0, true);
-	camera_0->CreateComponentPhysics();
-	camera_0->CreateComponentCamera()
-		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
-	camera_0->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(5));
-
-	ecs.SystemCamera().SetCurrentCamera(0);
-
 	{
-		auto jars = ecs.CreateEntity("jars");
-		jars->CreateComponentTransform()
-			->SetWorldMatrixCalculationOrder(EWorldMatrixCalculationOrder::ScaleRotTrans)
-			->SetPosition(XMFLOAT3(10.0f, 0.0f, 0.0f))
-			->SetScalingFactor(XMFLOAT3(0.05f, 0.05f, 0.05f));
-		jars->CreateComponentPhysics();
-		jars->CreateComponentRender()
-			->SetModel(ecs.SystemRender().GetSharedModel(0))
-			->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
-		ecs.SystemPhysics().SetBoundingEllipsoid(jars, SBoundingEllipsoidData(1.1f, 1.1f, 1.1f, 0, 0.7f, 0.3f));
+		auto transform = camera_0->CreateComponentTransform();
+		transform->Position = XMVectorSet(3.0f, 12.0f, 3.0f, 1.0f);
+		transform->RotatePitchYawRoll(XMFLOAT3(XM_PIDIV2, 0, 0), true);
+
+		auto physics = camera_0->CreateComponentPhysics();
+		
+		auto camera = camera_0->CreateComponentCamera();
+		camera->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
+
+		auto render = camera_0->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(5));
+	}
+
+	auto jars = ecs.CreateEntity("jars");
+	{
+		auto transform = jars->CreateComponentTransform();
+		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
+		transform->Position = XMVectorSet(10.0f, 0.0f, 0.0f, 1.0f);
+		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
+
+		auto physics = jars->CreateComponentPhysics();
+		physics->BoundingEllipsoid = SBoundingEllipsoidData(1.1f, 1.1f, 1.1f, 0, 0.7f, 0.3f);
+
+		auto render = jars->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(0));
+		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 
 	auto ambient_light = ecs.CreateEntity("ambient_light");
-	ambient_light->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(0.0f, 5.0f, 0.0f));
-	ambient_light->CreateComponentLight()
-		->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
-	ambient_light->CreateComponentPhysics();
-	ambient_light->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(1));
-	//ecs.DestroyEntityByName("ambient_light");
+	{
+		auto transform = ambient_light->CreateComponentTransform();
+		transform->Position = XMVectorSet(0.0f, 5.0f, 0.0f, 1.0f);
+		
+		auto light = ambient_light->CreateComponentLight();
+		light->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
 
+		auto physics = ambient_light->CreateComponentPhysics();
+
+		auto render = ambient_light->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(1));
+
+		//ecs.DestroyEntityByName("ambient_light");
+	}
+	
 	auto directional_light = ecs.CreateEntity("directional_light");
-	directional_light->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(3.0f, 3.0f, -3.0f));
-	directional_light->CreateComponentLight()
-		->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, -1.0f, -1.0f), 0.6f);
-	directional_light->CreateComponentPhysics();
-	directional_light->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(1));
-	//ecs.DestroyEntityByName("directional_light");
+	{
+		auto transform = directional_light->CreateComponentTransform();
+		transform->Position = XMVectorSet(3.0f, 3.0f, -3.0f, 1.0f);
+
+		auto light = directional_light->CreateComponentLight();
+		light->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, -1.0f, -1.0f), 0.6f);
+
+		auto physics = directional_light->CreateComponentPhysics();
+
+		auto render = directional_light->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(1));
+
+		//ecs.DestroyEntityByName("directional_light");
+	}
 
 	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
-	image_gamma->CreateComponentRender()
-		->SetImage2D(ecs.SystemRender().GetSharedImage2D(0))
-		->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(3));
-
+	{
+		auto render = image_gamma->CreateComponentRender();
+		render->SetImage2D(ecs.SystemRender().GetSharedImage2D(0));
+		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(3));
+	}
+	
 	auto cam = ecs.CreateEntity("camera_1");
-	cam->CreateComponentTransform()
-		->SetPosition(XMFLOAT3(0, 2, 0));
-	cam->CreateComponentPhysics();
-	cam->CreateComponentCamera()
-		->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
-	cam->CreateComponentRender()
-		->SetModel(ecs.SystemRender().GetSharedModel(5));
+	{
+		auto transform = cam->CreateComponentTransform();
+		transform->Position = XMVectorSet(0.0f, 2.0f, 0.0f, 1.0f);
+		
+		auto physics = cam->CreateComponentPhysics();
+		
+		auto camera = cam->CreateComponentCamera();
+		camera->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
+
+		auto render = cam->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(5));
+	}
+
+	ecs.SystemCamera().SetCurrentCamera(0);
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);
@@ -315,7 +360,7 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 
 	if (Character == 't')
 	{
-		ecs.GetEntityByName("ambient_light")->GetComponentTransform()->Translate(XMFLOAT3(0.1f, 0, 0));
+		ecs.GetEntityByName("ambient_light")->GetComponentTransform()->Position += XMVectorSet(0.1f, 0.0f, 0.0f, 0.0f);
 	}
 }
 
@@ -398,10 +443,10 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	auto& ecs = myGame.ECS();
 
 	// 3D Point for debugging
-	ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->SetPosition(ecs.SystemPhysics().GetPickedPoint());
+	ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->Position = ecs.SystemPhysics().GetPickedPoint();
 
 	// ECS entity Skybox
-	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->SetPosition(ecs.SystemCamera().GetCurrentCameraPosition());
+	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->Position = ecs.SystemCamera().GetCurrentCameraPosition();
 
 	// ECS execute systems
 	ecs.ExecuteSystems();
