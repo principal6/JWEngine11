@@ -1,13 +1,9 @@
 #include "JWGame.h"
 
-#ifdef _DEBUG
-#define new new( _CLIENT_BLOCK, __FILE__, __LINE__ )
-#endif
-
 using namespace JWEngine;
 
 static JWGame myGame;
-JWLogger myLogger;
+static JWLogger myLogger;
 
 JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown);
 JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput);
@@ -16,8 +12,6 @@ JW_FUNCTION_ON_RENDER(OnRender);
 
 int main()
 {
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-
 	// TODO:
 	// # Physics	@ Fix picking object behind terrain..!!
 	// # Terrain	@ Use SComponentTransform (partially done... only for translation!)

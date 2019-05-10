@@ -9,7 +9,6 @@
 #include <chrono>
 #include <cstdint>
 #include <Windows.h>
-#include <crtdbg.h>
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
