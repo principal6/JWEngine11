@@ -2,7 +2,7 @@
 
 using namespace JWEngine;
 
-void JWDX::Create(HWND hWnd, XMFLOAT2 WindowSize, STRING Directory, const SClearColor& ClearColor) noexcept
+void JWDX::Create(HWND hWnd, const SSize2& WindowSize, EAllowedDisplayMode InitialMode, STRING Directory, const SClearColor& ClearColor) noexcept
 {
 	if (!m_IsCreated)
 	{
@@ -10,7 +10,7 @@ void JWDX::Create(HWND hWnd, XMFLOAT2 WindowSize, STRING Directory, const SClear
 		m_BaseDirectory = Directory;
 
 		// Set window size
-		m_WindowSize = WindowSize;
+		m_pWindowSize = &WindowSize;
 
 		// Set clear color
 		m_ClearColor[0] = ClearColor.R;
@@ -18,58 +18,154 @@ void JWDX::Create(HWND hWnd, XMFLOAT2 WindowSize, STRING Directory, const SClear
 		m_ClearColor[2] = ClearColor.B;
 		m_ClearColor[3] = 1.0f;
 
-		// Create device and swap chain
-		CreateDeviceAndSwapChain(hWnd);
+		// Create all DirectX-related objects.
+		CreateAllDX(hWnd);
 
-		// Create VS shaders, input layout and constant buffers
-		CreateVSBase();
-		CreateVSRaw();
-		CreateVSSkyMap();
-		CreateVSInstantText();
-		CreateAndSetVSCBs();
+		UpdateAvailableDisplayModes();
 
-		// Create GS shaders
-		CreateGSNormal();
+		// ### Save display modes ###
+		// Windowed display mode
+		m_WindowedDisplayMode = InitialMode;
+		// FullScreen display mode
+		auto screen_w{ GetSystemMetrics(SM_CXSCREEN) };
+		auto screen_h{ GetSystemMetrics(SM_CYSCREEN) };
+		const auto& modes = GetAvailableDisplayModes();
+		for (DisplayModeIndex iter = 0; iter < modes.size(); ++iter)
+		{
+			if ((modes[iter].Width == screen_w) && (modes[iter].Height == screen_h))
+			{
+				m_FullScreenDisplayMode = static_cast<EAllowedDisplayMode>(iter);
+				break;
+			}
+		}
 
-		// Create PS shaders and constant buffers
-		CreatePSBase();
-		CreatePSRaw();
-		CreatePSSkyMap();
-		CreatePSInstantText();
-		CreateAndSetPSCBs();
+		UpdateDefaultViewport();
 
-		// Set default shaders
-		SetVS(EVertexShader::VSBase);
-		SetPS(EPixelShader::PSBase);
-
-		// Create depth-stencil view
-		CreateDepthStencilView();
-
-		// Create depth-stencil states
-		CreateDepthStencilStates();
-
-		// Create render target view
-		CreateRenderTargetView();
-
-		// Create rasterizer states
-		CreateRasterizerStates();
-
-		// Create sampler states
-		CreateSamplerStates();
-
-		// Create blend states
-		CreateBlendStates();
-
-		// Create viewport
-		CreateDefaultViewport();
+		UpdateUniversalOrthoProjMatrix();
 
 		m_IsCreated = true;
 	}
 }
 
+PRIVATE void JWDX::UpdateAvailableDisplayModes() noexcept
+{
+	IDXGIOutput* output{};
+	DXGI_MODE_DESC* mode_list{};
+	UINT mode_count{};
+
+	m_SwapChain->GetContainingOutput(&output);
+	output->GetDisplayModeList(DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, nullptr);
+
+	mode_list = new DXGI_MODE_DESC[mode_count];
+	output->GetDisplayModeList(DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, mode_list);
+
+	for (UINT capable_id = 0; capable_id < mode_count; ++capable_id)
+	{
+		for (uint32_t allowed_id = 0; allowed_id < KAllowedDisplayModeCount; ++allowed_id)
+		{
+			if ((mode_list[capable_id].Width == KAllowedDisplayModes[allowed_id].Width) &&
+				(mode_list[capable_id].Height == KAllowedDisplayModes[allowed_id].Height))
+			{
+				if (m_AvailableDisplayModes.size())
+				{
+					if (m_AvailableDisplayModes[m_AvailableDisplayModes.size() - 1] == KAllowedDisplayModes[allowed_id])
+					{
+						continue;
+					}
+				}
+
+				m_AvailableDisplayModes.emplace_back(KAllowedDisplayModes[allowed_id]);
+			}
+		}
+	}
+
+	JW_DELETE_ARRAY(mode_list);
+	JW_RELEASE(output);
+}
+
+PRIVATE void JWDX::UpdateDefaultViewport() noexcept
+{
+	// Setup the viewport
+	m_DefaultViewPort.TopLeftX = 0;
+	m_DefaultViewPort.TopLeftY = 0;
+	m_DefaultViewPort.Width = m_pWindowSize->floatX();
+	m_DefaultViewPort.Height = m_pWindowSize->floatY();
+	m_DefaultViewPort.MinDepth = 0.0f; // IMPORTANT!
+	m_DefaultViewPort.MaxDepth = 1.0f; // IMPORTANT!
+
+	// Set the viewport
+	m_DeviceContext11->RSSetViewports(1, &m_DefaultViewPort);
+}
+
+PRIVATE void JWDX::UpdateUniversalOrthoProjMatrix() noexcept
+{
+	m_UniversalOrthoProjMat = XMMatrixOrthographicLH(m_pWindowSize->floatX(), m_pWindowSize->floatY(), KOrthographicNearZ, KOrthographicFarZ);
+}
+
 void JWDX::Destroy() noexcept
 {
+	// Delete dynamically allocated objects.
+
+	// Destroy all DirectX-related objects.
+	DestroyAllDX();
+}
+
+PRIVATE void JWDX::CreateAllDX(HWND hWnd) noexcept
+{
+	// Create device and swap chain
+	CreateDeviceAndSwapChain(hWnd);
+
+	// Create VS shaders, input layout and constant buffers
+	CreateVSBase();
+	CreateVSRaw();
+	CreateVSSkyMap();
+	CreateVSInstantText();
+	CreateAndSetVSCBs();
+
+	// Create GS shaders
+	CreateGSNormal();
+
+	// Create PS shaders and constant buffers
+	CreatePSBase();
+	CreatePSRaw();
+	CreatePSSkyMap();
+	CreatePSInstantText();
+	CreateAndSetPSCBs();
+
+	// Set default shaders
+	SetVS(EVertexShader::VSBase);
+	SetPS(EPixelShader::PSBase);
+
+	// Views
+	// Create render target view
+	CreateRenderTargetView();
+
+	// Create depth-stencil view
+	CreateDepthStencilView();
+
+	// Set views
+	SetViews();
+
+	// States
+	// Create depth-stencil states
+	CreateDepthStencilStates();
+
+	// Create rasterizer states
+	CreateRasterizerStates();
+
+	// Create sampler states
+	CreateSamplerStates();
+
+	// Create blend states
+	CreateBlendStates();
+}
+
+PRIVATE void JWDX::DestroyAllDX() noexcept
+{
 	uint64_t reference_count{};
+
+	// @important
+	m_SwapChain->SetFullscreenState(FALSE, nullptr);
 
 	// Release the COM objects we created.
 
@@ -87,11 +183,11 @@ void JWDX::Destroy() noexcept
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_RasterizerStateSolidNoCull11);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_RasterizerStateWireFrame11);
 
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_RenderTargetView11);
-
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DepthStencilStateZDisabled11);
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DepthStencilStateZEnabled11);
-	JW_RELEASE_CHECK_REFERENCE_COUNT(m_DepthStencilView11);
+
+	// Views
+	DestroyViews();
 
 	// PS CB
 	JW_RELEASE_CHECK_REFERENCE_COUNT(m_PSCBCamera);
@@ -143,8 +239,8 @@ PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 {
 	// Describe the screen buffer
 	DXGI_MODE_DESC buffer_description{};
-	buffer_description.Width = static_cast<UINT>(m_WindowSize.x);
-	buffer_description.Height = static_cast<UINT>(m_WindowSize.y);
+	buffer_description.Width = m_pWindowSize->Width;
+	buffer_description.Height = m_pWindowSize->Height;
 	buffer_description.RefreshRate.Numerator = 60;
 	buffer_description.RefreshRate.Denominator = 1;
 	buffer_description.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -157,15 +253,19 @@ PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 	swap_chain_description.SampleDesc.Count = 1;
 	swap_chain_description.SampleDesc.Quality = 0;
 	swap_chain_description.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swap_chain_description.BufferCount = 1;
+	swap_chain_description.BufferCount = 2; // @important
 	swap_chain_description.OutputWindow = hWnd;
 	swap_chain_description.Windowed = TRUE;
 	swap_chain_description.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	//swap_chain_description.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	// Create the Device and the SwapChain
-	D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
+	if (FAILED(D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
 		nullptr, 0, D3D11_SDK_VERSION, &swap_chain_description, &m_SwapChain,
-		&m_Device11, nullptr, &m_DeviceContext11);
+		&m_Device11, nullptr, &m_DeviceContext11)))
+	{
+		JW_ERROR_ABORT("Failed to create Device and SwapChain.");
+	}
 }
 
 PRIVATE void JWDX::CreateVSBase() noexcept
@@ -207,7 +307,6 @@ PRIVATE void JWDX::CreateVSSkyMap() noexcept
 	// Create vertex shader
 	m_Device11->CreateVertexShader(m_VSSkyMapBuffer->GetBufferPointer(), m_VSSkyMapBuffer->GetBufferSize(), nullptr, &m_VSSkyMap);
 }
-
 
 PRIVATE void JWDX::CreateVSInstantText() noexcept
 {
@@ -333,12 +432,26 @@ PRIVATE void JWDX::CreateAndSetPSCBs() noexcept
 	m_DeviceContext11->PSSetConstantBuffers(2, 1, &m_PSCBCamera);
 }
 
+PRIVATE void JWDX::CreateRenderTargetView() noexcept
+{
+	// Create buffer for render target view
+	if (SUCCEEDED(m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&m_RenderTargetTexture)))
+	{
+		// Create render target view
+		m_Device11->CreateRenderTargetView(m_RenderTargetTexture, nullptr, &m_RenderTargetView);
+	}
+	else
+	{
+		JW_ERROR_ABORT("Failed to get back buffer.");
+	}
+}
+
 PRIVATE void JWDX::CreateDepthStencilView() noexcept
 {
 	// Describe depth-stencil buffer
 	D3D11_TEXTURE2D_DESC depth_stencil_texture_descrption{};
-	depth_stencil_texture_descrption.Width = static_cast<UINT>(m_WindowSize.x);
-	depth_stencil_texture_descrption.Height = static_cast<UINT>(m_WindowSize.y);
+	depth_stencil_texture_descrption.Width = m_pWindowSize->Width;
+	depth_stencil_texture_descrption.Height = m_pWindowSize->Height;
 	depth_stencil_texture_descrption.MipLevels = 1;
 	depth_stencil_texture_descrption.ArraySize = 1;
 	depth_stencil_texture_descrption.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -348,13 +461,13 @@ PRIVATE void JWDX::CreateDepthStencilView() noexcept
 	depth_stencil_texture_descrption.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 	depth_stencil_texture_descrption.CPUAccessFlags = 0;
 	depth_stencil_texture_descrption.MiscFlags = 0;
-	
+
 	// Create buffer for depth-stencil view
 	ID3D11Texture2D* depth_stencil_buffer{};
 	if (SUCCEEDED(m_Device11->CreateTexture2D(&depth_stencil_texture_descrption, nullptr, &depth_stencil_buffer)))
 	{
 		// Create the depth-stencil View
-		m_Device11->CreateDepthStencilView(depth_stencil_buffer, nullptr, &m_DepthStencilView11);
+		m_Device11->CreateDepthStencilView(depth_stencil_buffer, nullptr, &m_DepthStencilView);
 
 		JW_RELEASE(depth_stencil_buffer);
 	}
@@ -362,6 +475,22 @@ PRIVATE void JWDX::CreateDepthStencilView() noexcept
 	{
 		JW_ERROR_ABORT("Failed to create texture.");
 	}
+}
+
+PRIVATE void JWDX::SetViews() noexcept
+{
+	// Set render target view & depth-stencil view
+	m_DeviceContext11->OMSetRenderTargets(1, &m_RenderTargetView, m_DepthStencilView);
+}
+
+PRIVATE void JWDX::DestroyViews() noexcept
+{
+	//m_DeviceContext11->OMSetRenderTargets(0, nullptr, nullptr);
+
+	JW_RELEASE(m_DepthStencilView);
+
+	JW_RELEASE(m_RenderTargetTexture);
+	JW_RELEASE(m_RenderTargetView);
 }
 
 PRIVATE void JWDX::CreateDepthStencilStates() noexcept
@@ -391,26 +520,6 @@ PRIVATE void JWDX::CreateDepthStencilStates() noexcept
 	m_Device11->CreateDepthStencilState(&depth_stencil_description, &m_DepthStencilStateZDisabled11);
 }
 
-PRIVATE void JWDX::CreateRenderTargetView() noexcept
-{
-	// Create buffer for render target view
-	ID3D11Texture2D* back_buffer{};
-	if (SUCCEEDED(m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)& back_buffer)))
-	{
-		// Create render target view
-		m_Device11->CreateRenderTargetView(back_buffer, nullptr, &m_RenderTargetView11);
-
-		// Set render target view & depth-stencil view
-		m_DeviceContext11->OMSetRenderTargets(1, &m_RenderTargetView11, m_DepthStencilView11);
-
-		JW_RELEASE(back_buffer);
-	}
-	else
-	{
-		JW_ERROR_ABORT("Failed to get back buffer.");
-	}
-}
-
 PRIVATE void JWDX::CreateRasterizerStates() noexcept
 {
 	D3D11_RASTERIZER_DESC rasterizer_description{};
@@ -438,7 +547,7 @@ PRIVATE void JWDX::CreateBlendStates() noexcept
 {
 	D3D11_BLEND_DESC blend_description{};
 	blend_description.RenderTarget[0].BlendEnable = true;
-
+	
 	blend_description.RenderTarget[0].SrcBlend = blend_description.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
 	blend_description.RenderTarget[0].DestBlend = blend_description.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
 	blend_description.RenderTarget[0].BlendOp = blend_description.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
@@ -488,20 +597,6 @@ PRIVATE void JWDX::CreateSamplerStates() noexcept
 	m_Device11->CreateSamplerState(&sampler_description, &m_SamplerStateAnisotropic);
 }
 
-PRIVATE void JWDX::CreateDefaultViewport() noexcept
-{
-	// Setup the viewport
-	m_DefaultViewPort.TopLeftX = 0;
-	m_DefaultViewPort.TopLeftY = 0;
-	m_DefaultViewPort.Width = m_WindowSize.x;
-	m_DefaultViewPort.Height = m_WindowSize.y;
-	m_DefaultViewPort.MinDepth = 0.0f; // IMPORTANT!
-	m_DefaultViewPort.MaxDepth = 1.0f; // IMPORTANT!
-
-	// Set the viewport
-	m_DeviceContext11->RSSetViewports(1, &m_DefaultViewPort);
-}
-
 void JWDX::CreateDynamicVertexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** ppBuffer) noexcept
 {
 	D3D11_BUFFER_DESC vertex_buffer_description{};
@@ -545,6 +640,71 @@ void JWDX::CreateIndexBuffer(UINT ByteSize, const void* pData, ID3D11Buffer** pp
 	index_buffer_data.pSysMem = pData;
 
 	m_Device11->CreateBuffer(&index_buffer_description, &index_buffer_data, ppBuffer);
+}
+
+void JWDX::SetToFullScreenDisplayMode() noexcept
+{
+	SetDisplayMode(m_FullScreenDisplayMode);
+}
+
+void JWDX::SetToWindowedDisplayMode() noexcept
+{
+	SetDisplayMode(m_WindowedDisplayMode);
+}
+
+void JWDX::SetCurrentDisplayMode(EAllowedDisplayMode Mode) noexcept
+{
+	BOOL is_fullscreen{ false };
+	IDXGIOutput* dxgi_output{};
+
+	m_SwapChain->GetFullscreenState(&is_fullscreen, &dxgi_output);
+
+	auto display_mode{ ConvertEAllowedDisplayModeToModeSize(Mode) };
+	if (is_fullscreen == TRUE)
+	{
+		// Update FullScreen Display Mode
+		m_FullScreenDisplayMode = ConvertModeSizeToEAllowedDisplayMode(display_mode);
+	}
+	else
+	{
+		// Update Windowed Display Mode
+		m_WindowedDisplayMode = ConvertModeSizeToEAllowedDisplayMode(display_mode);
+	}
+
+	SetDisplayMode(Mode);
+
+	JW_RELEASE(dxgi_output);
+}
+
+PRIVATE void JWDX::SetDisplayMode(EAllowedDisplayMode Mode) noexcept
+{
+	m_DeviceContext11->OMSetRenderTargets(0, nullptr, nullptr);
+
+	auto display_mode{ ConvertEAllowedDisplayModeToModeSize(Mode) };
+
+	DXGI_MODE_DESC mode{};
+	mode.Format = DXGI_FORMAT_UNKNOWN;
+	mode.Width = display_mode.Width;
+	mode.Height = display_mode.Height;
+	mode.RefreshRate.Denominator = 0;
+	mode.RefreshRate.Numerator = 0;
+	mode.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	mode.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+
+	m_SwapChain->ResizeTarget(&mode);
+
+	DestroyViews();
+
+	m_SwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+
+	CreateRenderTargetView();
+	CreateDepthStencilView();
+
+	SetViews();
+
+	// @important
+	UpdateUniversalOrthoProjMatrix();
+	UpdateDefaultViewport();
 }
 
 inline void JWDX::UpdateDynamicResource(ID3D11Resource* pResource, const void* pData, size_t Size) noexcept
@@ -789,10 +949,10 @@ void JWDX::UpdatePSCBCamera(const XMVECTOR& CameraPosition) noexcept
 void JWDX::BeginDrawing() noexcept
 {
 	// Clear render target view
-	m_DeviceContext11->ClearRenderTargetView(m_RenderTargetView11, m_ClearColor);
+	m_DeviceContext11->ClearRenderTargetView(m_RenderTargetView, m_ClearColor);
 
 	// Clear depth-stencil view
-	m_DeviceContext11->ClearDepthStencilView(m_DepthStencilView11, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	m_DeviceContext11->ClearDepthStencilView(m_DepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void JWDX::EndDrawing() noexcept

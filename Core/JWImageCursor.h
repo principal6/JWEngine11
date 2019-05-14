@@ -13,7 +13,7 @@ namespace JWEngine
 		JWImageCursor() = default;
 		~JWImageCursor();
 
-		void Create(JWDX& DX, XMFLOAT2 WindowSize) noexcept;
+		void Create(JWDX& DX, const SSize2& WindowSize) noexcept;
 
 		void LoadImageCursorFromFile(STRING Directory, STRING FileName) noexcept;
 
@@ -30,8 +30,7 @@ namespace JWEngine
 		bool						m_IsTextureCreated{ false };
 
 		JWDX*						m_pDX{};
-
-		XMMATRIX					m_MatrixProjOrthographic{};
+		const SSize2*				m_pWindowSize{};
 
 		ID3D11Buffer*				m_VertexBuffer{};
 		ID3D11Buffer*				m_IndexBuffer{};
@@ -41,7 +40,7 @@ namespace JWEngine
 
 		XMFLOAT2					m_Position{};
 		XMFLOAT2					m_Size{};
-		SSizeInt					m_OriginalSize{};
+		SSize2					m_OriginalSize{};
 
 		SVSCBSpace					m_VSCBSpace{};
 	};

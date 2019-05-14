@@ -11,15 +11,14 @@ JWImageCursor::~JWImageCursor()
 	JW_RELEASE(m_IndexBuffer);
 }
 
-void JWImageCursor::Create(JWDX& DX, XMFLOAT2 WindowSize) noexcept
+void JWImageCursor::Create(JWDX& DX, const SSize2& WindowSize) noexcept
 {
 	if (!m_IsCreated)
 	{
 		m_pDX = &DX;
-		
-		// Set orthographic projection matrix.
-		m_MatrixProjOrthographic = XMMatrixOrthographicLH(WindowSize.x, WindowSize.y, KOrthographicNearZ, KOrthographicFarZ);
 
+		m_pWindowSize = &WindowSize;
+		
 		m_VertexData.AddVertex(SVertexModel(0, 0, 0, 0, 0));
 		m_VertexData.AddVertex(SVertexModel(1, 0, 0, 1, 0));
 		m_VertexData.AddVertex(SVertexModel(0, -1, 0, 0, 1));
@@ -80,8 +79,8 @@ auto JWImageCursor::SetPosition(XMFLOAT2 Position) noexcept->JWImageCursor&
 
 PROTECTED void JWImageCursor::UpdateVertices() noexcept
 {
-	float window_width = m_pDX->GetWindowSize().x;
-	float window_height = m_pDX->GetWindowSize().y;
+	auto window_width = m_pWindowSize->floatX();
+	auto window_height = m_pWindowSize->floatY();
 
 	auto x_0 = -window_width / 2 + m_Position.x;
 	auto y_0 = window_height / 2 - m_Position.y;
@@ -104,7 +103,7 @@ void JWImageCursor::Draw() noexcept
 	m_pDX->SetPS(EPixelShader::PSBase);
 
 	// Update VS constant buffer (WVP matrix, which in reality is WO matrix.)
-	m_VSCBSpace.WVP = XMMatrixTranspose(m_MatrixProjOrthographic);
+	m_VSCBSpace.WVP = XMMatrixTranspose(m_pDX->GetUniversalOrthoProjMatrix());
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Set PS texture and sampler

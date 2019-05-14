@@ -14,7 +14,7 @@ namespace JWEngine
 		~JWLineModel() = default;
 
 		// Called in JWGame class
-		void Create(JWDX& DX) noexcept;
+		void Create(JWDX& DX, const SSize2& WindowSize) noexcept;
 
 		void Destroy() noexcept;
 
@@ -42,6 +42,7 @@ namespace JWEngine
 		bool					m_IsCreated{ false };
 
 		JWDX*					m_pDX{};
+		const SSize2*			m_pWindowSize{};
 
 		ID3D11Buffer*			m_VertexBuffer{};
 		ID3D11Buffer*			m_IndexBuffer{};

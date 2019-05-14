@@ -3,11 +3,13 @@
 
 using namespace JWEngine;
 
-void JWInstantText::Create(JWDX& DX, XMFLOAT2 WindowSize, STRING BaseDirectory, STRING FontFileName) noexcept
+void JWInstantText::Create(JWDX& DX, const SSize2& WindowSize, STRING BaseDirectory, STRING FontFileName) noexcept
 {
 	if (!m_IsCreated)
 	{
 		m_BaseDirectory = BaseDirectory;
+
+		m_pWindowSize = &WindowSize;
 
 		if (!m_FontParser.IsParsed())
 		{
@@ -23,9 +25,6 @@ void JWInstantText::Create(JWDX& DX, XMFLOAT2 WindowSize, STRING BaseDirectory, 
 
 		// Set JWDX pointer.
 		m_pDX = &DX;
-
-		// Set orthographic projection matrix.
-		m_MatrixProjOrthographic = XMMatrixOrthographicLH(WindowSize.x, WindowSize.y, KOrthographicNearZ, KOrthographicFarZ);
 
 		CreateInstantTextVertexBuffer();
 		CreateInstantTextIndexBuffer();
@@ -100,7 +99,7 @@ void JWInstantText::BeginRendering() noexcept
 	m_pDX->SetVS(EVertexShader::VSIntantText);
 
 	// Update VS constant buffer (WVP matrix, which in reality is WO matrix.)
-	m_VSCBSpace.WVP = XMMatrixTranspose(m_MatrixProjOrthographic);
+	m_VSCBSpace.WVP = XMMatrixTranspose(m_pDX->GetUniversalOrthoProjMatrix());
 	m_pDX->UpdateVSCBSpace(m_VSCBSpace);
 
 	// Set PS
@@ -120,8 +119,8 @@ void JWInstantText::RenderText(const WSTRING& Text, XMFLOAT2 Position, XMFLOAT4 
 	uint32_t text_length = static_cast<uint32_t>(Text.length());
 	if ((m_TotalTextLength + text_length) < KMaxInsantTextLength)
 	{
-		float window_width_half = m_pDX->GetWindowSize().x / 2.0f;
-		float window_height_half = m_pDX->GetWindowSize().y / 2.0f;
+		float window_width_half = m_pWindowSize->floatX() / 2.0f;
+		float window_height_half = m_pWindowSize->floatY() / 2.0f;
 		float texture_width = m_FontParser.GetFontTextureWidth();
 		float texture_height = m_FontParser.GetFontTextureHeight();
 		float base_x_position = -window_width_half + Position.x;

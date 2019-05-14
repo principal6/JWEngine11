@@ -3,12 +3,14 @@
 
 using namespace JWEngine;
 
-void JWLineModel::Create(JWDX& DX) noexcept
+void JWLineModel::Create(JWDX& DX, const SSize2& WindowSize) noexcept
 {
 	if (!m_IsCreated)
 	{
 		// Set JWDX pointer.
 		m_pDX = &DX;
+
+		m_pWindowSize = &WindowSize;
 
 		m_IsCreated = true;
 	}
@@ -115,8 +117,8 @@ auto JWLineModel::AddLine2D(XMFLOAT2 StartPosition, XMFLOAT2 Length, XMFLOAT4 Co
 
 	if (m_RenderType == ERenderType::Model_Line2D)
 	{
-		float window_width = m_pDX->GetWindowSize().x;
-		float window_height = m_pDX->GetWindowSize().y;
+		auto window_width = m_pWindowSize->floatX();
+		auto window_height = m_pWindowSize->floatY();
 
 		XMVECTOR length = XMLoadFloat2(&Length);
 		XMVECTOR position_a = XMVectorSet(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0, 1.0f);
@@ -221,8 +223,8 @@ auto JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2
 		{
 			Line2DIndex = min(Line2DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
-			float window_width = m_pDX->GetWindowSize().x;
-			float window_height = m_pDX->GetWindowSize().y;
+			auto window_width = m_pWindowSize->floatX();
+			auto window_height = m_pWindowSize->floatY();
 
 			XMVECTOR length = XMLoadFloat2(&Length);
 			XMVECTOR position_a = XMVectorSet(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0, 1.0f);
@@ -245,8 +247,8 @@ auto JWLineModel::SetLine2D(size_t Line2DIndex, XMFLOAT2 StartPosition, XMFLOAT2
 		{
 			Line2DIndex = min(Line2DIndex, m_VertexData.GetVertexCount() / 2 - 1);
 
-			float window_width = m_pDX->GetWindowSize().x;
-			float window_height = m_pDX->GetWindowSize().y;
+			auto window_width = m_pWindowSize->floatX();
+			auto window_height = m_pWindowSize->floatY();
 
 			XMVECTOR length = XMLoadFloat2(&Length);
 			XMVECTOR position_a = XMVectorSet(-window_width / 2 + StartPosition.x, window_height / 2 - StartPosition.y, 0, 1.0f);

@@ -4,13 +4,15 @@
 
 using namespace JWEngine;
 
-void JWSystemRender::Create(JWECS& ECS, JWDX& DX, STRING BaseDirectory) noexcept
+void JWSystemRender::Create(JWECS& ECS, JWDX& DX, const SSize2& WindowSize, STRING BaseDirectory) noexcept
 {
 	// Set JWECS pointer.
 	m_pECS = &ECS;
 
 	// Set JWDX pointer.
 	m_pDX = &DX;
+
+	m_pWindowSize = &WindowSize;
 
 	// Set base directory.
 	m_BaseDirectory = BaseDirectory;
@@ -297,7 +299,7 @@ auto JWSystemRender::CreateSharedLineModel() noexcept->JWLineModel*
 
 	auto& current_line_model = m_vSharedLineModel[m_vSharedLineModel.size() - 1];
 
-	current_line_model.Create(*m_pDX);
+	current_line_model.Create(*m_pDX, *m_pWindowSize);
 
 	return &current_line_model;
 }
@@ -314,13 +316,13 @@ auto JWSystemRender::GetSharedLineModel(size_t Index) noexcept->JWLineModel*
 	return result;
 }
 
-auto JWSystemRender::CreateSharedImage2D(SPositionInt Position, SSizeInt Size) noexcept->JWImage*
+auto JWSystemRender::CreateSharedImage2D(SPosition2 Position, SSize2 Size) noexcept->JWImage*
 {
 	m_vSharedImage2D.push_back(JWImage());
 
 	auto& current_image = m_vSharedImage2D[m_vSharedImage2D.size() - 1];
 
-	current_image.Create(*m_pDX);
+	current_image.Create(*m_pDX, *m_pWindowSize);
 
 	current_image.SetPosition(XMFLOAT2(static_cast<float>(Position.X), static_cast<float>(Position.Y)));
 	current_image.SetSize(XMFLOAT2(static_cast<float>(Size.Width), static_cast<float>(Size.Height)));
@@ -1070,7 +1072,7 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 		}
 		break;
 	case ERenderType::Image_2D:
-		WVP = XMMatrixTranspose(m_pECS->SystemCamera().OrthographicMatrix());
+		WVP = XMMatrixTranspose(m_pDX->GetUniversalOrthoProjMatrix());
 
 		m_VSCBFlags.FlagVS = 0;
 		break;
@@ -1078,7 +1080,7 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 		m_VSCBFlags.FlagVS = 0;
 		break;
 	case ERenderType::Model_Line2D:
-		WVP = XMMatrixTranspose(component_world_matrix * m_pECS->SystemCamera().OrthographicMatrix());
+		WVP = XMMatrixTranspose(component_world_matrix * m_pDX->GetUniversalOrthoProjMatrix());
 
 		m_VSCBFlags.FlagVS = 0;
 		break;
@@ -1281,6 +1283,20 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 	
 	// Reset GS
 	m_pDX->SetGS(EGeometryShader::None);
+}
+
+void JWSystemRender::UpdateImage2Ds() noexcept
+{
+	if (m_vpComponents.size())
+	{
+		for (auto& iter : m_vpComponents)
+		{
+			if (iter->RenderType == ERenderType::Image_2D)
+			{
+				iter->PtrImage->UpdatePositionAndSize();
+			}
+		}
+	}
 }
 
 void JWSystemRender::SetUniversalRasterizerState(ERasterizerState State) noexcept

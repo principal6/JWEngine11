@@ -16,7 +16,7 @@ namespace JWEngine
 		JWInstantText() = default;
 		~JWInstantText() = default;
 
-		void Create(JWDX& DX, XMFLOAT2 WindowSize, STRING BaseDirectory, STRING FontFileName) noexcept;
+		void Create(JWDX& DX, const SSize2& WindowSize, STRING BaseDirectory, STRING FontFileName) noexcept;
 		void Destroy() noexcept;
 
 		void BeginRendering() noexcept;
@@ -33,9 +33,9 @@ namespace JWEngine
 		bool						m_IsCreated{ false };
 
 		JWDX*						m_pDX{};
-
-		XMMATRIX					m_MatrixProjOrthographic{};
+		const SSize2*				m_pWindowSize{};
 		STRING						m_BaseDirectory{};
+
 		JWBMFontParser				m_FontParser{};
 
 		ID3D11Buffer*				m_VertexBuffer{};

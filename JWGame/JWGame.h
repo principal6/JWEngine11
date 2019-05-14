@@ -26,7 +26,8 @@ namespace JWEngine
 		JWGame() = default;
 		~JWGame() = default;
 
-		void Create(SPositionInt WindowPosition, SSizeInt WindowSize, STRING Title, STRING GameFontFileName, JWLogger* PtrLogger = nullptr) noexcept;
+		void Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, STRING WindowTitle,
+			STRING GameFontFileName, JWLogger& Logger) noexcept;
 
 		void LoadCursorImage(STRING FileName) noexcept;
 
@@ -35,16 +36,24 @@ namespace JWEngine
 		void SetFunctionOnWindowsKeyDown(FP_ON_WINDOWS_KEY_DOWN Function) noexcept;
 		void SetFunctionOnWindowsCharInput(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept;
 
+
+		void SetGameDisplayMode(EAllowedDisplayMode Mode) noexcept;
+		void UpdateWindowSize(EAllowedDisplayMode Mode) noexcept;
+		void UpdateECSSize() noexcept;
+
+	public:
+
 		// ---------------------
 		// --- Object getter ---
 		auto& InstantText() noexcept { return m_InstantText; }
 		auto& RawPixelSetter() noexcept { return m_RawPixelSetter; }
 		auto& ECS() noexcept { return m_ECS; }
+		auto& DX() noexcept { return m_DX; }
+		auto& Window() noexcept { return m_Window; }
 	
 		// Getter
-		auto GetFPS() noexcept { return m_FPS; };
-		auto GetWindowWidth() noexcept { return m_Window.GetWindowSize().x; }
-		auto GetWindowHeight() noexcept { return m_Window.GetWindowSize().y; }
+		const auto& GetFPS() noexcept { return m_FPS; };
+		const auto& GetWindowSize() noexcept { return m_WindowSize; }
 
 		// Base directory
 		auto GetBaseDirectory() const noexcept { return m_BaseDirectory; }
@@ -60,6 +69,8 @@ namespace JWEngine
 		bool					m_IsMouseCursorLoaded{ false };
 		
 		STRING					m_BaseDirectory;
+		SSize2					m_ScreenResolution{};
+		SSize2					m_WindowSize{};
 		SClearColor				m_ClearColor{};
 
 		FP_ON_INPUT				m_fpOnInput{};

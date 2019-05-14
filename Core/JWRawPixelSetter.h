@@ -50,7 +50,7 @@ namespace JWEngine
 			vPixels[index] = Color;
 		}
 
-		void FillRect(SPositionInt Position, SSizeInt Size, SRawPixelColor Color)
+		void FillRect(SPosition2 Position, SSize2 Size, SRawPixelColor Color)
 		{
 			uint32_t color_byte4 = (Color.B << 24 | Color.G << 16 | Color.R << 8 | Color.A);
 
@@ -82,7 +82,7 @@ namespace JWEngine
 		~JWRawPixelSetter() = default;
 
 		// Called in JWGame class
-		void Create(JWDX& DX) noexcept;
+		void Create(JWDX& DX, const SSize2& WindowSize) noexcept;
 		void Destroy() noexcept;
 
 		// Called in JWGame class

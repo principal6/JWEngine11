@@ -3,11 +3,13 @@
 
 using namespace JWEngine;
 
-void JWImage::Create(JWDX& DX) noexcept
+void JWImage::Create(JWDX& DX, const SSize2& WindowSize) noexcept
 {
 	if (!m_IsCreated)
 	{
 		m_pDX = &DX;
+
+		m_pWindowSize = &WindowSize;
 
 		m_VertexData.AddVertex(SVertexModel(0, 0, 0, 0, 0));
 		m_VertexData.AddVertex(SVertexModel(1, 0, 0, 1, 0));
@@ -37,7 +39,7 @@ auto JWImage::SetPosition(XMFLOAT2 Position) noexcept->JWImage*
 {
 	m_Position = Position;
 
-	UpdateScreenPositionAndSize();
+	UpdatePositionAndSize();
 
 	return this;
 }
@@ -46,15 +48,15 @@ auto JWImage::SetSize(XMFLOAT2 Size) noexcept->JWImage*
 {
 	m_Size = Size;
 
-	UpdateScreenPositionAndSize();
+	UpdatePositionAndSize();
 
 	return this;
 }
 
-PRIVATE void JWImage::UpdateScreenPositionAndSize() noexcept
+auto JWImage::UpdatePositionAndSize() noexcept->JWImage*
 {
-	float window_width = m_pDX->GetWindowSize().x;
-	float window_height = m_pDX->GetWindowSize().y;
+	auto window_width = m_pWindowSize->floatX();
+	auto window_height = m_pWindowSize->floatY();
 
 	auto x_0 = -window_width / 2 + m_Position.x;
 	auto y_0 = window_height / 2 - m_Position.y;
@@ -65,4 +67,6 @@ PRIVATE void JWImage::UpdateScreenPositionAndSize() noexcept
 	m_VertexData.vVerticesModel[3].Position = XMVectorSet(x_0 + m_Size.x, y_0 - m_Size.y, 0, 0);
 	
 	m_pDX->UpdateDynamicResource(m_VertexBuffer, m_VertexData.GetVertexModelPtrData(), m_VertexData.GetVertexModelByteSize());
+
+	return this;
 }

@@ -193,24 +193,52 @@ namespace JWEngine
 		ScaleRotTrans,
 	};
 
-	struct SPositionInt
+	struct SPosition2
 	{
-		SPositionInt() {};
-		SPositionInt(int _X, int _Y) : X(_X), Y(_Y) {};
+		SPosition2() {};
+		SPosition2(int _X, int _Y) : X(_X), Y(_Y) {};
 
 		int X{};
 		int Y{};
+
+		bool operator ==(const SPosition2& other) const
+		{
+			if ((X == other.Y) && (Y == other.Y)) { return true; }
+			return false;
+		}
+
+		bool operator !=(const SPosition2& other) const
+		{
+			if (*this == other) { return false; }
+			return true;
+		}
 	};
 
-	struct SSizeInt
+	struct SSize2
 	{
-		SSizeInt() {};
-		SSizeInt(uint32_t _Width, uint32_t _Height) : Width(_Width), Height(_Height) {};
+		SSize2() {};
+		SSize2(uint32_t _Width, uint32_t _Height) : Width(_Width), Height(_Height) {};
+
+		inline float floatX() const noexcept { return static_cast<float>(Width); }
+		inline float floatY() const noexcept { return static_cast<float>(Height); }
+		inline XMFLOAT2 ToXMFLOAT2() const noexcept { return { static_cast<float>(Width), static_cast<float>(Height) }; }
 
 		uint32_t Width{};
 		uint32_t Height{};
-	};
 
+		bool operator ==(const SSize2& other) const
+		{
+			if ((Width == other.Width) && (Height == other.Height)) { return true; }
+			return false;
+		}
+
+		bool operator !=(const SSize2& other) const
+		{
+			if (*this == other) { return false; }
+			return true;
+		}
+	};
+	
 	struct SClearColor
 	{
 		SClearColor() {};
@@ -615,7 +643,7 @@ namespace JWEngine
 	{
 		ID3D11Texture2D*			Texture{};
 		ID3D11ShaderResourceView*	TextureSRV{};
-		SSizeInt					TextureSize{};
+		SSize2					TextureSize{};
 	};
 
 	// Line2D & Line3D

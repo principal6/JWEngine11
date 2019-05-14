@@ -2,8 +2,9 @@
 
 using namespace JWEngine;
 
-static FP_ON_WINDOWS_KEY_DOWN s_fpWindowsKeyDown{};
-static FP_ON_WINDOWS_CHAR_INPUT s_fpWindowsCharKeyPressed{};
+static FP_ON_WINDOWS_KEY_DOWN	s_fpWindowsKeyDown{};
+static FP_ON_WINDOWS_CHAR_INPUT	s_fpWindowsCharKeyPressed{};
+static FP_ON_WINDOWS_RESIZE		s_fpWindowsResize{};
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -21,6 +22,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			s_fpWindowsKeyDown(wParam);
 		}
 		break;
+	case WM_SIZE:
+		if (s_fpWindowsResize)
+		{
+			s_fpWindowsResize(hWnd);
+		}
+		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
@@ -32,12 +39,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& Title) noexcept
+void JWWin32Window::Create(const SPosition2& Position, const SSize2& Size, const STRING& Title) noexcept
 {
 	m_hInstance = GetModuleHandleA(nullptr);
-
-	m_WindowSize.x = static_cast<float>(Size.Width);
-	m_WindowSize.y = static_cast<float>(Size.Height);
 
 	m_WindowClass.cbSize = sizeof(WNDCLASSEXA);
 	m_WindowClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -60,9 +64,9 @@ void JWWin32Window::Create(SPositionInt Position, SSizeInt Size, const STRING& T
 		rect.right = Position.X + Size.Width;
 		rect.bottom = Position.Y + Size.Height;
 
-		AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
-
-		m_hWnd = CreateWindowExA(0, m_WindowClass.lpszClassName, Title.c_str(), WS_OVERLAPPEDWINDOW, rect.left, rect.top,
+		AdjustWindowRect(&rect, KGameWindowStyle, false);
+		
+		m_hWnd = CreateWindowExA(0, m_WindowClass.lpszClassName, Title.c_str(), KGameWindowStyle, rect.left, rect.top,
 			rect.right - rect.left, rect.bottom - rect.top, nullptr, nullptr, m_hInstance, nullptr);
 
 		if (m_hWnd)
@@ -89,4 +93,9 @@ void JWWin32Window::SetOnWindowsKeyDownFunction(FP_ON_WINDOWS_KEY_DOWN Function)
 void JWWin32Window::SetOnWindowsCharInputFunction(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept
 {
 	s_fpWindowsCharKeyPressed = Function;
+}
+
+void JWWin32Window::SetOnWindowsResizeFunction(FP_ON_WINDOWS_RESIZE Function) noexcept
+{
+	s_fpWindowsResize = Function;
 }

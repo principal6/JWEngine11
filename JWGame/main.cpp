@@ -21,11 +21,11 @@ int main()
 
 	myLogger.InitializeTime();
 
-	myGame.Create(SPositionInt(0, 30), SSizeInt(800, 600), "JWGame", "megt20all", &myLogger);
+	myGame.Create(EAllowedDisplayMode::w800h600, SPosition2(0, 30), "JWGame", "megt20all", myLogger);
 	//myGame.LoadCursorImage("cursor_default.png");
 
 	// ECS Shared resources
-	auto & ecs = myGame.ECS();
+	auto& ecs = myGame.ECS();
 	{
 		// SharedModel
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.obj"); // Shared Model #0
@@ -54,7 +54,7 @@ int main()
 	}
 	{
 		// SharedImage2D
-		ecs.SystemRender().CreateSharedImage2D(SPositionInt(160, 10), SSizeInt(100, 40)); // Shared Image2D #0
+		ecs.SystemRender().CreateSharedImage2D(SPosition2(160, 10), SSize2(100, 40)); // Shared Image2D #0
 	}
 	{
 		// SharedLineModel
@@ -186,7 +186,7 @@ int main()
 		auto physics = camera_0->CreateComponentPhysics();
 		
 		auto camera = camera_0->CreateComponentCamera();
-		camera->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
+		camera->CreatePerspectiveCamera(ECameraType::FreeLook);
 
 		auto render = camera_0->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(5));
@@ -254,7 +254,7 @@ int main()
 		auto physics = cam->CreateComponentPhysics();
 		
 		auto camera = cam->CreateComponentCamera();
-		camera->CreatePerspectiveCamera(ECameraType::FreeLook, myGame.GetWindowWidth(), myGame.GetWindowHeight());
+		camera->CreatePerspectiveCamera(ECameraType::FreeLook);
 
 		auto render = cam->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(5));

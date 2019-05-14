@@ -59,8 +59,9 @@ namespace JWEngine
 		ECameraType	Type{ ECameraType::Invalid };
 		XMVECTOR	LookAt{};
 
-		float		Width{};
-		float		Height{};
+		// @important
+		// 'PtrWindowSize' is set by JWSystemCamera when CreateComponent() is called
+		const SSize2*	PtrWindowSize{};
 		float		FOV{ KDefFOV };
 		float		ZNear{ KDefZNear };
 		float		ZFar{ KDefZFar };
@@ -76,24 +77,26 @@ namespace JWEngine
 		float		RotateFactor{ KDefRotateFactor };
 		float		ZoomFactor{ KDefZoomFactor };
 
-		void CreatePerspectiveCamera(ECameraType CameraType, float ViewWidth, float ViewHeight) noexcept
+		void CreatePerspectiveCamera(ECameraType CameraType) noexcept
 		{
+			if (CameraType == ECameraType::Orthographic)
+			{
+				JW_ERROR_ABORT("Camera type not matching.");
+			}
+
 			Type = CameraType;
 
-			Width = ViewWidth;
-			Height = ViewHeight;
-
-			MatrixProjection = XMMatrixPerspectiveFovLH(FOV, Width / Height, ZNear, ZFar);
+			MatrixProjection = XMMatrixPerspectiveFovLH(FOV, PtrWindowSize->floatX() / PtrWindowSize->floatY(), ZNear, ZFar);
 		}
 
-		void CreateOrthographicCamera(float ViewWidth, float ViewHeight) noexcept
+		void CreateOrthographicCamera() noexcept
 		{
 			Type = ECameraType::Orthographic;
 
 			ZNear = KOrthographicNearZ;
 			ZFar = KOrthographicFarZ;
 
-			MatrixProjection = XMMatrixOrthographicLH(ViewWidth, ViewHeight, ZNear, ZFar);
+			MatrixProjection = XMMatrixOrthographicLH(PtrWindowSize->floatX(), PtrWindowSize->floatY(), ZNear, ZFar);
 		}
 
 		void SetFrustum(float _FOV, float _ZNear, float _ZFar)
@@ -102,7 +105,7 @@ namespace JWEngine
 			ZNear = _ZNear;
 			ZFar = _ZFar;
 
-			MatrixProjection = XMMatrixPerspectiveFovLH(FOV, Width / Height, ZNear, ZFar);
+			MatrixProjection = XMMatrixPerspectiveFovLH(FOV, PtrWindowSize->floatX() / PtrWindowSize->floatY(), ZNear, ZFar);
 		}
 	};
 
@@ -112,7 +115,7 @@ namespace JWEngine
 		JWSystemCamera() = default;
 		~JWSystemCamera() = default;
 
-		void Create(JWECS& ECS, JWDX& DX, XMFLOAT2 WindowSize) noexcept;
+		void Create(JWECS& ECS, JWDX& DX, const SSize2& WindowSize) noexcept;
 		void Destroy() noexcept;
 
 		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentCamera&;
@@ -126,6 +129,10 @@ namespace JWEngine
 		void SetCurrentCamera(size_t ComponentID) noexcept;
 		auto GetCurrentCamera() const noexcept { return m_pCurrentCamera; }
 		auto GetCurrentCameraComponentID() const noexcept { return m_pCurrentCamera->ComponentID; }
+
+		// @important:
+		// This function must be called when DisplayMode has been changed.
+		void UpdateCamerasProjectionMatrix() noexcept;
 		
 		// NORMALLY
 		// X_Pitch is mouse's y movement
@@ -141,7 +148,6 @@ namespace JWEngine
 		void SetCurrentCameraPosition(const XMFLOAT3& Position) noexcept;
 		auto GetCurrentCameraPosition() const noexcept->const XMVECTOR&;
 
-		const auto& OrthographicMatrix() noexcept { return m_MatrixProjOrthographic; }
 		const auto& CurrentViewMatrix() noexcept { return m_pCurrentCamera->MatrixView; }
 		const auto& CurrentProjectionMatrix() noexcept { return m_pCurrentCamera->MatrixProjection; }
 		const auto CurrentViewProjectionMatrix() noexcept { return m_pCurrentCamera->MatrixView * m_pCurrentCamera->MatrixProjection; }
@@ -161,12 +167,11 @@ namespace JWEngine
 	private:
 		JWDX*						m_pDX{};
 		JWECS*						m_pECS{};
+		const SSize2*				m_pWindowSize{};
 
 		VECTOR<SComponentCamera*>	m_vpComponents;
-
 		SComponentCamera*			m_pCurrentCamera{};
 
-		XMMATRIX					m_MatrixProjOrthographic{};
 		SViewFrustumVertices		m_CapturedViewFrustumVertices{};
 	};
 };

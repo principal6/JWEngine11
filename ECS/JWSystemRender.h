@@ -235,48 +235,53 @@ namespace JWEngine
 		JWSystemRender() = default;
 		~JWSystemRender() = default;
 
-		void Create(JWECS& ECS, JWDX& DX, STRING BaseDirectory) noexcept;
+		void Create(JWECS& ECS, JWDX& DX, const SSize2& WindowSize, STRING BaseDirectory) noexcept;
 		void Destroy() noexcept;
 
 		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentRender&;
 		void DestroyComponent(SComponentRender& Component) noexcept;
 
-		// Shared resources
+		// ### Shared Resources ###
+		// Shared Texture
 		void CreateSharedTexture(ESharedTextureType Type, STRING FileName) noexcept;
 		void CreateSharedTextureFromSharedModel(size_t ModelIndex) noexcept;
 		auto GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*;
-
+		// Shared Model
 		auto CreateSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*;
 		auto CreateDynamicSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*;
 		auto CreateSharedModelFromFile(ESharedModelType Type, const STRING& FileName, const WSTRING& OverrideTextureFN = L"") noexcept->JWModel*;
 		auto GetSharedModel(size_t Index) noexcept->JWModel*;
-
+		// Shared LineModel
 		auto CreateSharedLineModel() noexcept->JWLineModel*;
 		auto GetSharedLineModel(size_t Index) noexcept->JWLineModel*;
-
-		auto CreateSharedImage2D(SPositionInt Position, SSizeInt Size) noexcept->JWImage*;
+		// Shared Image2D
+		auto CreateSharedImage2D(SPosition2 Position, SSize2 Size) noexcept->JWImage*;
 		auto GetSharedImage2D(size_t Index) noexcept->JWImage*;
-
+		// Shared Terrain
 		auto CreateSharedTerrainFromHeightMap(const STRING& HeightMapFN, float HeightFactor, float XYSizeFactor) noexcept->STerrainData*;
 		auto CreateSharedTerrainFromTRN(const STRING& FileName) noexcept->STerrainData*;
 		auto GetSharedTerrain(size_t Index) noexcept->STerrainData*;
-
+		// AnimationTexture
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
 		auto GetAnimationTexture(size_t Index) noexcept->STextureData*;
 		
-		// Bounidng ellipsoid
+		// ### Bounidng ellipsoid ###
 		void AddBoundingEllipsoidInstance(const XMMATRIX& WorldMatrix) noexcept;
 		void EraseBoundingEllipsoidInstance(uint32_t InstanceID) noexcept;
 		void UpdateBoundingEllipsoidInstance(uint32_t InstanceID, const XMMATRIX& WorldMatrix) noexcept;
 
 		void Execute() noexcept;
 
-		void SetUniversalRasterizerState(ERasterizerState State) noexcept;
+		// @important:
+		// This function must be called when DisplayMode has been changed.
+		void UpdateImage2Ds() noexcept;
 
+		void SetUniversalRasterizerState(ERasterizerState State) noexcept;
 		void SetSystemRenderFlag(JWFlagSystemRenderOption Flag) noexcept;
 		void ToggleSystemRenderFlag(JWFlagSystemRenderOption Flag) noexcept;
 		void ToggleWireFrame() noexcept;
 
+		// Frustum culling
 		auto GetFrustumCulledEntityCount() const noexcept { return m_FrustumCulledEntityCount; }
 		auto GetFrustumCulledTerrainNodeCount() const noexcept { return m_FrustumCulledTerrainNodeCount; }
 
@@ -314,6 +319,7 @@ namespace JWEngine
 
 		JWECS*						m_pECS{};
 		JWDX*						m_pDX{};
+		const SSize2*				m_pWindowSize{};
 		STRING						m_BaseDirectory{};
 
 		SVSCBSpace					m_VSCBSpace{};

@@ -3,7 +3,7 @@
 
 using namespace JWEngine;
 
-void JWRawPixelSetter::Create(JWDX& DX) noexcept
+void JWRawPixelSetter::Create(JWDX& DX, const SSize2& WindowSize) noexcept
 {
 	if (!m_IsCreated)
 	{
@@ -11,7 +11,7 @@ void JWRawPixelSetter::Create(JWDX& DX) noexcept
 		m_pDX = &DX;
 
 		// Create raw pixel data
-		m_RawPixelData.CreatePixelData(m_pDX->GetWindowSize());
+		m_RawPixelData.CreatePixelData(WindowSize.ToXMFLOAT2());
 
 		// Set default color
 		for (uint32_t y = 0; y < m_RawPixelData.GetHeight(); ++y)

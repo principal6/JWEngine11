@@ -1,18 +1,17 @@
 #include "JWECS.h"
-#include "../Core/JWWin32Window.h"
 
 using namespace JWEngine;
 
-void JWECS::Create(JWDX& DX, JWWin32Window& Window, STRING BaseDirectory) noexcept
+void JWECS::Create(JWDX& DX, HWND hWnd, const SSize2& WindowSize, STRING BaseDirectory) noexcept
 {
 	m_pDX = &DX;
 	m_BaseDirectory = BaseDirectory;
 
 	m_SystemTransform.Create(*this);
 	m_SystemLight.Create(*this, DX);
-	m_SystemPhysics.Create(*this, Window.GethWnd(), Window.GetWindowSize());
-	m_SystemCamera.Create(*this, DX, Window.GetWindowSize());
-	m_SystemRender.Create(*this, DX, BaseDirectory);
+	m_SystemPhysics.Create(*this, hWnd, WindowSize);
+	m_SystemCamera.Create(*this, DX, WindowSize);
+	m_SystemRender.Create(*this, DX, WindowSize, BaseDirectory);
 }
 
 void JWECS::Destroy() noexcept

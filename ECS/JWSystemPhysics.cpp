@@ -3,13 +3,14 @@
 
 using namespace JWEngine;
 
-void JWSystemPhysics::Create(JWECS& ECS, HWND hWnd, XMFLOAT2 WindowSize) noexcept
+void JWSystemPhysics::Create(JWECS& ECS, HWND hWnd, const SSize2& WindowSize) noexcept
 {
 	// Set JWECS pointer.
 	m_pECS = &ECS;
 
 	m_hWnd = hWnd;
-	m_WindowSize = WindowSize;
+
+	m_pWindowSize = &WindowSize;
 }
 
 void JWSystemPhysics::Destroy() noexcept
@@ -112,8 +113,8 @@ PRIVATE __forceinline void JWSystemPhysics::CastPickingRay() noexcept
 	// Normalize mouse cursor position
 	// x = [-1.0, 1.0]
 	// y = [-1.0, 1.0]
-	m_NormalizedMousePosition.x = (static_cast<float>(m_MouseClientPosition.x) / m_WindowSize.x) * 2.0f - 1.0f;
-	m_NormalizedMousePosition.y = (static_cast<float>(m_MouseClientPosition.y) / m_WindowSize.y) * 2.0f - 1.0f;
+	m_NormalizedMousePosition.x = (static_cast<float>(m_MouseClientPosition.x) / m_pWindowSize->floatX()) * 2.0f - 1.0f;
+	m_NormalizedMousePosition.y = (static_cast<float>(m_MouseClientPosition.y) / m_pWindowSize->floatY()) * 2.0f - 1.0f;
 
 	const auto& MatrixView = m_pECS->SystemCamera().CurrentViewMatrix();
 	const auto& MatrixProjection = m_pECS->SystemCamera().CurrentProjectionMatrix();

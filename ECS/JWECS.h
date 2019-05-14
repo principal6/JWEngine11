@@ -5,7 +5,6 @@
 namespace JWEngine
 {
 	class JWDX;
-	class JWWin32Window;
 
 	class JWECS final
 	{
@@ -14,7 +13,7 @@ namespace JWEngine
 		~JWECS() = default;
 
 		// Called in JWGame class
-		void Create(JWDX& DX, JWWin32Window& Window, STRING BaseDirectory) noexcept;
+		void Create(JWDX& DX, HWND hWnd, const SSize2& WindowSize, STRING BaseDirectory) noexcept;
 		void Destroy() noexcept;
 		
 		// ### Entity creator ###
@@ -46,7 +45,6 @@ namespace JWEngine
 
 	private:
 		JWDX*					m_pDX{};
-		JWWin32Window*			m_pWindow{};
 		STRING					m_BaseDirectory{};
 
 		JWSystemTransform		m_SystemTransform{};

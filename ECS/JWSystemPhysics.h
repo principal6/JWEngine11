@@ -25,7 +25,7 @@ namespace JWEngine
 		JWSystemPhysics() = default;
 		~JWSystemPhysics() = default;
 
-		void Create(JWECS& ECS, HWND hWnd, XMFLOAT2 WindowSize) noexcept;
+		void Create(JWECS& ECS, HWND hWnd, const SSize2& WindowSize) noexcept;
 		void Destroy() noexcept;
 
 		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentPhysics&;
@@ -67,7 +67,7 @@ namespace JWEngine
 		JWECS*						m_pECS{};
 
 		HWND						m_hWnd{};
-		XMFLOAT2					m_WindowSize{};
+		const SSize2*				m_pWindowSize{};
 
 		POINT						m_MouseClientPosition{};
 		XMFLOAT2					m_NormalizedMousePosition{};

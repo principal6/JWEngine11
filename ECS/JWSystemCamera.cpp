@@ -3,16 +3,15 @@
 
 using namespace JWEngine;
 
-void JWSystemCamera::Create(JWECS& ECS, JWDX& DX, XMFLOAT2 WindowSize) noexcept
+void JWSystemCamera::Create(JWECS& ECS, JWDX& DX, const SSize2& WindowSize) noexcept
 {
 	// Set JWECS pointer.
 	m_pECS = &ECS;
 
 	// Set JWDX pointer.
 	m_pDX = &DX;
-	
-	// Set orthographic projection matrix.
-	m_MatrixProjOrthographic = XMMatrixOrthographicLH(WindowSize.x, WindowSize.y, KOrthographicNearZ, KOrthographicFarZ);
+
+	m_pWindowSize = &WindowSize;
 }
 
 void JWSystemCamera::Destroy() noexcept
@@ -37,6 +36,7 @@ auto JWSystemCamera::CreateComponent(JWEntity* pEntity) noexcept->SComponentCame
 	// Save component ID & pointer to Entity
 	m_vpComponents[slot]->ComponentID = slot;
 	m_vpComponents[slot]->PtrEntity = pEntity;
+	m_vpComponents[slot]->PtrWindowSize = m_pWindowSize;
 
 	return *m_vpComponents[slot];
 }
@@ -118,7 +118,7 @@ PRIVATE inline auto JWSystemCamera::GetCurrentCameraViewFrustumNRU() const noexc
 	XMFLOAT3 position{};
 	position.z = m_pCurrentCamera->ZNear;
 	position.y = tanf(m_pCurrentCamera->FOV / 2.0f) * position.z;
-	position.x = position.y * (m_pCurrentCamera->Width) / (m_pCurrentCamera->Height);
+	position.x = position.y * m_pWindowSize->floatX() / m_pWindowSize->floatY();
 
 	return XMVectorSet(position.x, position.y, position.z, 1);
 }
@@ -128,7 +128,7 @@ PRIVATE inline auto JWSystemCamera::GetCurrentCameraViewFrustumFRU() const noexc
 	XMFLOAT3 position{};
 	position.z = m_pCurrentCamera->ZFar * 0.98f;
 	position.y = tanf(m_pCurrentCamera->FOV / 2.0f) * position.z;
-	position.x = position.y * (m_pCurrentCamera->Width) / (m_pCurrentCamera->Height);
+	position.x = position.y * m_pWindowSize->floatX() / m_pWindowSize->floatY();
 
 	return XMVectorSet(position.x, position.y, position.z, 1);
 }
@@ -165,6 +165,26 @@ void JWSystemCamera::SetCurrentCamera(size_t ComponentID) noexcept
 
 	RotateCurrentCamera(0, 0, 0);
 	UpdateCurrentCameraViewMatrix();
+}
+
+void JWSystemCamera::UpdateCamerasProjectionMatrix() noexcept
+{
+	if (m_vpComponents.size())
+	{
+		for (auto* iter : m_vpComponents)
+		{
+			if (iter->Type == ECameraType::Orthographic)
+			{
+				iter->MatrixProjection =
+					XMMatrixOrthographicLH(m_pWindowSize->floatX(), m_pWindowSize->floatY(), iter->ZNear, iter->ZFar);
+			}
+			else
+			{
+				iter->MatrixProjection =
+					XMMatrixPerspectiveFovLH(iter->FOV, m_pWindowSize->floatX() / m_pWindowSize->floatY(), iter->ZNear, iter->ZFar);
+			}
+		}
+	}
 }
 
 void JWSystemCamera::RotateCurrentCamera(float X_Pitch, float Y_Yaw, float Z_Roll) noexcept

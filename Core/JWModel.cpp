@@ -63,7 +63,7 @@ auto JWModel::AddAnimationFromFile(STRING FileName) noexcept->JWModel*
 	return this;
 }
 
-auto JWModel::BakeAnimationTexture(SSizeInt TextureSize, STRING FileName) noexcept->JWModel*
+auto JWModel::BakeAnimationTexture(SSize2 TextureSize, STRING FileName) noexcept->JWModel*
 {
 	if (ModelData.AnimationSet.vAnimations.size())
 	{
