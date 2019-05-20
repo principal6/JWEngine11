@@ -17,6 +17,7 @@ int main()
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
 	// # Render		@ Sprite instancing
+	// # Cursor		@ Image cursor input VS. Raw input
 
 	myLogger.InitializeTime();
 
