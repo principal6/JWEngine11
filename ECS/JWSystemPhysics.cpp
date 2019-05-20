@@ -85,9 +85,9 @@ void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
 auto JWSystemPhysics::PickEntity() noexcept->bool
 {
 	m_pPickedEntity = nullptr;
-	m_IsEntityPicked = false;
-	m_PickedEntityName.clear();
-
+	m_pPickedTerrainEntity = nullptr;
+	m_pPickedNonTerrainEntity = nullptr;
+	
 	CastPickingRay();
 
 	if (m_vpComponents.size() == 0)
@@ -95,9 +95,41 @@ auto JWSystemPhysics::PickEntity() noexcept->bool
 		return false;
 	}
 
+	// Reset distances for comparison
+	m_PickedTerrainDistance = KVectorMax;
+	m_PickedNonTerrainDistance = KVectorMax;
+
 	if (PickEntityByEllipsoid())
 	{
-		m_IsEntityPicked = true;
+		if (m_pPickedTerrainEntity)
+		{
+			if (PickSubBoundingEllipsoid(m_pPickedTerrainEntity))
+			{
+				PickTerrainTriangle();
+			}
+		}
+
+		// Final picking (between Terrain and Non-Terrain entities)
+		if (XMVector3Less(m_PickedNonTerrainDistance, m_PickedTerrainDistance))
+		{
+			m_PickedDistance = m_PickedNonTerrainDistance;
+			m_pPickedEntity = m_pPickedNonTerrainEntity;
+
+			m_PickedTriangle[0] = KVectorZero;
+			m_PickedTriangle[1] = KVectorZero;
+			m_PickedTriangle[2] = KVectorZero;
+		}
+		else
+		{
+			m_PickedDistance = m_PickedTerrainDistance;
+			m_pPickedEntity = m_pPickedTerrainEntity;
+		}
+
+		if (m_pPickedEntity)
+		{
+			m_PickedPoint = m_PickingRayOrigin + m_PickedDistance * m_PickingRayDirection;
+		}
+
 		return true;
 	}
 
@@ -139,92 +171,8 @@ PRIVATE __forceinline void JWSystemPhysics::CastPickingRay() noexcept
 	m_PickingRayDirection = XMVector3TransformNormal(m_PickingRayViewSpaceDirection, MatrixViewInverse);
 }
 
-PRIVATE auto JWSystemPhysics::PickEntityByTriangle() noexcept->bool
-{
-	XMVECTOR old_t{ XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX) };
-
-	for (auto iter : m_vpComponents)
-	{
-		auto& entity = iter->PtrEntity;
-
-		auto transform{ entity->GetComponentTransform() };
-		auto render{ entity->GetComponentRender() };
-		auto type{ entity->GetEntityType() };
-
-		if (type != EEntityType::UserDefined)
-		{
-			// MainSprite, MainTerrain need to be picked
-			if (!(
-				(type == EEntityType::MainSprite) ||
-				(type == EEntityType::MainTerrain)
-				))
-			{
-				continue;
-			}
-		}
-
-		if (transform)
-		{
-			auto model_type = render->PtrModel->GetRenderType();
-
-			SIndexDataTriangle* ptr_index_data{};
-			SVertexDataModel* ptr_vertex_data{};
-
-			if ((model_type == ERenderType::Model_Dynamic) || (model_type == ERenderType::Model_Static))
-			{
-				ptr_index_data = &render->PtrModel->ModelData.IndexData;
-				ptr_vertex_data = &render->PtrModel->ModelData.VertexData;
-			}
-			else if (model_type == ERenderType::Model_Rigged)
-			{
-				ptr_index_data = &render->PtrModel->ModelData.IndexData;
-				ptr_vertex_data = &render->PtrModel->ModelData.VertexData;
-			}
-			else
-			{
-				continue;
-			}
-
-			assert(ptr_index_data);
-			assert(ptr_vertex_data);
-
-			const auto& faces{ ptr_index_data->vFaces };
-			const auto& vertices{ ptr_vertex_data->vVerticesModel };
-
-			// Iterate all the triangles in the model
-			for (auto triangle : faces)
-			{
-				// Move vertices from local space to world space!
-				auto v0 = XMVector3TransformCoord(vertices[triangle._0].Position, transform->WorldMatrix);
-				auto v1 = XMVector3TransformCoord(vertices[triangle._1].Position, transform->WorldMatrix);
-				auto v2 = XMVector3TransformCoord(vertices[triangle._2].Position, transform->WorldMatrix);
-
-				if (IntersectRayTriangle(m_PickedPoint, old_t,
-					m_PickingRayOrigin, m_PickingRayDirection,
-					v0, v1, v2))
-				{
-					m_pPickedEntity = entity;
-
-					m_PickedTriangle[0] = v0;
-					m_PickedTriangle[1] = v1;
-					m_PickedTriangle[2] = v2;
-				}
-			}
-		}
-	}
-
-	if (m_pPickedEntity)
-	{
-		m_PickedEntityName = m_pPickedEntity->GetEntityName();
-		return true;
-	}
-
-	return false;
-}
-
 PRIVATE auto JWSystemPhysics::PickEntityByEllipsoid() noexcept->bool
 {
-	XMVECTOR old_t{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX };
 	for (auto iter : m_vpComponents)
 	{
 		auto entity = iter->PtrEntity;
@@ -262,30 +210,36 @@ PRIVATE auto JWSystemPhysics::PickEntityByEllipsoid() noexcept->bool
 			auto e_ray_origin = XMVector3TransformCoord(m_PickingRayOrigin, inv_ellipsoid_world);
 			auto e_ray_direction = XMVector3TransformNormal(m_PickingRayDirection, inv_ellipsoid_world);
 
-			if (IntersectRayUnitSphere(e_ray_origin, e_ray_direction, &old_t))
+			if (type == EEntityType::MainTerrain)
 			{
-				m_PickedPoint = m_PickingRayOrigin + old_t * m_PickingRayDirection;
-				m_pPickedEntity = entity;
+				if (IntersectRayUnitSphere(e_ray_origin, e_ray_direction))
+				{
+					m_pPickedTerrainEntity = entity;
+				}
+			}
+			else
+			{
+				if (IntersectRayUnitSphere(e_ray_origin, e_ray_direction, &m_PickedNonTerrainDistance))
+				{
+					m_pPickedNonTerrainEntity = entity;
+				}
 			}
 		}
 	}
 
-	if (m_pPickedEntity)
+	if ((m_pPickedTerrainEntity) || (m_pPickedNonTerrainEntity))
 	{
-		m_PickedEntityName = m_pPickedEntity->GetEntityName();
-		m_PickedPoint = m_PickingRayOrigin + old_t * m_PickingRayDirection;
 		return true;
 	}
 
 	return false;
 }
 
-auto JWSystemPhysics::PickSubBoundingEllipsoid() noexcept->bool
+PRIVATE auto JWSystemPhysics::PickSubBoundingEllipsoid(JWEntity* PtrEntity) noexcept->bool
 {
-	if (m_pPickedEntity == nullptr) { return false; }
-	auto physics = m_pPickedEntity->GetComponentPhysics();
+	auto physics = PtrEntity->GetComponentPhysics();
 	if (physics == nullptr) { return false; }
-	auto transform = m_pPickedEntity->GetComponentTransform();
+	auto transform = PtrEntity->GetComponentTransform();
 	if (transform == nullptr) { return false; }
 
 	// Clear array
@@ -304,7 +258,7 @@ auto JWSystemPhysics::PickSubBoundingEllipsoid() noexcept->bool
 		e_ray_origin = XMVector3TransformCoord(m_PickingRayOrigin, inv_ellipsoid_world);
 		e_ray_direction = XMVector3TransformNormal(m_PickingRayDirection, inv_ellipsoid_world);
 
-		// @important: NO old_t comparison!
+		// @important: NO distance comparison!
 		if (IntersectRayUnitSphere(e_ray_origin, e_ray_direction))
 		{
 			m_vPickedSubBoundingEllipsoidID.push_back(id - 1);
@@ -319,20 +273,21 @@ auto JWSystemPhysics::PickSubBoundingEllipsoid() noexcept->bool
 	return false;
 }
 
-void JWSystemPhysics::PickTerrainTriangle() noexcept
+PRIVATE void JWSystemPhysics::PickTerrainTriangle() noexcept
 {
-	if (m_pPickedEntity)
+	if (m_pPickedTerrainEntity)
 	{
-		auto render = m_pPickedEntity->GetComponentRender();
+		auto render = m_pPickedTerrainEntity->GetComponentRender();
 		if (render == nullptr) { return; }
 
 		auto ptr_terrain = render->PtrTerrain;
 		if (ptr_terrain == nullptr) { return; }
 
-		auto transform = m_pPickedEntity->GetComponentTransform();
+		auto transform = m_pPickedTerrainEntity->GetComponentTransform();
 		
 		XMVECTOR v[3]{};
-		XMVECTOR old_t{ XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX) };
+		auto picked_distance{ KVectorMax };
+
 		for (auto& bs : m_vPickedSubBoundingEllipsoidID)
 		{
 			for (auto& node : ptr_terrain->QuadTree)
@@ -351,7 +306,7 @@ void JWSystemPhysics::PickTerrainTriangle() noexcept
 							v[2] = XMVector3TransformCoord(vertices[triangle._2].Position, transform->WorldMatrix);
 						}
 
-						if (IntersectRayTriangle(m_PickedPoint, old_t,
+						if (IntersectRayTriangle(m_PickedPoint, picked_distance,
 							m_PickingRayOrigin, m_PickingRayDirection,
 							v[0], v[1], v[2]))
 						{
@@ -364,9 +319,19 @@ void JWSystemPhysics::PickTerrainTriangle() noexcept
 			}
 		}
 
-		m_PickedPoint = m_PickingRayOrigin + old_t * m_PickingRayDirection;
+		m_PickedTerrainDistance = picked_distance;
 	}
 }
+
+auto JWSystemPhysics::GetPickedEntityName() const noexcept->const STRING&
+{
+	if (m_pPickedEntity) 
+	{
+		return m_pPickedEntity->GetEntityName();
+	}
+
+	return m_KNoName;
+};
 
 void JWSystemPhysics::Execute() noexcept
 {

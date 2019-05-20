@@ -13,7 +13,6 @@ JW_FUNCTION_ON_RENDER(OnRender);
 int main()
 {
 	// TODO:
-	// # Physics	@ Fix picking object behind terrain..!!
 	// # Terrain	@ Use SComponentTransform (partially done... only for translation!)
 	// # Physics	@ Collision
 	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
@@ -28,8 +27,8 @@ int main()
 	auto& ecs = myGame.ECS();
 	{
 		// SharedModel
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.obj"); // Shared Model #0
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.obj"); // Shared Model #1
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.mobj"); // Shared Model #0
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.mobj"); // Shared Model #1
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X", L"Ezreal_mip.dds") // Shared Model #2
 			->AddAnimationFromFile("Ezreal_Punching.X")
 			->AddAnimationFromFile("Ezreal_Walk.X");
@@ -40,7 +39,7 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSquare(10.0f, XMFLOAT2(10.0f, 10.0f))); // Shared Model #4
 
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.obj"); // Shared Model #5
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.mobj"); // Shared Model #5
 
 		ecs.SystemRender().CreateDynamicSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeTriangle(
@@ -393,17 +392,7 @@ JW_FUNCTION_ON_INPUT(OnInput)
 	// Mouse left button pressed
 	if (DeviceState.CurrentMouse.rgbButtons[0])
 	{
-		if (ecs.SystemPhysics().PickEntity())
-		{
-			auto picked_entity = ecs.SystemPhysics().GetPickedEntity();
-			if (picked_entity->GetEntityType() == EEntityType::MainTerrain)
-			{
-				if (ecs.SystemPhysics().PickSubBoundingEllipsoid())
-				{
-					ecs.SystemPhysics().PickTerrainTriangle();
-				}
-			}
-		}
+		ecs.SystemPhysics().PickEntity();
 
 		// ECS entity Ray
 		ecs.GetEntityByType(EEntityType::PickingRay)->GetComponentRender()->PtrLine

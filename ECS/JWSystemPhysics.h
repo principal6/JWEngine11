@@ -32,12 +32,9 @@ namespace JWEngine
 		void DestroyComponent(SComponentPhysics& Component) noexcept;
 
 		auto PickEntity() noexcept->bool;
-		auto PickSubBoundingEllipsoid() noexcept->bool;
-		void PickTerrainTriangle() noexcept;
 
-		auto IsEntityPicked() const noexcept { return m_IsEntityPicked; };
 		const auto GetPickedEntity() const noexcept { return m_pPickedEntity; };
-		const auto& GetPickedEntityName() const noexcept { return m_PickedEntityName; };
+		auto GetPickedEntityName() const noexcept->const STRING&;
 
 		const auto& GetPickingRayOrigin() const noexcept { return m_PickingRayOrigin; };
 		const auto& GetPickingRayDirection() const noexcept { return m_PickingRayDirection; };
@@ -53,11 +50,10 @@ namespace JWEngine
 	private:
 		__forceinline void CastPickingRay() noexcept;
 
-		// Picking #0 Triangle picking (experimental)
-		auto PickEntityByTriangle() noexcept->bool;
-
-		// Picking #1 Ellipsoid picking (realistic choice)
 		auto PickEntityByEllipsoid() noexcept->bool;
+
+		auto PickSubBoundingEllipsoid(JWEntity* PtrEntity) noexcept->bool;
+		void PickTerrainTriangle() noexcept;
 
 		void UpdateBoundingEllipsoid(SComponentPhysics& Physics) noexcept;
 
@@ -75,13 +71,17 @@ namespace JWEngine
 		XMVECTOR					m_PickingRayViewSpaceDirection{};
 		XMVECTOR					m_PickingRayOrigin{};
 		XMVECTOR					m_PickingRayDirection{};
+
 		XMVECTOR					m_PickedTriangle[3]{};
 		XMVECTOR					m_PickedPoint{};
 		VECTOR<uint32_t>			m_vPickedSubBoundingEllipsoidID{};
-
-		bool						m_IsEntityPicked{ false };
-		STRING						m_PickedEntityName{};
 		JWEntity*					m_pPickedEntity{};
-		
+		JWEntity*					m_pPickedTerrainEntity{};
+		JWEntity*					m_pPickedNonTerrainEntity{};
+		XMVECTOR					m_PickedDistance{};
+		XMVECTOR					m_PickedTerrainDistance{};
+		XMVECTOR					m_PickedNonTerrainDistance{};
+
+		const STRING				m_KNoName{ "" };
 	};
 };
