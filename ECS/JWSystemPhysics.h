@@ -38,11 +38,8 @@ namespace JWEngine
 
 		const auto& GetPickingRayOrigin() const noexcept { return m_PickingRayOrigin; };
 		const auto& GetPickingRayDirection() const noexcept { return m_PickingRayDirection; };
-		
-		// Only available when Triangle picking is done.
-		const auto& GetPickedTriangleVertex(uint32_t PositionIndex) const noexcept { return m_PickedTriangle[min(PositionIndex, 2)]; };
 
-		// Only available when Triangle picking is done.
+		const auto& GetPickedTriangleVertex(uint32_t PositionIndex) const noexcept { return m_PickedTriangle[min(PositionIndex, 2)]; };
 		const auto& GetPickedPoint() const noexcept { return m_PickedPoint; };
 
 		void Execute() noexcept;
