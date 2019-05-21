@@ -3,7 +3,7 @@
 
 using namespace JWEngine;
 
-GLOBAL_LOGGER_USE;
+JW_LOGGER_USE;
 
 void JWDX::Create(HWND hWnd, const SSize2& WindowSize, EAllowedDisplayMode InitialMode, STRING Directory, const SClearColor& ClearColor) noexcept
 {
@@ -240,7 +240,7 @@ PRIVATE void JWDX::DestroyAllDX() noexcept
 
 PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 {
-	GLOBAL_LOG_METHOD_START;
+	JW_LOG_METHOD_START(0);
 
 	// Describe the screen buffer
 	DXGI_MODE_DESC buffer_description{};
@@ -272,7 +272,7 @@ PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 		JW_ERROR_ABORT("Failed to create Device and SwapChain.");
 	}
 
-	GLOBAL_LOG_METHOD_END;
+	JW_LOG_METHOD_END(0);
 }
 
 PRIVATE void JWDX::CreateVSBase() noexcept

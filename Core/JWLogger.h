@@ -7,50 +7,28 @@
 #include <Windows.h>
 #include <algorithm>
 #include <fstream>
+#include <mutex>
 
 namespace JWEngine
 {
-	#define THREAD_LOGGER_DECL JWEngine::JWLogger thread_logger{}
-	#define THREAD_LOGGER thread_logger
+	#define JW_LOG(thread_id, comment, LogLevel) ex_logger.Log(__FILE__, __LINE__, thread_id, comment, LogLevel)
+	#define JW_LOG_D(thread_id, comment) JW_LOG(thread_id, comment, JWEngine::ELogLevel::Default)
+	#define JW_LOG_I(thread_id, comment) JW_LOG(thread_id, comment, JWEngine::ELogLevel::Important)
+	#define JW_LOG_W(thread_id, comment) JW_LOG(thread_id, comment, JWEngine::ELogLevel::Warning)
+	#define JW_LOG_F(thread_id, comment) JW_LOG(thread_id, comment, JWEngine::ELogLevel::Fatal)
 
-	#define THREAD_LOG(thread_id, comment, LogLevel) thread_logger.Log(__FILE__, __LINE__, thread_id, comment, LogLevel)
-	#define THREAD_LOG_D(thread_id, comment) THREAD_LOG(thread_id, comment, JWEngine::ELogLevel::Default)
-	#define THREAD_LOG_I(thread_id, comment) THREAD_LOG(thread_id, comment, JWEngine::ELogLevel::Important)
-	#define THREAD_LOG_W(thread_id, comment) THREAD_LOG(thread_id, comment, JWEngine::ELogLevel::Warning)
-	#define THREAD_LOG_F(thread_id, comment) THREAD_LOG(thread_id, comment, JWEngine::ELogLevel::Fatal)
+	#define JW_LOG_METHOD_START(thread_id) JW_LOG(thread_id, (std::string(typeid(*this).name()) + "::" + __func__ + "() Start").c_str(), JWEngine::ELogLevel::Default)
+	#define JW_LOG_METHOD_END(thread_id) JW_LOG(thread_id, (std::string(typeid(*this).name()) + "::" + __func__ + "() End").c_str(), JWEngine::ELogLevel::Default)
 
-	#define THREAD_LOGGER_SEND_OUT(out) if (out) { *out = thread_logger; }
+	#define JW_LOG_FREE_FUNC_START(thread_id) JW_LOG(thread_id, (std::string(__func__) + "() Start").c_str(), JWEngine::ELogLevel::Default)
+	#define JW_LOG_FREE_FUNC_END(thread_id) JW_LOG(thread_id, (std::string(__func__) + "() End").c_str(), JWEngine::ELogLevel::Default)
 
-	#define THREAD_LOG_METHOD_START(thread_id) THREAD_LOG(thread_id, (std::string(typeid(*this).name()) + "::" + __func__ + "() Start").c_str(), JWEngine::ELogLevel::Default)
-	#define THREAD_LOG_METHOD_END(thread_id) THREAD_LOG(thread_id, (std::string(typeid(*this).name()) + "::" + __func__ + "() End").c_str(), JWEngine::ELogLevel::Default)
-
-	#define THREAD_LOG_FREE_FUNC_START(thread_id) THREAD_LOG(thread_id, (std::string(__func__) + "() Start").c_str(), JWEngine::ELogLevel::Default)
-	#define THREAD_LOG_FREE_FUNC_END(thread_id) THREAD_LOG(thread_id, (std::string(__func__) + "() End").c_str(), JWEngine::ELogLevel::Default)
-
-	#define THREAD_LOGGER_DECL_METHOD_START(thread_id) THREAD_LOGGER_DECL; THREAD_LOG_METHOD_START(thread_id)
-	#define THREAD_LOGGER_SEND_OUT_METHOD_END(thread_id, out) THREAD_LOG_METHOD_END(thread_id); THREAD_LOGGER_SEND_OUT(out)
-
-	#define THREAD_LOGGER_DECL_FREE_FUNC_START(thread_id) THREAD_LOGGER_DECL; THREAD_LOG_FREE_FUNC_START(thread_id)
-	#define THREAD_LOGGER_SEND_OUT_FREE_FUNC_END(thread_id, out) THREAD_LOG_FREE_FUNC_START(thread_id); THREAD_LOGGER_SEND_OUT(out)
-
-	#define JOIN_THREAD_LOG(thread_logger) ex_logger.JoinLog(thread_logger)
-
-	#define GLOBAL_LOGGER_DECL extern JWEngine::JWLogger ex_logger{}
-	#define GLOBAL_LOGGER_USE extern JWEngine::JWLogger ex_logger
-	#define GLOBAL_LOGGER ex_logger
-
-	#define GLOBAL_LOG(comment, LogLevel) ex_logger.LogPrint(__FILE__, __LINE__, 0, comment, LogLevel)
-	#define GLOBAL_LOG_D(comment) GLOBAL_LOG(comment, JWEngine::ELogLevel::Default)
-	#define GLOBAL_LOG_I(comment) GLOBAL_LOG(comment, JWEngine::ELogLevel::Important)
-	#define GLOBAL_LOG_W(comment) GLOBAL_LOG(comment, JWEngine::ELogLevel::Warning)
-	#define GLOBAL_LOG_F(comment) GLOBAL_LOG(comment, JWEngine::ELogLevel::Fatal)
-
-	#define GLOBAL_LOG_METHOD_START GLOBAL_LOG((std::string(typeid(*this).name()) + "::" + __func__ + "() Start").c_str(), JWEngine::ELogLevel::Default)
-	#define GLOBAL_LOG_METHOD_END GLOBAL_LOG((std::string(typeid(*this).name()) + "::" + __func__ + "() End").c_str(), JWEngine::ELogLevel::Default)
+	#define JW_LOGGER_DECL extern JWEngine::JWLogger ex_logger{}
+	#define JW_LOGGER_USE extern JWEngine::JWLogger ex_logger
+	#define JW_LOGGER_INITIALIZE ex_logger.PrintHead()
+	#define JW_LOGGER_SAVE(file_name) ex_logger.SaveToFile(file_name)
+	#define JW_LOGGER ex_logger
 	
-	#define GLOBAL_LOG_FREE_FUNC_START GLOBAL_LOG((std::string(__func__) + "() Start").c_str(), JWEngine::ELogLevel::Default)
-	#define GLOBAL_LOG_FREE_FUNC_END GLOBAL_LOG((std::string(__func__) + "() End").c_str(), JWEngine::ELogLevel::Default)
-
 	static constexpr char KLogHead[]{ "        date        |    time    |  thread  |        file       :line\t| lev | comment  \n" };
 	static constexpr int KSZFileLen{ 20 };
 
@@ -84,35 +62,6 @@ namespace JWEngine
 		void PrintHead()
 		{
 			printf(KLogHead);
-		}
-
-		void LogPrint(const char* file, int line, int thread_id, const char* comment, ELogLevel level = ELogLevel::Default)
-		{
-			Log(file, line, thread_id, comment, level);
-
-			auto& current_datum = m_data[m_data.size() - 1];
-			
-			switch (current_datum.level)
-			{
-			case JWEngine::ELogLevel::Default:
-				SetConsoleTextAttribute(m_hConsole, FOREGROUND_INTENSITY);
-				break;
-			case JWEngine::ELogLevel::Important:
-				SetConsoleTextAttribute(m_hConsole, FOREGROUND_GREEN);
-				break;
-			case JWEngine::ELogLevel::Warning:
-				SetConsoleTextAttribute(m_hConsole, FOREGROUND_RED | FOREGROUND_GREEN);
-				break;
-			case JWEngine::ELogLevel::Fatal:
-				SetConsoleTextAttribute(m_hConsole, FOREGROUND_RED);
-				break;
-			default:
-				break;
-			}
-
-			printf(current_datum.log.c_str());
-
-			current_datum.is_printed = true;
 		}
 
 		void Log(const char* file, int line, int thread_id, const char* comment, ELogLevel level = ELogLevel::Default)
@@ -161,51 +110,28 @@ namespace JWEngine
 			sprintf_s(temp_str, "%s | %lld | thread:%d | %s%d\t| %s | %s\n",
 				sz_date, ll_time % 10000000000, thread_id, sz_file, line, sz_level, comment);
 
+			std::lock_guard<std::mutex> lg{ m_mutex };
+
 			m_data.emplace_back(ll_time, level, temp_str);
-		};
-
-		void JoinLog(const JWLogger& thread_log) 
-		{
-			for (const auto& iter : thread_log.m_data)
+			
+			switch (level)
 			{
-				m_data.emplace_back(iter);
+			case JWEngine::ELogLevel::Default:
+				SetConsoleTextAttribute(m_hConsole, FOREGROUND_INTENSITY);
+				break;
+			case JWEngine::ELogLevel::Important:
+				SetConsoleTextAttribute(m_hConsole, FOREGROUND_GREEN);
+				break;
+			case JWEngine::ELogLevel::Warning:
+				SetConsoleTextAttribute(m_hConsole, FOREGROUND_RED | FOREGROUND_GREEN);
+				break;
+			case JWEngine::ELogLevel::Fatal:
+				SetConsoleTextAttribute(m_hConsole, FOREGROUND_RED);
+				break;
+			default:
+				break;
 			}
-
-			std::sort(m_data.begin(), m_data.end(), SortLogLess);
-		};
-
-		void DisplayNonPrintedLog()
-		{
-			printf(KLogHead);
-			for (auto& iter : m_data)
-			{
-				if (iter.is_printed)
-				{
-					continue;
-				}
-
-				switch (iter.level)
-				{
-				case JWEngine::ELogLevel::Default:
-					SetConsoleTextAttribute(m_hConsole, FOREGROUND_INTENSITY);
-					break;
-				case JWEngine::ELogLevel::Important:
-					SetConsoleTextAttribute(m_hConsole, FOREGROUND_GREEN);
-					break;
-				case JWEngine::ELogLevel::Warning:
-					SetConsoleTextAttribute(m_hConsole, FOREGROUND_RED | FOREGROUND_GREEN);
-					break;
-				case JWEngine::ELogLevel::Fatal:
-					SetConsoleTextAttribute(m_hConsole, FOREGROUND_RED);
-					break;
-				default:
-					break;
-				}
-
-				printf("%s", iter.log.c_str());
-
-				iter.is_printed = true;
-			}
+			printf(temp_str);
 		};
 
 		void SaveToFile(const std::string& FileName)
@@ -228,6 +154,8 @@ namespace JWEngine
 	private:
 		std::vector<SLogDatum> m_data{};
 		std::chrono::system_clock m_clock{};
+		std::mutex m_mutex{};
+
 		HANDLE m_hConsole{ GetStdHandle(STD_OUTPUT_HANDLE) };
 	};
 };

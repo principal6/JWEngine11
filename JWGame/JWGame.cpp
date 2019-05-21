@@ -5,7 +5,7 @@ using namespace JWEngine;
 
 static JWGame* gs_pJWGame{};
 
-GLOBAL_LOGGER_USE;
+JW_LOGGER_USE;
 
 JW_FUNCTION_ON_WINDOWS_RESIZE(OnResize)
 {
@@ -38,7 +38,7 @@ void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, 
 {
 	gs_pJWGame = this;
 
-	GLOBAL_LOG_METHOD_START;
+	JW_LOG_METHOD_START(0);
 
 	if (!m_IsCreated)
 	{
@@ -50,7 +50,7 @@ void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, 
 		base_directory = base_directory.substr(0, find_project_name - 1);
 		base_directory += "\\";
 
-		GLOBAL_LOG_D(STRING("Base directory: " + base_directory).c_str());
+		JW_LOG_D(0, STRING("Base directory: " + base_directory).c_str());
 
 		m_BaseDirectory = base_directory;
 
@@ -59,7 +59,7 @@ void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, 
 		m_Window.SetOnWindowsResizeFunction(OnResize);
 		m_IsWindowCreated = true;
 
-		GLOBAL_LOG_D("Window created");
+		JW_LOG_D(0, "Window created");
 
 		m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
 		m_DX.Create(m_Window.GethWnd(), m_WindowSize, DisplayMode, m_BaseDirectory, m_ClearColor);
@@ -67,15 +67,15 @@ void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, 
 		
 		m_IsDXCreated = true;
 
-		GLOBAL_LOG_D("DX created");
+		JW_LOG_D(0, "DX created");
 
 		m_Input.Create(m_Window.GethWnd(), m_Window.GethInstance());
 
-		GLOBAL_LOG_D("Input created");
+		JW_LOG_D(0, "Input created");
 
 		m_InstantText.Create(m_DX, m_WindowSize, m_BaseDirectory, KAssetDirectory + GameFontFileName);
 
-		GLOBAL_LOG_D("Instant text created");
+		JW_LOG_D(0, "Instant text created");
 
 		m_MouseCursorImage.Create(m_DX, m_WindowSize);
 
@@ -83,12 +83,12 @@ void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, 
 
 		m_ECS.Create(m_DX, m_Window.GethWnd(), m_WindowSize, m_BaseDirectory);
 
-		GLOBAL_LOG_D("ECS created");
+		JW_LOG_D(0, "ECS created");
 
 		m_IsCreated = true;
 	}
 
-	GLOBAL_LOG_METHOD_END;
+	JW_LOG_METHOD_END(0);
 }
 
 void JWGame::LoadCursorImage(STRING FileName) noexcept
@@ -148,7 +148,7 @@ void JWGame::UpdateECSSize() noexcept
 
 void JWGame::Run() noexcept
 {
-	GLOBAL_LOG_METHOD_START;
+	JW_LOG_METHOD_START(0);
 
 	assert(m_IsWindowCreated);
 	assert(m_IsDXCreated);
@@ -231,9 +231,9 @@ void JWGame::Run() noexcept
 	m_DX.Destroy();
 	m_Window.Destroy();
 
-	GLOBAL_LOG_METHOD_END;
+	JW_LOG_METHOD_END(0);
 
-	GLOBAL_LOGGER.SaveToFile(m_BaseDirectory + "\\LOG.txt");
+	JW_LOGGER_SAVE(m_BaseDirectory + "\\LOG.txt");
 }
 
 void JWGame::Halt() noexcept

@@ -5,7 +5,7 @@ using namespace JWEngine;
 
 static JWGame myGame;
 
-GLOBAL_LOGGER_DECL;
+JW_LOGGER_DECL;
 
 JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown);
 JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput);
@@ -21,7 +21,7 @@ int main()
 	// # Render		@ Sprite instancing
 	// # Cursor		@ Image cursor input VS. Raw input
 
-	GLOBAL_LOGGER.PrintHead();
+	JW_LOGGER_INITIALIZE;
 
 	myGame.Create(EAllowedDisplayMode::w800h600, SPosition2(0, 30), "JWGame", "megt20all");
 	//myGame.LoadCursorImage("cursor_default.png");
