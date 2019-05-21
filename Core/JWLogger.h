@@ -177,7 +177,7 @@ namespace JWEngine
 		void DisplayNonPrintedLog()
 		{
 			printf(KLogHead);
-			for (const auto& iter : m_data)
+			for (auto& iter : m_data)
 			{
 				if (iter.is_printed)
 				{
@@ -203,6 +203,8 @@ namespace JWEngine
 				}
 
 				printf("%s", iter.log.c_str());
+
+				iter.is_printed = true;
 			}
 		};
 
