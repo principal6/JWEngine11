@@ -26,8 +26,7 @@ namespace JWEngine
 		JWGame() = default;
 		~JWGame() = default;
 
-		void Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, STRING WindowTitle,
-			STRING GameFontFileName, JWLogger& Logger) noexcept;
+		void Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, STRING WindowTitle, STRING GameFontFileName) noexcept;
 
 		void LoadCursorImage(STRING FileName) noexcept;
 
@@ -35,7 +34,6 @@ namespace JWEngine
 		void SetFunctionOnRender(FP_ON_RENDER Function) noexcept;
 		void SetFunctionOnWindowsKeyDown(FP_ON_WINDOWS_KEY_DOWN Function) noexcept;
 		void SetFunctionOnWindowsCharInput(FP_ON_WINDOWS_CHAR_INPUT Function) noexcept;
-
 
 		void SetGameDisplayMode(EAllowedDisplayMode Mode) noexcept;
 		void UpdateWindowSize(EAllowedDisplayMode Mode) noexcept;
@@ -84,8 +82,6 @@ namespace JWEngine
 		JWRawPixelSetter		m_RawPixelSetter{};
 		JWECS					m_ECS{};
 
-		JWLogger*				m_pLogger{};
-		
 		STEADY_CLOCK			m_Clock{};
 		TIME_UNIT_MS			m_ElapsedTime{};
 		TIME_POINT				m_TimeNow{};

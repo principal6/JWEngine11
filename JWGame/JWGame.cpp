@@ -1,8 +1,11 @@
 #include "JWGame.h"
+#include "../Core/JWLogger.h"
 
 using namespace JWEngine;
 
 static JWGame* gs_pJWGame{};
+
+GLOBAL_LOGGER_USE;
 
 JW_FUNCTION_ON_WINDOWS_RESIZE(OnResize)
 {
@@ -31,14 +34,11 @@ JW_FUNCTION_ON_WINDOWS_RESIZE(OnResize)
 	JW_RELEASE(dxgi_output);
 }
 
-void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, STRING WindowTitle,
-	STRING GameFontFileName, JWLogger& Logger) noexcept
+void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, STRING WindowTitle, STRING GameFontFileName) noexcept
 {
 	gs_pJWGame = this;
 
-	m_pLogger = &Logger;
-
-	LOG_METHOD();
+	GLOBAL_LOG_METHOD_START;
 
 	if (!m_IsCreated)
 	{
@@ -50,7 +50,7 @@ void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, 
 		base_directory = base_directory.substr(0, find_project_name - 1);
 		base_directory += "\\";
 
-		LOG_ADD("Base directory: " + base_directory);
+		GLOBAL_LOG_D(STRING("Base directory: " + base_directory).c_str());
 
 		m_BaseDirectory = base_directory;
 
@@ -59,7 +59,7 @@ void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, 
 		m_Window.SetOnWindowsResizeFunction(OnResize);
 		m_IsWindowCreated = true;
 
-		LOG_ADD("Window created");
+		GLOBAL_LOG_D("Window created");
 
 		m_ClearColor = SClearColor(0.6f, 0.6f, 1.0f);
 		m_DX.Create(m_Window.GethWnd(), m_WindowSize, DisplayMode, m_BaseDirectory, m_ClearColor);
@@ -67,15 +67,15 @@ void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, 
 		
 		m_IsDXCreated = true;
 
-		LOG_ADD("DX created");
+		GLOBAL_LOG_D("DX created");
 
 		m_Input.Create(m_Window.GethWnd(), m_Window.GethInstance());
 
-		LOG_ADD("Input created");
+		GLOBAL_LOG_D("Input created");
 
 		m_InstantText.Create(m_DX, m_WindowSize, m_BaseDirectory, KAssetDirectory + GameFontFileName);
 
-		LOG_ADD("Instant text created");
+		GLOBAL_LOG_D("Instant text created");
 
 		m_MouseCursorImage.Create(m_DX, m_WindowSize);
 
@@ -83,12 +83,12 @@ void JWGame::Create(EAllowedDisplayMode DisplayMode, SPosition2 WindowPosition, 
 
 		m_ECS.Create(m_DX, m_Window.GethWnd(), m_WindowSize, m_BaseDirectory);
 
-		LOG_ADD("ECS created");
+		GLOBAL_LOG_D("ECS created");
 
 		m_IsCreated = true;
 	}
 
-	LOG_METHOD_FINISH();
+	GLOBAL_LOG_METHOD_END;
 }
 
 void JWGame::LoadCursorImage(STRING FileName) noexcept
@@ -148,7 +148,7 @@ void JWGame::UpdateECSSize() noexcept
 
 void JWGame::Run() noexcept
 {
-	LOG_METHOD();
+	GLOBAL_LOG_METHOD_START;
 
 	assert(m_IsWindowCreated);
 	assert(m_IsDXCreated);
@@ -231,9 +231,9 @@ void JWGame::Run() noexcept
 	m_DX.Destroy();
 	m_Window.Destroy();
 
-	LOG_METHOD_FINISH();
+	GLOBAL_LOG_METHOD_END;
 
-	LOG_SAVE(m_BaseDirectory);
+	GLOBAL_LOGGER.SaveToFile(m_BaseDirectory + "\\LOG.txt");
 }
 
 void JWGame::Halt() noexcept

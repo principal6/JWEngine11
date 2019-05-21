@@ -1,6 +1,9 @@
 #include "JWDX.h"
+#include "JWLogger.h"
 
 using namespace JWEngine;
+
+GLOBAL_LOGGER_USE;
 
 void JWDX::Create(HWND hWnd, const SSize2& WindowSize, EAllowedDisplayMode InitialMode, STRING Directory, const SClearColor& ClearColor) noexcept
 {
@@ -237,6 +240,8 @@ PRIVATE void JWDX::DestroyAllDX() noexcept
 
 PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 {
+	GLOBAL_LOG_METHOD_START;
+
 	// Describe the screen buffer
 	DXGI_MODE_DESC buffer_description{};
 	buffer_description.Width = m_pWindowSize->Width;
@@ -266,6 +271,8 @@ PRIVATE void JWDX::CreateDeviceAndSwapChain(HWND hWnd) noexcept
 	{
 		JW_ERROR_ABORT("Failed to create Device and SwapChain.");
 	}
+
+	GLOBAL_LOG_METHOD_END;
 }
 
 PRIVATE void JWDX::CreateVSBase() noexcept

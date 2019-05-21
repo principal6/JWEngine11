@@ -1,9 +1,11 @@
+#include "../Core/JWLogger.h"
 #include "JWGame.h"
 
 using namespace JWEngine;
 
 static JWGame myGame;
-static JWLogger myLogger;
+
+GLOBAL_LOGGER_DECL;
 
 JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown);
 JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput);
@@ -19,9 +21,9 @@ int main()
 	// # Render		@ Sprite instancing
 	// # Cursor		@ Image cursor input VS. Raw input
 
-	myLogger.InitializeTime();
+	GLOBAL_LOGGER.PrintHead();
 
-	myGame.Create(EAllowedDisplayMode::w800h600, SPosition2(0, 30), "JWGame", "megt20all", myLogger);
+	myGame.Create(EAllowedDisplayMode::w800h600, SPosition2(0, 30), "JWGame", "megt20all");
 	//myGame.LoadCursorImage("cursor_default.png");
 
 	// ECS Shared resources
