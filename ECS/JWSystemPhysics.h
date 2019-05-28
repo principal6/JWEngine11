@@ -4,8 +4,19 @@
 
 namespace JWEngine
 {
+	// Gravity on Earth = 9.8m/s^2
+	static constexpr float KGravityOnEarth{ 9.8f };
+	static constexpr XMVECTOR KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
+	static const STRING KNoName{ "" };
+
 	class JWEntity;
 	class JWECS;
+
+	enum EFLAGSystemPhysicsOption : uint16_t
+	{
+		JWFlagSystemPhysicsOption_ApplyForces = 0x01,
+	};
+	using JWFlagSystemPhysicsOption = uint16_t;
 
 	struct SComponentPhysics
 	{
@@ -17,6 +28,64 @@ namespace JWEngine
 
 		// Subset of bounding ellipsoids that cover parts of the entity.
 		VECTOR<SBoundingEllipsoidData>	SubBoundingEllipsoids{};
+
+		// [Property]	mass
+		// [Unit]		gram
+		// InverseMass = 1/Mass
+		// @important: mass MUST NOT be 'zero'
+		// but 'infinite mass' (zero InverseMass) means no physics calculation on this component.
+		float		InverseMass{};
+
+		// [Property]	velocity
+		// [Unit]		m/s
+		XMVECTOR	Velocity{};
+
+		// [Property]	acceleration
+		// [Unit]		m/s^2
+		XMVECTOR	Acceleration{};
+
+		// @important: AccumulatedForce must be zeroed every frame.
+		XMVECTOR	AccumulatedForce{};
+
+		void SetMassByGram(float g)
+		{
+			assert(g > 0);
+
+			if (g > 0)
+			{
+				InverseMass = 1.0f / g;
+			}
+		}
+
+		void SetMassByKilogram(float Kg)
+		{
+			assert(Kg > 0);
+
+			if (Kg > 0)
+			{
+				InverseMass = 1.0f / (Kg / 1000.0f);
+			}
+		}
+		
+		void SetMassToInfinite()
+		{
+			InverseMass = 0;
+		}
+
+		void SetVelocity(const XMVECTOR& _Velocity)
+		{
+			Velocity = _Velocity;
+		}
+
+		void SetAcceleration(const XMVECTOR& _Acceleration)
+		{
+			Acceleration = _Acceleration;
+		}
+
+		void AddForce(const XMVECTOR& Force)
+		{
+			AccumulatedForce += Force;
+		}
 	};
 
 	class JWSystemPhysics
@@ -33,6 +102,9 @@ namespace JWEngine
 
 		auto PickEntity() noexcept->bool;
 
+		void SetSystemPhysicsFlag(JWFlagSystemPhysicsOption Flag) noexcept;
+		void ToggleSystemPhysicsFlag(JWFlagSystemPhysicsOption Flag) noexcept;
+
 		const auto GetPickedEntity() const noexcept { return m_pPickedEntity; };
 		auto GetPickedEntityName() const noexcept->const STRING&;
 
@@ -42,6 +114,9 @@ namespace JWEngine
 		const auto& GetPickedTriangleVertex(uint32_t PositionIndex) const noexcept { return m_PickedTriangle[min(PositionIndex, 2)]; };
 		const auto& GetPickedPoint() const noexcept { return m_PickedPoint; };
 
+		void ApplyUniversalGravity() noexcept;
+		void ApplyUniversalAcceleration(const XMVECTOR& _Acceleration) noexcept;
+		void ZeroAllVelocities() noexcept;
 		void Execute() noexcept;
 
 	private:
@@ -79,6 +154,6 @@ namespace JWEngine
 		XMVECTOR					m_PickedTerrainDistance{};
 		XMVECTOR					m_PickedNonTerrainDistance{};
 
-		const STRING				m_KNoName{ "" };
+		JWFlagSystemPhysicsOption	m_FlagSystemPhyscisOption{};
 	};
 };

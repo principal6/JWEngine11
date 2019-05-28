@@ -16,7 +16,7 @@ namespace JWEngine
 		uint32_t	ComponentID{};
 
 		XMVECTOR	Position{ KVectorZero };
-		XMFLOAT3	ScalingFactor{ 1.0f, 1.0f, 1.0f };
+		XMVECTOR	ScalingFactor{ KVectorOne };
 
 		// Rotation calculation order is always Roll -> Pitch -> Yaw
 		XMFLOAT3	PitchYawRoll{ 0, 0, 0 };

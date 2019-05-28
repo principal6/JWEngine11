@@ -53,6 +53,9 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(0, 1, 0), XMFLOAT3(0, 1, 0))
 		); // Shared Model #8 (Representation for debugging a 3d point)
+
+		ecs.SystemRender().CreateSharedModelFromModelData(
+			ecs.SystemRender().PrimitiveMaker().MakeCube(1.0f)); // Shared Model #9 (Box)
 	}
 	{
 		// SharedImage2D
@@ -83,7 +86,7 @@ int main()
 		//auto terrain = ecs.SystemRender().CreateSharedTerrainFromHeightMap("heightmap_gray_128.tif", 100.0f, 4.0f);
 		//ecs.SystemRender().TerrainGenerator().SaveTerrainAsTRN("heightmap_gray_128.trn", *terrain);
 
-		ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_gray_128.trn"); // Shared Terrain #0
+		//ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_gray_128.trn"); // Shared Terrain #0
 	}
 
 	ecs.SystemRender().SetSystemRenderFlag(
@@ -149,6 +152,7 @@ int main()
 
 		auto physics = main_sprite->CreateComponentPhysics();
 		physics->BoundingEllipsoid = SBoundingEllipsoidData(2.0f, 3.6f, 2.0f, 0.0f, -0.4f, 0.0f);
+		physics->SetMassToInfinite();
 
 		auto render = main_sprite->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(2));
@@ -160,6 +164,7 @@ int main()
 		render->SetAnimation(3);
 	}
 
+	/*
 	auto terrain = ecs.CreateEntity(EEntityType::MainTerrain);
 	{
 		auto terrain_data = ecs.SystemRender().GetSharedTerrain(0);
@@ -178,14 +183,16 @@ int main()
 		render->SetTexture(ETextureType::Normal, ecs.SystemRender().GetSharedTexture(2));
 		render->AddRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
+	*/
 
 	auto camera_0 = ecs.CreateEntity("camera_0");
 	{
 		auto transform = camera_0->CreateComponentTransform();
-		transform->Position = XMVectorSet(3.0f, 12.0f, 3.0f, 1.0f);
-		transform->RotatePitchYawRoll(XMFLOAT3(XM_PIDIV2, 0, 0), true);
+		transform->Position = XMVectorSet(0.0f, 12.0f, -20.0f, 1.0f);
+		transform->RotatePitchYawRoll(XMFLOAT3(XM_PIDIV2 * 1.3f, 0, 0), true);
 
 		auto physics = camera_0->CreateComponentPhysics();
+		physics->SetMassToInfinite();
 		
 		auto camera = camera_0->CreateComponentCamera();
 		camera->CreatePerspectiveCamera(ECameraType::FreeLook);
@@ -198,11 +205,12 @@ int main()
 	{
 		auto transform = jars->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(10.0f, 2.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(10.0f, 8.0f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
 
 		auto physics = jars->CreateComponentPhysics();
 		physics->BoundingEllipsoid = SBoundingEllipsoidData(1.1f, 1.1f, 1.1f, 0, 0.7f, 0.3f);
+		physics->SetMassByKilogram(1.0f);
 
 		auto render = jars->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(0));
@@ -218,6 +226,7 @@ int main()
 		light->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
 
 		auto physics = ambient_light->CreateComponentPhysics();
+		physics->SetMassToInfinite();
 
 		auto render = ambient_light->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(1));
@@ -234,6 +243,7 @@ int main()
 		light->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, -1.0f, -1.0f), 0.6f);
 
 		auto physics = directional_light->CreateComponentPhysics();
+		physics->SetMassToInfinite();
 
 		auto render = directional_light->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(1));
@@ -248,18 +258,33 @@ int main()
 		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(3));
 	}
 	
-	auto cam = ecs.CreateEntity("camera_1");
+	auto camera_1 = ecs.CreateEntity("camera_1");
 	{
-		auto transform = cam->CreateComponentTransform();
+		auto transform = camera_1->CreateComponentTransform();
 		transform->Position = XMVectorSet(0.0f, 12.0f, 0.0f, 1.0f);
 		
-		auto physics = cam->CreateComponentPhysics();
+		auto physics = camera_1->CreateComponentPhysics();
+		physics->SetMassToInfinite();
 		
-		auto camera = cam->CreateComponentCamera();
+		auto camera = camera_1->CreateComponentCamera();
 		camera->CreatePerspectiveCamera(ECameraType::FreeLook);
 
-		auto render = cam->CreateComponentRender();
+		auto render = camera_1->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(5));
+	}
+
+	auto box = ecs.CreateEntity("box");
+	{
+		auto transform = box->CreateComponentTransform();
+		transform->ScalingFactor = XMVectorSet(32, 1.0f, 32, 0.0f);
+		transform->Position = XMVectorSet(0.0f, -2.0f, 0.0f, 1.0f);
+
+		auto physics = box->CreateComponentPhysics();
+		physics->BoundingEllipsoid = SBoundingEllipsoidData(32, 1.0f, 32);
+		physics->SetMassToInfinite();
+
+		auto render = box->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(9));
 	}
 
 	ecs.SystemCamera().SetCurrentCamera(0);
@@ -357,9 +382,15 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 			->UpdateModel();
 	}
 
-	if (Character == 't')
+	if (Character == '6')
 	{
-		ecs.GetEntityByName("ambient_light")->GetComponentTransform()->Position += XMVectorSet(0.1f, 0.0f, 0.0f, 0.0f);
+		ecs.SystemPhysics().ToggleSystemPhysicsFlag(JWFlagSystemPhysicsOption_ApplyForces);
+	}
+
+	if (Character == '7')
+	{
+		ecs.SystemPhysics().ZeroAllVelocities();
+		ecs.GetEntityByName("jars")->GetComponentTransform()->Position = XMVectorSet(10.0f, 8.0f, 0.0f, 1.0f);
 	}
 }
 
@@ -437,16 +468,10 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	// ECS entity Skybox
 	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->Position = ecs.SystemCamera().GetCurrentCameraPosition();
 
+	ecs.SystemPhysics().ApplyUniversalGravity();
+
 	// ECS execute systems
 	ecs.ExecuteSystems();
-
-	// Text
-	static WSTRING s_temp{};
-	static WSTRING s_fps{};
-	static WSTRING s_anim_id{};
-	static WSTRING s_picked_entity{};
-	static WSTRING s_cull_count{};
-	static WSTRING s_cull_count2{};
 
 	uint32_t anim_id{};
 	// ECS entity Sprite info
@@ -456,13 +481,21 @@ JW_FUNCTION_ON_RENDER(OnRender)
 		const auto& anim_state = main_sprite->GetComponentRender()->AnimationState;
 		anim_id = anim_state.CurrAnimationID;
 	}
-	
-	s_fps = L"FPS: " + ConvertIntToWSTRING(myGame.GetFPS(), s_temp);
-	s_anim_id = L"Animation ID: " + ConvertIntToWSTRING(anim_id, s_temp);
-	s_picked_entity = L"Picked Entity = " + StringToWstring(ecs.SystemPhysics().GetPickedEntityName());
-	s_cull_count = L"Frustum culled entities = " + ConvertIntToWSTRING(ecs.SystemRender().GetFrustumCulledEntityCount(), s_temp);
-	s_cull_count2 = L"Frustum culled terrain nodes = " + ConvertIntToWSTRING(ecs.SystemRender().GetFrustumCulledTerrainNodeCount(), s_temp);
 
+	// Text
+	static WSTRING s_fps{};
+	static WSTRING s_anim_id{};
+	static WSTRING s_picked_entity{};
+	static WSTRING s_cull_count{};
+	static WSTRING s_cull_count2{};
+	static WSTRING s_dt{};
+	s_fps = L"FPS: " + TO_WSTRING(myGame.GetFPS());
+	s_anim_id = L"Animation ID: " + TO_WSTRING(anim_id);
+	s_picked_entity = L"Picked Entity = " + StringToWstring(ecs.SystemPhysics().GetPickedEntityName());
+	s_cull_count = L"Frustum culled entities = " + TO_WSTRING(ecs.SystemRender().GetFrustumCulledEntityCount());
+	s_cull_count2 = L"Frustum culled terrain nodes = " + TO_WSTRING(ecs.SystemRender().GetFrustumCulledTerrainNodeCount());
+	s_dt = L"Delta time = " + TO_WSTRING(ecs.GetDeltaTime());
+	
 	myGame.InstantText().BeginRendering();
 
 	myGame.InstantText().RenderText(s_fps, XMFLOAT2(10, 10), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
@@ -470,6 +503,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	myGame.InstantText().RenderText(s_picked_entity, XMFLOAT2(10, 50), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_cull_count, XMFLOAT2(10, 70), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_cull_count2, XMFLOAT2(10, 90), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_dt, XMFLOAT2(10, 110), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 
 	myGame.InstantText().EndRendering();
 }

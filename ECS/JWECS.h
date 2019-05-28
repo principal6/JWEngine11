@@ -33,6 +33,9 @@ namespace JWEngine
 		void DestroyEntityByName(STRING EntityName) noexcept;
 		void DestroyEntityByType(EEntityType Type) noexcept;
 
+		void UpdateDeltaTime(long long dt) noexcept;
+		auto GetDeltaTime() noexcept->float;
+
 		// ### Execute ###
 		void ExecuteSystems() noexcept;
 
@@ -55,6 +58,8 @@ namespace JWEngine
 
 		VECTOR<JWEntity*>		m_vpEntities;
 		MAP<STRING, uint64_t>	m_mapEntityNames;
+
+		float					m_DeltaTime{};
 	};
 };
 

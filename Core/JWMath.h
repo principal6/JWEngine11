@@ -6,10 +6,11 @@ namespace JWEngine
 {
 	using namespace DirectX;
 
-	static const auto KVectorZero = XMVectorZero();
-	static const auto KVectorMax = XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
+	static const XMVECTOR KVectorZero = XMVectorZero();
+	static const XMVECTOR KVectorMax = XMVectorSet(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
+	static const XMVECTOR KVectorOne = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);
 
-	static const auto KMatrixIdentity = XMMatrixIdentity();
+	static const XMMATRIX KMatrixIdentity = XMMatrixIdentity();
 	
 	static auto __vectorcall GetTriangleNormal(const XMVECTOR& EdgeAB, const XMVECTOR& EdgeAC)->XMVECTOR
 	{

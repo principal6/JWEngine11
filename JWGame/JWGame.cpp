@@ -172,6 +172,12 @@ void JWGame::Run() noexcept
 		}
 		else
 		{
+			m_FrameStartTime = m_Clock.now();
+
+			m_FrameDeltaTime = std::chrono::duration_cast<TIME_UNIT_MS>(m_FrameStartTime - m_FrameStartTimePrev);
+			
+			m_ECS.UpdateDeltaTime(m_FrameDeltaTime.count());
+
 			// Update input device state
 			m_InputDeviceState = m_Input.GetDeviceState();
 
@@ -206,10 +212,12 @@ void JWGame::Run() noexcept
 
 			// Advance frame count
 			++m_FrameCount;
+			
 
-			m_TimeNow = m_Clock.now();
-			m_ElapsedTime = std::chrono::duration_cast<TIME_UNIT_MS>(m_TimeNow - m_TimePrev);
-			if (m_ElapsedTime.count() >= 1000)
+			m_FPSTimeNow = m_Clock.now();
+			m_FPSElapsedTime = std::chrono::duration_cast<TIME_UNIT_MS>(m_FPSTimeNow - m_FPSTimePrev);
+			
+			if (m_FPSElapsedTime.count() >= 1000)
 			{
 				// Save FPS
 				m_FPS = m_FrameCount;
@@ -218,8 +226,10 @@ void JWGame::Run() noexcept
 				m_FrameCount = 0;
 
 				// Reset timer
-				m_TimePrev = m_TimeNow;
+				m_FPSTimePrev = m_FPSTimeNow;
 			}
+
+			m_FrameStartTimePrev = m_FrameStartTime;
 		}
 	}
 

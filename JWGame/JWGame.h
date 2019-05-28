@@ -83,11 +83,17 @@ namespace JWEngine
 		JWECS					m_ECS{};
 
 		STEADY_CLOCK			m_Clock{};
-		TIME_UNIT_MS			m_ElapsedTime{};
-		TIME_POINT				m_TimeNow{};
-		TIME_POINT				m_TimePrev{};
+		// This is for FPS calculation
+		TIME_UNIT_MS			m_FPSElapsedTime{};
+		TIME_POINT				m_FPSTimeNow{};
+		TIME_POINT				m_FPSTimePrev{};
 		uint32_t				m_FrameCount{};
 		uint32_t				m_FPS{};
+
+		// This is for Physics update
+		TIME_UNIT_MS			m_FrameDeltaTime{};
+		TIME_POINT				m_FrameStartTime{};
+		TIME_POINT				m_FrameStartTimePrev{};
 
 		JWImageCursor			m_MouseCursorImage{};
 		XMFLOAT2				m_MouseCursorPosition{};

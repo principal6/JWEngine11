@@ -31,6 +31,8 @@
 	using STEADY_CLOCK = std::chrono::steady_clock;
 	using TIME_POINT = std::chrono::time_point<STEADY_CLOCK>;
 	using TIME_UNIT_MS = std::chrono::milliseconds;
+	using TIME_UNIT_mS = std::chrono::microseconds;
+	using TIME_UNIT_NS = std::chrono::nanoseconds;
 
 	template <typename T>
 	using VECTOR = std::vector<T>;
@@ -49,6 +51,8 @@
 	#define MAKE_PAIR(Key, Value) std::make_pair(Key, Value)
 	#define MOVE(T) std::move(T)
 	#define MAKE_UNIQUE_AND_MOVE(T) MOVE(MAKE_UNIQUE(T))
+	#define TO_STRING(value) std::to_string(value)
+	#define TO_WSTRING(value) std::to_wstring(value)
 #endif
 
 #ifndef STRING_CONVERTERS
@@ -86,55 +90,6 @@
 		temp = nullptr;
 		return Result;
 	}
-
-	inline auto ConvertIntToWSTRING(int value, WSTRING& string)->WSTRING&
-	{
-		wchar_t temp[255]{};
-		swprintf_s(temp, L"%d", value);
-		string = temp;
-		return string;
-	}
-
-	inline auto ConvertLongLongToWSTRING(long long value, WSTRING& string)->WSTRING&
-	{
-		wchar_t temp[255]{};
-		swprintf_s(temp, L"%lld", value);
-		string = temp;
-		return string;
-	}
-
-	inline auto ConvertFloatToWSTRING(float value, WSTRING& string)->WSTRING&
-	{
-		wchar_t temp[255]{};
-		swprintf_s(temp, L"%f", value);
-		string = temp;
-		return string;
-	}
-
-	inline auto ConvertIntToSTRING(int value, STRING& string)->STRING&
-	{
-		char temp[255]{};
-		sprintf_s(temp, "%d", value);
-		string = temp;
-		return string;
-	}
-
-	inline auto ConvertLongLongToSTRING(long long value, STRING& string)->STRING&
-	{
-		char temp[255]{};
-		sprintf_s(temp, "%lld", value);
-		string = temp;
-		return string;
-	}
-
-	inline auto ConvertFloatToSTRING(float value, STRING& string)->STRING&
-	{
-		char temp[255]{};
-		sprintf_s(temp, "%f", value);
-		string = temp;
-		return string;
-	}
-
 #endif
 
 // Static function prefix

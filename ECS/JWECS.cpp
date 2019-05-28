@@ -76,10 +76,9 @@ auto JWECS::CreateEntity(EEntityType Type) noexcept->JWEntity*
 		}
 	}
 
-	STRING temp{};
 	STRING entity_name{ "UniqueEntity" };
 	uint32_t type_id = static_cast<uint32_t>(Type);
-	entity_name += ConvertIntToSTRING(type_id, temp);
+	entity_name += TO_STRING(type_id);
 
 	m_vpEntities.push_back(new JWEntity());
 	uint64_t index = m_vpEntities.size() - 1;
@@ -229,6 +228,17 @@ void JWECS::DestroyEntityByType(EEntityType Type) noexcept
 			++index;
 		}
 	}
+}
+
+void JWECS::UpdateDeltaTime(long long dt) noexcept
+{
+	m_DeltaTime = static_cast<float>(dt) / 1000.0f;
+
+}
+
+auto JWECS::GetDeltaTime() noexcept->float
+{
+	return m_DeltaTime;
 }
 
 void JWECS::ExecuteSystems() noexcept

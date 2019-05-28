@@ -330,25 +330,84 @@ auto JWSystemPhysics::GetPickedEntityName() const noexcept->const STRING&
 		return m_pPickedEntity->GetEntityName();
 	}
 
-	return m_KNoName;
+	return KNoName;
 };
+
+void JWSystemPhysics::SetSystemPhysicsFlag(JWFlagSystemPhysicsOption Flag) noexcept
+{
+	m_FlagSystemPhyscisOption = Flag;
+}
+
+void JWSystemPhysics::ToggleSystemPhysicsFlag(JWFlagSystemPhysicsOption Flag) noexcept
+{
+	m_FlagSystemPhyscisOption ^= Flag;
+}
+
+void JWSystemPhysics::ApplyUniversalGravity() noexcept
+{
+	if (m_FlagSystemPhyscisOption & JWFlagSystemPhysicsOption_ApplyForces)
+	{
+		ApplyUniversalAcceleration(KVectorGravityOnEarth);
+	}
+}
+
+void JWSystemPhysics::ApplyUniversalAcceleration(const XMVECTOR& _Acceleration) noexcept
+{
+	for (auto& iter : m_vpComponents)
+	{
+		if (iter->InverseMass > 0)
+		{
+			iter->AccumulatedForce += _Acceleration / iter->InverseMass;
+		}
+	}
+}
+
+void JWSystemPhysics::ZeroAllVelocities() noexcept
+{
+	for (auto& iter : m_vpComponents)
+	{
+		if (iter->InverseMass > 0)
+		{
+			iter->Velocity = KVectorZero;
+		}
+	}
+}
 
 void JWSystemPhysics::Execute() noexcept
 {
 	for (auto& iter : m_vpComponents)
 	{
-		UpdateBoundingEllipsoid(*iter);
-
 		auto transform{ iter->PtrEntity->GetComponentTransform() };
 		if (transform)
 		{
-			// Calculate world matrix of the bounding ellipsoid
-			auto entity_position = transform->Position;
-			for (auto& curr_subbe : iter->SubBoundingEllipsoids)
+			if (iter->InverseMass > 0)
 			{
-				auto mat_scaling = XMMatrixScaling(curr_subbe.RadiusX, curr_subbe.RadiusY, curr_subbe.RadiusZ);
-				auto mat_translation = XMMatrixTranslationFromVector(entity_position + curr_subbe.Offset);
-				curr_subbe.EllipsoidWorld = mat_scaling * mat_translation;
+				auto delta_time = m_pECS->GetDeltaTime();
+				assert(delta_time >= 0);
+
+				// a = 1/m * f;
+				iter->Acceleration = iter->InverseMass * iter->AccumulatedForce;
+
+				// v' = v + at
+				iter->Velocity += iter->Acceleration * delta_time;
+
+				// p' = p + vt
+				transform->Position += iter->Velocity * delta_time;
+
+				// Reset accumulated force
+				iter->AccumulatedForce = KVectorZero;
+			}
+
+			// Update bounding ellipsoid
+			UpdateBoundingEllipsoid(*iter);
+
+			// Calculate world matrix of the sub-bounding ellipsoids
+			auto entity_position = transform->Position;
+			for (auto& curr_sub_be : iter->SubBoundingEllipsoids)
+			{
+				auto mat_scaling = XMMatrixScaling(curr_sub_be.RadiusX, curr_sub_be.RadiusY, curr_sub_be.RadiusZ);
+				auto mat_translation = XMMatrixTranslationFromVector(entity_position + curr_sub_be.Offset);
+				curr_sub_be.EllipsoidWorld = mat_scaling * mat_translation;
 			}
 		}
 	}
