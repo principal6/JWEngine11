@@ -383,13 +383,18 @@ void JWSystemPhysics::Execute() noexcept
 			if (iter->InverseMass > 0)
 			{
 				auto delta_time = m_pECS->GetDeltaTime();
-				assert(delta_time >= 0);
+				assert(delta_time > 0);
 
 				// a = 1/m * f;
 				iter->Acceleration = iter->InverseMass * iter->AccumulatedForce;
 
 				// v' = v + at
 				iter->Velocity += iter->Acceleration * delta_time;
+
+				if (XMVectorGetY(transform->Position) < KPhysicsWorldFloor)
+				{
+					iter->Velocity = KVectorZero;
+				}
 
 				// p' = p + vt
 				transform->Position += iter->Velocity * delta_time;
@@ -401,14 +406,8 @@ void JWSystemPhysics::Execute() noexcept
 			// Update bounding ellipsoid
 			UpdateBoundingEllipsoid(*iter);
 
-			// Calculate world matrix of the sub-bounding ellipsoids
-			auto entity_position = transform->Position;
-			for (auto& curr_sub_be : iter->SubBoundingEllipsoids)
-			{
-				auto mat_scaling = XMMatrixScaling(curr_sub_be.RadiusX, curr_sub_be.RadiusY, curr_sub_be.RadiusZ);
-				auto mat_translation = XMMatrixTranslationFromVector(entity_position + curr_sub_be.Offset);
-				curr_sub_be.EllipsoidWorld = mat_scaling * mat_translation;
-			}
+			// Update sub-bounding ellipsoids
+			UpdateSubBoundingEllipsoids(*iter);
 		}
 	}
 }
@@ -428,4 +427,17 @@ PRIVATE void JWSystemPhysics::UpdateBoundingEllipsoid(SComponentPhysics& Physics
 
 	// Update the data into SystemRender
 	m_pECS->SystemRender().UpdateBoundingEllipsoidInstance(Physics.ComponentID, bounding_ellipsoid.EllipsoidWorld);
+}
+
+PRIVATE void JWSystemPhysics::UpdateSubBoundingEllipsoids(SComponentPhysics& Physics) noexcept
+{
+	// Calculate world matrix of the sub-bounding ellipsoids
+	auto transform = Physics.PtrEntity->GetComponentTransform();
+	auto entity_position = transform->Position;
+	for (auto& curr_sub_be : Physics.SubBoundingEllipsoids)
+	{
+		auto mat_scaling = XMMatrixScaling(curr_sub_be.RadiusX, curr_sub_be.RadiusY, curr_sub_be.RadiusZ);
+		auto mat_translation = XMMatrixTranslationFromVector(entity_position + curr_sub_be.Offset);
+		curr_sub_be.EllipsoidWorld = mat_scaling * mat_translation;
+	}
 }

@@ -174,7 +174,7 @@ void JWGame::Run() noexcept
 		{
 			m_FrameStartTime = m_Clock.now();
 
-			m_FrameDeltaTime = std::chrono::duration_cast<TIME_UNIT_MS>(m_FrameStartTime - m_FrameStartTimePrev);
+			m_FrameDeltaTime = std::chrono::duration_cast<TIME_UNIT_mS>(m_FrameStartTime - m_FrameStartTimePrev);
 			
 			m_ECS.UpdateDeltaTime(m_FrameDeltaTime.count());
 

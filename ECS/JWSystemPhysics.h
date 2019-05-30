@@ -6,6 +6,7 @@ namespace JWEngine
 {
 	// Gravity on Earth = 9.8m/s^2
 	static constexpr float KGravityOnEarth{ 9.8f };
+	static constexpr float KPhysicsWorldFloor{ -100.0f };
 	static constexpr XMVECTOR KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
 	static const STRING KNoName{ "" };
 
@@ -120,14 +121,14 @@ namespace JWEngine
 		void Execute() noexcept;
 
 	private:
+		// Picking
 		__forceinline void CastPickingRay() noexcept;
-
 		auto PickEntityByEllipsoid() noexcept->bool;
-
 		auto PickSubBoundingEllipsoid(JWEntity* PtrEntity) noexcept->bool;
 		void PickTerrainTriangle() noexcept;
 
 		void UpdateBoundingEllipsoid(SComponentPhysics& Physics) noexcept;
+		void UpdateSubBoundingEllipsoids(SComponentPhysics& Physics) noexcept;
 
 	private:
 		VECTOR<SComponentPhysics*>	m_vpComponents;

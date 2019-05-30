@@ -467,7 +467,8 @@ JW_FUNCTION_ON_RENDER(OnRender)
 
 	// ECS entity Skybox
 	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->Position = ecs.SystemCamera().GetCurrentCameraPosition();
-
+	
+	// ECS Physics - Gravity
 	ecs.SystemPhysics().ApplyUniversalGravity();
 
 	// ECS execute systems

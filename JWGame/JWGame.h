@@ -91,7 +91,7 @@ namespace JWEngine
 		uint32_t				m_FPS{};
 
 		// This is for Physics update
-		TIME_UNIT_MS			m_FrameDeltaTime{};
+		TIME_UNIT_mS			m_FrameDeltaTime{};
 		TIME_POINT				m_FrameStartTime{};
 		TIME_POINT				m_FrameStartTimePrev{};
 

@@ -232,8 +232,7 @@ void JWECS::DestroyEntityByType(EEntityType Type) noexcept
 
 void JWECS::UpdateDeltaTime(long long dt) noexcept
 {
-	m_DeltaTime = static_cast<float>(dt) / 1000.0f;
-
+	m_DeltaTime = static_cast<float>(dt) / 1'000'000.0f;
 }
 
 auto JWECS::GetDeltaTime() noexcept->float
