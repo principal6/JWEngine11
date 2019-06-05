@@ -71,11 +71,14 @@ namespace JWEngine
 		uint32_t	NextAnimationID{};
 	};
 	
-	// Every pointer is a non-owner pointer.
+	// All member pointers are non-owners.
 	struct SComponentRender
 	{
-		JWEntity*					PtrEntity{};
-		uint32_t					ComponentID{};
+		SComponentRender(EntityIndexType _EntityIndex, ComponentIndexType _ComponentIndex) :
+			EntityIndex{ _EntityIndex }, ComponentIndex{ _ComponentIndex } {};
+
+		EntityIndexType				EntityIndex{};
+		ComponentIndexType			ComponentIndex{};
 
 		ERenderType					RenderType{ ERenderType::Invalid };
 		EDepthStencilState			DepthStencilState{ EDepthStencilState::ZEnabled };
@@ -231,15 +234,14 @@ namespace JWEngine
 
 	class JWSystemRender
 	{
+		friend class JWEntity;
+
 	public:
 		JWSystemRender() = default;
 		~JWSystemRender() = default;
 
 		void Create(JWECS& ECS, JWDX& DX, const SSize2& WindowSize, STRING BaseDirectory) noexcept;
 		void Destroy() noexcept;
-
-		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentRender&;
-		void DestroyComponent(SComponentRender& Component) noexcept;
 
 		// ### Shared Resources ###
 		// Shared Texture
@@ -290,6 +292,12 @@ namespace JWEngine
 		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
 		auto& TerrainGenerator() noexcept { return m_TerrainGenerator; }
 
+	// Only accesible for JWEntity
+	private:
+		auto CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType;
+		void DestroyComponent(ComponentIndexType ComponentIndex) noexcept;
+		auto GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentRender*;
+
 	private:
 		void SetShaders(SComponentRender& Component) noexcept;
 
@@ -315,7 +323,7 @@ namespace JWEngine
 		void DrawNonInstancedBoundingEllipsoids(const XMMATRIX& EllipsoidWorld) noexcept;
 		
 	private:
-		VECTOR<SComponentRender*>	m_vpComponents;
+		VECTOR<SComponentRender>	m_vComponents;
 
 		JWECS*						m_pECS{};
 		JWDX*						m_pDX{};
@@ -329,15 +337,15 @@ namespace JWEngine
 		SPSCBFlags					m_PSCBFlags{};
 
 		// Shared resources(texture, model data, animation texture)
-		VECTOR<STextureData>				m_vSharedTextureData;
-		VECTOR<STextureData>				m_vAnimationTextureData;
-		VECTOR<JWModel>						m_vSharedModel;
-		VECTOR<JWLineModel>					m_vSharedLineModel;
-		VECTOR<JWImage>						m_vSharedImage2D;
-		VECTOR<STerrainData>				m_vSharedTerrain;
+		VECTOR<STextureData>		m_vSharedTextureData;
+		VECTOR<STextureData>		m_vAnimationTextureData;
+		VECTOR<JWModel>				m_vSharedModel;
+		VECTOR<JWLineModel>			m_vSharedLineModel;
+		VECTOR<JWImage>				m_vSharedImage2D;
+		VECTOR<STerrainData>		m_vSharedTerrain;
 
 		// Primitive maker (for shared resources)
-		JWPrimitiveMaker					m_PrimitiveMaker{};
+		JWPrimitiveMaker			m_PrimitiveMaker{};
 
 		// Bounding ellipsoid
 		JWModel						m_BoundingEllipsoid{};

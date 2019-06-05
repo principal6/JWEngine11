@@ -13,32 +13,22 @@ void JWSystemPhysics::Create(JWECS& ECS, HWND hWnd, const SSize2& WindowSize) no
 	m_pWindowSize = &WindowSize;
 }
 
-void JWSystemPhysics::Destroy() noexcept
-{
-	if (m_vpComponents.size())
-	{
-		for (auto& iter : m_vpComponents)
-		{
-			JW_DELETE(iter);
-		}
-	}
-}
+void JWSystemPhysics::Destroy() noexcept {}
 
-auto JWSystemPhysics::CreateComponent(JWEntity* pEntity) noexcept->SComponentPhysics&
+PRIVATE auto JWSystemPhysics::CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType
 {
-	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
-
-	auto new_entry{ new SComponentPhysics() };
-	m_vpComponents.push_back(new_entry);
+	auto component_index{ static_cast<ComponentIndexType>(m_vComponents.size()) };
 
 	// @important
 	// Save component ID & pointer to Entity
-	m_vpComponents[slot]->ComponentID = slot;
-	m_vpComponents[slot]->PtrEntity = pEntity;
+	m_vComponents.emplace_back(EntityIndex, component_index);
+
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(EntityIndex);
 
 	// Set world matrix of bounding ellipsoid
-	auto transform = m_vpComponents[slot]->PtrEntity->GetComponentTransform();
-	const auto& bounding_ellipsoid = m_vpComponents[slot]->BoundingEllipsoid;
+	auto transform = ptr_entity->GetComponentTransform();
+	const auto& bounding_ellipsoid = m_vComponents[component_index].BoundingEllipsoid;
 
 	auto temp_center = bounding_ellipsoid.Offset;
 	if (transform) { temp_center += transform->Position; }
@@ -49,37 +39,55 @@ auto JWSystemPhysics::CreateComponent(JWEntity* pEntity) noexcept->SComponentPhy
 	// Add bounding ellipsoid instance into SystemRender
 	m_pECS->SystemRender().AddBoundingEllipsoidInstance(mat_scaling * mat_translation);
 
-	return *m_vpComponents[slot];
+	return component_index;
 }
 
-void JWSystemPhysics::DestroyComponent(SComponentPhysics& Component) noexcept
+PRIVATE void JWSystemPhysics::DestroyComponent(ComponentIndexType ComponentIndex) noexcept
 {
-	// Erase bounding ellipsoid instance in SystemRender
-	m_pECS->SystemRender().EraseBoundingEllipsoidInstance(Component.ComponentID);
-
-	uint32_t slot{};
-	for (const auto& iter : m_vpComponents)
+	if (m_vComponents.size() == 0)
 	{
-		if (iter->ComponentID == Component.ComponentID)
-		{
-			break;
-		}
-
-		++slot;
-	}
-	JW_DELETE(m_vpComponents[slot]);
-
-	// Swap the last element of the vector and the deleted element & shrink the size of the vector.
-	uint32_t last_index = static_cast<uint32_t>(m_vpComponents.size() - 1);
-	if (slot < last_index)
-	{
-		m_vpComponents[slot] = m_vpComponents[last_index];
-		m_vpComponents[slot]->ComponentID = slot; // @important!!
-
-		m_vpComponents[last_index] = nullptr;
+		JW_ERROR_ABORT("There is no component to destroy.");
 	}
 
-	m_vpComponents.pop_back();
+	// Save the target component's index.
+	auto component_index{ ComponentIndex };
+
+	// Get the last index of the component vector.
+	auto last_index = static_cast<ComponentIndexType>(m_vComponents.size() - 1);
+
+	// Get pointer to the entity with last_index's component.
+	auto ptr_entity_last_component = m_pECS->GetEntityByIndex(m_vComponents[last_index].EntityIndex);
+
+	// See if the component index is invalid.
+	if (component_index > last_index)
+	{
+		JW_ERROR_ABORT("Invalid component index.");
+	}
+
+	// Erase bounding ellipsoid instance in JWSystemRender
+	m_pECS->SystemRender().EraseBoundingEllipsoidInstance(component_index);
+
+	// Swap the last element of the vector and the deleted element if necessary
+	if (component_index < last_index)
+	{
+		m_vComponents[component_index] = std::move(m_vComponents[last_index]);
+		m_vComponents[component_index].ComponentIndex = component_index; // @important
+
+		ptr_entity_last_component->SetComponentPhysicsIndex(component_index); // @important
+	}
+
+	// Shrink the size of the vector.
+	m_vComponents.pop_back();
+}
+
+PRIVATE auto JWSystemPhysics::GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentPhysics*
+{
+	if (ComponentIndex >= m_vComponents.size())
+	{
+		return nullptr;
+	}
+
+	return &m_vComponents[ComponentIndex];
 }
 
 auto JWSystemPhysics::PickEntity() noexcept->bool
@@ -90,7 +98,7 @@ auto JWSystemPhysics::PickEntity() noexcept->bool
 	
 	CastPickingRay();
 
-	if (m_vpComponents.size() == 0)
+	if (m_vComponents.size() == 0)
 	{
 		return false;
 	}
@@ -173,12 +181,12 @@ PRIVATE __forceinline void JWSystemPhysics::CastPickingRay() noexcept
 
 PRIVATE auto JWSystemPhysics::PickEntityByEllipsoid() noexcept->bool
 {
-	for (auto iter : m_vpComponents)
+	for (auto iter : m_vComponents)
 	{
-		auto entity = iter->PtrEntity;
+		auto ptr_entity = m_pECS->GetEntityByIndex(iter.EntityIndex);
 
-		auto transform{ entity->GetComponentTransform() };
-		auto type{ entity->GetEntityType() };
+		auto transform{ ptr_entity->GetComponentTransform() };
+		auto type{ ptr_entity->GetEntityType() };
 
 		if (type != EEntityType::UserDefined)
 		{
@@ -194,19 +202,19 @@ PRIVATE auto JWSystemPhysics::PickEntityByEllipsoid() noexcept->bool
 
 		if (transform)
 		{
-			auto camera{ entity->GetComponentCamera() };
+			auto camera{ ptr_entity->GetComponentCamera() };
 			if (camera)
 			{
 				// @important
 				// You must be UNABLE to pick the current camera!
-				if (m_pECS->SystemCamera().GetCurrentCameraComponentID() == camera->ComponentID)
+				if (m_pECS->SystemCamera().GetCurrentCameraComponentID() == camera->ComponentIndex)
 				{
 					continue;
 				}
 			}
 
 			// Transform ray into ellipsoid space
-			auto inv_ellipsoid_world = XMMatrixInverse(nullptr, iter->BoundingEllipsoid.EllipsoidWorld);
+			auto inv_ellipsoid_world = XMMatrixInverse(nullptr, iter.BoundingEllipsoid.EllipsoidWorld);
 			auto e_ray_origin = XMVector3TransformCoord(m_PickingRayOrigin, inv_ellipsoid_world);
 			auto e_ray_direction = XMVector3TransformNormal(m_PickingRayDirection, inv_ellipsoid_world);
 
@@ -214,14 +222,14 @@ PRIVATE auto JWSystemPhysics::PickEntityByEllipsoid() noexcept->bool
 			{
 				if (IntersectRayUnitSphere(e_ray_origin, e_ray_direction))
 				{
-					m_pPickedTerrainEntity = entity;
+					m_pPickedTerrainEntity = ptr_entity;
 				}
 			}
 			else
 			{
 				if (IntersectRayUnitSphere(e_ray_origin, e_ray_direction, &m_PickedNonTerrainDistance))
 				{
-					m_pPickedNonTerrainEntity = entity;
+					m_pPickedNonTerrainEntity = ptr_entity;
 				}
 			}
 		}
@@ -353,69 +361,75 @@ void JWSystemPhysics::ApplyUniversalGravity() noexcept
 
 void JWSystemPhysics::ApplyUniversalAcceleration(const XMVECTOR& _Acceleration) noexcept
 {
-	for (auto& iter : m_vpComponents)
+	for (auto& iter : m_vComponents)
 	{
-		if (iter->InverseMass > 0)
+		if (iter.InverseMass > 0)
 		{
-			iter->AccumulatedForce += _Acceleration / iter->InverseMass;
+			iter.AccumulatedForce += _Acceleration / iter.InverseMass;
 		}
 	}
 }
 
 void JWSystemPhysics::ZeroAllVelocities() noexcept
 {
-	for (auto& iter : m_vpComponents)
+	for (auto& iter : m_vComponents)
 	{
-		if (iter->InverseMass > 0)
+		if (iter.InverseMass > 0)
 		{
-			iter->Velocity = KVectorZero;
+			iter.Velocity = KVectorZero;
 		}
 	}
 }
 
 void JWSystemPhysics::Execute() noexcept
 {
-	for (auto& iter : m_vpComponents)
+	for (auto& iter : m_vComponents)
 	{
-		auto transform{ iter->PtrEntity->GetComponentTransform() };
+		// Get pointer to the entity.
+		auto ptr_entity = m_pECS->GetEntityByIndex(iter.EntityIndex);
+
+		auto transform{ ptr_entity->GetComponentTransform() };
 		if (transform)
 		{
-			if (iter->InverseMass > 0)
+			if (iter.InverseMass > 0)
 			{
 				auto delta_time = m_pECS->GetDeltaTime();
 				assert(delta_time > 0);
 
 				// a = 1/m * f;
-				iter->Acceleration = iter->InverseMass * iter->AccumulatedForce;
+				iter.Acceleration = iter.InverseMass * iter.AccumulatedForce;
 
 				// v' = v + at
-				iter->Velocity += iter->Acceleration * delta_time;
+				iter.Velocity += iter.Acceleration * delta_time;
 
 				if (XMVectorGetY(transform->Position) < KPhysicsWorldFloor)
 				{
-					iter->Velocity = KVectorZero;
+					iter.Velocity = KVectorZero;
 				}
 
 				// p' = p + vt
-				transform->Position += iter->Velocity * delta_time;
+				transform->Position += iter.Velocity * delta_time;
 
 				// Reset accumulated force
-				iter->AccumulatedForce = KVectorZero;
+				iter.AccumulatedForce = KVectorZero;
 			}
 
 			// Update bounding ellipsoid
-			UpdateBoundingEllipsoid(*iter);
+			UpdateBoundingEllipsoid(iter);
 
 			// Update sub-bounding ellipsoids
-			UpdateSubBoundingEllipsoids(*iter);
+			UpdateSubBoundingEllipsoids(iter);
 		}
 	}
 }
 
 PRIVATE void JWSystemPhysics::UpdateBoundingEllipsoid(SComponentPhysics& Physics) noexcept
 {
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(Physics.EntityIndex);
+
 	// Calculate world matrix of the bounding ellipsoid
-	auto transform = Physics.PtrEntity->GetComponentTransform();
+	auto transform = ptr_entity->GetComponentTransform();
 	auto& bounding_ellipsoid = Physics.BoundingEllipsoid;
 
 	auto temp_center = bounding_ellipsoid.Offset;
@@ -426,13 +440,16 @@ PRIVATE void JWSystemPhysics::UpdateBoundingEllipsoid(SComponentPhysics& Physics
 	bounding_ellipsoid.EllipsoidWorld = mat_scaling * mat_translation;
 
 	// Update the data into SystemRender
-	m_pECS->SystemRender().UpdateBoundingEllipsoidInstance(Physics.ComponentID, bounding_ellipsoid.EllipsoidWorld);
+	m_pECS->SystemRender().UpdateBoundingEllipsoidInstance(Physics.ComponentIndex, bounding_ellipsoid.EllipsoidWorld);
 }
 
 PRIVATE void JWSystemPhysics::UpdateSubBoundingEllipsoids(SComponentPhysics& Physics) noexcept
 {
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(Physics.EntityIndex);
+
 	// Calculate world matrix of the sub-bounding ellipsoids
-	auto transform = Physics.PtrEntity->GetComponentTransform();
+	auto transform = ptr_entity->GetComponentTransform();
 	auto entity_position = transform->Position;
 	for (auto& curr_sub_be : Physics.SubBoundingEllipsoids)
 	{

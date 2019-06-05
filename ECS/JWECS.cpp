@@ -17,10 +17,9 @@ void JWECS::Create(JWDX& DX, HWND hWnd, const SSize2& WindowSize, STRING BaseDir
 void JWECS::Destroy() noexcept
 {
 	// Destroy entities and free them
-	for (auto& iter : m_vpEntities)
+	for (auto& iter : m_vEntities)
 	{
-		iter->Destroy();
-		JW_DELETE(iter);
+		iter.Destroy();
 	}
 
 	// @important
@@ -34,11 +33,11 @@ void JWECS::Destroy() noexcept
 
 auto JWECS::CreateEntity(STRING EntityName) noexcept->JWEntity*
 {
-	if (m_vpEntities.size())
+	if (m_vEntities.size())
 	{
-		for (auto& iter : m_vpEntities)
+		for (auto& iter : m_vEntities)
 		{
-			if (iter->GetEntityName().compare(EntityName) == 0)
+			if (iter.GetEntityName().compare(EntityName) == 0)
 			{
 				// Duplicate name cannot be used!
 				JW_ERROR_ABORT("This entity name is duplicated. (" + EntityName + ")");
@@ -46,15 +45,15 @@ auto JWECS::CreateEntity(STRING EntityName) noexcept->JWEntity*
 		}
 	}
 
-	m_vpEntities.push_back(new JWEntity());
-	uint64_t index = m_vpEntities.size() - 1;
+	auto entity_index{ static_cast<EntityIndexType>(m_vEntities.size()) };
+	m_vEntities.emplace_back(entity_index);
 
-	auto& entity = m_vpEntities[index];
-	entity->Create(this, EntityName);
+	auto& entity = m_vEntities[entity_index];
+	entity.Create(this, EntityName);
 
-	m_mapEntityNames.insert(std::make_pair(EntityName, index));
+	m_mapEntityNames.insert(std::make_pair(EntityName, entity_index));
 
-	return entity;
+	return &entity;
 }
 
 auto JWECS::CreateEntity(EEntityType Type) noexcept->JWEntity*
@@ -64,11 +63,11 @@ auto JWECS::CreateEntity(EEntityType Type) noexcept->JWEntity*
 		JW_ERROR_ABORT("You can't make a user-defined entity by this method.");
 	}
 
-	if (m_vpEntities.size())
+	if (m_vEntities.size())
 	{
-		for (auto& iter : m_vpEntities)
+		for (auto& iter : m_vEntities)
 		{
-			if (iter->GetEntityType() == Type)
+			if (iter.GetEntityType() == Type)
 			{
 				// It must be unique
 				JW_ERROR_ABORT("The entity of the type already exists.");
@@ -80,40 +79,44 @@ auto JWECS::CreateEntity(EEntityType Type) noexcept->JWEntity*
 	uint32_t type_id = static_cast<uint32_t>(Type);
 	entity_name += TO_STRING(type_id);
 
-	m_vpEntities.push_back(new JWEntity());
-	uint64_t index = m_vpEntities.size() - 1;
+	auto entity_index{ static_cast<EntityIndexType>(m_vEntities.size()) };
+	m_vEntities.emplace_back(entity_index);
 
-	auto& entity = m_vpEntities[index];
-	entity->Create(this, entity_name, Type);
-	m_mapEntityNames.insert(std::make_pair(entity_name, index));
+	auto& entity = m_vEntities[entity_index];
+	entity.Create(this, entity_name, Type);
+	m_mapEntityNames.insert(std::make_pair(entity_name, entity_index));
 
-	return entity;
+	return &entity;
 }
 
-auto JWECS::GetEntityByIndex(uint32_t Index) noexcept->JWEntity*
+auto JWECS::GetEntityByIndex(EntityIndexType Index) noexcept->JWEntity*
 {
 	JWEntity* result{};
 
-	if (Index < m_vpEntities.size())
+	if (Index < m_vEntities.size())
 	{
-		result = m_vpEntities[Index];
+		result = &m_vEntities[Index];
+	}
+	else
+	{
+		JW_ERROR_ABORT("Invalid entity index.");
 	}
 
 	return result;
 }
 
-auto JWECS::GetEntityByName(STRING EntityName) noexcept->JWEntity*
+auto JWECS::GetEntityByName(const STRING& EntityName) noexcept->JWEntity*
 {
 	JWEntity* result{};
 
-	if (m_vpEntities.size())
+	if (m_vEntities.size())
 	{
 		auto find = m_mapEntityNames.find(EntityName);
 		if (find != m_mapEntityNames.end())
 		{
-			auto index = find->second;
+			auto entity_index = find->second;
 
-			result = m_vpEntities[index];
+			result = &m_vEntities[entity_index];
 		}
 		else
 		{
@@ -133,13 +136,13 @@ auto JWECS::GetEntityByType(EEntityType Type) noexcept->JWEntity*
 		JW_ERROR_ABORT("Impossible to get the entity of user defined type by calling this method.");
 	}
 
-	if (m_vpEntities.size())
+	if (m_vEntities.size())
 	{
-		for (auto& iter : m_vpEntities)
+		for (auto& iter : m_vEntities)
 		{
-			if (iter->GetEntityType() == Type)
+			if (iter.GetEntityType() == Type)
 			{
-				result = iter;
+				result = &iter;
 			}
 		}
 	}
@@ -147,46 +150,39 @@ auto JWECS::GetEntityByType(EEntityType Type) noexcept->JWEntity*
 	return result;
 }
 
-void JWECS::DestroyEntityByIndex(uint32_t Index) noexcept
+void JWECS::DestroyEntityByIndex(EntityIndexType Index) noexcept
 {
-	if (Index < m_vpEntities.size())
+	if (Index < m_vEntities.size())
 	{
-		m_mapEntityNames.erase(m_vpEntities[Index]->GetEntityName());
-		m_vpEntities[Index]->Destroy();
-		JW_DELETE(m_vpEntities[Index]);
+		m_mapEntityNames.erase(m_vEntities[Index].GetEntityName());
 
-		uint32_t last_Index = static_cast<uint32_t>(m_vpEntities.size() - 1);
+		m_vEntities[Index].Destroy();
+
+		auto last_Index = static_cast<EntityIndexType>(m_vEntities.size() - 1);
 		if (Index < last_Index)
 		{
-			m_vpEntities[Index] = m_vpEntities[last_Index];
-			m_vpEntities[last_Index] = nullptr;
+			m_vEntities[Index] = std::move(m_vEntities[last_Index]);
+			m_vEntities[Index].SetEntityIndex(Index);
 		}
 
-		m_vpEntities.pop_back();
+		m_vEntities.pop_back();
+	}
+	else
+	{
+		JW_ERROR_ABORT("Invalid entity index.");
 	}
 }
 
-void JWECS::DestroyEntityByName(STRING EntityName) noexcept
+void JWECS::DestroyEntityByName(const STRING& EntityName) noexcept
 {
-	if (m_vpEntities.size())
+	if (m_vEntities.size())
 	{
 		auto find = m_mapEntityNames.find(EntityName);
 		if (find != m_mapEntityNames.end())
 		{
-			auto index = find->second;
+			auto entity_index = find->second;
 
-			m_mapEntityNames.erase(m_vpEntities[index]->GetEntityName());
-			m_vpEntities[index]->Destroy();
-			JW_DELETE(m_vpEntities[index]);
-
-			uint32_t last_index = static_cast<uint32_t>(m_vpEntities.size() - 1);
-			if (index < last_index)
-			{
-				m_vpEntities[index] = m_vpEntities[last_index];
-				m_vpEntities[last_index] = nullptr;
-			}
-
-			m_vpEntities.pop_back();
+			DestroyEntityByIndex(entity_index);
 		}
 		else
 		{
@@ -202,30 +198,18 @@ void JWECS::DestroyEntityByType(EEntityType Type) noexcept
 		JW_ERROR_ABORT("Impossible to destroy the entity of user defined type by calling this method.");
 	}
 
-	if (m_vpEntities.size())
+	if (m_vEntities.size())
 	{
-		uint32_t index{};
-		for (auto& iter : m_vpEntities)
+		for (auto& iter : m_vEntities)
 		{
-			if (iter->GetEntityType() == Type)
+			if (iter.GetEntityType() == Type)
 			{
-				m_mapEntityNames.erase(m_vpEntities[index]->GetEntityName());
-				m_vpEntities[index]->Destroy();
-				JW_DELETE(m_vpEntities[index]);
+				auto entity_index = iter.GetEntityIndex();
 
-				uint32_t last_index = static_cast<uint32_t>(m_vpEntities.size() - 1);
-				if (index < last_index)
-				{
-					m_vpEntities[index] = m_vpEntities[last_index];
-					m_vpEntities[last_index] = nullptr;
-				}
-
-				m_vpEntities.pop_back();
+				DestroyEntityByIndex(entity_index);
 
 				return;
 			}
-
-			++index;
 		}
 	}
 }

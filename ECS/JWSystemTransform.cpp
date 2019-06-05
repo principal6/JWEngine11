@@ -1,4 +1,4 @@
-#include "JWSystemTransform.h"
+#include "JWECS.h"
 
 using namespace JWEngine;
 
@@ -8,57 +8,62 @@ void JWSystemTransform::Create(JWECS& ECS) noexcept
 	m_pECS = &ECS;
 }
 
-void JWSystemTransform::Destroy() noexcept
-{
-	if (m_vpComponents.size())
-	{
-		for (auto& iter : m_vpComponents)
-		{
-			JW_DELETE(iter);
-		}
-	}
-}
+void JWSystemTransform::Destroy() noexcept {}
 
-PRIVATE auto JWSystemTransform::CreateComponent(JWEntity& Entity) noexcept->SComponentTransform&
+PRIVATE auto JWSystemTransform::CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType
 {
-	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
+	auto component_index{ static_cast<ComponentIndexType>(m_vComponents.size()) };
 	
-	auto new_entry{ new SComponentTransform() };
-	m_vpComponents.push_back(new_entry);
-
 	// @important
 	// Save component ID & pointer to Entity
-	m_vpComponents[slot]->ComponentID = slot;
-	m_vpComponents[slot]->PtrEntity = &Entity;
+	m_vComponents.emplace_back(EntityIndex, component_index);
 
-	return *m_vpComponents[slot];
+	return component_index;
 }
 
-PRIVATE void JWSystemTransform::DestroyComponent(SComponentTransform& Component) noexcept
+PRIVATE void JWSystemTransform::DestroyComponent(ComponentIndexType ComponentIndex) noexcept
 {
-	uint32_t slot{};
-	for (const auto& iter : m_vpComponents)
+	if (m_vComponents.size() == 0)
 	{
-		if (iter->ComponentID == Component.ComponentID)
-		{
-			break;
-		}
-
-		++slot;
-	}
-	JW_DELETE(m_vpComponents[slot]);
-
-	// Swap the last element of the vector and the deleted element & shrink the size of the vector.
-	uint32_t last_index = static_cast<uint32_t>(m_vpComponents.size() - 1);
-	if (slot < last_index)
-	{
-		m_vpComponents[slot] = m_vpComponents[last_index];
-		m_vpComponents[slot]->ComponentID = slot; // @important
-
-		m_vpComponents[last_index] = nullptr;
+		JW_ERROR_ABORT("There is no component to destroy.");
 	}
 
-	m_vpComponents.pop_back();
+	// Save the target component's index.
+	auto component_index{ ComponentIndex };
+
+	// Get the last index of the component vector.
+	auto last_index = static_cast<ComponentIndexType>(m_vComponents.size() - 1);
+
+	// Get pointer to the entity with last_index's component.
+	auto ptr_entity_last_component = m_pECS->GetEntityByIndex(m_vComponents[last_index].EntityIndex);
+
+	// See if the component index is invalid.
+	if (component_index > last_index)
+	{
+		JW_ERROR_ABORT("Invalid component index.");
+	}
+
+	// Swap the last element of the vector and the deleted element if necessary
+	if (component_index < last_index)
+	{
+		m_vComponents[component_index] = std::move(m_vComponents[last_index]);
+		m_vComponents[component_index].ComponentIndex = component_index; // @important
+
+		ptr_entity_last_component->SetComponentTransformIndex(component_index); // @important
+	}
+
+	// Shrink the size of the vector.
+	m_vComponents.pop_back();
+}
+
+PRIVATE auto JWSystemTransform::GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentTransform*
+{
+	if (ComponentIndex >= m_vComponents.size())
+	{
+		return nullptr;
+	}
+
+	return &m_vComponents[ComponentIndex];
 }
 
 void JWSystemTransform::Execute() noexcept
@@ -67,37 +72,34 @@ void JWSystemTransform::Execute() noexcept
 	XMMATRIX matrix_scaling{};
 	XMMATRIX matrix_rotation{};
 
-	for (auto& iter : m_vpComponents)
+	for (auto& iter : m_vComponents)
 	{
-		if (iter)
+		matrix_translation = XMMatrixTranslationFromVector(iter.Position);
+		matrix_scaling = XMMatrixScalingFromVector(iter.ScalingFactor);
+		matrix_rotation = XMMatrixRotationRollPitchYaw(iter.PitchYawRoll.x, iter.PitchYawRoll.y, iter.PitchYawRoll.z);
+
+		switch (iter.WorldMatrixCalculationOrder)
 		{
-			matrix_translation = XMMatrixTranslationFromVector(iter->Position);
-			matrix_scaling = XMMatrixScalingFromVector(iter->ScalingFactor);
-			matrix_rotation = XMMatrixRotationRollPitchYaw(iter->PitchYawRoll.x, iter->PitchYawRoll.y, iter->PitchYawRoll.z);
-			
-			switch (iter->WorldMatrixCalculationOrder)
-			{
-			case JWEngine::EWorldMatrixCalculationOrder::TransRotScale:
-				iter->WorldMatrix = matrix_translation * matrix_rotation * matrix_scaling;
-				break;
-			case JWEngine::EWorldMatrixCalculationOrder::TransScaleRot:
-				iter->WorldMatrix = matrix_translation * matrix_scaling * matrix_rotation;
-				break;
-			case JWEngine::EWorldMatrixCalculationOrder::RotTransScale:
-				iter->WorldMatrix = matrix_rotation * matrix_translation * matrix_scaling;
-				break;
-			case JWEngine::EWorldMatrixCalculationOrder::RotScaleTrans:
-				iter->WorldMatrix = matrix_rotation * matrix_scaling * matrix_translation;
-				break;
-			case JWEngine::EWorldMatrixCalculationOrder::ScaleTransRot:
-				iter->WorldMatrix = matrix_scaling * matrix_translation * matrix_rotation;
-				break;
-			case JWEngine::EWorldMatrixCalculationOrder::ScaleRotTrans:
-				iter->WorldMatrix = matrix_scaling * matrix_rotation * matrix_translation;
-				break;
-			default:
-				break;
-			}
+		case JWEngine::EWorldMatrixCalculationOrder::TransRotScale:
+			iter.WorldMatrix = matrix_translation * matrix_rotation * matrix_scaling;
+			break;
+		case JWEngine::EWorldMatrixCalculationOrder::TransScaleRot:
+			iter.WorldMatrix = matrix_translation * matrix_scaling * matrix_rotation;
+			break;
+		case JWEngine::EWorldMatrixCalculationOrder::RotTransScale:
+			iter.WorldMatrix = matrix_rotation * matrix_translation * matrix_scaling;
+			break;
+		case JWEngine::EWorldMatrixCalculationOrder::RotScaleTrans:
+			iter.WorldMatrix = matrix_rotation * matrix_scaling * matrix_translation;
+			break;
+		case JWEngine::EWorldMatrixCalculationOrder::ScaleTransRot:
+			iter.WorldMatrix = matrix_scaling * matrix_translation * matrix_rotation;
+			break;
+		case JWEngine::EWorldMatrixCalculationOrder::ScaleRotTrans:
+			iter.WorldMatrix = matrix_scaling * matrix_rotation * matrix_translation;
+			break;
+		default:
+			break;
 		}
 	}
 }

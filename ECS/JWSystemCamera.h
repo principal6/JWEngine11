@@ -50,18 +50,19 @@ namespace JWEngine
 		XMVECTOR FRD{};
 		XMVECTOR FLD{};
 	};
-
+	
 	struct SComponentCamera
 	{
-		JWEntity*	PtrEntity{};
-		uint32_t	ComponentID{};
+		SComponentCamera(EntityIndexType _EntityIndex, ComponentIndexType _ComponentIndex, const SSize2* _PtrWindowSize) :
+			EntityIndex{ _EntityIndex }, ComponentIndex{ _ComponentIndex }, PtrWindowSize{ _PtrWindowSize } {};
+
+		EntityIndexType		EntityIndex{};
+		ComponentIndexType	ComponentIndex{};
+		const SSize2*		PtrWindowSize{};
 		
 		ECameraType	Type{ ECameraType::Invalid };
 		XMVECTOR	LookAt{};
 
-		// @important
-		// 'PtrWindowSize' is set by JWSystemCamera when CreateComponent() is called
-		const SSize2*	PtrWindowSize{};
 		float		FOV{ KDefFOV };
 		float		ZNear{ KDefZNear };
 		float		ZFar{ KDefZFar };
@@ -111,15 +112,14 @@ namespace JWEngine
 
 	class JWSystemCamera
 	{
+		friend class JWEntity;
+
 	public:
 		JWSystemCamera() = default;
 		~JWSystemCamera() = default;
 
 		void Create(JWECS& ECS, JWDX& DX, const SSize2& WindowSize) noexcept;
 		void Destroy() noexcept;
-
-		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentCamera&;
-		void DestroyComponent(SComponentCamera& Component) noexcept;
 
 		void CaptureViewFrustum() noexcept;
 		const auto& GetCapturedViewFrustum() const noexcept { return m_CapturedViewFrustumVertices; }
@@ -128,7 +128,7 @@ namespace JWEngine
 
 		void SetCurrentCamera(size_t ComponentID) noexcept;
 		auto GetCurrentCamera() const noexcept { return m_pCurrentCamera; }
-		auto GetCurrentCameraComponentID() const noexcept { return m_pCurrentCamera->ComponentID; }
+		auto GetCurrentCameraComponentID() const noexcept { return m_pCurrentCamera->ComponentIndex; }
 
 		// @important:
 		// This function must be called when DisplayMode has been changed.
@@ -151,6 +151,12 @@ namespace JWEngine
 		const auto& CurrentViewMatrix() noexcept { return m_pCurrentCamera->MatrixView; }
 		const auto& CurrentProjectionMatrix() noexcept { return m_pCurrentCamera->MatrixProjection; }
 		const auto CurrentViewProjectionMatrix() noexcept { return m_pCurrentCamera->MatrixView * m_pCurrentCamera->MatrixProjection; }
+	
+	// Only accesible for JWEntity
+	private:
+		auto CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType;
+		void DestroyComponent(ComponentIndexType ComponentIndex) noexcept;
+		auto GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentCamera*;
 
 	private:
 		inline void MoveFreeLook(ECameraDirection Direction) noexcept;
@@ -165,11 +171,12 @@ namespace JWEngine
 		inline auto GetCurrentCameraViewFrustumFRU() const noexcept->XMVECTOR;
 
 	private:
+		VECTOR<SComponentCamera>	m_vComponents;
+		
 		JWDX*						m_pDX{};
 		JWECS*						m_pECS{};
 		const SSize2*				m_pWindowSize{};
-
-		VECTOR<SComponentCamera*>	m_vpComponents;
+		
 		SComponentCamera*			m_pCurrentCamera{};
 
 		SViewFrustumVertices		m_CapturedViewFrustumVertices{};

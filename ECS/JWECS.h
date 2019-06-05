@@ -24,13 +24,13 @@ namespace JWEngine
 		auto CreateEntity(EEntityType Type) noexcept->JWEntity*;
 
 		// ### Entity getters ###
-		auto GetEntityByIndex(uint32_t Index) noexcept->JWEntity*;
-		auto GetEntityByName(STRING EntityName) noexcept->JWEntity*;
+		auto GetEntityByIndex(EntityIndexType Index) noexcept->JWEntity*;
+		auto GetEntityByName(const STRING& EntityName) noexcept->JWEntity*;
 		auto GetEntityByType(EEntityType Type) noexcept->JWEntity*;
 
 		// ### Entity destroyers ###
-		void DestroyEntityByIndex(uint32_t Index) noexcept;
-		void DestroyEntityByName(STRING EntityName) noexcept;
+		void DestroyEntityByIndex(EntityIndexType Index) noexcept;
+		void DestroyEntityByName(const STRING& EntityName) noexcept;
 		void DestroyEntityByType(EEntityType Type) noexcept;
 
 		void UpdateDeltaTime(long long dt) noexcept;
@@ -56,8 +56,8 @@ namespace JWEngine
 		JWSystemCamera			m_SystemCamera{};
 		JWSystemRender			m_SystemRender{};
 
-		VECTOR<JWEntity*>		m_vpEntities;
-		MAP<STRING, uint64_t>	m_mapEntityNames;
+		VECTOR<JWEntity>				m_vEntities;
+		MAP<STRING, EntityIndexType>	m_mapEntityNames;
 
 		float					m_DeltaTime{};
 	};

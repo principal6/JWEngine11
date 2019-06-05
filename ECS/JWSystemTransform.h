@@ -12,8 +12,11 @@ namespace JWEngine
 
 	struct SComponentTransform
 	{
-		JWEntity*	PtrEntity{};
-		uint32_t	ComponentID{};
+		SComponentTransform(EntityIndexType _EntityIndex, ComponentIndexType _ComponentIndex) :
+			EntityIndex{ _EntityIndex }, ComponentIndex{ _ComponentIndex } {};
+
+		EntityIndexType		EntityIndex{};
+		ComponentIndexType	ComponentIndex{};
 
 		XMVECTOR	Position{ KVectorZero };
 		XMVECTOR	ScalingFactor{ KVectorOne };
@@ -75,11 +78,13 @@ namespace JWEngine
 
 	// Only accesible for JWEntity
 	private:
-		auto CreateComponent(JWEntity& Entity) noexcept->SComponentTransform&;
-		void DestroyComponent(SComponentTransform& Component) noexcept;
+		auto CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType;
+		void DestroyComponent(ComponentIndexType ComponentIndex) noexcept;
+		auto GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentTransform*;
 
 	private:
-		JWECS*							m_pECS{};
-		VECTOR<SComponentTransform*>	m_vpComponents;
+		VECTOR<SComponentTransform>	m_vComponents;
+
+		JWECS*						m_pECS{};
 	};
 };

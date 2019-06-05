@@ -119,6 +119,12 @@ namespace JWEngine
 	
 	using namespace DirectX;
 
+	using EntityIndexType = uint32_t;
+	static constexpr EntityIndexType KInvalidEntityIndex{ (EntityIndexType)-1 };
+
+	using ComponentIndexType = uint32_t;
+	static constexpr ComponentIndexType KInvalidComponentIndex{ (ComponentIndexType)-1 };
+
 	static constexpr uint8_t KVertexBufferCount = 3;
 	static constexpr uint8_t KVBIDModel = 0;
 	static constexpr uint8_t KVBIDRigging = 1;

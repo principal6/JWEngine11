@@ -12,68 +12,73 @@ void JWSystemLight::Create(JWECS& ECS, JWDX& DX) noexcept
 	m_pDX = &DX;
 }
 
-void JWSystemLight::Destroy() noexcept
-{
-	if (m_vpComponents.size())
-	{
-		for (auto& iter : m_vpComponents)
-		{
-			JW_DELETE(iter);
-		}
-	}
-}
+void JWSystemLight::Destroy() noexcept {}
 
-auto JWSystemLight::CreateComponent(JWEntity* pEntity) noexcept->SComponentLight&
+PRIVATE auto JWSystemLight::CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType
 {
-	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
-
-	auto new_entry{ new SComponentLight() };
-	m_vpComponents.push_back(new_entry);
+	auto component_index{ static_cast<ComponentIndexType>(m_vComponents.size()) };
 
 	// @important
 	// Save component ID & pointer to Entity
-	m_vpComponents[slot]->ComponentID = slot;
-	m_vpComponents[slot]->PtrEntity = pEntity;
+	m_vComponents.emplace_back(EntityIndex, component_index);
 
-	m_ShouldUpdate = true;
+	m_ShouldUpdateLights = true;
 
-	return *m_vpComponents[slot];
+	return component_index;
 }
 
-void JWSystemLight::DestroyComponent(SComponentLight& Component) noexcept
+PRIVATE void JWSystemLight::DestroyComponent(ComponentIndexType ComponentIndex) noexcept
 {
-	uint32_t slot{};
-	for (const auto& iter : m_vpComponents)
+	if (m_vComponents.size() == 0)
 	{
-		if (iter->ComponentID == Component.ComponentID)
-		{
-			break;
-		}
-
-		++slot;
-	}
-	JW_DELETE(m_vpComponents[slot]);
-
-	// Swap the last element of the vector and the deleted element & shrink the size of the vector.
-	uint32_t last_index = static_cast<uint32_t>(m_vpComponents.size() - 1);
-	if (slot < last_index)
-	{
-		m_vpComponents[slot] = m_vpComponents[last_index];
-		m_vpComponents[slot]->ComponentID = slot; // @important
-
-		m_vpComponents[last_index] = nullptr;
+		JW_ERROR_ABORT("There is no component to destroy.");
 	}
 
-	m_vpComponents.pop_back();
+	// Save the target component's index.
+	auto component_index{ ComponentIndex };
+
+	// Get the last index of the component vector.
+	auto last_index = static_cast<ComponentIndexType>(m_vComponents.size() - 1);
+
+	// Get pointer to the entity with last_index's component.
+	auto ptr_entity_last_component = m_pECS->GetEntityByIndex(m_vComponents[last_index].EntityIndex);
+
+	// See if the component index is invalid.
+	if (component_index > last_index)
+	{
+		JW_ERROR_ABORT("Invalid component index.");
+	}
+
+	// Swap the last element of the vector and the deleted element if necessary
+	if (component_index < last_index)
+	{
+		m_vComponents[component_index] = std::move(m_vComponents[last_index]);
+		m_vComponents[component_index].ComponentIndex = component_index; // @important
+
+		ptr_entity_last_component->SetComponentLightIndex(component_index); // @important
+	}
+
+	// Shrink the size of the vector.
+	m_vComponents.pop_back();
+}
+
+PRIVATE auto JWSystemLight::GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentLight*
+{
+	if (ComponentIndex >= m_vComponents.size())
+	{
+		return nullptr;
+	}
+
+	return &m_vComponents[ComponentIndex];
 }
 
 void JWSystemLight::Execute() noexcept
 {
-	if (m_ShouldUpdate)
+	if (m_ShouldUpdateLights)
 	{
-		for (auto& iter : m_vpComponents)
+		for (auto& iter : m_vComponents)
 		{
-			auto& light_data = iter->LightData;
+			auto& light_data = iter.LightData;
 
 			if (light_data.LightType == ELightType::AmbientLight)
 			{
@@ -96,6 +101,6 @@ void JWSystemLight::Execute() noexcept
 
 		m_pDX->UpdatePSCBLights(m_PSCBLights);
 
-		m_ShouldUpdate = false;
+		m_ShouldUpdateLights = false;
 	}
 }

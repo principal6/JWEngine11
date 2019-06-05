@@ -36,8 +36,11 @@ namespace JWEngine
 
 	struct SComponentLight
 	{
-		JWEntity*	PtrEntity{};
-		uint32_t	ComponentID{};
+		SComponentLight(EntityIndexType _EntityIndex, ComponentIndexType _ComponentIndex) :
+			EntityIndex{ _EntityIndex }, ComponentIndex{ _ComponentIndex } {};
+
+		EntityIndexType		EntityIndex{};
+		ComponentIndexType	ComponentIndex{};
 
 		SLightData	LightData;
 
@@ -71,6 +74,8 @@ namespace JWEngine
 
 	class JWSystemLight
 	{
+		friend class JWEntity;
+
 	public:
 		JWSystemLight() = default;
 		~JWSystemLight() = default;
@@ -78,17 +83,21 @@ namespace JWEngine
 		void Create(JWECS& ECS, JWDX& DX) noexcept;
 		void Destroy() noexcept;
 
-		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentLight&;
-		void DestroyComponent(SComponentLight& Component) noexcept;
-
 		void Execute() noexcept;
 
+	// Only accesible for JWEntity
 	private:
-		VECTOR<SComponentLight*>	m_vpComponents;
+		auto CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType;
+		void DestroyComponent(ComponentIndexType ComponentIndex) noexcept;
+		auto GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentLight*;
 
-		JWECS*						m_pECS{};
-		JWDX*						m_pDX{};
-		bool						m_ShouldUpdate{ false };
-		SPSCBLights					m_PSCBLights{};
+	private:
+		VECTOR<SComponentLight>	m_vComponents;
+
+		JWECS*					m_pECS{};
+		JWDX*					m_pDX{};
+
+		bool					m_ShouldUpdateLights{ false };
+		SPSCBLights				m_PSCBLights{};
 	};
 };

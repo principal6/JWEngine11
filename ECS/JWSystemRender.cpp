@@ -29,14 +29,6 @@ void JWSystemRender::Create(JWECS& ECS, JWDX& DX, const SSize2& WindowSize, STRI
 
 void JWSystemRender::Destroy() noexcept
 {
-	if (m_vpComponents.size())
-	{
-		for (auto& iter : m_vpComponents)
-		{
-			JW_DELETE(iter);
-		}
-	}
-
 	// Destroy shared resources
 	{
 		for (auto& iter : m_vSharedTextureData)
@@ -77,46 +69,60 @@ void JWSystemRender::Destroy() noexcept
 	m_BoundingEllipsoid.Destroy();
 }
 
-auto JWSystemRender::CreateComponent(JWEntity* pEntity) noexcept->SComponentRender&
+PRIVATE auto JWSystemRender::CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType
 {
-	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
-
-	auto new_entry{ new SComponentRender() };
-	m_vpComponents.push_back(new_entry);
+	auto component_index{ static_cast<ComponentIndexType>(m_vComponents.size()) };
 
 	// @important
 	// Save component ID & pointer to Entity
-	m_vpComponents[slot]->ComponentID = slot;
-	m_vpComponents[slot]->PtrEntity = pEntity;
-
-	return *m_vpComponents[slot];
+	m_vComponents.emplace_back(EntityIndex, component_index);
+	
+	return component_index;
 }
 
-void JWSystemRender::DestroyComponent(SComponentRender& Component) noexcept
+PRIVATE void JWSystemRender::DestroyComponent(ComponentIndexType ComponentIndex) noexcept
 {
-	uint32_t slot{};
-	for (const auto& iter : m_vpComponents)
+	if (m_vComponents.size() == 0)
 	{
-		if (iter->ComponentID == Component.ComponentID)
-		{
-			break;
-		}
-
-		++slot;
-	}
-	JW_DELETE(m_vpComponents[slot]);
-
-	// Swap the last element of the vector and the deleted element & shrink the size of the vector.
-	uint32_t last_index = static_cast<uint32_t>(m_vpComponents.size() - 1);
-	if (slot < last_index)
-	{
-		m_vpComponents[slot] = m_vpComponents[last_index];
-		m_vpComponents[slot]->ComponentID = slot; // @important
-
-		m_vpComponents[last_index] = nullptr;
+		JW_ERROR_ABORT("There is no component to destroy.");
 	}
 
-	m_vpComponents.pop_back();
+	// Save the target component's index.
+	auto component_index{ ComponentIndex };
+
+	// Get the last index of the component vector.
+	auto last_index = static_cast<ComponentIndexType>(m_vComponents.size() - 1);
+
+	// Get pointer to the entity with last_index's component.
+	auto ptr_entity_last_component = m_pECS->GetEntityByIndex(m_vComponents[last_index].EntityIndex);
+
+	// See if the component index is invalid.
+	if (component_index > last_index)
+	{
+		JW_ERROR_ABORT("Invalid component index.");
+	}
+
+	// Swap the last element of the vector and the deleted element if necessary
+	if (component_index < last_index)
+	{
+		m_vComponents[component_index] = std::move(m_vComponents[last_index]);
+		m_vComponents[component_index].ComponentIndex = component_index; // @important
+
+		ptr_entity_last_component->SetComponentRenderIndex(component_index); // @important
+	}
+
+	// Shrink the size of the vector.
+	m_vComponents.pop_back();
+}
+
+PRIVATE auto JWSystemRender::GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentRender*
+{
+	if (ComponentIndex >= m_vComponents.size())
+	{
+		return nullptr;
+	}
+
+	return &m_vComponents[ComponentIndex];
 }
 
 void JWSystemRender::CreateSharedTexture(ESharedTextureType Type, STRING FileName) noexcept
@@ -454,15 +460,15 @@ void JWSystemRender::Execute() noexcept
 	// #0 Opaque drawing
 	// Set OM blend state
 	m_pDX->SetBlendState(EBlendState::Opaque);
-	for (auto& iter : m_vpComponents)
+	for (auto& iter : m_vComponents)
 	{
 		// Check transparency
-		if (iter->FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency)
+		if (iter.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency)
 		{
 			continue;
 		}
 
-		ExecuteComponent(*iter);
+		ExecuteComponent(iter);
 	}
 	
 
@@ -476,31 +482,34 @@ void JWSystemRender::Execute() noexcept
 	// #2 Transparent drawing
 	// Set OM blend state
 	m_pDX->SetBlendState(EBlendState::Transprent);
-	for (auto& iter : m_vpComponents)
+	for (auto& iter : m_vComponents)
 	{
 		// Check transparency
-		if (!(iter->FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency))
+		if (!(iter.FlagComponentRenderOption & JWFlagComponentRenderOption_UseTransparency))
 		{
 			continue;
 		}
 
-		ExecuteComponent(*iter);
+		ExecuteComponent(iter);
 	}
 }
 
 PRIVATE void JWSystemRender::ExecuteComponent(SComponentRender& Component) noexcept
 {
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(Component.EntityIndex);
+
 	// Check flag - View frustum drawing
 	if (!(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawViewFrustum))
 	{
-		if (Component.PtrEntity->GetEntityType() == EEntityType::ViewFrustum)
+		if (ptr_entity->GetEntityType() == EEntityType::ViewFrustum)
 		{
 			return;
 		}
 	}
 
 	// Check flag - Camera drawing
-	auto camera = Component.PtrEntity->GetComponentCamera();
+	auto camera = ptr_entity->GetComponentCamera();
 	if (camera)
 	{
 		// This is a Camera entity.
@@ -510,7 +519,7 @@ PRIVATE void JWSystemRender::ExecuteComponent(SComponentRender& Component) noexc
 			return;
 		}
 
-		if (camera->ComponentID == m_pECS->SystemCamera().GetCurrentCameraComponentID())
+		if (camera->ComponentIndex == m_pECS->SystemCamera().GetCurrentCameraComponentID())
 		{
 			return;
 		}
@@ -519,7 +528,7 @@ PRIVATE void JWSystemRender::ExecuteComponent(SComponentRender& Component) noexc
 	// Check flag - Frustum culling
 	if (m_FlagSystemRenderOption & JWFlagSystemRenderOption_UseFrustumCulling)
 	{
-		auto physics = Component.PtrEntity->GetComponentPhysics();
+		auto physics = ptr_entity->GetComponentPhysics();
 		if (physics)
 		{
 			if (IsUnitSphereCulledByViewFrustum(physics->BoundingEllipsoid.EllipsoidWorld))
@@ -565,7 +574,7 @@ PRIVATE void JWSystemRender::ExecuteComponent(SComponentRender& Component) noexc
 	if ((m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawBoundingEllipsoids) &&
 		(m_FlagSystemRenderOption & JWFlagSystemRenderOption_DrawSubBoundingEllipsoids))
 	{
-		auto physics = Component.PtrEntity->GetComponentPhysics();
+		auto physics = ptr_entity->GetComponentPhysics();
 		if (physics)
 		{
 			if (physics->SubBoundingEllipsoids.size())
@@ -640,10 +649,13 @@ void JWSystemRender::DrawInstancedBoundingEllipsoids() noexcept
 	auto current_camera = m_pECS->SystemCamera().GetCurrentCamera();
 	if (current_camera)
 	{
-		auto physics = current_camera->PtrEntity->GetComponentPhysics();
+		// Get pointer to the entity.
+		auto ptr_entity = m_pECS->GetEntityByIndex(current_camera->EntityIndex);
+
+		auto physics = ptr_entity->GetComponentPhysics();
 		if (physics)
 		{
-			UpdateBoundingEllipsoidInstance(physics->ComponentID, XMMatrixScaling(0, 0, 0));
+			UpdateBoundingEllipsoidInstance(physics->ComponentIndex, XMMatrixScaling(0, 0, 0));
 		}
 	}
 	
@@ -976,6 +988,9 @@ PRIVATE void JWSystemRender::UpdateNodeTPoseIntoBones(float AnimationTime, SMode
 
 void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 {
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(Component.EntityIndex);
+
 	// Set PS
 	m_pDX->SetPS(Component.PixelShader);
 
@@ -1037,7 +1052,7 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 
 	// @important
 	// Get transform component, if there is.
-	const auto& component_transform = Component.PtrEntity->GetComponentTransform();
+	const auto& component_transform = ptr_entity->GetComponentTransform();
 	XMMATRIX component_world_matrix{ XMMatrixIdentity() };
 	if (component_transform)
 	{
@@ -1100,6 +1115,8 @@ void JWSystemRender::SetShaders(SComponentRender& Component) noexcept
 
 PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 {
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(Component.EntityIndex);
 	auto ptr_device_context = m_pDX->GetDeviceContext();
 
 	auto type = Component.RenderType;
@@ -1107,7 +1124,7 @@ PRIVATE void JWSystemRender::Draw(SComponentRender& Component) noexcept
 	auto& image = Component.PtrImage;
 	auto& line = Component.PtrLine;
 
-	auto physics = Component.PtrEntity->GetComponentPhysics();
+	auto physics = ptr_entity->GetComponentPhysics();
 	bool should_cull{ false };
 
 	// Set IA primitive topology 
@@ -1287,13 +1304,13 @@ PRIVATE void JWSystemRender::DrawNormals(SComponentRender& Component) noexcept
 
 void JWSystemRender::UpdateImage2Ds() noexcept
 {
-	if (m_vpComponents.size())
+	if (m_vComponents.size())
 	{
-		for (auto& iter : m_vpComponents)
+		for (auto& iter : m_vComponents)
 		{
-			if (iter->RenderType == ERenderType::Image_2D)
+			if (iter.RenderType == ERenderType::Image_2D)
 			{
-				iter->PtrImage->UpdatePositionAndSize();
+				iter.PtrImage->UpdatePositionAndSize();
 			}
 		}
 	}

@@ -5,10 +5,10 @@
 namespace JWEngine
 {
 	// Gravity on Earth = 9.8m/s^2
-	static constexpr float KGravityOnEarth{ 9.8f };
-	static constexpr float KPhysicsWorldFloor{ -100.0f };
-	static constexpr XMVECTOR KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
-	static const STRING KNoName{ "" };
+	static constexpr float		KGravityOnEarth{ 9.8f };
+	static constexpr float		KPhysicsWorldFloor{ -100.0f };
+	static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
+	static const STRING			KNoName{ "" };
 
 	class JWEntity;
 	class JWECS;
@@ -21,8 +21,11 @@ namespace JWEngine
 
 	struct SComponentPhysics
 	{
-		JWEntity*			PtrEntity{};
-		uint32_t			ComponentID{};
+		SComponentPhysics(EntityIndexType _EntityIndex, ComponentIndexType _ComponentIndex) :
+			EntityIndex{ _EntityIndex }, ComponentIndex{ _ComponentIndex } {};
+
+		EntityIndexType		EntityIndex{};
+		ComponentIndexType	ComponentIndex{};
 
 		// Unique bounding ellipsoid that covers the whole entity.
 		SBoundingEllipsoidData			BoundingEllipsoid{};
@@ -30,7 +33,7 @@ namespace JWEngine
 		// Subset of bounding ellipsoids that cover parts of the entity.
 		VECTOR<SBoundingEllipsoidData>	SubBoundingEllipsoids{};
 
-		// [Property]	mass
+		// [Property]	mass (*inverse)
 		// [Unit]		gram
 		// InverseMass = 1/Mass
 		// @important: mass MUST NOT be 'zero'
@@ -91,15 +94,14 @@ namespace JWEngine
 
 	class JWSystemPhysics
 	{
+		friend class JWEntity;
+
 	public:
 		JWSystemPhysics() = default;
 		~JWSystemPhysics() = default;
 
 		void Create(JWECS& ECS, HWND hWnd, const SSize2& WindowSize) noexcept;
 		void Destroy() noexcept;
-
-		auto CreateComponent(JWEntity* pEntity) noexcept->SComponentPhysics&;
-		void DestroyComponent(SComponentPhysics& Component) noexcept;
 
 		auto PickEntity() noexcept->bool;
 
@@ -120,6 +122,12 @@ namespace JWEngine
 		void ZeroAllVelocities() noexcept;
 		void Execute() noexcept;
 
+	// Only accesible for JWEntity
+	private:
+		auto CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType;
+		void DestroyComponent(ComponentIndexType ComponentIndex) noexcept;
+		auto GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentPhysics*;
+
 	private:
 		// Picking
 		__forceinline void CastPickingRay() noexcept;
@@ -131,10 +139,9 @@ namespace JWEngine
 		void UpdateSubBoundingEllipsoids(SComponentPhysics& Physics) noexcept;
 
 	private:
-		VECTOR<SComponentPhysics*>	m_vpComponents;
+		VECTOR<SComponentPhysics>	m_vComponents;
 
 		JWECS*						m_pECS{};
-
 		HWND						m_hWnd{};
 		const SSize2*				m_pWindowSize{};
 
@@ -156,5 +163,14 @@ namespace JWEngine
 		XMVECTOR					m_PickedNonTerrainDistance{};
 
 		JWFlagSystemPhysicsOption	m_FlagSystemPhyscisOption{};
+	};
+
+	class JWPhysicsCollisionDetector
+	{
+	public:
+
+
+	private:
+
 	};
 };

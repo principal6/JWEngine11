@@ -14,64 +14,68 @@ void JWSystemCamera::Create(JWECS& ECS, JWDX& DX, const SSize2& WindowSize) noex
 	m_pWindowSize = &WindowSize;
 }
 
-void JWSystemCamera::Destroy() noexcept
-{
-	if (m_vpComponents.size())
-	{
-		for (auto& iter : m_vpComponents)
-		{
-			JW_DELETE(iter);
-		}
-	}
-}
+void JWSystemCamera::Destroy() noexcept {}
 
-auto JWSystemCamera::CreateComponent(JWEntity* pEntity) noexcept->SComponentCamera&
+PRIVATE auto JWSystemCamera::CreateComponent(EntityIndexType EntityIndex) noexcept->ComponentIndexType
 {
-	uint32_t slot{ static_cast<uint32_t>(m_vpComponents.size()) };
-
-	auto new_entry{ new SComponentCamera() };
-	m_vpComponents.push_back(new_entry);
+	auto component_index{ static_cast<ComponentIndexType>(m_vComponents.size()) };
 
 	// @important
-	// Save component ID & pointer to Entity
-	m_vpComponents[slot]->ComponentID = slot;
-	m_vpComponents[slot]->PtrEntity = pEntity;
-	m_vpComponents[slot]->PtrWindowSize = m_pWindowSize;
+	// Save component ID & pointer to Entity & pointer to WindowSize
+	m_vComponents.emplace_back(EntityIndex, component_index, m_pWindowSize);
 
-	return *m_vpComponents[slot];
+	return component_index;
 }
 
-void JWSystemCamera::DestroyComponent(SComponentCamera& Component) noexcept
+PRIVATE void JWSystemCamera::DestroyComponent(ComponentIndexType ComponentIndex) noexcept
 {
-	if (m_vpComponents.size() == 1)
+	if (m_vComponents.size() == 0)
 	{
-		// 아래처럼 하면... 프로그램 종료될 때도 해제 실패함!!
+		JW_ERROR_ABORT("There is no component to destroy.");
+	}
+
+	if (m_vComponents.size() == 1)
+	{
+		// 아래 코드 실행하면... 프로그램 종료될 때도 해제 실패한다고 에러 띄움!!
 		//JW_ERROR_RETURN("카메라 컴포넌트 해제 실패. 모든 장면에는 최소한 1개의 카메라가 필요합니다.");
 	}
 
-	uint32_t slot{};
-	for (const auto& iter : m_vpComponents)
+	// Save the target component's index.
+	auto component_index{ ComponentIndex };
+
+	// Get the last index of the component vector.
+	auto last_index = static_cast<ComponentIndexType>(m_vComponents.size() - 1);
+	
+	// Get pointer to the entity with last_index's component.
+	auto ptr_entity_last_component = m_pECS->GetEntityByIndex(m_vComponents[last_index].EntityIndex);
+
+	// See if the component index is invalid.
+	if (component_index > last_index)
 	{
-		if (iter->ComponentID == Component.ComponentID)
-		{
-			break;
-		}
-
-		++slot;
-	}
-	JW_DELETE(m_vpComponents[slot]);
-
-	// Swap the last element of the vector and the deleted element & shrink the size of the vector.
-	uint32_t last_index = static_cast<uint32_t>(m_vpComponents.size() - 1);
-	if (slot < last_index)
-	{
-		m_vpComponents[slot] = m_vpComponents[last_index];
-		m_vpComponents[slot]->ComponentID = slot; // @important
-
-		m_vpComponents[last_index] = nullptr;
+		JW_ERROR_ABORT("Invalid component index.");
 	}
 
-	m_vpComponents.pop_back();
+	// Swap the last element of the vector and the deleted element if necessary
+	if (component_index < last_index)
+	{
+		m_vComponents[component_index] = std::move(m_vComponents[last_index]);
+		m_vComponents[component_index].ComponentIndex = component_index; // @important
+
+		ptr_entity_last_component->SetComponentCameraIndex(component_index); // @important
+	}
+
+	// Shrink the size of the vector.
+	m_vComponents.pop_back();
+}
+
+PRIVATE auto JWSystemCamera::GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentCamera*
+{
+	if (ComponentIndex >= m_vComponents.size())
+	{
+		return nullptr;
+	}
+
+	return &m_vComponents[ComponentIndex];
 }
 
 void JWSystemCamera::CaptureViewFrustum() noexcept
@@ -137,7 +141,7 @@ void JWSystemCamera::Execute() noexcept
 {
 	if (m_pCurrentCamera == nullptr)
 	{
-		if (m_vpComponents.size())
+		if (m_vComponents.size())
 		{
 			SetCurrentCamera(0);
 		}
@@ -147,21 +151,24 @@ void JWSystemCamera::Execute() noexcept
 		}
 	}
 
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(m_pCurrentCamera->EntityIndex);
+
 	// Update current camera's position to PS for specular calculation.
-	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	auto transform = ptr_entity->GetComponentTransform();
 	m_pDX->UpdatePSCBCamera(transform->Position);
 }
 
 void JWSystemCamera::SetCurrentCamera(size_t ComponentID) noexcept
 {
-	if (m_vpComponents.size() == 0)
+	if (m_vComponents.size() == 0)
 	{
 		JW_ERROR_ABORT("You didn't create any camera.");
 	}
 
-	ComponentID = min(ComponentID, m_vpComponents.size() - 1);
+	ComponentID = min(ComponentID, m_vComponents.size() - 1);
 
-	m_pCurrentCamera = m_vpComponents[ComponentID];
+	m_pCurrentCamera = &m_vComponents[ComponentID];
 
 	RotateCurrentCamera(0, 0, 0);
 	UpdateCurrentCameraViewMatrix();
@@ -169,19 +176,19 @@ void JWSystemCamera::SetCurrentCamera(size_t ComponentID) noexcept
 
 void JWSystemCamera::UpdateCamerasProjectionMatrix() noexcept
 {
-	if (m_vpComponents.size())
+	if (m_vComponents.size())
 	{
-		for (auto* iter : m_vpComponents)
+		for (auto& iter : m_vComponents)
 		{
-			if (iter->Type == ECameraType::Orthographic)
+			if (iter.Type == ECameraType::Orthographic)
 			{
-				iter->MatrixProjection =
-					XMMatrixOrthographicLH(m_pWindowSize->floatX(), m_pWindowSize->floatY(), iter->ZNear, iter->ZFar);
+				iter.MatrixProjection =
+					XMMatrixOrthographicLH(m_pWindowSize->floatX(), m_pWindowSize->floatY(), iter.ZNear, iter.ZFar);
 			}
 			else
 			{
-				iter->MatrixProjection =
-					XMMatrixPerspectiveFovLH(iter->FOV, m_pWindowSize->floatX() / m_pWindowSize->floatY(), iter->ZNear, iter->ZFar);
+				iter.MatrixProjection =
+					XMMatrixPerspectiveFovLH(iter.FOV, m_pWindowSize->floatX() / m_pWindowSize->floatY(), iter.ZNear, iter.ZFar);
 			}
 		}
 	}
@@ -192,7 +199,10 @@ void JWSystemCamera::RotateCurrentCamera(float X_Pitch, float Y_Yaw, float Z_Rol
 	const auto& type = m_pCurrentCamera->Type;
 	const auto& rotate_factor = m_pCurrentCamera->RotateFactor;
 
-	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(m_pCurrentCamera->EntityIndex);
+
+	auto transform = ptr_entity->GetComponentTransform();
 	transform->RotatePitchYawRoll(XMFLOAT3(X_Pitch * rotate_factor, Y_Yaw * rotate_factor, Z_Roll * rotate_factor), true);
 	auto& position = transform->Position;
 	const auto& forward = transform->Forward;
@@ -230,8 +240,11 @@ void JWSystemCamera::ZoomCurrentCamera(float Factor) noexcept
 	zoom = max(zoom, zoom_near);
 	zoom = min(zoom, zoom_far);
 	
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(m_pCurrentCamera->EntityIndex);
+
 	// Update Position vector.
-	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	auto transform = ptr_entity->GetComponentTransform();
 	auto& position = transform->Position;
 	const auto& forward = transform->Forward;
 	const auto& lookat = m_pCurrentCamera->LookAt;
@@ -265,7 +278,10 @@ PRIVATE inline void JWSystemCamera::MoveFreeLook(ECameraDirection Direction) noe
 {
 	const auto& move_factor = m_pCurrentCamera->MoveFactor;
 
-	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(m_pCurrentCamera->EntityIndex);
+
+	auto transform = ptr_entity->GetComponentTransform();
 	auto& position = transform->Position;
 	const auto& forward = transform->Forward;
 	const auto& right = transform->Right;
@@ -298,7 +314,10 @@ PRIVATE inline void JWSystemCamera::MoveFirstPerson(ECameraDirection Direction) 
 {
 	const auto& move_factor = m_pCurrentCamera->MoveFactor;
 
-	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(m_pCurrentCamera->EntityIndex);
+
+	auto transform = ptr_entity->GetComponentTransform();
 	auto& position = transform->Position;
 	const auto& forward = transform->Forward;
 	const auto& right = transform->Right;
@@ -334,7 +353,10 @@ PRIVATE inline void JWSystemCamera::MoveThirdPerson(ECameraDirection Direction) 
 {
 	const auto& move_factor = m_pCurrentCamera->MoveFactor;
 
-	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(m_pCurrentCamera->EntityIndex);
+
+	auto transform = ptr_entity->GetComponentTransform();
 	const auto& forward = transform->Forward;
 	const auto& right = transform->Right;
 
@@ -371,7 +393,10 @@ PRIVATE inline void JWSystemCamera::UpdateCurrentCameraViewMatrix() noexcept
 {
 	auto& matrix_view = m_pCurrentCamera->MatrixView;
 	
-	const auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(m_pCurrentCamera->EntityIndex);
+
+	const auto transform = ptr_entity->GetComponentTransform();
 	const auto& position = transform->Position;
 	const auto& up = transform->Up;
 
@@ -385,7 +410,10 @@ void JWSystemCamera::SetCurrentCameraPosition(const XMFLOAT3& Position) noexcept
 {
 	const auto& type = m_pCurrentCamera->Type;
 
-	auto transform = m_pCurrentCamera->PtrEntity->GetComponentTransform();
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(m_pCurrentCamera->EntityIndex);
+
+	auto transform = ptr_entity->GetComponentTransform();
 	auto& position = transform->Position = XMVectorSet(Position.x, Position.y, Position.z, 1);
 	auto& lookat = m_pCurrentCamera->LookAt;
 	const auto& forward = transform->Forward;
@@ -409,5 +437,8 @@ void JWSystemCamera::SetCurrentCameraPosition(const XMFLOAT3& Position) noexcept
 
 auto JWSystemCamera::GetCurrentCameraPosition() const noexcept->const XMVECTOR&
 {
-	return m_pCurrentCamera->PtrEntity->GetComponentTransform()->Position;
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(m_pCurrentCamera->EntityIndex);
+
+	return ptr_entity->GetComponentTransform()->Position;
 }
