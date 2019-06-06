@@ -1,0 +1,14 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 07.06.2019 01:42:36
+
+newmtl _16440_Oil_Drum_new_16440_Oil_Drum_default
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000 
+	illum 2
+	Ka 0.4196 0.2196 0.1176
+	Kd 0.4196 0.2196 0.1176
+	Ks 0.3600 0.3600 0.3600
+	Ke 0.0000 0.0000 0.0000

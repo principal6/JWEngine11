@@ -56,6 +56,10 @@ int main()
 
 		ecs.SystemRender().CreateSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeCube(1.0f)); // Shared Model #9 (Box)
+
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "oil_drum.mobj"); // Shared Model #10
+
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "recycling_bin.mobj"); // Shared Model #11
 	}
 	{
 		// SharedImage2D
@@ -285,6 +289,38 @@ int main()
 
 		auto render = box->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(9));
+	}
+
+	auto oil_drum = ecs.CreateEntity("oil_drum");
+	{
+		auto transform = oil_drum->CreateComponentTransform();
+		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
+		transform->Position = XMVectorSet(14.0f, 8.0f, 0.0f, 1.0f);
+		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
+
+		auto physics = oil_drum->CreateComponentPhysics();
+		physics->BoundingEllipsoid = SBoundingEllipsoidData(1.1f, 1.1f, 1.1f);
+		physics->SetMassByKilogram(20.0f);
+
+		auto render = oil_drum->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(10));
+		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
+	}
+
+	auto recycling_bin = ecs.CreateEntity("recycling_bin");
+	{
+		auto transform = recycling_bin->CreateComponentTransform();
+		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
+		transform->Position = XMVectorSet(18.0f, 8.0f, 0.0f, 1.0f);
+		transform->ScalingFactor = { 0.06f, 0.06f, 0.06f };
+
+		auto physics = recycling_bin->CreateComponentPhysics();
+		physics->BoundingEllipsoid = SBoundingEllipsoidData(1.6f, 1.6f, 1.6f, 0.0f, 0.2f, 0.0f);
+		physics->SetMassByKilogram(6.0f);
+
+		auto render = recycling_bin->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModel(11));
+		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 
 	ecs.SystemCamera().SetCurrentCamera(0);
