@@ -30,7 +30,7 @@ int main()
 	auto& ecs = myGame.ECS();
 	{
 		// SharedModel
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "Decoration_18.mobj"); // Shared Model #0
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "jar.mobj"); // Shared Model #0
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.mobj"); // Shared Model #1
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X", L"Ezreal_mip.dds") // Shared Model #2
 			->AddAnimationFromFile("Ezreal_Punching.X")
@@ -201,18 +201,18 @@ int main()
 		render->SetModel(ecs.SystemRender().GetSharedModel(5));
 	}
 
-	auto jars = ecs.CreateEntity("jars");
+	auto jar = ecs.CreateEntity("jar");
 	{
-		auto transform = jars->CreateComponentTransform();
+		auto transform = jar->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
 		transform->Position = XMVectorSet(10.0f, 8.0f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
 
-		auto physics = jars->CreateComponentPhysics();
-		physics->BoundingEllipsoid = SBoundingEllipsoidData(1.1f, 1.1f, 1.1f, 0, 0.7f, 0.3f);
+		auto physics = jar->CreateComponentPhysics();
+		physics->BoundingEllipsoid = SBoundingEllipsoidData(0.8f, 0.8f, 0.8f, 0.0f, 0.6f, 0.0f);
 		physics->SetMassByKilogram(1.0f);
 
-		auto render = jars->CreateComponentRender();
+		auto render = jar->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(0));
 		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
@@ -390,7 +390,7 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 	if (Character == '7')
 	{
 		ecs.SystemPhysics().ZeroAllVelocities();
-		ecs.GetEntityByName("jars")->GetComponentTransform()->Position = XMVectorSet(10.0f, 8.0f, 0.0f, 1.0f);
+		ecs.GetEntityByName("jar")->GetComponentTransform()->Position = XMVectorSet(10.0f, 8.0f, 0.0f, 1.0f);
 	}
 }
 
