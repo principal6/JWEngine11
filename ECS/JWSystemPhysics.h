@@ -58,6 +58,9 @@ namespace JWEngine
 		// @important: AccumulatedForce must be zeroed every frame.
 		XMVECTOR	AccumulatedForce{};
 
+		// (NON_OWNING) Collision mesh
+		JWModel*	PtrCollisionMesh{};
+
 		void SetMassByGram(float g)
 		{
 			assert(g > 0);
@@ -91,6 +94,12 @@ namespace JWEngine
 		void AddForce(const XMVECTOR& Force)
 		{
 			AccumulatedForce += Force;
+		}
+
+		void SetCollisionMesh(JWModel* PtrModel)
+		{
+			assert(PtrModel);
+			PtrCollisionMesh = PtrModel;
 		}
 	};
 

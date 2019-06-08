@@ -657,7 +657,7 @@ PRIVATE void JWSystemPhysics::DetectCoarseCollision() noexcept
 
 					if (IntersectSpheres(i->BoundingSphere.Radius, i_world_center, j->BoundingSphere.Radius, j_world_center))
 					{
-						m_CoarseCollisionList.emplace_back(i->EntityIndex, j->EntityIndex);
+						m_CoarseCollisionList.emplace_back(i->ComponentIndex, j->ComponentIndex);
 					}
 				}
 			}
@@ -671,20 +671,51 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 
 	for (const auto& iter : m_CoarseCollisionList)
 	{
-		auto entity_a = m_pECS->GetEntityByIndex(iter.A);
-		auto entity_b = m_pECS->GetEntityByIndex(iter.B);
+		auto& physics_a = m_vComponents[iter.A];
+		auto& physics_b = m_vComponents[iter.B];
+
+		auto entity_a = m_pECS->GetEntityByIndex(physics_a.EntityIndex);
+		auto entity_b = m_pECS->GetEntityByIndex(physics_b.EntityIndex);
 		
 		auto render_a = entity_a->GetComponentRender();
 		auto render_b = entity_b->GetComponentRender();
 
-		if ((render_a->PtrModel == nullptr) || (render_b->PtrModel == nullptr))
+		JWModel* a_model{ physics_a.PtrCollisionMesh };
+		JWModel* b_model{ physics_b.PtrCollisionMesh };
+
+		if ((a_model == nullptr) || (b_model == nullptr))
 		{
-			continue;
+			if ((render_a->PtrModel == nullptr) || (render_b->PtrModel == nullptr))
+			{
+				continue;
+			}
+
+			//JW_ERROR_ABORT("It is desirable to always use collision mesh!");
+
+			a_model = render_a->PtrModel;
+			b_model = render_b->PtrModel;
 		}
-		else
+		
+		auto& a_vertices = a_model->ModelData.VertexData.vVerticesModel;
+		auto& b_vertices = b_model->ModelData.VertexData.vVerticesModel;
+
+		auto& a_faces = a_model->ModelData.IndexData.vFaces;
+		auto& b_faces = b_model->ModelData.IndexData.vFaces;
+
+
+		// WHICH CONTACT TO GENERATE???
+		// face to face??
+		for (auto& a_face : a_faces)
 		{
-			render_a->PtrModel->ModelData.IndexData.vFaces[0];
+			a_vertices[a_face._0];
+			a_vertices[a_face._1];
+			a_vertices[a_face._2];
+
+			for (auto& b_face : b_faces)
+			{
+
+			}
 		}
+
 	}
-	int deb = 0;
 }

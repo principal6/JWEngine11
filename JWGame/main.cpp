@@ -45,6 +45,10 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "jar.mobj", "jar");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "oil_drum.mobj", "oil_drum");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "recycling_bin.mobj", "recycling_bin");
+
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "jar_cm.mobj", "CM_jar");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "oil_drum_cm.mobj", "CM_oil_drum");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "recycling_bin_cm.mobj", "CM_recycling_bin");
 	}
 	{
 		// SharedImage2D
@@ -195,6 +199,20 @@ int main()
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("CAMERA"));
 	}
 
+	auto camera_1 = ecs.CreateEntity("camera_1");
+	{
+		auto transform = camera_1->CreateComponentTransform();
+		transform->Position = XMVectorSet(0.0f, 12.0f, 0.0f, 1.0f);
+
+		auto physics = camera_1->CreateComponentPhysics();
+
+		auto camera = camera_1->CreateComponentCamera();
+		camera->CreatePerspectiveCamera(ECameraType::FreeLook);
+
+		auto render = camera_1->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("CAMERA"));
+	}
+
 	auto ambient_light = ecs.CreateEntity("ambient_light");
 	{
 		auto transform = ambient_light->CreateComponentTransform();
@@ -225,20 +243,6 @@ int main()
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("LIGHT"));
 
 		//ecs.DestroyEntityByName("directional_light");
-	}
-
-	auto camera_1 = ecs.CreateEntity("camera_1");
-	{
-		auto transform = camera_1->CreateComponentTransform();
-		transform->Position = XMVectorSet(0.0f, 12.0f, 0.0f, 1.0f);
-		
-		auto physics = camera_1->CreateComponentPhysics();
-		
-		auto camera = camera_1->CreateComponentCamera();
-		camera->CreatePerspectiveCamera(ECameraType::FreeLook);
-
-		auto render = camera_1->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModelByName("CAMERA"));
 	}
 
 	auto box = ecs.CreateEntity("box");
@@ -275,12 +279,13 @@ int main()
 	{
 		auto transform = oil_drum->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(0.0f, 26.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(0.0f, 20.0f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
 
 		auto physics = oil_drum->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(1.1f);
 		physics->SetMassByKilogram(20.0f);
+		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_oil_drum"));
 
 		auto render = oil_drum->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("oil_drum"));
