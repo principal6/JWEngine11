@@ -30,36 +30,24 @@ int main()
 	auto& ecs = myGame.ECS();
 	{
 		// SharedModel
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "jar.mobj"); // Shared Model #0
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.mobj"); // Shared Model #1
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X", L"Ezreal_mip.dds") // Shared Model #2
+		ecs.SystemRender().CreateDynamicSharedModelFromModelData(
+			ecs.SystemRender().PrimitiveMaker().MakeTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0)), "PICKED_TRIANGLE");
+		ecs.SystemRender().CreateSharedModelFromModelData(
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(0, 1, 0), XMFLOAT3(0, 1, 0)), "POINT_3D");
+		ecs.SystemRender().CreateDynamicSharedModelFromModelData(ecs.SystemRender().PrimitiveMaker().MakeHexahedron(), "VIEW_FRUSTUM");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.mobj", "CAMERA");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.mobj", "LIGHT");
+		ecs.SystemRender().CreateSharedModelFromModelData(ecs.SystemRender().PrimitiveMaker().MakeSphere(100.0f, 16, 7), "SKY_SPHERE");
+
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X", "EZREAL", L"Ezreal_mip.dds")
 			->AddAnimationFromFile("Ezreal_Punching.X")
 			->AddAnimationFromFile("Ezreal_Walk.X");
 		//->BakeAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
 
-		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeSphere(100.0f, 16, 7)); // Shared Model #3 (Sphere for Sky)
-		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeSquare(10.0f, XMFLOAT2(10.0f, 10.0f))); // Shared Model #4
-
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.mobj"); // Shared Model #5
-
-		ecs.SystemRender().CreateDynamicSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeTriangle(
-				XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0))); // Shared Model #6 (Picked triangle)
-		ecs.SystemRender().CreateDynamicSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeHexahedron()); // Shared Model #7 (View Frustum representation)
-
-		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(0, 1, 0), XMFLOAT3(0, 1, 0))
-		); // Shared Model #8 (Representation for debugging a 3d point)
-
-		ecs.SystemRender().CreateSharedModelFromModelData(
-			ecs.SystemRender().PrimitiveMaker().MakeCube(1.0f)); // Shared Model #9 (Box)
-
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "oil_drum.mobj"); // Shared Model #10
-
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "recycling_bin.mobj"); // Shared Model #11
+		ecs.SystemRender().CreateSharedModelFromModelData(ecs.SystemRender().PrimitiveMaker().MakeCube(1.0f), "box");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "jar.mobj", "jar");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "oil_drum.mobj", "oil_drum");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "recycling_bin.mobj", "recycling_bin");
 	}
 	{
 		// SharedImage2D
@@ -102,28 +90,33 @@ int main()
 		transform->Position = XMVectorSet(0.0f, 0.0f, 10.0f, 1.0f);
 
 		auto render = debug_point->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(8));
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D"));
 	}
 
-	auto view_frustum = ecs.CreateEntity(EEntityType::ViewFrustum);
+	auto VIEW_FRUSTUM = ecs.CreateEntity(EEntityType::ViewFrustum);
 	{
-		auto render = view_frustum->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(7));
+		auto render = VIEW_FRUSTUM->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("VIEW_FRUSTUM"));
 		render->SetRenderFlag(JWFlagComponentRenderOption_UseTransparency);
 	}
 
-	/*
 	auto grid = ecs.CreateEntity(EEntityType::Grid);
 	{
 		auto render = grid->CreateComponentRender();
 		render->SetLineModel(ecs.SystemRender().GetSharedLineModel(0));
 	}
-	*/
+	
+	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
+	{
+		auto render = image_gamma->CreateComponentRender();
+		render->SetImage2D(ecs.SystemRender().GetSharedImage2D(0));
+		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(3));
+	}
 
 	auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
 	{
 		auto render = picked_tri->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(6));
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("PICKED_TRIANGLE"));
 		render->SetRenderFlag(JWFlagComponentRenderOption_AlwaysSolidNoCull);
 	}
 
@@ -133,14 +126,14 @@ int main()
 		render->SetLineModel(ecs.SystemRender().GetSharedLineModel(1));
 	}
 
-	auto sky_sphere = ecs.CreateEntity(EEntityType::Sky);
+	auto SKY_SPHERE = ecs.CreateEntity(EEntityType::Sky);
 	{
-		auto transform = sky_sphere->CreateComponentTransform();
+		auto transform = SKY_SPHERE->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
 		transform->Position = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 
-		auto render = sky_sphere->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(3));
+		auto render = SKY_SPHERE->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("SKY_SPHERE"));
 		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(0));
 		render->SetVertexShader(EVertexShader::VSSkyMap);
 		render->SetPixelShader(EPixelShader::PSSkyMap);
@@ -156,10 +149,10 @@ int main()
 		
 		auto physics = main_sprite->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(3.0f, 0.0f, -0.5f, 0.0f);
-		physics->SetMassToInfinite();
+		//physics->SetMassByKilogram();
 
 		auto render = main_sprite->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(2));
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("EZREAL"));
 		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(4));
 		render->SetRenderFlag(
 			JWFlagComponentRenderOption_UseDiffuseTexture | JWFlagComponentRenderOption_GetLit |
@@ -178,6 +171,7 @@ int main()
 		transform->Position = XMVectorSet(-10.0f, -10.0f, 10.0f, 1.0f);
 
 		auto physics = terrain->CreateComponentPhysics();
+		physics->SetMassToInfinite();
 		physics->BoundingSphere = terrain_data->WholeBoundingSphere;
 		physics->SubBoundingSpheres = terrain_data->SubBoundingSpheres;
 
@@ -196,29 +190,12 @@ int main()
 		transform->RotatePitchYawRoll(XMFLOAT3(XM_PIDIV2 * 1.3f, 0, 0), true);
 
 		auto physics = camera_0->CreateComponentPhysics();
-		physics->SetMassToInfinite();
 		
 		auto camera = camera_0->CreateComponentCamera();
 		camera->CreatePerspectiveCamera(ECameraType::FreeLook);
 
 		auto render = camera_0->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(5));
-	}
-
-	auto jar = ecs.CreateEntity("jar");
-	{
-		auto transform = jar->CreateComponentTransform();
-		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(10.0f, 8.0f, 0.0f, 1.0f);
-		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
-
-		auto physics = jar->CreateComponentPhysics();
-		physics->BoundingSphere = SBoundingSphereData(0.8f, 0.0f, 0.6f, 0.0f);
-		physics->SetMassByKilogram(1.0f);
-
-		auto render = jar->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(0));
-		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("CAMERA"));
 	}
 
 	auto ambient_light = ecs.CreateEntity("ambient_light");
@@ -230,10 +207,9 @@ int main()
 		light->MakeAmbientLight(XMFLOAT3(1.0f, 1.0f, 1.0f), 0.5f);
 
 		auto physics = ambient_light->CreateComponentPhysics();
-		physics->SetMassToInfinite();
 
 		auto render = ambient_light->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(1));
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("LIGHT"));
 
 		//ecs.DestroyEntityByName("ambient_light");
 	}
@@ -247,55 +223,62 @@ int main()
 		light->MakeDirectionalLight(XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-1.0f, -1.0f, -1.0f), 0.6f);
 
 		auto physics = directional_light->CreateComponentPhysics();
-		physics->SetMassToInfinite();
 
 		auto render = directional_light->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(1));
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("LIGHT"));
 
 		//ecs.DestroyEntityByName("directional_light");
 	}
 
-	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
-	{
-		auto render = image_gamma->CreateComponentRender();
-		render->SetImage2D(ecs.SystemRender().GetSharedImage2D(0));
-		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(3));
-	}
-	
 	auto camera_1 = ecs.CreateEntity("camera_1");
 	{
 		auto transform = camera_1->CreateComponentTransform();
 		transform->Position = XMVectorSet(0.0f, 12.0f, 0.0f, 1.0f);
 		
 		auto physics = camera_1->CreateComponentPhysics();
-		physics->SetMassToInfinite();
 		
 		auto camera = camera_1->CreateComponentCamera();
 		camera->CreatePerspectiveCamera(ECameraType::FreeLook);
 
 		auto render = camera_1->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(5));
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("CAMERA"));
 	}
 
 	auto box = ecs.CreateEntity("box");
 	{
 		auto transform = box->CreateComponentTransform();
 		transform->ScalingFactor = XMVectorSet(32, 1.0f, 32, 0.0f);
-		transform->Position = XMVectorSet(0.0f, -2.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(0.0f, -10.0f, 0.0f, 1.0f);
 
 		auto physics = box->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(24.0f);
 		physics->SetMassToInfinite();
 
 		auto render = box->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(9));
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("box"));
+	}
+
+	auto jar = ecs.CreateEntity("jar");
+	{
+		auto transform = jar->CreateComponentTransform();
+		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
+		transform->Position = XMVectorSet(10.0f, 13.0f, 0.0f, 1.0f);
+		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
+
+		auto physics = jar->CreateComponentPhysics();
+		physics->BoundingSphere = SBoundingSphereData(0.8f, 0.0f, 0.6f, 0.0f);
+		//physics->SetMassByKilogram(1.0f);
+
+		auto render = jar->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("jar"));
+		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 	
 	auto oil_drum = ecs.CreateEntity("oil_drum");
 	{
 		auto transform = oil_drum->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(14.0f, 8.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(0.0f, 26.0f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
 
 		auto physics = oil_drum->CreateComponentPhysics();
@@ -303,7 +286,7 @@ int main()
 		physics->SetMassByKilogram(20.0f);
 
 		auto render = oil_drum->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(10));
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("oil_drum"));
 		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 
@@ -311,15 +294,15 @@ int main()
 	{
 		auto transform = recycling_bin->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(18.0f, 8.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(18.0f, 10.0f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.06f, 0.06f, 0.06f };
 
 		auto physics = recycling_bin->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(1.6f, 0.0f, 0.26f, 0.0f);
-		physics->SetMassByKilogram(6.0f);
+		//physics->SetMassByKilogram(6.0f);
 
 		auto render = recycling_bin->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModel(11));
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("recycling_bin"));
 		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 

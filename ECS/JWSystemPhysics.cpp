@@ -538,9 +538,13 @@ void JWSystemPhysics::Execute() noexcept
 
 			// Update sub-bounding spheres
 			UpdateSubBoundingSpheres(iter);
-
 		}
 	}
+
+	// Collision detection
+	DetectCoarseCollision();
+
+	DetectFineCollision();
 }
 
 /*
@@ -613,4 +617,74 @@ PRIVATE void JWSystemPhysics::UpdateSubBoundingSpheres(SComponentPhysics& Physic
 		auto mat_scaling = XMMatrixScaling(curr_sub_bs.Radius, curr_sub_bs.Radius, curr_sub_bs.Radius);
 		auto mat_translation = XMMatrixTranslationFromVector(entity_position + curr_sub_bs.Center);
 	}
+}
+
+PRIVATE void JWSystemPhysics::DetectCoarseCollision() noexcept
+{
+	auto n = m_vComponents.size();
+	if (n == 0) { return; }
+
+	auto max_capacity = n * (n - 1) / 2;
+	if (m_CoarseCollisionList.capacity() < max_capacity)
+	{
+		m_CoarseCollisionList.reserve(max_capacity);
+	}
+	m_CoarseCollisionList.clear();
+
+	for (auto i = m_vComponents.cbegin(); i != m_vComponents.cend(); ++i)
+	{
+		if (i->InverseMass != KNonPhysicalObjectInverseMass)
+		{
+			auto i_entity = m_pECS->GetEntityByIndex(i->EntityIndex);
+			auto i_transform = i_entity->GetComponentTransform();
+			auto i_world_center = i->BoundingSphere.Center;
+			if (i_transform)
+			{
+				i_world_center += i_transform->Position;
+			}
+
+			for (auto j = i + 1; j != m_vComponents.cend(); ++j)
+			{
+				if (j->InverseMass != KNonPhysicalObjectInverseMass)
+				{
+					auto j_entity = m_pECS->GetEntityByIndex(j->EntityIndex);
+					auto j_transform = j_entity->GetComponentTransform();
+					auto j_world_center = j->BoundingSphere.Center;
+					if (j_transform)
+					{
+						j_world_center += j_transform->Position;
+					}
+
+					if (IntersectSpheres(i->BoundingSphere.Radius, i_world_center, j->BoundingSphere.Radius, j_world_center))
+					{
+						m_CoarseCollisionList.emplace_back(i->EntityIndex, j->EntityIndex);
+					}
+				}
+			}
+		}
+	}
+}
+
+PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
+{
+	if (m_CoarseCollisionList.size() == 0) { return; }
+
+	for (const auto& iter : m_CoarseCollisionList)
+	{
+		auto entity_a = m_pECS->GetEntityByIndex(iter.A);
+		auto entity_b = m_pECS->GetEntityByIndex(iter.B);
+		
+		auto render_a = entity_a->GetComponentRender();
+		auto render_b = entity_b->GetComponentRender();
+
+		if ((render_a->PtrModel == nullptr) || (render_b->PtrModel == nullptr))
+		{
+			continue;
+		}
+		else
+		{
+			render_a->PtrModel->ModelData.IndexData.vFaces[0];
+		}
+	}
+	int deb = 0;
 }

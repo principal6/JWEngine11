@@ -35,24 +35,24 @@ namespace JWEngine
 		void Destroy() noexcept;
 
 		auto CreateComponentTransform() noexcept->SComponentTransform*;
-		auto GetComponentTransform() noexcept->SComponentTransform*;
-		void SetComponentTransformIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentTransformIndex = ComponentIndex; };
+		inline auto GetComponentTransform() noexcept->SComponentTransform*;
+		inline void SetComponentTransformIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentTransformIndex = ComponentIndex; };
 
 		auto CreateComponentLight() noexcept->SComponentLight*;
-		auto GetComponentLight() noexcept->SComponentLight*;
-		void SetComponentLightIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentLightIndex = ComponentIndex; };
+		inline auto GetComponentLight() noexcept->SComponentLight*;
+		inline void SetComponentLightIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentLightIndex = ComponentIndex; };
 
 		auto CreateComponentPhysics() noexcept->SComponentPhysics*;
-		auto GetComponentPhysics() noexcept->SComponentPhysics*;
-		void SetComponentPhysicsIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentPhysicsIndex = ComponentIndex; };
+		inline auto GetComponentPhysics() noexcept->SComponentPhysics*;
+		inline void SetComponentPhysicsIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentPhysicsIndex = ComponentIndex; };
 
 		auto CreateComponentCamera() noexcept->SComponentCamera*;
-		auto GetComponentCamera() noexcept->SComponentCamera*;
-		void SetComponentCameraIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentCameraIndex = ComponentIndex; };
+		inline auto GetComponentCamera() noexcept->SComponentCamera*;
+		inline void SetComponentCameraIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentCameraIndex = ComponentIndex; };
 
 		auto CreateComponentRender() noexcept->SComponentRender*;
-		auto GetComponentRender() noexcept->SComponentRender*;
-		void SetComponentRenderIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentRenderIndex = ComponentIndex; };
+		inline auto GetComponentRender() noexcept->SComponentRender*;
+		inline void SetComponentRenderIndex(ComponentIndexType ComponentIndex) noexcept { m_ComponentRenderIndex = ComponentIndex; };
 		
 		inline void SetEntityIndex(EntityIndexType NewIndex) noexcept { m_EntityIndex = NewIndex; };
 		inline auto GetEntityIndex() const noexcept { return m_EntityIndex; };

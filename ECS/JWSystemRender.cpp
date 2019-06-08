@@ -17,12 +17,13 @@ void JWSystemRender::Create(JWECS& ECS, JWDX& DX, const SSize2& WindowSize, STRI
 	// Set base directory.
 	m_BaseDirectory = BaseDirectory;
 
-	// Bounding ellipsoid (with instance buffer)
+	// Bounding sphere (with instance buffer)
 	JWPrimitiveMaker primitive{};
-	m_BoundingSphereModel.Create(DX, BaseDirectory);
+	m_BoundingSphereModel.Create(DX, BaseDirectory, "BOUNDING_SPHERE");
 	m_BoundingSphereModel.CreateMeshBuffers(primitive.MakeSphere(1.0f, 16, 7), ERenderType::Model_Static);
 	m_BoundingSphereModel.CreateInstanceBuffer();
 
+	/// Bounding ellipsoid (with instance buffer)
 	///m_BoundingEllipsoid.Create(DX, BaseDirectory);
 	///m_BoundingEllipsoid.CreateMeshBuffers(primitive.MakeSphere(1.0f, 16, 7), ERenderType::Model_Static);
 	///m_BoundingEllipsoid.CreateInstanceBuffer();
@@ -232,13 +233,13 @@ auto JWSystemRender::GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResour
 	return result;
 }
 
-auto JWSystemRender::CreateSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*
+auto JWSystemRender::CreateSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*
 {
 	m_vSharedModel.push_back(JWModel());
 
 	auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
 
-	current_model.Create(*m_pDX, m_BaseDirectory);
+	current_model.Create(*m_pDX, m_BaseDirectory, ModelName);
 
 	JWPrimitiveMaker maker{};
 	current_model.CreateMeshBuffers(ModelData, ERenderType::Model_Static);
@@ -246,13 +247,13 @@ auto JWSystemRender::CreateSharedModelFromModelData(const SModelData& ModelData)
 	return &current_model;
 }
 
-auto JWSystemRender::CreateDynamicSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*
+auto JWSystemRender::CreateDynamicSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*
 {
 	m_vSharedModel.push_back(JWModel());
 
 	auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
 
-	current_model.Create(*m_pDX, m_BaseDirectory);
+	current_model.Create(*m_pDX, m_BaseDirectory, ModelName);
 
 	JWPrimitiveMaker maker{};
 	current_model.CreateMeshBuffers(ModelData, ERenderType::Model_Dynamic);
@@ -260,13 +261,14 @@ auto JWSystemRender::CreateDynamicSharedModelFromModelData(const SModelData& Mod
 	return &current_model;
 }
 
-auto JWSystemRender::CreateSharedModelFromFile(ESharedModelType Type, const STRING& FileName, const WSTRING& OverrideTextureFN) noexcept->JWModel*
+auto JWSystemRender::CreateSharedModelFromFile(ESharedModelType Type, const STRING& FileName, const STRING& ModelName,
+	const WSTRING& OverrideTextureFN) noexcept->JWModel*
 {
 	m_vSharedModel.push_back(JWModel());
 
 	auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
 
-	current_model.Create(*m_pDX, m_BaseDirectory);
+	current_model.Create(*m_pDX, m_BaseDirectory, ModelName);
 
 	JWAssimpLoader loader{};
 
@@ -292,13 +294,28 @@ auto JWSystemRender::CreateSharedModelFromFile(ESharedModelType Type, const STRI
 	return &current_model;
 }
 
-auto JWSystemRender::GetSharedModel(size_t Index) noexcept->JWModel*
+auto JWSystemRender::GetSharedModelByIndex(size_t Index) noexcept->JWModel*
 {
 	JWModel* result{};
 
 	if (Index < m_vSharedModel.size())
 	{
 		result = &m_vSharedModel[Index];
+	}
+
+	return result;
+}
+
+auto JWSystemRender::GetSharedModelByName(const STRING& Name) noexcept->JWModel*
+{
+	JWModel* result{};
+
+	for (auto& iter : m_vSharedModel)
+	{
+		if (iter.GetModelName().compare(Name) == 0)
+		{
+			result = &iter;
+		}
 	}
 
 	return result;

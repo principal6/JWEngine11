@@ -265,5 +265,28 @@ namespace JWEngine
 		return false;
 	}
 
+	static auto __vectorcall IntersectSpheres(
+		float RadiusA, const XMVECTOR& CenterA, float RadiusB, const XMVECTOR& CenterB, float* OutSqaureDistancePtr = nullptr) noexcept->bool
+	{
+		auto distance_vector = CenterA - CenterB;
+		distance_vector = XMVector3Dot(distance_vector, distance_vector);
+		auto square_distance = XMVectorGetX(distance_vector);
+
+		auto sqaure_radii = RadiusA + RadiusB;
+		sqaure_radii *= sqaure_radii;
+
+		if (OutSqaureDistancePtr)
+		{
+			*OutSqaureDistancePtr = square_distance;
+		}
+
+		if (square_distance <= sqaure_radii)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 
 };

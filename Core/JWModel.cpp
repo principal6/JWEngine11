@@ -4,13 +4,16 @@
 
 using namespace JWEngine;
 
-void JWModel::Create(JWDX& DX, STRING& BaseDirectory) noexcept
+void JWModel::Create(JWDX& DX, const STRING& BaseDirectory, const STRING& ModelName) noexcept
 {
 	// Set JWDX pointer.
 	m_pDX = &DX;
 
 	// Set BaseDirectory pointer.
 	m_pBaseDirectory = &BaseDirectory;
+
+	// Set model's name.
+	m_ModelName = ModelName;
 }
 
 void JWModel::Destroy() noexcept
@@ -52,7 +55,7 @@ void JWModel::CreateInstanceBuffer() noexcept
 		&ModelVertexBuffer[KVBIDInstancing]);
 }
 
-auto JWModel::AddAnimationFromFile(STRING FileName) noexcept->JWModel*
+auto JWModel::AddAnimationFromFile(const STRING& FileName) noexcept->JWModel*
 {
 	if (m_RenderType == ERenderType::Model_Rigged)
 	{
@@ -63,7 +66,7 @@ auto JWModel::AddAnimationFromFile(STRING FileName) noexcept->JWModel*
 	return this;
 }
 
-auto JWModel::BakeAnimationTexture(SSize2 TextureSize, STRING FileName) noexcept->JWModel*
+auto JWModel::BakeAnimationTexture(SSize2 TextureSize, const STRING& FileName) noexcept->JWModel*
 {
 	if (ModelData.AnimationSet.vAnimations.size())
 	{

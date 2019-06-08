@@ -5,7 +5,8 @@
 namespace JWEngine
 {
 	// Gravity on Earth = 9.8m/s^2
-	static constexpr float		KGravityOnEarth{ 9.8f };
+	static constexpr float		KNonPhysicalObjectInverseMass{ -1.0f };
+	static constexpr float		KGravityOnEarth{ 0.8f };
 	static constexpr float		KPhysicsWorldFloor{ -100.0f };
 	static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
 	static const STRING			KNoName{ "" };
@@ -13,11 +14,11 @@ namespace JWEngine
 	class JWEntity;
 	class JWECS;
 
-	enum EFLAGSystemPhysicsOption : uint16_t
+	enum EFLAGSystemPhysicsOption : uint8_t
 	{
 		JWFlagSystemPhysicsOption_ApplyForces = 0x01,
 	};
-	using JWFlagSystemPhysicsOption = uint16_t;
+	using JWFlagSystemPhysicsOption = uint8_t;
 
 	struct SComponentPhysics
 	{
@@ -44,7 +45,7 @@ namespace JWEngine
 		// InverseMass = 1/Mass
 		// @important: mass MUST NOT be 'zero'
 		// but 'infinite mass' (zero InverseMass) means no physics calculation on this component.
-		float		InverseMass{};
+		float		InverseMass{ KNonPhysicalObjectInverseMass };
 
 		// [Property]	velocity
 		// [Unit]		m/s
@@ -69,12 +70,7 @@ namespace JWEngine
 
 		void SetMassByKilogram(float Kg)
 		{
-			assert(Kg > 0);
-
-			if (Kg > 0)
-			{
-				InverseMass = 1.0f / (Kg / 1000.0f);
-			}
+			SetMassByGram(Kg * 1000.0f);
 		}
 		
 		void SetMassToInfinite()
@@ -96,6 +92,15 @@ namespace JWEngine
 		{
 			AccumulatedForce += Force;
 		}
+	};
+
+	struct SCollisionPair
+	{
+		SCollisionPair() {};
+		SCollisionPair(ComponentIndexType _A, ComponentIndexType _B) : A{ _A }, B{ _B } {};
+
+		ComponentIndexType A{};
+		ComponentIndexType B{};
 	};
 
 	class JWSystemPhysics
@@ -149,6 +154,9 @@ namespace JWEngine
 		void UpdateBoundingSphere(SComponentPhysics& Physics) noexcept;
 		void UpdateSubBoundingSpheres(SComponentPhysics& Physics) noexcept;
 
+		void DetectCoarseCollision() noexcept;
+		void DetectFineCollision() noexcept;
+
 	private:
 		VECTOR<SComponentPhysics>	m_vComponents;
 
@@ -165,7 +173,7 @@ namespace JWEngine
 
 		XMVECTOR					m_PickedTriangle[3]{};
 		XMVECTOR					m_PickedPoint{};
-		//VECTOR<uint32_t>			m_vPickedSubBoundingEllipsoidID{};
+		///VECTOR<uint32_t>			m_vPickedSubBoundingEllipsoidID{};
 		VECTOR<uint32_t>			m_vPickedSubBoundingSphereID{};
 
 		JWEntity*					m_pPickedEntity{};
@@ -175,15 +183,8 @@ namespace JWEngine
 		XMVECTOR					m_PickedTerrainDistance{};
 		XMVECTOR					m_PickedNonTerrainDistance{};
 
+		VECTOR<SCollisionPair>		m_CoarseCollisionList{};
+
 		JWFlagSystemPhysicsOption	m_FlagSystemPhyscisOption{};
-	};
-
-	class JWPhysicsCollisionDetector
-	{
-	public:
-
-
-	private:
-
 	};
 };

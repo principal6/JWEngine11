@@ -12,7 +12,7 @@ namespace JWEngine
 		JWModel() = default;
 		~JWModel() = default;
 
-		void Create(JWDX& DX, STRING& BaseDirectory) noexcept;
+		void Create(JWDX& DX, const STRING& BaseDirectory, const STRING& ModelName) noexcept;
 		void Destroy() noexcept;
 
 		void CreateMeshBuffers(const SModelData& Data, ERenderType Type) noexcept;
@@ -20,12 +20,12 @@ namespace JWEngine
 
 		// ---------------------------------
 		// --- Animation related methods ---
-		auto AddAnimationFromFile(STRING FileName) noexcept->JWModel*;
+		auto AddAnimationFromFile(const STRING& FileName) noexcept->JWModel*;
 
 		// Before calling this function,
 		// first you must add all the animations you want to bake into texture
 		// by calling AddAnimationFromFile()
-		auto BakeAnimationTexture(SSize2 TextureSize, STRING FileName) noexcept->JWModel*;
+		auto BakeAnimationTexture(SSize2 TextureSize, const STRING& FileName) noexcept->JWModel*;
 
 		// Only available when it's dynamic model
 		// @important
@@ -43,6 +43,7 @@ namespace JWEngine
 
 		auto GetRenderType() const noexcept { return m_RenderType; };
 		auto GetTextureFileName() const noexcept->const WSTRING& { return ModelData.TextureFileNameW; }
+		auto GetModelName() const noexcept->const STRING& { return m_ModelName; }
 
 	public:
 		ID3D11Buffer*		ModelVertexBuffer[KVertexBufferCount]{};
@@ -64,5 +65,6 @@ namespace JWEngine
 		JWDX*			m_pDX{};
 		const STRING*	m_pBaseDirectory{};
 		ERenderType		m_RenderType{ ERenderType::Invalid };
+		STRING			m_ModelName{};
 	};
 };

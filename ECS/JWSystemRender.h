@@ -249,10 +249,12 @@ namespace JWEngine
 		void CreateSharedTextureFromSharedModel(size_t ModelIndex) noexcept;
 		auto GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*;
 		// Shared Model
-		auto CreateSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*;
-		auto CreateDynamicSharedModelFromModelData(const SModelData& ModelData) noexcept->JWModel*;
-		auto CreateSharedModelFromFile(ESharedModelType Type, const STRING& FileName, const WSTRING& OverrideTextureFN = L"") noexcept->JWModel*;
-		auto GetSharedModel(size_t Index) noexcept->JWModel*;
+		auto CreateSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*;
+		auto CreateDynamicSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*;
+		auto CreateSharedModelFromFile(ESharedModelType Type, const STRING& FileName, const STRING& ModelName, 
+			const WSTRING& OverrideTextureFN = L"") noexcept->JWModel*;
+		auto GetSharedModelByIndex(size_t Index) noexcept->JWModel*;
+		auto GetSharedModelByName(const STRING& Name) noexcept->JWModel*;
 		// Shared LineModel
 		auto CreateSharedLineModel() noexcept->JWLineModel*;
 		auto GetSharedLineModel(size_t Index) noexcept->JWLineModel*;

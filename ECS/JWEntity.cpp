@@ -51,7 +51,7 @@ auto JWEntity::CreateComponentTransform() noexcept->SComponentTransform*
 	return GetComponentTransform();
 }
 
-auto JWEntity::GetComponentTransform() noexcept->SComponentTransform*
+inline auto JWEntity::GetComponentTransform() noexcept->SComponentTransform*
 {
 	return m_pECS->SystemTransform().GetComponentPtr(m_ComponentTransformIndex);
 }
@@ -63,7 +63,7 @@ auto JWEntity::CreateComponentLight() noexcept->SComponentLight*
 	return GetComponentLight();
 }
 
-auto JWEntity::GetComponentLight() noexcept->SComponentLight*
+inline auto JWEntity::GetComponentLight() noexcept->SComponentLight*
 {
 	return m_pECS->SystemLight().GetComponentPtr(m_ComponentLightIndex);
 }
@@ -75,7 +75,7 @@ auto JWEntity::CreateComponentPhysics() noexcept->SComponentPhysics*
 	return GetComponentPhysics();
 }
 
-auto JWEntity::GetComponentPhysics() noexcept->SComponentPhysics*
+inline auto JWEntity::GetComponentPhysics() noexcept->SComponentPhysics*
 {
 	return m_pECS->SystemPhysics().GetComponentPtr(m_ComponentPhysicsIndex);
 }
@@ -87,7 +87,7 @@ auto JWEntity::CreateComponentCamera() noexcept->SComponentCamera*
 	return GetComponentCamera();
 }
 
-auto JWEntity::GetComponentCamera() noexcept->SComponentCamera*
+inline auto JWEntity::GetComponentCamera() noexcept->SComponentCamera*
 {
 	return m_pECS->SystemCamera().GetComponentPtr(m_ComponentCameraIndex);
 }
@@ -99,7 +99,7 @@ auto JWEntity::CreateComponentRender() noexcept->SComponentRender*
 	return GetComponentRender();
 }
 
-auto JWEntity::GetComponentRender() noexcept->SComponentRender*
+inline auto JWEntity::GetComponentRender() noexcept->SComponentRender*
 {
 	return m_pECS->SystemRender().GetComponentPtr(m_ComponentRenderIndex);
 }
