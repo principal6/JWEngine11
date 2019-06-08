@@ -28,16 +28,19 @@ PRIVATE auto JWSystemPhysics::CreateComponent(EntityIndexType EntityIndex) noexc
 
 	// Set world matrix of bounding ellipsoid
 	auto transform = ptr_entity->GetComponentTransform();
-	const auto& bounding_ellipsoid = m_vComponents[component_index].BoundingEllipsoid;
+	const auto& bounding_sphere = m_vComponents[component_index].BoundingSphere;
 
-	auto temp_center = bounding_ellipsoid.Offset;
+	auto temp_center = bounding_sphere.Center;
 	if (transform) { temp_center += transform->Position; }
 	
-	auto mat_scaling = XMMatrixScaling(bounding_ellipsoid.RadiusX, bounding_ellipsoid.RadiusY, bounding_ellipsoid.RadiusZ);
+	auto mat_scaling = XMMatrixScaling(bounding_sphere.Radius, bounding_sphere.Radius, bounding_sphere.Radius);
 	auto mat_translation = XMMatrixTranslationFromVector(temp_center);
 
-	// Add bounding ellipsoid instance into SystemRender
-	m_pECS->SystemRender().AddBoundingEllipsoidInstance(mat_scaling * mat_translation);
+	/// Add bounding ellipsoid instance into SystemRender
+	///m_pECS->SystemRender().AddBoundingEllipsoidInstance(mat_scaling * mat_translation);
+
+	// Add bounding sphere instance into SystemRender
+	m_pECS->SystemRender().AddBoundingSphereInstance(mat_scaling * mat_translation);
 
 	return component_index;
 }
@@ -64,8 +67,11 @@ PRIVATE void JWSystemPhysics::DestroyComponent(ComponentIndexType ComponentIndex
 		JW_ERROR_ABORT("Invalid component index.");
 	}
 
-	// Erase bounding ellipsoid instance in JWSystemRender
-	m_pECS->SystemRender().EraseBoundingEllipsoidInstance(component_index);
+	/// Erase bounding ellipsoid instance in JWSystemRender
+	///m_pECS->SystemRender().EraseBoundingEllipsoidInstance(component_index);
+
+	// Erase bounding sphere instance in JWSystemRender
+	m_pECS->SystemRender().EraseBoundingSphereInstance(component_index);
 
 	// Swap the last element of the vector and the deleted element if necessary
 	if (component_index < last_index)
@@ -107,11 +113,13 @@ auto JWSystemPhysics::PickEntity() noexcept->bool
 	m_PickedTerrainDistance = KVectorMax;
 	m_PickedNonTerrainDistance = KVectorMax;
 
-	if (PickEntityByEllipsoid())
+	//if (PickEntityByEllipsoid())
+	if (PickEntityBySphere())
 	{
 		if (m_pPickedTerrainEntity)
 		{
-			if (PickSubBoundingEllipsoid(m_pPickedTerrainEntity))
+			//if (PickSubBoundingEllipsoid(m_pPickedTerrainEntity))
+			if (PickSubBoundingSphere(m_pPickedTerrainEntity))
 			{
 				PickTerrainTriangle();
 			}
@@ -179,6 +187,7 @@ PRIVATE __forceinline void JWSystemPhysics::CastPickingRay() noexcept
 	m_PickingRayDirection = XMVector3TransformNormal(m_PickingRayViewSpaceDirection, MatrixViewInverse);
 }
 
+/*
 PRIVATE auto JWSystemPhysics::PickEntityByEllipsoid() noexcept->bool
 {
 	for (auto iter : m_vComponents)
@@ -217,6 +226,7 @@ PRIVATE auto JWSystemPhysics::PickEntityByEllipsoid() noexcept->bool
 			auto inv_ellipsoid_world = XMMatrixInverse(nullptr, iter.BoundingEllipsoid.EllipsoidWorld);
 			auto e_ray_origin = XMVector3TransformCoord(m_PickingRayOrigin, inv_ellipsoid_world);
 			auto e_ray_direction = XMVector3TransformNormal(m_PickingRayDirection, inv_ellipsoid_world);
+			
 
 			if (type == EEntityType::MainTerrain)
 			{
@@ -242,7 +252,78 @@ PRIVATE auto JWSystemPhysics::PickEntityByEllipsoid() noexcept->bool
 
 	return false;
 }
+*/
 
+PRIVATE auto JWSystemPhysics::PickEntityBySphere() noexcept->bool
+{
+	for (auto iter : m_vComponents)
+	{
+		auto ptr_entity = m_pECS->GetEntityByIndex(iter.EntityIndex);
+
+		auto transform{ ptr_entity->GetComponentTransform() };
+		auto type{ ptr_entity->GetEntityType() };
+
+		if (type != EEntityType::UserDefined)
+		{
+			// MainSprite, MainTerrain need to be picked
+			if (!(
+				(type == EEntityType::MainSprite) ||
+				(type == EEntityType::MainTerrain)
+				))
+			{
+				continue;
+			}
+		}
+
+		if (transform)
+		{
+			auto camera{ ptr_entity->GetComponentCamera() };
+			if (camera)
+			{
+				// @important
+				// You must be UNABLE to pick the current camera!
+				if (m_pECS->SystemCamera().GetCurrentCameraComponentID() == camera->ComponentIndex)
+				{
+					continue;
+				}
+			}
+
+			auto physics = ptr_entity->GetComponentPhysics();
+			if (physics)
+			{
+				auto world_center = physics->BoundingSphere.Center;
+				if (transform)
+				{
+					world_center += transform->Position;
+				}
+				if (type == EEntityType::MainTerrain)
+				{
+					if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, physics->BoundingSphere.Radius, world_center))
+					{
+						m_pPickedTerrainEntity = ptr_entity;
+					}
+				}
+				else
+				{
+					if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, physics->BoundingSphere.Radius, world_center,
+						&m_PickedNonTerrainDistance))
+					{
+						m_pPickedNonTerrainEntity = ptr_entity;
+					}
+				}
+			}
+		}
+	}
+
+	if ((m_pPickedTerrainEntity) || (m_pPickedNonTerrainEntity))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+/*
 PRIVATE auto JWSystemPhysics::PickSubBoundingEllipsoid(JWEntity* PtrEntity) noexcept->bool
 {
 	auto physics = PtrEntity->GetComponentPhysics();
@@ -280,6 +361,38 @@ PRIVATE auto JWSystemPhysics::PickSubBoundingEllipsoid(JWEntity* PtrEntity) noex
 
 	return false;
 }
+*/
+
+PRIVATE auto JWSystemPhysics::PickSubBoundingSphere(JWEntity* PtrEntity) noexcept->bool
+{
+	auto physics = PtrEntity->GetComponentPhysics();
+	if (physics == nullptr) { return false; }
+	auto transform = PtrEntity->GetComponentTransform();
+	if (transform == nullptr) { return false; }
+
+	// Clear array
+	m_vPickedSubBoundingSphereID.clear();
+
+	auto& sub_bounding_spheres = physics->SubBoundingSpheres;
+
+	for (auto id = static_cast<uint32_t>(sub_bounding_spheres.size()); id > 0; --id)
+	{
+		auto world_center = sub_bounding_spheres[id - 1].Center + transform->Position;
+
+		// @important: NO distance comparison!
+		if (IntersectRaySphere(m_PickingRayOrigin, m_PickingRayDirection, sub_bounding_spheres[id - 1].Radius, world_center))
+		{
+			m_vPickedSubBoundingSphereID.push_back(id - 1);
+		}
+	}
+
+	if (m_vPickedSubBoundingSphereID.size())
+	{
+		return true;
+	}
+
+	return false;
+}
 
 PRIVATE void JWSystemPhysics::PickTerrainTriangle() noexcept
 {
@@ -296,11 +409,11 @@ PRIVATE void JWSystemPhysics::PickTerrainTriangle() noexcept
 		XMVECTOR v[3]{};
 		auto picked_distance{ KVectorMax };
 
-		for (auto& bs : m_vPickedSubBoundingEllipsoidID)
+		for (auto& bs : m_vPickedSubBoundingSphereID)
 		{
 			for (auto& node : ptr_terrain->QuadTree)
 			{
-				if (node.SubBoundingEllipsoidID == bs)
+				if (node.SubBoundingVolumeID == bs)
 				{
 					const auto& faces{ node.IndexData.vFaces };
 					const auto& vertices{ node.VertexData.vVerticesModel };
@@ -414,15 +527,23 @@ void JWSystemPhysics::Execute() noexcept
 				iter.AccumulatedForce = KVectorZero;
 			}
 
-			// Update bounding ellipsoid
-			UpdateBoundingEllipsoid(iter);
+			/// Update bounding ellipsoid
+			///UpdateBoundingEllipsoid(iter);
 
-			// Update sub-bounding ellipsoids
-			UpdateSubBoundingEllipsoids(iter);
+			/// Update sub-bounding ellipsoids
+			///UpdateSubBoundingEllipsoids(iter);
+
+			// Update bounding sphere
+			UpdateBoundingSphere(iter);
+
+			// Update sub-bounding spheres
+			UpdateSubBoundingSpheres(iter);
+
 		}
 	}
 }
 
+/*
 PRIVATE void JWSystemPhysics::UpdateBoundingEllipsoid(SComponentPhysics& Physics) noexcept
 {
 	// Get pointer to the entity.
@@ -456,5 +577,40 @@ PRIVATE void JWSystemPhysics::UpdateSubBoundingEllipsoids(SComponentPhysics& Phy
 		auto mat_scaling = XMMatrixScaling(curr_sub_be.RadiusX, curr_sub_be.RadiusY, curr_sub_be.RadiusZ);
 		auto mat_translation = XMMatrixTranslationFromVector(entity_position + curr_sub_be.Offset);
 		curr_sub_be.EllipsoidWorld = mat_scaling * mat_translation;
+	}
+}
+*/
+
+PRIVATE void JWSystemPhysics::UpdateBoundingSphere(SComponentPhysics& Physics) noexcept
+{
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(Physics.EntityIndex);
+
+	// Calculate world matrix of the bounding ellipsoid
+	auto transform = ptr_entity->GetComponentTransform();
+	auto& bounding_sphere = Physics.BoundingSphere;
+
+	auto temp_center = bounding_sphere.Center;
+	if (transform) { temp_center += transform->Position; }
+
+	auto mat_scaling = XMMatrixScaling(bounding_sphere.Radius, bounding_sphere.Radius, bounding_sphere.Radius);
+	auto mat_translation = XMMatrixTranslationFromVector(temp_center);
+
+	// Update the data into SystemRender
+	m_pECS->SystemRender().UpdateBoundingSphereInstance(Physics.ComponentIndex, mat_scaling * mat_translation);
+}
+
+PRIVATE void JWSystemPhysics::UpdateSubBoundingSpheres(SComponentPhysics& Physics) noexcept
+{
+	// Get pointer to the entity.
+	auto ptr_entity = m_pECS->GetEntityByIndex(Physics.EntityIndex);
+
+	// Calculate world matrix of the sub-bounding ellipsoids
+	auto transform = ptr_entity->GetComponentTransform();
+	auto entity_position = transform->Position;
+	for (auto& curr_sub_bs : Physics.SubBoundingSpheres)
+	{
+		auto mat_scaling = XMMatrixScaling(curr_sub_bs.Radius, curr_sub_bs.Radius, curr_sub_bs.Radius);
+		auto mat_translation = XMMatrixTranslationFromVector(entity_position + curr_sub_bs.Center);
 	}
 }

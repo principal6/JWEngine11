@@ -153,9 +153,9 @@ int main()
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
 		transform->Position = XMVectorSet(0.0f, 2.8f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.02f, 0.02f, 0.02f };
-
+		
 		auto physics = main_sprite->CreateComponentPhysics();
-		physics->BoundingEllipsoid = SBoundingEllipsoidData(2.0f, 3.6f, 2.0f, 0.0f, -0.4f, 0.0f);
+		physics->BoundingSphere = SBoundingSphereData(3.0f, 0.0f, -0.5f, 0.0f);
 		physics->SetMassToInfinite();
 
 		auto render = main_sprite->CreateComponentRender();
@@ -178,8 +178,8 @@ int main()
 		transform->Position = XMVectorSet(-10.0f, -10.0f, 10.0f, 1.0f);
 
 		auto physics = terrain->CreateComponentPhysics();
-		physics->BoundingEllipsoid = terrain_data->WholeBoundingEllipsoid;
-		physics->SubBoundingEllipsoids = terrain_data->SubBoundingEllipsoids;
+		physics->BoundingSphere = terrain_data->WholeBoundingSphere;
+		physics->SubBoundingSpheres = terrain_data->SubBoundingSpheres;
 
 		auto render = terrain->CreateComponentRender();
 		render->SetTerrain(terrain_data);
@@ -213,7 +213,7 @@ int main()
 		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
 
 		auto physics = jar->CreateComponentPhysics();
-		physics->BoundingEllipsoid = SBoundingEllipsoidData(0.8f, 0.8f, 0.8f, 0.0f, 0.6f, 0.0f);
+		physics->BoundingSphere = SBoundingSphereData(0.8f, 0.0f, 0.6f, 0.0f);
 		physics->SetMassByKilogram(1.0f);
 
 		auto render = jar->CreateComponentRender();
@@ -284,13 +284,13 @@ int main()
 		transform->Position = XMVectorSet(0.0f, -2.0f, 0.0f, 1.0f);
 
 		auto physics = box->CreateComponentPhysics();
-		physics->BoundingEllipsoid = SBoundingEllipsoidData(32, 1.0f, 32);
+		physics->BoundingSphere = SBoundingSphereData(24.0f);
 		physics->SetMassToInfinite();
 
 		auto render = box->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModel(9));
 	}
-
+	
 	auto oil_drum = ecs.CreateEntity("oil_drum");
 	{
 		auto transform = oil_drum->CreateComponentTransform();
@@ -299,7 +299,7 @@ int main()
 		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
 
 		auto physics = oil_drum->CreateComponentPhysics();
-		physics->BoundingEllipsoid = SBoundingEllipsoidData(1.1f, 1.1f, 1.1f);
+		physics->BoundingSphere = SBoundingSphereData(1.1f);
 		physics->SetMassByKilogram(20.0f);
 
 		auto render = oil_drum->CreateComponentRender();
@@ -315,7 +315,7 @@ int main()
 		transform->ScalingFactor = { 0.06f, 0.06f, 0.06f };
 
 		auto physics = recycling_bin->CreateComponentPhysics();
-		physics->BoundingEllipsoid = SBoundingEllipsoidData(1.6f, 1.6f, 1.6f, 0.0f, 0.2f, 0.0f);
+		physics->BoundingSphere = SBoundingSphereData(1.6f, 0.0f, 0.26f, 0.0f);
 		physics->SetMassByKilogram(6.0f);
 
 		auto render = recycling_bin->CreateComponentRender();
@@ -356,12 +356,12 @@ JW_FUNCTION_ON_WINDOWS_KEY_DOWN(OnWindowsKeyDown)
 
 	if (VK == VK_F4)
 	{
-		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawBoundingEllipsoids);
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawBoundingSpheres);
 	}
 
 	if (VK == VK_F5)
 	{
-		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawSubBoundingEllipsoids);
+		ecs.SystemRender().ToggleSystemRenderFlag(JWFlagSystemRenderOption_DrawSubBoundingSpheres);
 	}
 
 	if (VK == VK_F6)

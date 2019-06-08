@@ -47,8 +47,8 @@ namespace JWEngine
 	enum EFLAGSystemRenderOption : uint16_t
 	{
 		JWFlagSystemRenderOption_DrawNormals			= 0x01,
-		JWFlagSystemRenderOption_DrawBoundingEllipsoids	= 0x02,
-		JWFlagSystemRenderOption_DrawSubBoundingEllipsoids = 0x04,
+		JWFlagSystemRenderOption_DrawBoundingSpheres	= 0x02,
+		JWFlagSystemRenderOption_DrawSubBoundingSpheres = 0x04,
 		JWFlagSystemRenderOption_DrawCameras			= 0x08,
 		JWFlagSystemRenderOption_DrawViewFrustum		= 0x10,
 		JWFlagSystemRenderOption_UseLighting			= 0x20,
@@ -267,10 +267,15 @@ namespace JWEngine
 		void CreateAnimationTextureFromFile(STRING FileName) noexcept;
 		auto GetAnimationTexture(size_t Index) noexcept->STextureData*;
 		
-		// ### Bounidng ellipsoid ###
-		void AddBoundingEllipsoidInstance(const XMMATRIX& WorldMatrix) noexcept;
-		void EraseBoundingEllipsoidInstance(uint32_t InstanceID) noexcept;
-		void UpdateBoundingEllipsoidInstance(uint32_t InstanceID, const XMMATRIX& WorldMatrix) noexcept;
+		/// ### Bounidng ellipsoid ###
+		///void AddBoundingEllipsoidInstance(const XMMATRIX& WorldMatrix) noexcept;
+		///void EraseBoundingEllipsoidInstance(uint32_t InstanceID) noexcept;
+		///void UpdateBoundingEllipsoidInstance(uint32_t InstanceID, const XMMATRIX& WorldMatrix) noexcept;
+
+		// ### Bounidng sphere ###
+		void AddBoundingSphereInstance(const XMMATRIX& WorldMatrix) noexcept;
+		void EraseBoundingSphereInstance(uint32_t InstanceID) noexcept;
+		void UpdateBoundingSphereInstance(uint32_t InstanceID, const XMMATRIX& WorldMatrix) noexcept;
 
 		void Execute() noexcept;
 
@@ -288,7 +293,8 @@ namespace JWEngine
 		auto GetFrustumCulledTerrainNodeCount() const noexcept { return m_FrustumCulledTerrainNodeCount; }
 
 		// Object getter
-		auto& BoundingEllipsoid() noexcept { return m_BoundingEllipsoid; }
+		///auto& BoundingEllipsoid() noexcept { return m_BoundingEllipsoid; }
+		auto& BoundingSphereModel() noexcept { return m_BoundingSphereModel; }
 		auto& PrimitiveMaker() noexcept { return m_PrimitiveMaker; }
 		auto& TerrainGenerator() noexcept { return m_TerrainGenerator; }
 
@@ -309,18 +315,28 @@ namespace JWEngine
 		void UpdateNodeTPoseIntoBones(float AnimationTime, SModelData& ModelData,
 			const SModelNode& CurrentNode, const XMMATRIX Accumulated) noexcept;
 
-		// Bounding ellipsoid
-		inline void UpdateBoundingEllipsoidInstanceBuffer() noexcept;
+		/// Bounding ellipsoid
+		///inline void UpdateBoundingEllipsoidInstanceBuffer() noexcept;
 
-		// Frustum culling
-		auto IsUnitSphereCulledByViewFrustum(const XMMATRIX& EllipsoidWorld) const noexcept->bool;
+		// Bounding sphere
+		inline void UpdateBoundingSphereInstanceBuffer() noexcept;
+
+		/// Frustum culling with bounding ellipsoid
+		///auto IsUnitSphereCulledByViewFrustum(const XMMATRIX& EllipsoidWorld) const noexcept->bool;
+
+		// Frustum culling with bounding sphere
+		auto IsSphereCulledByViewFrustum(float Radius, const XMVECTOR& Center) const noexcept->bool;
 
 		void ExecuteComponent(SComponentRender& Component) noexcept;
 
 		void Draw(SComponentRender& Component) noexcept;
 		void DrawNormals(SComponentRender& Component) noexcept;
-		void DrawInstancedBoundingEllipsoids() noexcept;
-		void DrawNonInstancedBoundingEllipsoids(const XMMATRIX& EllipsoidWorld) noexcept;
+
+		void DrawInstancedBoundingSpheres() noexcept;
+		void DrawNonInstancedBoundingSpheres(float Radius, const XMVECTOR& Center) noexcept;
+
+		///void DrawInstancedBoundingEllipsoids() noexcept;
+		///void DrawNonInstancedBoundingEllipsoids(const XMMATRIX& EllipsoidWorld) noexcept;
 		
 	private:
 		VECTOR<SComponentRender>	m_vComponents;
@@ -347,8 +363,11 @@ namespace JWEngine
 		// Primitive maker (for shared resources)
 		JWPrimitiveMaker			m_PrimitiveMaker{};
 
-		// Bounding ellipsoid
-		JWModel						m_BoundingEllipsoid{};
+		/// Bounding ellipsoid
+		///JWModel						m_BoundingEllipsoid{};
+
+		// Bounding sphere
+		JWModel						m_BoundingSphereModel{};
 
 		ERasterizerState			m_UniversalRasterizerState{ ERasterizerState::SolidNoCull };
 		ERasterizerState			m_OldUniversalRasterizerState{ ERasterizerState::SolidNoCull };

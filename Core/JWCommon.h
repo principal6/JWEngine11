@@ -142,6 +142,7 @@ namespace JWEngine
 	static constexpr size_t KSizeTInvalid{ MAXSIZE_T };
 	static constexpr float KOrthographicNearZ{ 1.0f };
 	static constexpr float KOrthographicFarZ{ 100.0f };
+	static constexpr float KDefaultBoundingSphereRadius = 1.0f;
 	static constexpr float KDefaultBoundingEllipsoidRadius = 1.0f;
 
 	enum class EWorldMatrixCalculationOrder
@@ -604,7 +605,7 @@ namespace JWEngine
 	{
 		ID3D11Texture2D*			Texture{};
 		ID3D11ShaderResourceView*	TextureSRV{};
-		SSize2					TextureSize{};
+		SSize2						TextureSize{};
 	};
 
 	// Line2D & Line3D
@@ -612,6 +613,19 @@ namespace JWEngine
 	{
 		SVertexDataModel VertexData{};
 		SIndexDataLine IndexData{};
+	};
+
+	struct SBoundingSphereData
+	{
+		SBoundingSphereData() {};
+		SBoundingSphereData(float _Radius) : Radius{ _Radius } {};
+		SBoundingSphereData(float _Radius, float CenterX, float CenterY, float CenterZ) : Radius{ _Radius }, Center{ CenterX, CenterY, CenterZ, 1.0f } {};
+		SBoundingSphereData(float _Radius, const XMVECTOR& _Center) : Radius{ _Radius }, Center{ _Center } {};
+
+		float		Radius{ KDefaultBoundingSphereRadius };
+
+		// Not the world center, but an offset
+		XMVECTOR	Center{ 0.0f, 0.0f, 0.0f, 1.0f };
 	};
 
 	struct SBoundingEllipsoidData
@@ -648,8 +662,8 @@ namespace JWEngine
 
 		bool				HasMeshes{ false };
 
-		// This value is valid only when 'IsMeshNode' is 'true'
-		int32_t				SubBoundingEllipsoidID{ -1 };
+		// This value is valid only when 'HasMeshes' is 'true'
+		int32_t				SubBoundingVolumeID{ -1 };
 
 		ID3D11Buffer*		VertexBuffer{};
 		ID3D11Buffer*		IndexBuffer{};
@@ -666,8 +680,11 @@ namespace JWEngine
 		float							HeightFactor{};
 		float							XYSizeFactor{};
 
-		SBoundingEllipsoidData			WholeBoundingEllipsoid{};
-		VECTOR<SBoundingEllipsoidData>	SubBoundingEllipsoids{};
+		SBoundingSphereData				WholeBoundingSphere{};
+		VECTOR<SBoundingSphereData>		SubBoundingSpheres{};
+
+		//SBoundingEllipsoidData			WholeBoundingEllipsoid{};
+		//VECTOR<SBoundingEllipsoidData>	SubBoundingEllipsoids{};
 
 		void Destroy()
 		{

@@ -27,11 +27,17 @@ namespace JWEngine
 		EntityIndexType		EntityIndex{};
 		ComponentIndexType	ComponentIndex{};
 
-		// Unique bounding ellipsoid that covers the whole entity.
-		SBoundingEllipsoidData			BoundingEllipsoid{};
+		/// Unique bounding ellipsoid that covers the whole entity.
+		///SBoundingEllipsoidData			BoundingEllipsoid{};
 
-		// Subset of bounding ellipsoids that cover parts of the entity.
-		VECTOR<SBoundingEllipsoidData>	SubBoundingEllipsoids{};
+		/// Subset of bounding ellipsoids that cover parts of the entity.
+		///VECTOR<SBoundingEllipsoidData>	SubBoundingEllipsoids{};
+
+		// Unique bounding sphere that covers the whole entity.
+		SBoundingSphereData			BoundingSphere{};
+
+		// Subset of bounding spheres that cover parts of the entity.
+		VECTOR<SBoundingSphereData>	SubBoundingSpheres{};
 
 		// [Property]	mass (*inverse)
 		// [Unit]		gram
@@ -131,12 +137,17 @@ namespace JWEngine
 	private:
 		// Picking
 		__forceinline void CastPickingRay() noexcept;
-		auto PickEntityByEllipsoid() noexcept->bool;
-		auto PickSubBoundingEllipsoid(JWEntity* PtrEntity) noexcept->bool;
+		//auto PickEntityByEllipsoid() noexcept->bool;
+		auto PickEntityBySphere() noexcept->bool;
+		//auto PickSubBoundingEllipsoid(JWEntity* PtrEntity) noexcept->bool;
+		auto PickSubBoundingSphere(JWEntity* PtrEntity) noexcept->bool;
 		void PickTerrainTriangle() noexcept;
 
-		void UpdateBoundingEllipsoid(SComponentPhysics& Physics) noexcept;
-		void UpdateSubBoundingEllipsoids(SComponentPhysics& Physics) noexcept;
+		///void UpdateBoundingEllipsoid(SComponentPhysics& Physics) noexcept;
+		///void UpdateSubBoundingEllipsoids(SComponentPhysics& Physics) noexcept;
+
+		void UpdateBoundingSphere(SComponentPhysics& Physics) noexcept;
+		void UpdateSubBoundingSpheres(SComponentPhysics& Physics) noexcept;
 
 	private:
 		VECTOR<SComponentPhysics>	m_vComponents;
@@ -154,7 +165,9 @@ namespace JWEngine
 
 		XMVECTOR					m_PickedTriangle[3]{};
 		XMVECTOR					m_PickedPoint{};
-		VECTOR<uint32_t>			m_vPickedSubBoundingEllipsoidID{};
+		//VECTOR<uint32_t>			m_vPickedSubBoundingEllipsoidID{};
+		VECTOR<uint32_t>			m_vPickedSubBoundingSphereID{};
+
 		JWEntity*					m_pPickedEntity{};
 		JWEntity*					m_pPickedTerrainEntity{};
 		JWEntity*					m_pPickedNonTerrainEntity{};

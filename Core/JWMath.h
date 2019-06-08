@@ -164,7 +164,7 @@ namespace JWEngine
 	// And if, b©÷ - 4ac ¡Ã 0
 	// then, the ray hit the sphere!
 	static auto __vectorcall IntersectRaySphere(
-		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection, const XMVECTOR& Center, float Radius,
+		const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection, float Radius, const XMVECTOR& Center,
 		XMVECTOR* PtrOutOldT = nullptr) noexcept->bool
 	{
 		auto r = XMVectorSet(Radius, Radius, Radius, 1.0f);
@@ -249,4 +249,21 @@ namespace JWEngine
 
 		return false;
 	}
+
+	// @warning: NOT TESTED YET
+	static auto __vectorcall IntersectPlaneSphere(
+		const XMVECTOR& PlaneNormal, const XMVECTOR& PlanePoint, float Radius, const XMVECTOR& Center, float* OutDistancePtr = nullptr) noexcept->bool
+	{
+		auto relative_position = Center - PlanePoint;
+		auto distance = XMVector3Dot(relative_position, PlaneNormal);
+
+		if (XMVectorGetX(distance) >= Radius)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+
 };

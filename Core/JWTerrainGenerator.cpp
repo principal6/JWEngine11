@@ -327,7 +327,7 @@ auto JWTerrainGenerator::GenerateTerrainFromHeightMap(const STRING& HeightMapFN,
 
 		if (are_vertices_loaded)
 		{
-			// Calculate the whole bounding ellipsoid's radius and offset.
+			// Calculate the whole bounding sphere's center and radius.
 			{
 				XMVECTOR max_v{ -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, -D3D11_FLOAT32_MAX, 1.0f };
 				XMVECTOR min_v{ D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX , D3D11_FLOAT32_MAX, 1.0f };
@@ -340,7 +340,18 @@ auto JWTerrainGenerator::GenerateTerrainFromHeightMap(const STRING& HeightMapFN,
 
 				auto d = max_v - min_v;
 				auto r = XMVector3Length(d) / 2.0f;
+				
+				// Bounding sphere
+				terrain_data.WholeBoundingSphere.Center = XMVectorSet(
+					XMVectorGetX(d) / 2.0f,
+					XMVectorGetY(d) / 2.0f,
+					-XMVectorGetZ(d) / 2.0f,
+					0.0f);
 
+				terrain_data.WholeBoundingSphere.Radius = XMVectorGetX(r);
+
+				// Bounding ellipsoid
+				/*
 				terrain_data.WholeBoundingEllipsoid.Offset = XMVectorSet(
 					XMVectorGetX(d) / 2.0f,
 					XMVectorGetY(d) / 2.0f,
@@ -350,6 +361,7 @@ auto JWTerrainGenerator::GenerateTerrainFromHeightMap(const STRING& HeightMapFN,
 				terrain_data.WholeBoundingEllipsoid.RadiusX = XMVectorGetX(r);
 				terrain_data.WholeBoundingEllipsoid.RadiusY = XMVectorGetX(r);
 				terrain_data.WholeBoundingEllipsoid.RadiusZ = XMVectorGetX(r);
+				*/
 			}
 
 			// Index
@@ -471,12 +483,18 @@ void JWTerrainGenerator::SaveTerrainAsTRN(const STRING& TRNFileName, const STerr
 	terrain_info->SetAttribute("size_z", TerrainData.TerrainSizeZ);
 	terrain_info->SetAttribute("height_factor", TerrainData.HeightFactor);
 	terrain_info->SetAttribute("xy_size_factor", TerrainData.XYSizeFactor);
+	terrain_info->SetAttribute("whole_bounding_sphere_center_x", XMVectorGetX(TerrainData.WholeBoundingSphere.Center));
+	terrain_info->SetAttribute("whole_bounding_sphere_center_y", XMVectorGetY(TerrainData.WholeBoundingSphere.Center));
+	terrain_info->SetAttribute("whole_bounding_sphere_center_z", XMVectorGetZ(TerrainData.WholeBoundingSphere.Center));
+	terrain_info->SetAttribute("whole_bounding_sphere_radius", TerrainData.WholeBoundingSphere.Radius);
+	/*
 	terrain_info->SetAttribute("whole_bounding_ellipsoid_offset_x", XMVectorGetX(TerrainData.WholeBoundingEllipsoid.Offset));
 	terrain_info->SetAttribute("whole_bounding_ellipsoid_offset_y", XMVectorGetY(TerrainData.WholeBoundingEllipsoid.Offset));
 	terrain_info->SetAttribute("whole_bounding_ellipsoid_offset_z", XMVectorGetZ(TerrainData.WholeBoundingEllipsoid.Offset));
 	terrain_info->SetAttribute("whole_bounding_ellipsoid_radius_x", TerrainData.WholeBoundingEllipsoid.RadiusX);
 	terrain_info->SetAttribute("whole_bounding_ellipsoid_radius_y", TerrainData.WholeBoundingEllipsoid.RadiusY);
 	terrain_info->SetAttribute("whole_bounding_ellipsoid_radius_z", TerrainData.WholeBoundingEllipsoid.RadiusZ);
+	*/
 
 	auto quad_tree = doc.NewElement("quad_tree");
 	quad_tree->SetAttribute("node_count", static_cast<int>(TerrainData.QuadTree.size()));
@@ -495,7 +513,7 @@ void JWTerrainGenerator::SaveTerrainAsTRN(const STRING& TRNFileName, const STerr
 		node->SetAttribute("size_x", iter.SizeX);
 		node->SetAttribute("size_z", iter.SizeZ);
 		node->SetAttribute("has_meshes", iter.HasMeshes);
-		node->SetAttribute("sub_bounding_ellipsoid_id", iter.SubBoundingEllipsoidID);
+		node->SetAttribute("sub_bounding_sphere_id", iter.SubBoundingVolumeID);
 
 		if (iter.HasMeshes)
 		{
@@ -557,32 +575,30 @@ void JWTerrainGenerator::SaveTerrainAsTRN(const STRING& TRNFileName, const STerr
 		quad_tree->InsertEndChild(node);
 	}
 
-	auto sub_bounding_ellipsoids = doc.NewElement("sub_bounding_ellipsoids");
-	sub_bounding_ellipsoids->SetAttribute("count", static_cast<int>(TerrainData.SubBoundingEllipsoids.size()));
+	auto sub_bounding_spheres = doc.NewElement("sub_bounding_spheres");
+	sub_bounding_spheres->SetAttribute("count", static_cast<int>(TerrainData.SubBoundingSpheres.size()));
 
-	for (auto& iter : TerrainData.SubBoundingEllipsoids)
+	for (auto& iter : TerrainData.SubBoundingSpheres)
 	{
-		auto sub_bounding_ellipsoid = doc.NewElement("sub_bounding_ellipsoid");
+		auto sub_bounding_sphere = doc.NewElement("sub_bounding_sphere");
 
-		auto offset = doc.NewElement("offset");
-		offset->SetAttribute("x", XMVectorGetX(iter.Offset));
-		offset->SetAttribute("y", XMVectorGetY(iter.Offset));
-		offset->SetAttribute("z", XMVectorGetZ(iter.Offset));
+		auto center = doc.NewElement("center");
+		center->SetAttribute("x", XMVectorGetX(iter.Center));
+		center->SetAttribute("y", XMVectorGetY(iter.Center));
+		center->SetAttribute("z", XMVectorGetZ(iter.Center));
 
 		auto radius = doc.NewElement("radius");
-		radius->SetAttribute("x", iter.RadiusX);
-		radius->SetAttribute("y", iter.RadiusY);
-		radius->SetAttribute("z", iter.RadiusZ);
+		radius->SetText(iter.Radius);
 
-		sub_bounding_ellipsoid->InsertEndChild(offset);
-		sub_bounding_ellipsoid->InsertEndChild(radius);
+		sub_bounding_sphere->InsertEndChild(center);
+		sub_bounding_sphere->InsertEndChild(radius);
 
-		sub_bounding_ellipsoids->InsertEndChild(sub_bounding_ellipsoid);
+		sub_bounding_spheres->InsertEndChild(sub_bounding_sphere);
 	}
 
 	root->InsertEndChild(terrain_info);
 	root->InsertEndChild(quad_tree);
-	root->InsertEndChild(sub_bounding_ellipsoids);
+	root->InsertEndChild(sub_bounding_spheres);
 	
 	doc.InsertFirstChild(root);
 	doc.SaveFile((m_BaseDirectory + KAssetDirectory + TRNFileName).c_str());
@@ -605,14 +621,12 @@ auto JWTerrainGenerator::LoadTerrainFromTRN(const STRING& TRNFileName) noexcept-
 	terrain_data.HeightFactor = terrain_info->FloatAttribute("height_factor");
 	terrain_data.XYSizeFactor = terrain_info->FloatAttribute("xy_size_factor");
 
-	terrain_data.WholeBoundingEllipsoid.Offset = XMVectorSet(
-		terrain_info->FloatAttribute("whole_bounding_ellipsoid_offset_x"),
-		terrain_info->FloatAttribute("whole_bounding_ellipsoid_offset_y"),
-		terrain_info->FloatAttribute("whole_bounding_ellipsoid_offset_z"),
+	terrain_data.WholeBoundingSphere.Center = XMVectorSet(
+		terrain_info->FloatAttribute("whole_bounding_sphere_center_x"),
+		terrain_info->FloatAttribute("whole_bounding_sphere_center_y"),
+		terrain_info->FloatAttribute("whole_bounding_sphere_center_z"),
 		0.0f);
-	terrain_data.WholeBoundingEllipsoid.RadiusX = terrain_info->FloatAttribute("whole_bounding_ellipsoid_radius_x");
-	terrain_data.WholeBoundingEllipsoid.RadiusY = terrain_info->FloatAttribute("whole_bounding_ellipsoid_radius_y");
-	terrain_data.WholeBoundingEllipsoid.RadiusZ = terrain_info->FloatAttribute("whole_bounding_ellipsoid_radius_z");
+	terrain_data.WholeBoundingSphere.Radius = terrain_info->FloatAttribute("whole_bounding_sphere_radius");
 
 	auto quad_tree = terrain_info->NextSiblingElement();
 	auto node_count = quad_tree->IntAttribute("node_count");
@@ -636,7 +650,7 @@ auto JWTerrainGenerator::LoadTerrainFromTRN(const STRING& TRNFileName) noexcept-
 			current_node.SizeX = xml_node->IntAttribute("size_x");
 			current_node.SizeZ = xml_node->IntAttribute("size_z");
 			current_node.HasMeshes = xml_node->BoolAttribute("has_meshes");
-			current_node.SubBoundingEllipsoidID = xml_node->IntAttribute("sub_bounding_ellipsoid_id");
+			current_node.SubBoundingVolumeID = xml_node->IntAttribute("sub_bounding_sphere_id");
 
 			if (current_node.HasMeshes)
 			{
@@ -699,31 +713,29 @@ auto JWTerrainGenerator::LoadTerrainFromTRN(const STRING& TRNFileName) noexcept-
 		}
 	}
 
-	auto sub_bounding_ellipsoids = quad_tree->NextSiblingElement();
-	auto sub_bounding_ellipsoid_count = sub_bounding_ellipsoids->IntAttribute("count");
-	if (sub_bounding_ellipsoid_count)
+	auto sub_bounding_spheres = quad_tree->NextSiblingElement();
+	auto sub_bounding_sphere_count = sub_bounding_spheres->IntAttribute("count");
+	if (sub_bounding_sphere_count)
 	{
-		auto xml_sub_bounding_ellipsoid = sub_bounding_ellipsoids->FirstChildElement();
+		auto xml_sub_bounding_sphere = sub_bounding_spheres->FirstChildElement();
 
-		for (int i = 0; i < sub_bounding_ellipsoid_count; ++i)
+		for (int i = 0; i < sub_bounding_sphere_count; ++i)
 		{
-			SBoundingEllipsoidData curr_sub_bounding_ellipsoid{};
+			SBoundingSphereData curr_sub_bounding_sphere{};
 
-			auto offset = xml_sub_bounding_ellipsoid->FirstChildElement();
-			curr_sub_bounding_ellipsoid.Offset = XMVectorSet(
-				offset->FloatAttribute("x"),
-				offset->FloatAttribute("y"),
-				offset->FloatAttribute("z"),
+			auto center = xml_sub_bounding_sphere->FirstChildElement();
+			curr_sub_bounding_sphere.Center = XMVectorSet(
+				center->FloatAttribute("x"),
+				center->FloatAttribute("y"),
+				center->FloatAttribute("z"),
 				0.0f);
 
-			auto radius = offset->NextSiblingElement();
-			curr_sub_bounding_ellipsoid.RadiusX = radius->FloatAttribute("x");
-			curr_sub_bounding_ellipsoid.RadiusY = radius->FloatAttribute("y");
-			curr_sub_bounding_ellipsoid.RadiusZ = radius->FloatAttribute("z");
-			
-			terrain_data.SubBoundingEllipsoids.emplace_back(curr_sub_bounding_ellipsoid);
+			auto radius = center->NextSiblingElement();
+			curr_sub_bounding_sphere.Radius = radius->FloatText();
 
-			xml_sub_bounding_ellipsoid = xml_sub_bounding_ellipsoid->NextSiblingElement();
+			terrain_data.SubBoundingSpheres.emplace_back(curr_sub_bounding_sphere);
+
+			xml_sub_bounding_sphere = xml_sub_bounding_sphere->NextSiblingElement();
 		}
 	}
 
@@ -817,15 +829,13 @@ void JWTerrainGenerator::BuildQuadTreeMesh(STerrainData& TerrainData, const SMod
 
 			auto d = max_v - min_v;
 			auto r = XMVector3Length(d) / 2.0f;
-			auto offset = min_v + d / 2.0f;
+			auto center = min_v + d / 2.0f;
 			
-			TerrainData.SubBoundingEllipsoids.push_back(SBoundingEllipsoidData());
-			iter.SubBoundingEllipsoidID = static_cast<uint32_t>(TerrainData.SubBoundingEllipsoids.size() - 1);
+			TerrainData.SubBoundingSpheres.push_back(SBoundingSphereData());
+			iter.SubBoundingVolumeID = static_cast<uint32_t>(TerrainData.SubBoundingSpheres.size() - 1);
 
-			TerrainData.SubBoundingEllipsoids[iter.SubBoundingEllipsoidID].Offset = offset;
-			TerrainData.SubBoundingEllipsoids[iter.SubBoundingEllipsoidID].RadiusX = XMVectorGetX(r);
-			TerrainData.SubBoundingEllipsoids[iter.SubBoundingEllipsoidID].RadiusY = XMVectorGetY(r);
-			TerrainData.SubBoundingEllipsoids[iter.SubBoundingEllipsoidID].RadiusZ = XMVectorGetZ(r);
+			TerrainData.SubBoundingSpheres[iter.SubBoundingVolumeID].Center = center;
+			TerrainData.SubBoundingSpheres[iter.SubBoundingVolumeID].Radius = XMVectorGetX(r);
 			
 			// Index
 			for (uint32_t i = 0; i < iter.SizeX * iter.SizeZ; ++i)
