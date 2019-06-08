@@ -15,9 +15,6 @@ JW_FUNCTION_ON_RENDER(OnRender);
 int main()
 {
 	// TODO:
-	// # Terrain	@ Use SComponentTransform (partially done... only for translation!)
-	// # Physics	@ Collision
-	// # Physics	@ Light/Camera representations must be pickable but not subject to physics, so these must be NonPhysical type
 	// # Render		@ Sprite instancing
 	// # Cursor		@ Image cursor input VS. Raw input
 
@@ -67,7 +64,7 @@ int main()
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "terra_diffuse_mip.dds"); //Shared Resource #1
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "terra_normal_mip.dds"); //Shared Resource #2
 		ecs.SystemRender().CreateSharedTexture(ESharedTextureType::Texture2D, "Grayscale_Interval_Ten.png"); //Shared Resource #3
-		ecs.SystemRender().CreateSharedTextureFromSharedModel(2); //Shared Resource #4
+		ecs.SystemRender().CreateSharedTextureFromSharedModel("EZREAL"); //Shared Resource #4
 	}
 	{
 		// Animations texture

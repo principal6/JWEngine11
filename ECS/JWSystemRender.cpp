@@ -179,16 +179,10 @@ void JWSystemRender::CreateSharedTexture(ESharedTextureType Type, STRING FileNam
 	}
 }
 
-void JWSystemRender::CreateSharedTextureFromSharedModel(size_t ModelIndex) noexcept
+void JWSystemRender::CreateSharedTextureFromSharedModel(const STRING& ModelName) noexcept
 {
-	if (m_vSharedModel.size() == 0)
-	{
-		// No shared model exists.
-		return;
-	}
-
-	ModelIndex = min(ModelIndex, m_vSharedModel.size() - 1);
-	const JWModel * ptr_model = &m_vSharedModel[ModelIndex];
+	const JWModel* ptr_model = GetSharedModelByName(ModelName);
+	if (ptr_model == nullptr) { return; }
 
 	m_vSharedTextureData.push_back(STextureData());
 
@@ -235,6 +229,11 @@ auto JWSystemRender::GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResour
 
 auto JWSystemRender::CreateSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*
 {
+	if (GetSharedModelByName(ModelName))
+	{
+		JW_ERROR_ABORT("Identical model name already exists!");
+	}
+
 	m_vSharedModel.push_back(JWModel());
 
 	auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
@@ -249,6 +248,11 @@ auto JWSystemRender::CreateSharedModelFromModelData(const SModelData& ModelData,
 
 auto JWSystemRender::CreateDynamicSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*
 {
+	if (GetSharedModelByName(ModelName))
+	{
+		JW_ERROR_ABORT("Identical model name already exists!");
+	}
+
 	m_vSharedModel.push_back(JWModel());
 
 	auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];
@@ -264,6 +268,11 @@ auto JWSystemRender::CreateDynamicSharedModelFromModelData(const SModelData& Mod
 auto JWSystemRender::CreateSharedModelFromFile(ESharedModelType Type, const STRING& FileName, const STRING& ModelName,
 	const WSTRING& OverrideTextureFN) noexcept->JWModel*
 {
+	if (GetSharedModelByName(ModelName))
+	{
+		JW_ERROR_ABORT("Identical model name already exists!");
+	}
+
 	m_vSharedModel.push_back(JWModel());
 
 	auto& current_model = m_vSharedModel[m_vSharedModel.size() - 1];

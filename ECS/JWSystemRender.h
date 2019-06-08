@@ -246,7 +246,7 @@ namespace JWEngine
 		// ### Shared Resources ###
 		// Shared Texture
 		void CreateSharedTexture(ESharedTextureType Type, STRING FileName) noexcept;
-		void CreateSharedTextureFromSharedModel(size_t ModelIndex) noexcept;
+		void CreateSharedTextureFromSharedModel(const STRING& ModelName) noexcept;
 		auto GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*;
 		// Shared Model
 		auto CreateSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*;
