@@ -780,7 +780,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 		if (are_in_contact == false)
 		{
 			// #4-2-1 Edge of a - object b
-			XMVECTOR projected_center_b{};
+			XMVECTOR closest_point_of_edge_a_to_b{};
 			for (auto face_i : a_face_with_position[m_ClosestPointsAIndex.front().PositionIndex])
 			{
 				auto a0 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[face_i]._0]], a_transform->WorldMatrix);
@@ -788,9 +788,9 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 				auto a2 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[face_i]._2]], a_transform->WorldMatrix);
 
 				// Edge 0-1
-				if (ProjectPointOntoSegment(b_center_world, a0, a1, projected_center_b))
+				if (ProjectPointOntoSegment(b_center_world, a0, a1, closest_point_of_edge_a_to_b))
 				{
-					if (is_edge_a_in_b = IsPointAInB(projected_center_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					if (is_edge_a_in_b = IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
 					{
 						are_in_contact = true;
 						break;
@@ -798,9 +798,9 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 				}
 
 				// Edge 1-2
-				if (ProjectPointOntoSegment(b_center_world, a1, a2, projected_center_b))
+				if (ProjectPointOntoSegment(b_center_world, a1, a2, closest_point_of_edge_a_to_b))
 				{
-					if (is_edge_a_in_b = IsPointAInB(projected_center_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					if (is_edge_a_in_b = IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
 					{
 						are_in_contact = true;
 						break;
@@ -808,9 +808,9 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 				}
 
 				// Edge 0-2
-				if (ProjectPointOntoSegment(b_center_world, a0, a2, projected_center_b))
+				if (ProjectPointOntoSegment(b_center_world, a0, a2, closest_point_of_edge_a_to_b))
 				{
-					if (is_edge_a_in_b = IsPointAInB(projected_center_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					if (is_edge_a_in_b = IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
 					{
 						are_in_contact = true;
 						break;
@@ -819,7 +819,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			}
 			
 			// #4-2-2 Edge of b - object a
-			XMVECTOR projected_center_a{};
+			XMVECTOR closest_point_of_edge_b_to_a{};
 			for (auto face_i : b_face_with_position[m_ClosestPointsBIndex.front().PositionIndex])
 			{
 				auto b0 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[face_i]._0]], b_transform->WorldMatrix);
@@ -827,9 +827,9 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 				auto b2 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[face_i]._2]], b_transform->WorldMatrix);
 
 				// Edge 0-1
-				if (ProjectPointOntoSegment(a_center_world, b0, b1, projected_center_a))
+				if (ProjectPointOntoSegment(a_center_world, b0, b1, closest_point_of_edge_b_to_a))
 				{
-					if (is_edge_b_in_a = IsPointAInB(projected_center_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					if (is_edge_b_in_a = IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
 					{
 						are_in_contact = true;
 						break;
@@ -837,9 +837,9 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 				}
 
 				// Edge 1-2
-				if (ProjectPointOntoSegment(a_center_world, b1, b2, projected_center_a))
+				if (ProjectPointOntoSegment(a_center_world, b1, b2, closest_point_of_edge_b_to_a))
 				{
-					if (is_edge_b_in_a = IsPointAInB(projected_center_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					if (is_edge_b_in_a = IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
 					{
 						are_in_contact = true;
 						break;
@@ -847,9 +847,9 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 				}
 
 				// Edge 0-2
-				if (ProjectPointOntoSegment(a_center_world, b0, b2, projected_center_a))
+				if (ProjectPointOntoSegment(a_center_world, b0, b2, closest_point_of_edge_b_to_a))
 				{
-					if (is_edge_b_in_a = IsPointAInB(projected_center_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					if (is_edge_b_in_a = IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
 					{
 						are_in_contact = true;
 						break;
