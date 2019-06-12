@@ -28,6 +28,7 @@ namespace JWEngine
 	{
 		StaticModel,
 		RiggedModel,
+		CollisionMesh,
 	};
 
 	enum EFLAGComponentRenderOption : uint32_t
@@ -249,7 +250,7 @@ namespace JWEngine
 		void CreateSharedTextureFromSharedModel(const STRING& ModelName) noexcept;
 		auto GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResourceView*;
 		// Shared Model
-		auto CreateSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*;
+		auto CreateSharedModelFromModelData(ESharedModelType Type, const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*;
 		auto CreateDynamicSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*;
 		auto CreateSharedModelFromFile(ESharedModelType Type, const STRING& FileName, const STRING& ModelName, 
 			const WSTRING& OverrideTextureFN = L"") noexcept->JWModel*;
@@ -307,6 +308,8 @@ namespace JWEngine
 		auto GetComponentPtr(ComponentIndexType ComponentIndex) noexcept->SComponentRender*;
 
 	private:
+		void CreateCollisionMeshData(JWModel& Model) noexcept;
+
 		void SetShaders(SComponentRender& Component) noexcept;
 
 		void AnimateOnGPU(SComponentRender& Component) noexcept;

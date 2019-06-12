@@ -665,57 +665,240 @@ PRIVATE void JWSystemPhysics::DetectCoarseCollision() noexcept
 	}
 }
 
+bool ClosestPointPred(const SClosestPoint& a, const SClosestPoint& b)
+{
+	return a.Distance > b.Distance;
+}
+
 PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 {
 	if (m_CoarseCollisionList.size() == 0) { return; }
 
 	for (const auto& iter : m_CoarseCollisionList)
 	{
-		auto& physics_a = m_vComponents[iter.A];
-		auto& physics_b = m_vComponents[iter.B];
+		const auto& a_physics = m_vComponents[iter.A];
+		const auto& b_physics = m_vComponents[iter.B];
 
-		auto entity_a = m_pECS->GetEntityByIndex(physics_a.EntityIndex);
-		auto entity_b = m_pECS->GetEntityByIndex(physics_b.EntityIndex);
-		
-		auto render_a = entity_a->GetComponentRender();
-		auto render_b = entity_b->GetComponentRender();
-
-		JWModel* a_model{ physics_a.PtrCollisionMesh };
-		JWModel* b_model{ physics_b.PtrCollisionMesh };
-
-		if ((a_model == nullptr) || (b_model == nullptr))
+		auto a_collision_mesh{ a_physics.PtrCollisionMesh };
+		auto b_collision_mesh{ b_physics.PtrCollisionMesh };
+		if ((a_collision_mesh == nullptr) || (b_collision_mesh == nullptr))
 		{
-			if ((render_a->PtrModel == nullptr) || (render_b->PtrModel == nullptr))
-			{
-				continue;
-			}
-
-			//JW_ERROR_ABORT("It is desirable to always use collision mesh!");
-
-			a_model = render_a->PtrModel;
-			b_model = render_b->PtrModel;
+			JW_ERROR_ABORT("The collision mesh is missing.");
 		}
 		
-		auto& a_vertices = a_model->ModelData.VertexData.vVerticesModel;
-		auto& b_vertices = b_model->ModelData.VertexData.vVerticesModel;
+		const auto& a_positions = a_collision_mesh->vPositionVertex;
+		const auto& b_positions = b_collision_mesh->vPositionVertex;
+		const auto& a_faces = a_collision_mesh->ModelData.IndexData.vFaces;
+		const auto& b_faces = b_collision_mesh->ModelData.IndexData.vFaces;
+		const auto& a_v_to_pv = a_collision_mesh->vPositionVertexIndexFromVertexIndex;
+		const auto& b_v_to_pv = b_collision_mesh->vPositionVertexIndexFromVertexIndex;
+		const auto& a_face_with_position = a_collision_mesh->vFaceWithPositionVertex;
+		const auto& b_face_with_position = b_collision_mesh->vFaceWithPositionVertex;
+		
+		// #1 Get world (mass) center of objects
+		const auto a_transform = m_pECS->GetEntityByIndex(a_physics.EntityIndex)->GetComponentTransform();
+		const auto b_transform = m_pECS->GetEntityByIndex(b_physics.EntityIndex)->GetComponentTransform();
+		auto a_center_world = a_physics.BoundingSphere.Center + a_transform->Position;
+		auto b_center_world = b_physics.BoundingSphere.Center + b_transform->Position;
 
-		auto& a_faces = a_model->ModelData.IndexData.vFaces;
-		auto& b_faces = b_model->ModelData.IndexData.vFaces;
+		// #2 Get relative directions
+		auto ba_dir = XMVector3Normalize(a_center_world - b_center_world);
+		auto ab_dir = -ba_dir;
 
-
-		// WHICH CONTACT TO GENERATE???
-		// face to face??
-		for (auto& a_face : a_faces)
+		// #3 Get the closest points of each object between them
+		// #3-1 Get closest points of object a
+		m_ClosestPointsAIndex.clear();
+		m_ClosestPointsAIndex.reserve(a_positions.size());
+		for (size_t i = 0; i < a_positions.size(); ++i)
 		{
-			a_vertices[a_face._0];
-			a_vertices[a_face._1];
-			a_vertices[a_face._2];
+			auto distance = XMVectorGetX(XMVector3Dot(a_positions[i], ab_dir));
+			m_ClosestPointsAIndex.emplace_back(i, distance);
+		}
+		std::sort(m_ClosestPointsAIndex.begin(), m_ClosestPointsAIndex.end(), ClosestPointPred);
 
-			for (auto& b_face : b_faces)
+		m_ClosestPointsA.clear();
+		m_ClosestPointsA.reserve(m_ClosestPointsAIndex.size());
+		for (auto position_i : m_ClosestPointsAIndex)
+		{
+			m_ClosestPointsA.emplace_back(XMVector3TransformCoord(a_positions[position_i.PositionIndex], a_transform->WorldMatrix));
+		}
+
+		// #3-2 Get closest points of object b
+		m_ClosestPointsBIndex.clear();
+		m_ClosestPointsBIndex.reserve(b_positions.size());
+		for (size_t i = 0; i < b_positions.size(); ++i)
+		{
+			auto distance = XMVectorGetX(XMVector3Dot(b_positions[i], ba_dir));
+			m_ClosestPointsBIndex.emplace_back(i, distance);
+		}
+		std::sort(m_ClosestPointsBIndex.begin(), m_ClosestPointsBIndex.end(), ClosestPointPred);
+
+		m_ClosestPointsB.clear();
+		m_ClosestPointsB.reserve(m_ClosestPointsBIndex.size());
+		for (auto position_i : m_ClosestPointsBIndex)
+		{
+			m_ClosestPointsB.emplace_back(XMVector3TransformCoord(b_positions[position_i.PositionIndex], b_transform->WorldMatrix));
+		}
+
+		// #4 See if the two objects intersect
+		bool are_in_contact{ false };
+		bool is_point_a_in_face_b{ false };
+		bool is_point_b_in_face_a{ false };
+
+		// #4-1 Point - Face
+		// #4-1-1 Point of a - Face of b
+		{
+			const auto& p_a = m_ClosestPointsA.front();
+			float dist_ab{};
+			ProjectPointOntoPlane(dist_ab, p_a, m_ClosestPointsB.front(), ba_dir);
+			if (dist_ab < 0)
 			{
-
+				is_point_a_in_face_b = IsPointAInB(p_a, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions);
 			}
 		}
 
+		// #4-1-2 Point of b - Face of a
+		if (is_point_a_in_face_b == false)
+		{
+			const auto& p_b = m_ClosestPointsB.front();
+			float dist_ba{};
+			ProjectPointOntoPlane(dist_ba, p_b, m_ClosestPointsA.front(), ab_dir);
+			if (dist_ba < 0)
+			{
+				is_point_b_in_face_a = IsPointAInB(p_b, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions);
+			}
+		}
+		
+		if ((is_point_b_in_face_a == true) || (is_point_a_in_face_b == true))
+		{
+			are_in_contact = true;
+		}
+
+		// #4-2 Edge - Edge
+		bool is_edge_a_in_b{ false };
+		bool is_edge_b_in_a{ false };
+		if (are_in_contact == false)
+		{
+			// #4-2-1 Edge of a - object b
+			XMVECTOR projected_center_b{};
+			for (auto face_i : a_face_with_position[m_ClosestPointsAIndex.front().PositionIndex])
+			{
+				auto a0 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[face_i]._0]], a_transform->WorldMatrix);
+				auto a1 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[face_i]._1]], a_transform->WorldMatrix);
+				auto a2 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[face_i]._2]], a_transform->WorldMatrix);
+
+				// Edge 0-1
+				if (ProjectPointOntoSegment(b_center_world, a0, a1, projected_center_b))
+				{
+					if (is_edge_a_in_b = IsPointAInB(projected_center_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					{
+						are_in_contact = true;
+						break;
+					}
+				}
+
+				// Edge 1-2
+				if (ProjectPointOntoSegment(b_center_world, a1, a2, projected_center_b))
+				{
+					if (is_edge_a_in_b = IsPointAInB(projected_center_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					{
+						are_in_contact = true;
+						break;
+					}
+				}
+
+				// Edge 0-2
+				if (ProjectPointOntoSegment(b_center_world, a0, a2, projected_center_b))
+				{
+					if (is_edge_a_in_b = IsPointAInB(projected_center_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					{
+						are_in_contact = true;
+						break;
+					}
+				}
+			}
+			
+			// #4-2-2 Edge of b - object a
+			XMVECTOR projected_center_a{};
+			for (auto face_i : b_face_with_position[m_ClosestPointsBIndex.front().PositionIndex])
+			{
+				auto b0 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[face_i]._0]], b_transform->WorldMatrix);
+				auto b1 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[face_i]._1]], b_transform->WorldMatrix);
+				auto b2 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[face_i]._2]], b_transform->WorldMatrix);
+
+				// Edge 0-1
+				if (ProjectPointOntoSegment(a_center_world, b0, b1, projected_center_a))
+				{
+					if (is_edge_b_in_a = IsPointAInB(projected_center_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					{
+						are_in_contact = true;
+						break;
+					}
+				}
+
+				// Edge 1-2
+				if (ProjectPointOntoSegment(a_center_world, b1, b2, projected_center_a))
+				{
+					if (is_edge_b_in_a = IsPointAInB(projected_center_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					{
+						are_in_contact = true;
+						break;
+					}
+				}
+
+				// Edge 0-2
+				if (ProjectPointOntoSegment(a_center_world, b0, b2, projected_center_a))
+				{
+					if (is_edge_b_in_a = IsPointAInB(projected_center_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					{
+						are_in_contact = true;
+						break;
+					}
+				}
+			}
+		}
+		
+		if (are_in_contact == true)
+		{
+			// #5 Get signed closing speed
+			auto relative_velocity_ba = b_physics.Velocity - a_physics.Velocity;
+			auto signed_closing_speed = XMVector3Dot(relative_velocity_ba, ba_dir);
+			if (XMVector3Greater(signed_closing_speed, KVectorZero))
+			{
+				// They are colliding, not separating.
+
+				// #6 Get penetration....
+
+			}
+		}
+		
 	}
+}
+
+PRIVATE auto JWSystemPhysics::IsPointAInB(const XMVECTOR& PointA, const VECTOR<SIndexTriangle>& BFaces, const XMMATRIX& BWorld,
+	const VECTOR<size_t>& BVertexToPosition, const VECTOR<XMVECTOR>& BPositions) noexcept->bool
+{
+	bool result{ false };
+	float dist{};
+
+	for (auto b_face : BFaces)
+	{
+		auto b0 = XMVector3TransformCoord(BPositions[BVertexToPosition[b_face._0]], BWorld);
+		auto b1 = XMVector3TransformCoord(BPositions[BVertexToPosition[b_face._1]], BWorld);
+		auto b2 = XMVector3TransformCoord(BPositions[BVertexToPosition[b_face._2]], BWorld);
+		auto n = GetTriangleNormal(b0, b1, b2);
+
+		ProjectPointOntoPlane(dist, PointA, b0, n);
+
+		if (dist < 0)
+		{
+			result = true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	return result;
 }

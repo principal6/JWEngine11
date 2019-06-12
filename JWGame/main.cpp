@@ -29,26 +29,34 @@ int main()
 		// SharedModel
 		ecs.SystemRender().CreateDynamicSharedModelFromModelData(
 			ecs.SystemRender().PrimitiveMaker().MakeTriangle(XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0), XMFLOAT3(0, 0, 0)), "PICKED_TRIANGLE");
-		ecs.SystemRender().CreateSharedModelFromModelData(
+		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::StaticModel,
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(0, 1, 0), XMFLOAT3(0, 1, 0)), "POINT_3D");
+		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::StaticModel,
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(1, 0, 0), XMFLOAT3(1, 1, 0)), "POINT_3D_A");
+		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::StaticModel,
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(0, 0, 1), XMFLOAT3(1, 0, 1)), "POINT_3D_B");
 		ecs.SystemRender().CreateDynamicSharedModelFromModelData(ecs.SystemRender().PrimitiveMaker().MakeHexahedron(), "VIEW_FRUSTUM");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.mobj", "CAMERA");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.mobj", "LIGHT");
-		ecs.SystemRender().CreateSharedModelFromModelData(ecs.SystemRender().PrimitiveMaker().MakeSphere(100.0f, 16, 7), "SKY_SPHERE");
+		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::StaticModel, 
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(100.0f, 16, 7), "SKY_SPHERE");
 
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::RiggedModel, "Ezreal_Idle.X", "EZREAL", L"Ezreal_mip.dds")
 			->AddAnimationFromFile("Ezreal_Punching.X")
 			->AddAnimationFromFile("Ezreal_Walk.X");
 		//->BakeAnimationTexture(SSizeInt(KColorCountPerTexel * KMaxBoneCount, 400), "baked_animation.dds");
 
-		ecs.SystemRender().CreateSharedModelFromModelData(ecs.SystemRender().PrimitiveMaker().MakeCube(1.0f), "box");
+		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::StaticModel, 
+			ecs.SystemRender().PrimitiveMaker().MakeCube(1.0f), "box");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "jar.mobj", "jar");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "oil_drum.mobj", "oil_drum");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "recycling_bin.mobj", "recycling_bin");
 
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "jar_cm.mobj", "CM_jar");
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "oil_drum_cm.mobj", "CM_oil_drum");
-		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "recycling_bin_cm.mobj", "CM_recycling_bin");
+		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::CollisionMesh,
+			ecs.SystemRender().PrimitiveMaker().MakeCube(1.0f), "CM_box");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::CollisionMesh, "jar_cm.mobj", "CM_jar");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::CollisionMesh, "oil_drum_cm.mobj", "CM_oil_drum");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::CollisionMesh, "recycling_bin_cm.mobj", "CM_recycling_bin");
 	}
 	{
 		// SharedImage2D
@@ -85,8 +93,9 @@ int main()
 	ecs.SystemRender().SetSystemRenderFlag(
 		JWFlagSystemRenderOption_UseLighting | JWFlagSystemRenderOption_DrawCameras | JWFlagSystemRenderOption_UseFrustumCulling);
 
-	auto debug_point = ecs.CreateEntity(EEntityType::Point3D);
 	{
+		auto debug_point = ecs.CreateEntity(EEntityType::Point3D);
+
 		auto transform = debug_point->CreateComponentTransform();
 		transform->Position = XMVectorSet(0.0f, 0.0f, 10.0f, 1.0f);
 
@@ -94,41 +103,47 @@ int main()
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D"));
 	}
 
-	auto VIEW_FRUSTUM = ecs.CreateEntity(EEntityType::ViewFrustum);
 	{
+		auto VIEW_FRUSTUM = ecs.CreateEntity(EEntityType::ViewFrustum);
+
 		auto render = VIEW_FRUSTUM->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("VIEW_FRUSTUM"));
 		render->SetRenderFlag(JWFlagComponentRenderOption_UseTransparency);
 	}
 
-	auto grid = ecs.CreateEntity(EEntityType::Grid);
 	{
+		auto grid = ecs.CreateEntity(EEntityType::Grid);
+
 		auto render = grid->CreateComponentRender();
 		render->SetLineModel(ecs.SystemRender().GetSharedLineModel(0));
 	}
 	
-	auto image_gamma = ecs.CreateEntity("IMG_Gamma");
 	{
+		auto image_gamma = ecs.CreateEntity("IMG_Gamma");
+
 		auto render = image_gamma->CreateComponentRender();
 		render->SetImage2D(ecs.SystemRender().GetSharedImage2D(0));
 		render->SetTexture(ETextureType::Diffuse, ecs.SystemRender().GetSharedTexture(3));
 	}
 
-	auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
 	{
+		auto picked_tri = ecs.CreateEntity(EEntityType::PickedTriangle);
+
 		auto render = picked_tri->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("PICKED_TRIANGLE"));
 		render->SetRenderFlag(JWFlagComponentRenderOption_AlwaysSolidNoCull);
 	}
 
-	auto ray = ecs.CreateEntity(EEntityType::PickingRay);
 	{
+		auto ray = ecs.CreateEntity(EEntityType::PickingRay);
+
 		auto render = ray->CreateComponentRender();
 		render->SetLineModel(ecs.SystemRender().GetSharedLineModel(1));
 	}
 
-	auto SKY_SPHERE = ecs.CreateEntity(EEntityType::Sky);
 	{
+		auto SKY_SPHERE = ecs.CreateEntity(EEntityType::Sky);
+
 		auto transform = SKY_SPHERE->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
 		transform->Position = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
@@ -141,8 +156,9 @@ int main()
 		render->AddRenderFlag(JWFlagComponentRenderOption_NeverDrawNormals);
 	}
 
-	auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
 	{
+		auto main_sprite = ecs.CreateEntity(EEntityType::MainSprite);
+
 		auto transform = main_sprite->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
 		transform->Position = XMVectorSet(0.0f, 2.8f, 0.0f, 1.0f);
@@ -163,8 +179,9 @@ int main()
 	}
 
 	/*
-	auto terrain = ecs.CreateEntity(EEntityType::MainTerrain);
 	{
+		auto terrain = ecs.CreateEntity(EEntityType::MainTerrain);
+
 		auto terrain_data = ecs.SystemRender().GetSharedTerrain(0);
 		
 		auto transform = terrain->CreateComponentTransform();
@@ -184,8 +201,9 @@ int main()
 	}
 	*/
 
-	auto camera_0 = ecs.CreateEntity("camera_0");
 	{
+		auto camera_0 = ecs.CreateEntity("camera_0");
+
 		auto transform = camera_0->CreateComponentTransform();
 		transform->Position = XMVectorSet(0.0f, 12.0f, -20.0f, 1.0f);
 		transform->RotatePitchYawRoll(XMFLOAT3(XM_PIDIV2 * 1.3f, 0, 0), true);
@@ -199,8 +217,9 @@ int main()
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("CAMERA"));
 	}
 
-	auto camera_1 = ecs.CreateEntity("camera_1");
 	{
+		auto camera_1 = ecs.CreateEntity("camera_1");
+
 		auto transform = camera_1->CreateComponentTransform();
 		transform->Position = XMVectorSet(0.0f, 12.0f, 0.0f, 1.0f);
 
@@ -213,8 +232,9 @@ int main()
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("CAMERA"));
 	}
 
-	auto ambient_light = ecs.CreateEntity("ambient_light");
 	{
+		auto ambient_light = ecs.CreateEntity("ambient_light");
+
 		auto transform = ambient_light->CreateComponentTransform();
 		transform->Position = XMVectorSet(0.0f, 10.0f, 0.0f, 1.0f);
 		
@@ -229,8 +249,9 @@ int main()
 		//ecs.DestroyEntityByName("ambient_light");
 	}
 	
-	auto directional_light = ecs.CreateEntity("directional_light");
 	{
+		auto directional_light = ecs.CreateEntity("directional_light");
+
 		auto transform = directional_light->CreateComponentTransform();
 		transform->Position = XMVectorSet(3.0f, 10.0f, -3.0f, 1.0f);
 
@@ -245,22 +266,25 @@ int main()
 		//ecs.DestroyEntityByName("directional_light");
 	}
 
-	auto box = ecs.CreateEntity("box");
 	{
+		auto box = ecs.CreateEntity("box");
+
 		auto transform = box->CreateComponentTransform();
-		transform->ScalingFactor = XMVectorSet(32, 1.0f, 32, 0.0f);
+		transform->ScalingFactor = XMVectorSet(32, 10.0f, 32, 0.0f);
 		transform->Position = XMVectorSet(0.0f, -10.0f, 0.0f, 1.0f);
 
 		auto physics = box->CreateComponentPhysics();
-		physics->BoundingSphere = SBoundingSphereData(24.0f);
+		physics->BoundingSphere = SBoundingSphereData(30.0f);
 		physics->SetMassToInfinite();
+		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_box"));
 
 		auto render = box->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("box"));
 	}
 
-	auto jar = ecs.CreateEntity("jar");
 	{
+		auto jar = ecs.CreateEntity("jar");
+
 		auto transform = jar->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
 		transform->Position = XMVectorSet(10.0f, 13.0f, 0.0f, 1.0f);
@@ -275,11 +299,13 @@ int main()
 		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 	
-	auto oil_drum = ecs.CreateEntity("oil_drum");
 	{
+		auto oil_drum = ecs.CreateEntity("oil_drum");
+
 		auto transform = oil_drum->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(0.0f, 20.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(0.0f, 24.0f, 0.0f, 1.0f);
+		transform->SetPitchYawRoll(XMFLOAT3(0, 0, -0.6f));
 		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
 
 		auto physics = oil_drum->CreateComponentPhysics();
@@ -292,8 +318,9 @@ int main()
 		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 
-	auto recycling_bin = ecs.CreateEntity("recycling_bin");
 	{
+		auto recycling_bin = ecs.CreateEntity("recycling_bin");
+
 		auto transform = recycling_bin->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
 		transform->Position = XMVectorSet(18.0f, 10.0f, 0.0f, 1.0f);
@@ -308,7 +335,52 @@ int main()
 		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 
+	{
+		auto closest_a0 = ecs.CreateEntity("closest_a0");
+		auto transform = closest_a0->CreateComponentTransform();
+		auto render = closest_a0->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_A"));
+	}
+
+	{
+		auto closest_a = ecs.CreateEntity("closest_a1");
+		auto transform = closest_a->CreateComponentTransform();
+		auto render = closest_a->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_A"));
+	}
+
+	{
+		auto closest_a = ecs.CreateEntity("closest_a2");
+		auto transform = closest_a->CreateComponentTransform();
+		auto render = closest_a->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_A"));
+	}
+
+	{
+		auto closest_b = ecs.CreateEntity("closest_b0");
+		auto transform = closest_b->CreateComponentTransform();
+		auto render = closest_b->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_B"));
+	}
+
+	{
+		auto closest_b = ecs.CreateEntity("closest_b1");
+		auto transform = closest_b->CreateComponentTransform();
+		auto render = closest_b->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_B"));
+	}
+
+	{
+		auto closest_b = ecs.CreateEntity("closest_b2");
+		auto transform = closest_b->CreateComponentTransform();
+		auto render = closest_b->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_B"));
+	}
+
 	ecs.SystemCamera().SetCurrentCamera(0);
+
+	// For debugging - turn the physics by pressing number key '6'.
+	ecs.SystemPhysics().ToggleSystemPhysicsFlag(JWFlagSystemPhysicsOption_ApplyForces);
 
 	myGame.SetFunctionOnWindowsKeyDown(OnWindowsKeyDown);
 	myGame.SetFunctionOnWindowsCharInput(OnWindowsCharKeyInput);
@@ -485,6 +557,14 @@ JW_FUNCTION_ON_RENDER(OnRender)
 
 	// 3D Point for debugging
 	ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->Position = ecs.SystemPhysics().GetPickedPoint();
+
+	ecs.GetEntityByName("closest_a0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointA0();
+	ecs.GetEntityByName("closest_a1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointA1();
+	ecs.GetEntityByName("closest_a2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointA2();
+	
+	ecs.GetEntityByName("closest_b0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointB0();
+	ecs.GetEntityByName("closest_b1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointB1();
+	ecs.GetEntityByName("closest_b2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointB2();
 
 	// ECS entity Skybox
 	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->Position = ecs.SystemCamera().GetCurrentCameraPosition();

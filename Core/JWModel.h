@@ -46,9 +46,14 @@ namespace JWEngine
 		auto GetModelName() const noexcept->const STRING& { return m_ModelName; }
 
 	public:
-		ID3D11Buffer*		ModelVertexBuffer[KVertexBufferCount]{};
-		ID3D11Buffer*		ModelIndexBuffer{};
-		SModelData			ModelData{};
+		ID3D11Buffer*			ModelVertexBuffer[KVertexBufferCount]{};
+		ID3D11Buffer*			ModelIndexBuffer{};
+		SModelData				ModelData{};
+
+		// For collision mesh
+		VECTOR<XMVECTOR>				vPositionVertex{};
+		VECTOR<size_t>					vPositionVertexIndexFromVertexIndex{};
+		VECTOR<VECTOR<size_t>>			vFaceWithPositionVertex{};
 
 	private:
 		void CreateModelVertexIndexBuffers() noexcept;

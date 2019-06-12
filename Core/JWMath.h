@@ -21,7 +21,7 @@ namespace JWEngine
 	{
 		return XMVector3Normalize(XMVector3Cross(TriB - TriA, TriC - TriA));
 	}
-
+	
 	// Returns distance and projected point vector
 	static auto __vectorcall ProjectPointOntoPlane(
 		float& OutDistance, const XMVECTOR& Point, const XMVECTOR& PlanePoint, const XMVECTOR& PlaneNormal)->XMVECTOR
@@ -31,23 +31,23 @@ namespace JWEngine
 
 		return (Point - PlaneNormal * dist);
 	}
-
-	static auto __vectorcall IsPointInsideTriangle(
-		const XMVECTOR& Point, const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC)->bool
+	
+	static auto __vectorcall IsPointOnPlaneInsideTriangle(
+		const XMVECTOR& PointOnPlane, const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC)->bool
 	{
 		auto edge_bc = TriC - TriB;
 		auto edge_ac = TriC - TriA;
 		auto edge_ab = TriB - TriA;
 
-		auto check_0 = XMVector3Cross(edge_bc, (Point - TriB));
+		auto check_0 = XMVector3Cross(edge_bc, (PointOnPlane - TriB));
 		auto check_1 = XMVector3Cross(edge_bc, (TriA - TriB));
 		if (XMVector3Greater(XMVector3Dot(check_0, check_1), KVectorZero))
 		{
-			check_0 = XMVector3Cross(edge_ac, (Point - TriA));
+			check_0 = XMVector3Cross(edge_ac, (PointOnPlane - TriA));
 			check_1 = XMVector3Cross(edge_ac, edge_ab);
 			if (XMVector3Greater(XMVector3Dot(check_0, check_1), KVectorZero))
 			{
-				check_0 = XMVector3Cross(edge_ab, (Point - TriA));
+				check_0 = XMVector3Cross(edge_ab, (PointOnPlane - TriA));
 				check_1 = XMVector3Cross(edge_ab, edge_ac);
 				if (XMVector3Greater(XMVector3Dot(check_0, check_1), KVectorZero))
 				{
@@ -108,7 +108,7 @@ namespace JWEngine
 			OutPointOnPlane = RayOrigin + new_t * RayDirection;
 
 			// Check if the point is in the triangle
-			if (IsPointInsideTriangle(OutPointOnPlane, TriA, TriB, TriC))
+			if (IsPointOnPlaneInsideTriangle(OutPointOnPlane, TriA, TriB, TriC))
 			{
 				//OutPointOnPlane = RayOrigin + new_t * RayDirection;
 				OutOldT = new_t;
@@ -288,5 +288,44 @@ namespace JWEngine
 		return false;
 	}
 
+	// @warning: NOT TESTED YET
+	static auto __vectorcall GetDistanceBetweenPointAndLine(
+		const XMVECTOR& LinePointA, const XMVECTOR& LinePointB, const XMVECTOR& Point) noexcept->float
+	{
+		auto ab_dir = XMVector3Normalize(LinePointB - LinePointA);
+		auto ap = Point - LinePointA;
+		auto p_proj = XMVector3Dot(ap, ab_dir) * ab_dir;
+		auto p_perp = Point - p_proj;
 
+		return XMVectorGetX(XMVector3Length(p_perp));
+	}
+
+	static auto __vectorcall ProjectPointOntoSegment(
+		const XMVECTOR& Point, const XMVECTOR& SegmentA, const XMVECTOR& SegmentB, XMVECTOR& ProjectedPoint)->bool
+	{
+		auto seg = SegmentA - SegmentB;
+		auto seg_dir = XMVector3Normalize(seg);
+		auto v = Point - SegmentB;
+
+		auto projected_v = XMVector3Dot(v, seg_dir) * seg_dir;
+		auto projected_dir = XMVector3Normalize(projected_v);
+		ProjectedPoint = SegmentB + projected_v;
+
+		auto seg_l_sq = XMVector3LengthSq(seg);
+		auto projected_l_sq = XMVector3LengthSq(projected_v);
+
+		if (XMVector3NotEqual(seg_dir, projected_dir))
+		{
+			return false;
+		}
+
+		if (XMVector3Greater(projected_l_sq, seg_l_sq))
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
 };

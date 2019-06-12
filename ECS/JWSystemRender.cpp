@@ -227,7 +227,7 @@ auto JWSystemRender::GetSharedTexture(size_t Index) noexcept->ID3D11ShaderResour
 	return result;
 }
 
-auto JWSystemRender::CreateSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*
+auto JWSystemRender::CreateSharedModelFromModelData(ESharedModelType Type, const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*
 {
 	if (GetSharedModelByName(ModelName))
 	{
@@ -243,7 +243,54 @@ auto JWSystemRender::CreateSharedModelFromModelData(const SModelData& ModelData,
 	JWPrimitiveMaker maker{};
 	current_model.CreateMeshBuffers(ModelData, ERenderType::Model_Static);
 
+	if (Type == ESharedModelType::CollisionMesh)
+	{
+		CreateCollisionMeshData(current_model);
+	}
+
 	return &current_model;
+}
+
+PRIVATE void JWSystemRender::CreateCollisionMeshData(JWModel& Model) noexcept
+{
+	Model.vPositionVertexIndexFromVertexIndex.resize(Model.ModelData.VertexData.vVerticesModel.size());
+	size_t vertex_index{};
+	size_t position_vertex_index{};
+	for (const auto& vertex : Model.ModelData.VertexData.vVerticesModel)
+	{
+		bool found{ false };
+		for (size_t i = 0; i < Model.vPositionVertex.size(); ++i)
+		{
+			if (XMVector3Equal(Model.vPositionVertex[i], vertex.Position))
+			{
+				position_vertex_index = i;
+				found = true;
+				break;
+			}
+		}
+		if (found == false)
+		{
+			Model.vPositionVertex.emplace_back(vertex.Position);
+			Model.vPositionVertexIndexFromVertexIndex[vertex_index] = Model.vPositionVertex.size() - 1;
+		}
+		else
+		{
+			Model.vPositionVertexIndexFromVertexIndex[vertex_index] = position_vertex_index;
+		}
+
+		++vertex_index;
+	}
+
+	Model.vFaceWithPositionVertex.resize(Model.vPositionVertexIndexFromVertexIndex.size());
+	size_t face_index{};
+	for (const auto& face : Model.ModelData.IndexData.vFaces)
+	{
+		Model.vFaceWithPositionVertex[Model.vPositionVertexIndexFromVertexIndex[face._0]].emplace_back(face_index);
+		Model.vFaceWithPositionVertex[Model.vPositionVertexIndexFromVertexIndex[face._1]].emplace_back(face_index);
+		Model.vFaceWithPositionVertex[Model.vPositionVertexIndexFromVertexIndex[face._2]].emplace_back(face_index);
+
+		++face_index;
+	}
 }
 
 auto JWSystemRender::CreateDynamicSharedModelFromModelData(const SModelData& ModelData, const STRING& ModelName) noexcept->JWModel*
@@ -283,16 +330,21 @@ auto JWSystemRender::CreateSharedModelFromFile(ESharedModelType Type, const STRI
 
 	switch (Type)
 	{
+	case JWEngine::ESharedModelType::CollisionMesh:
+		//[[fallthrough]];
 	case JWEngine::ESharedModelType::StaticModel:
 		current_model.CreateMeshBuffers(loader.LoadNonRiggedModel(m_BaseDirectory + KAssetDirectory, FileName), ERenderType::Model_Static);
-
 		break;
 	case JWEngine::ESharedModelType::RiggedModel:
 		current_model.CreateMeshBuffers(loader.LoadRiggedModel(m_BaseDirectory + KAssetDirectory, FileName), ERenderType::Model_Rigged);
-
 		break;
 	default:
 		break;
+	}
+
+	if (Type == ESharedModelType::CollisionMesh)
+	{
+		CreateCollisionMeshData(current_model);
 	}
 
 	if (OverrideTextureFN.length())

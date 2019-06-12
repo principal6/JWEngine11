@@ -6,13 +6,22 @@ namespace JWEngine
 {
 	// Gravity on Earth = 9.8m/s^2
 	static constexpr float		KNonPhysicalObjectInverseMass{ -1.0f };
-	static constexpr float		KGravityOnEarth{ 0.8f };
+	static constexpr float		KGravityOnEarth{ 9.8f };
 	static constexpr float		KPhysicsWorldFloor{ -100.0f };
 	static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
 	static const STRING			KNoName{ "" };
 
 	class JWEntity;
 	class JWECS;
+
+	struct SClosestPoint
+	{
+		SClosestPoint() {};
+		SClosestPoint(size_t _PositionIndex, float _Distance) : PositionIndex{ _PositionIndex }, Distance{ _Distance } {};
+
+		size_t	PositionIndex{};
+		float	Distance{};
+	};
 
 	enum EFLAGSystemPhysicsOption : uint8_t
 	{
@@ -45,6 +54,7 @@ namespace JWEngine
 		// InverseMass = 1/Mass
 		// @important: mass MUST NOT be 'zero'
 		// but 'infinite mass' (zero InverseMass) means no physics calculation on this component.
+		// If mass is not set, it is assumed to be a NON-physical entity.
 		float		InverseMass{ KNonPhysicalObjectInverseMass };
 
 		// [Property]	velocity
@@ -137,6 +147,13 @@ namespace JWEngine
 		const auto& GetPickedTriangleVertex(uint32_t PositionIndex) const noexcept { return m_PickedTriangle[min(PositionIndex, 2)]; };
 		const auto& GetPickedPoint() const noexcept { return m_PickedPoint; };
 
+		const auto& GetDebugClosestPointA0() const noexcept { if (m_ClosestPointsA.size() > 0) { return m_ClosestPointsA[0]; } return KVectorZero; };
+		const auto& GetDebugClosestPointA1() const noexcept { if (m_ClosestPointsA.size() > 1) { return m_ClosestPointsA[1]; } return KVectorZero; };
+		const auto& GetDebugClosestPointA2() const noexcept { if (m_ClosestPointsA.size() > 2) { return m_ClosestPointsA[2]; } return KVectorZero; };
+		const auto& GetDebugClosestPointB0() const noexcept { if (m_ClosestPointsB.size() > 0) { return m_ClosestPointsB[0]; } return KVectorZero; };
+		const auto& GetDebugClosestPointB1() const noexcept { if (m_ClosestPointsB.size() > 1) { return m_ClosestPointsB[1]; } return KVectorZero; };
+		const auto& GetDebugClosestPointB2() const noexcept { if (m_ClosestPointsB.size() > 2) { return m_ClosestPointsB[2]; } return KVectorZero; };
+
 		void ApplyUniversalGravity() noexcept;
 		void ApplyUniversalAcceleration(const XMVECTOR& _Acceleration) noexcept;
 		void ZeroAllVelocities() noexcept;
@@ -166,6 +183,9 @@ namespace JWEngine
 		void DetectCoarseCollision() noexcept;
 		void DetectFineCollision() noexcept;
 
+		auto IsPointAInB(const XMVECTOR& PointA, const VECTOR<SIndexTriangle>& BFaces, const XMMATRIX& BWorld,
+			const VECTOR<size_t>& BVertexToPosition, const VECTOR<XMVECTOR>& BPositions) noexcept->bool;
+
 	private:
 		VECTOR<SComponentPhysics>	m_vComponents;
 
@@ -193,7 +213,11 @@ namespace JWEngine
 		XMVECTOR					m_PickedNonTerrainDistance{};
 
 		VECTOR<SCollisionPair>		m_CoarseCollisionList{};
+		VECTOR<XMVECTOR>			m_ClosestPointsA{};
+		VECTOR<SClosestPoint>		m_ClosestPointsAIndex{};
+		VECTOR<XMVECTOR>			m_ClosestPointsB{};
+		VECTOR<SClosestPoint>		m_ClosestPointsBIndex{};
 
-		JWFlagSystemPhysicsOption	m_FlagSystemPhyscisOption{};
+		JWFlagSystemPhysicsOption	m_FlagSystemPhyscisOption{ JWFlagSystemPhysicsOption_ApplyForces };
 	};
 };
