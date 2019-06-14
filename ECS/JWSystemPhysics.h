@@ -6,13 +6,22 @@ namespace JWEngine
 {
 	// Gravity on Earth = 9.8m/s^2
 	static constexpr float		KNonPhysicalObjectInverseMass{ -1.0f };
-	static constexpr float		KGravityOnEarth{ 9.8f };
+	static constexpr float		KGravityOnEarth{ 0.8f };
 	static constexpr float		KPhysicsWorldFloor{ -100.0f };
-	static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
+	//static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
+	static constexpr XMVECTOR	KVectorGravityOnEarth{ KGravityOnEarth, 0, 0, 0 };
 	static const STRING			KNoName{ "" };
 
 	class JWEntity;
 	class JWECS;
+	
+	enum class EClosestEdgePair
+	{
+		None,
+		V0V1,
+		V0V2,
+		V1V2,
+	};
 
 	struct SClosestPoint
 	{
@@ -21,6 +30,16 @@ namespace JWEngine
 
 		size_t	PositionIndex{};
 		float	Distance{};
+	};
+	
+	struct SClosestFace
+	{
+		SClosestFace() {};
+		SClosestFace(const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2) : V0{ _V0 }, V1{ _V1 }, V2{ _V2 } {};
+
+		XMVECTOR V0{};
+		XMVECTOR V1{};
+		XMVECTOR V2{};
 	};
 
 	enum EFLAGSystemPhysicsOption : uint8_t
@@ -147,12 +166,14 @@ namespace JWEngine
 		const auto& GetPickedTriangleVertex(uint32_t PositionIndex) const noexcept { return m_PickedTriangle[min(PositionIndex, 2)]; };
 		const auto& GetPickedPoint() const noexcept { return m_PickedPoint; };
 
-		const auto& GetDebugClosestPointA0() const noexcept { if (m_ClosestPointsA.size() > 0) { return m_ClosestPointsA[0]; } return KVectorZero; };
-		const auto& GetDebugClosestPointA1() const noexcept { if (m_ClosestPointsA.size() > 1) { return m_ClosestPointsA[1]; } return KVectorZero; };
-		const auto& GetDebugClosestPointA2() const noexcept { if (m_ClosestPointsA.size() > 2) { return m_ClosestPointsA[2]; } return KVectorZero; };
-		const auto& GetDebugClosestPointB0() const noexcept { if (m_ClosestPointsB.size() > 0) { return m_ClosestPointsB[0]; } return KVectorZero; };
-		const auto& GetDebugClosestPointB1() const noexcept { if (m_ClosestPointsB.size() > 1) { return m_ClosestPointsB[1]; } return KVectorZero; };
-		const auto& GetDebugClosestPointB2() const noexcept { if (m_ClosestPointsB.size() > 2) { return m_ClosestPointsB[2]; } return KVectorZero; };
+		const auto& GetClosestPointA0() const noexcept { if (m_ClosestPointsA.size() > 0) { return m_ClosestPointsA[0]; } return KVectorZero; };
+		const auto& GetClosestPointA1() const noexcept { if (m_ClosestPointsA.size() > 1) { return m_ClosestPointsA[1]; } return KVectorZero; };
+		const auto& GetClosestPointA2() const noexcept { if (m_ClosestPointsA.size() > 2) { return m_ClosestPointsA[2]; } return KVectorZero; };
+		const auto& GetClosestPointB0() const noexcept { if (m_ClosestPointsB.size() > 0) { return m_ClosestPointsB[0]; } return KVectorZero; };
+		const auto& GetClosestPointB1() const noexcept { if (m_ClosestPointsB.size() > 1) { return m_ClosestPointsB[1]; } return KVectorZero; };
+		const auto& GetClosestPointB2() const noexcept { if (m_ClosestPointsB.size() > 2) { return m_ClosestPointsB[2]; } return KVectorZero; };
+		const auto& GetClosestFaceA() const noexcept { return m_ClosestFaceA; };
+		const auto& GetClosestFaceB() const noexcept { return m_ClosestFaceB; };
 
 		void ApplyUniversalGravity() noexcept;
 		void ApplyUniversalAcceleration(const XMVECTOR& _Acceleration) noexcept;
@@ -217,6 +238,8 @@ namespace JWEngine
 		VECTOR<SClosestPoint>		m_ClosestPointsAIndex{};
 		VECTOR<XMVECTOR>			m_ClosestPointsB{};
 		VECTOR<SClosestPoint>		m_ClosestPointsBIndex{};
+		SClosestFace				m_ClosestFaceA{};
+		SClosestFace				m_ClosestFaceB{};
 
 		JWFlagSystemPhysicsOption	m_FlagSystemPhyscisOption{ JWFlagSystemPhysicsOption_ApplyForces };
 	};

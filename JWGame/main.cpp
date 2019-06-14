@@ -304,7 +304,7 @@ int main()
 
 		auto transform = oil_drum->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(0.0f, 24.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(-17.0f, -5.0f, 0.0f, 1.0f);
 		transform->SetPitchYawRoll(XMFLOAT3(0, 0, -0.6f));
 		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
 
@@ -558,13 +558,22 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	// 3D Point for debugging
 	ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->Position = ecs.SystemPhysics().GetPickedPoint();
 
-	ecs.GetEntityByName("closest_a0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointA0();
-	ecs.GetEntityByName("closest_a1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointA1();
-	ecs.GetEntityByName("closest_a2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointA2();
+	//ecs.GetEntityByName("closest_a0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointA0();
+	//ecs.GetEntityByName("closest_a1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointA1();
+	//ecs.GetEntityByName("closest_a2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointA2();
+
+	ecs.GetEntityByName("closest_a0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceA().V0;
+	ecs.GetEntityByName("closest_a1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceA().V1;
+	ecs.GetEntityByName("closest_a2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceA().V2;
 	
-	ecs.GetEntityByName("closest_b0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointB0();
-	ecs.GetEntityByName("closest_b1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointB1();
-	ecs.GetEntityByName("closest_b2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetDebugClosestPointB2();
+	//ecs.GetEntityByName("closest_b0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointB0();
+	//ecs.GetEntityByName("closest_b1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointB1();
+	//ecs.GetEntityByName("closest_b2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointB2();
+
+	ecs.GetEntityByName("closest_b0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceB().V0;
+	ecs.GetEntityByName("closest_b1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceB().V1;
+	ecs.GetEntityByName("closest_b2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceB().V2;
+
 
 	// ECS entity Skybox
 	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->Position = ecs.SystemCamera().GetCurrentCameraPosition();

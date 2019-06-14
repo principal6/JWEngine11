@@ -11,6 +11,11 @@ namespace JWEngine
 	static const XMVECTOR KVectorOne = XMVectorSet(1.0f, 1.0f, 1.0f, 0.0f);
 
 	static const XMMATRIX KMatrixIdentity = XMMatrixIdentity();
+
+	static auto __vectorcall GetRayDirection(const XMVECTOR& RayOrigin, const XMVECTOR& PointInRayDirection)->XMVECTOR
+	{
+		return XMVector3Normalize(PointInRayDirection - RayOrigin);
+	}
 	
 	static auto __vectorcall GetTriangleNormal(const XMVECTOR& EdgeAB, const XMVECTOR& EdgeAC)->XMVECTOR
 	{
@@ -119,6 +124,38 @@ namespace JWEngine
 		{
 			// Save the point on plane.
 			OutPointOnPlane = RayOrigin + OutOldT * RayDirection;
+		}
+
+		return false;
+	}
+
+	static auto __vectorcall IntersectRayTriangle(XMVECTOR& OutPointOnPlane, const XMVECTOR& RayOrigin, const XMVECTOR& RayDirection,
+		const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC) noexcept->bool
+	{
+		auto triangle_normal = GetTriangleNormal(TriA, TriB, TriC);
+		auto plane_d = -XMVector3Dot(TriA, triangle_normal);
+
+		auto ray_origin_norm = XMVector3Dot(RayOrigin, triangle_normal);
+		auto ray_direction_norm = XMVector3Dot(RayDirection, triangle_normal);
+		XMVECTOR new_t{};
+		if (XMVector3NotEqual(ray_direction_norm, KVectorZero))
+		{
+			new_t = (-plane_d - ray_origin_norm) / ray_direction_norm;
+		}
+
+		// 't' should be positive for the picking to be in front of the camera!
+		// (if it's negative, the picking is occuring behind the camera)
+		// We will store the minimum of t values, which means that it's the closest picking to the camera.
+		if (XMVector3Greater(new_t, KVectorZero))
+		{
+			// Save the point on plane.
+			OutPointOnPlane = RayOrigin + new_t * RayDirection;
+
+			// Check if the point is in the triangle
+			if (IsPointOnPlaneInsideTriangle(OutPointOnPlane, TriA, TriB, TriC))
+			{
+				return true;
+			}
 		}
 
 		return false;

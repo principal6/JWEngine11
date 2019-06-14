@@ -679,8 +679,8 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 		const auto& a_physics = m_vComponents[iter.A];
 		const auto& b_physics = m_vComponents[iter.B];
 
-		auto a_collision_mesh{ a_physics.PtrCollisionMesh };
-		auto b_collision_mesh{ b_physics.PtrCollisionMesh };
+		auto& a_collision_mesh{ a_physics.PtrCollisionMesh };
+		auto& b_collision_mesh{ b_physics.PtrCollisionMesh };
 		if ((a_collision_mesh == nullptr) || (b_collision_mesh == nullptr))
 		{
 			JW_ERROR_ABORT("The collision mesh is missing.");
@@ -696,8 +696,8 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 		const auto& b_face_with_position = b_collision_mesh->vFaceWithPositionVertex;
 		
 		// #1 Get world (mass) center of objects
-		const auto a_transform = m_pECS->GetEntityByIndex(a_physics.EntityIndex)->GetComponentTransform();
-		const auto b_transform = m_pECS->GetEntityByIndex(b_physics.EntityIndex)->GetComponentTransform();
+		const auto& a_transform = m_pECS->GetEntityByIndex(a_physics.EntityIndex)->GetComponentTransform();
+		const auto& b_transform = m_pECS->GetEntityByIndex(b_physics.EntityIndex)->GetComponentTransform();
 		auto a_center_world = a_physics.BoundingSphere.Center + a_transform->Position;
 		auto b_center_world = b_physics.BoundingSphere.Center + b_transform->Position;
 
@@ -774,90 +774,246 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			are_in_contact = true;
 		}
 
-		// #4-2 Edge - Edge
-		bool is_edge_a_in_b{ false };
-		bool is_edge_b_in_a{ false };
+		// #4-2 Find the closest face of each object to another
 		if (are_in_contact == false)
 		{
-			// #4-2-1 Edge of a - object b
-			XMVECTOR closest_point_of_edge_a_to_b{};
-			for (auto face_i : a_face_with_position[m_ClosestPointsAIndex.front().PositionIndex])
+			// Find the closest face of a
+			XMVECTOR angle_max{ -KVectorMax };
+			for (const auto& a_face : a_face_with_position[m_ClosestPointsAIndex.front().PositionIndex])
 			{
-				auto a0 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[face_i]._0]], a_transform->WorldMatrix);
-				auto a1 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[face_i]._1]], a_transform->WorldMatrix);
-				auto a2 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[face_i]._2]], a_transform->WorldMatrix);
+				auto a0 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[a_face]._0]], a_transform->WorldMatrix);
+				auto a1 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[a_face]._1]], a_transform->WorldMatrix);
+				auto a2 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[a_face]._2]], a_transform->WorldMatrix);
+				auto n = GetTriangleNormal(a0, a1, a2);
 
-				// Edge 0-1
-				if (ProjectPointOntoSegment(b_center_world, a0, a1, closest_point_of_edge_a_to_b))
+				auto angle = XMVector3Dot(n, ab_dir);
+				if (XMVector3Greater(angle, angle_max))
 				{
-					if (is_edge_a_in_b = IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
-					{
-						are_in_contact = true;
-						break;
-					}
-				}
-
-				// Edge 1-2
-				if (ProjectPointOntoSegment(b_center_world, a1, a2, closest_point_of_edge_a_to_b))
-				{
-					if (is_edge_a_in_b = IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
-					{
-						are_in_contact = true;
-						break;
-					}
-				}
-
-				// Edge 0-2
-				if (ProjectPointOntoSegment(b_center_world, a0, a2, closest_point_of_edge_a_to_b))
-				{
-					if (is_edge_a_in_b = IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
-					{
-						are_in_contact = true;
-						break;
-					}
+					angle_max = angle;
+					m_ClosestFaceA = SClosestFace(a0, a1, a2);
 				}
 			}
-			
-			// #4-2-2 Edge of b - object a
-			XMVECTOR closest_point_of_edge_b_to_a{};
-			for (auto face_i : b_face_with_position[m_ClosestPointsBIndex.front().PositionIndex])
+
+			// Find the closest face of b
+			angle_max = -KVectorMax;
+			for (const auto& b_face : b_face_with_position[m_ClosestPointsBIndex.front().PositionIndex])
 			{
-				auto b0 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[face_i]._0]], b_transform->WorldMatrix);
-				auto b1 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[face_i]._1]], b_transform->WorldMatrix);
-				auto b2 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[face_i]._2]], b_transform->WorldMatrix);
+				auto b0 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[b_face]._0]], b_transform->WorldMatrix);
+				auto b1 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[b_face]._1]], b_transform->WorldMatrix);
+				auto b2 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[b_face]._2]], b_transform->WorldMatrix);
+				auto n = GetTriangleNormal(b0, b1, b2);
 
-				// Edge 0-1
-				if (ProjectPointOntoSegment(a_center_world, b0, b1, closest_point_of_edge_b_to_a))
+				auto angle = XMVector3Dot(n, ba_dir);
+				if (XMVector3Greater(angle, angle_max))
 				{
-					if (is_edge_b_in_a = IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
-					{
-						are_in_contact = true;
-						break;
-					}
-				}
-
-				// Edge 1-2
-				if (ProjectPointOntoSegment(a_center_world, b1, b2, closest_point_of_edge_b_to_a))
-				{
-					if (is_edge_b_in_a = IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
-					{
-						are_in_contact = true;
-						break;
-					}
-				}
-
-				// Edge 0-2
-				if (ProjectPointOntoSegment(a_center_world, b0, b2, closest_point_of_edge_b_to_a))
-				{
-					if (is_edge_b_in_a = IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
-					{
-						are_in_contact = true;
-						break;
-					}
+					angle_max = angle;
+					m_ClosestFaceB = SClosestFace(b0, b1, b2);
 				}
 			}
 		}
-		
+
+		// #4-3 Edge - Edge
+		bool is_edge_b_through_face_a{ false };
+		bool is_edge_a_through_face_b{ false };
+		EClosestEdgePair edge_a{ EClosestEdgePair::None };
+		EClosestEdgePair edge_b{ EClosestEdgePair::None };
+
+		// #4-3-1 Edge of 'b' is intersecting the closest face of 'a'
+		// Find the edge of 'a' that intersects 'b'
+		if (are_in_contact == false)
+		{
+			XMVECTOR closest_point_of_edge_a_to_b{};
+
+			// Edge a V0-V1
+			if (ProjectPointOntoSegment(b_center_world, m_ClosestFaceA.V0, m_ClosestFaceA.V1, closest_point_of_edge_a_to_b))
+			{
+				if (is_edge_b_through_face_a = IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+				{
+					edge_a = EClosestEdgePair::V0V1;
+				}
+			}
+
+			// Edge a V0-V2
+			if (edge_a == EClosestEdgePair::None)
+			{
+				if (ProjectPointOntoSegment(b_center_world, m_ClosestFaceA.V0, m_ClosestFaceA.V2, closest_point_of_edge_a_to_b))
+				{
+					if (is_edge_b_through_face_a = IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					{
+						edge_a = EClosestEdgePair::V0V2;
+					}
+				}
+			}
+
+			// Edge a V1-V2
+			if (edge_a == EClosestEdgePair::None)
+			{
+				if (ProjectPointOntoSegment(b_center_world, m_ClosestFaceA.V1, m_ClosestFaceA.V2, closest_point_of_edge_a_to_b))
+				{
+					if (is_edge_b_through_face_a = IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					{
+						edge_a = EClosestEdgePair::V1V2;
+					}
+				}
+			}
+
+			// Find the edge of 'b' that intersects the closest face of 'a'
+			if (edge_a != EClosestEdgePair::None)
+			{
+				// Edge b V0-V1
+				XMVECTOR intersected_point{};
+				if (
+					(IntersectRayTriangle(
+						intersected_point, m_ClosestFaceB.V0, GetRayDirection(m_ClosestFaceB.V0, m_ClosestFaceB.V1),
+						m_ClosestFaceA.V0, m_ClosestFaceA.V1, m_ClosestFaceA.V2) == true)
+					||
+					(IntersectRayTriangle(
+						intersected_point, m_ClosestFaceB.V1, GetRayDirection(m_ClosestFaceB.V1, m_ClosestFaceB.V0),
+						m_ClosestFaceA.V0, m_ClosestFaceA.V1, m_ClosestFaceA.V2) == true)
+					)
+				{
+					edge_b = EClosestEdgePair::V0V1;
+				}
+
+				// Edge b V0-V2
+				if (edge_b == EClosestEdgePair::None)
+				{
+					if (
+						(IntersectRayTriangle(
+							intersected_point, m_ClosestFaceB.V0, GetRayDirection(m_ClosestFaceB.V0, m_ClosestFaceB.V2),
+							m_ClosestFaceA.V0, m_ClosestFaceA.V1, m_ClosestFaceA.V2) == true)
+						||
+						(IntersectRayTriangle(
+							intersected_point, m_ClosestFaceB.V2, GetRayDirection(m_ClosestFaceB.V2, m_ClosestFaceB.V0),
+							m_ClosestFaceA.V0, m_ClosestFaceA.V1, m_ClosestFaceA.V2) == true)
+						)
+					{
+						edge_b = EClosestEdgePair::V0V2;
+					}
+				}
+
+				// Edge b V1-V2
+				if (edge_b == EClosestEdgePair::None)
+				{
+					if (
+						(IntersectRayTriangle(
+							intersected_point, m_ClosestFaceB.V1, GetRayDirection(m_ClosestFaceB.V1, m_ClosestFaceB.V2),
+							m_ClosestFaceA.V0, m_ClosestFaceA.V1, m_ClosestFaceA.V2) == true)
+						||
+						(IntersectRayTriangle(
+							intersected_point, m_ClosestFaceB.V2, GetRayDirection(m_ClosestFaceB.V2, m_ClosestFaceB.V1),
+							m_ClosestFaceA.V0, m_ClosestFaceA.V1, m_ClosestFaceA.V2) == true)
+						)
+					{
+						edge_b = EClosestEdgePair::V1V2;
+					}
+				}
+			}
+
+			if ((edge_a != EClosestEdgePair::None) && (edge_b != EClosestEdgePair::None))
+			{
+				are_in_contact = true;
+			}
+		}
+
+		// #4-3-2 Edge of 'a' is intersecting the closest face of 'b'
+		// Find the edge of 'b' that intersects 'a'
+		if (are_in_contact == false)
+		{
+			XMVECTOR closest_point_of_edge_b_to_a{};
+
+			// Edge b V0-V1
+			if (ProjectPointOntoSegment(a_center_world, m_ClosestFaceB.V0, m_ClosestFaceB.V1, closest_point_of_edge_b_to_a))
+			{
+				if (is_edge_a_through_face_b = IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+				{
+					edge_b = EClosestEdgePair::V0V1;
+				}
+			}
+
+			// Edge b V0-V2
+			if (edge_b == EClosestEdgePair::None)
+			{
+				if (ProjectPointOntoSegment(a_center_world, m_ClosestFaceB.V0, m_ClosestFaceB.V2, closest_point_of_edge_b_to_a))
+				{
+					if (is_edge_a_through_face_b = IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					{
+						edge_b = EClosestEdgePair::V0V2;
+					}
+				}
+			}
+
+			// Edge b V1-V2
+			if (edge_b == EClosestEdgePair::None)
+			{
+				if (ProjectPointOntoSegment(a_center_world, m_ClosestFaceB.V1, m_ClosestFaceB.V2, closest_point_of_edge_b_to_a))
+				{
+					if (is_edge_a_through_face_b = IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					{
+						edge_b = EClosestEdgePair::V1V2;
+					}
+				}
+			}
+
+			// Find the edge of 'a' that intersects the closest face of 'b'
+			if (edge_b != EClosestEdgePair::None)
+			{
+				// Edge a V0-V1
+				XMVECTOR intersected_point{};
+				if (
+					(IntersectRayTriangle(
+						intersected_point, m_ClosestFaceA.V0, GetRayDirection(m_ClosestFaceA.V0, m_ClosestFaceA.V1),
+						m_ClosestFaceB.V0, m_ClosestFaceB.V1, m_ClosestFaceB.V2) == true)
+					||
+					(IntersectRayTriangle(
+						intersected_point, m_ClosestFaceA.V1, GetRayDirection(m_ClosestFaceA.V1, m_ClosestFaceA.V0),
+						m_ClosestFaceB.V0, m_ClosestFaceB.V1, m_ClosestFaceB.V2) == true)
+					)
+				{
+					edge_a = EClosestEdgePair::V0V1;
+				}
+
+				// Edge a V0-V2
+				if (edge_a == EClosestEdgePair::None)
+				{
+					if (
+						(IntersectRayTriangle(
+							intersected_point, m_ClosestFaceA.V0, GetRayDirection(m_ClosestFaceA.V0, m_ClosestFaceA.V2),
+							m_ClosestFaceB.V0, m_ClosestFaceB.V1, m_ClosestFaceB.V2) == true)
+						||
+						(IntersectRayTriangle(
+							intersected_point, m_ClosestFaceA.V2, GetRayDirection(m_ClosestFaceA.V2, m_ClosestFaceA.V0),
+							m_ClosestFaceB.V0, m_ClosestFaceB.V1, m_ClosestFaceB.V2) == true)
+						)
+					{
+						edge_a = EClosestEdgePair::V0V2;
+					}
+				}
+
+				// Edge a V1-V2
+				if (edge_a == EClosestEdgePair::None)
+				{
+					if (
+						(IntersectRayTriangle(
+							intersected_point, m_ClosestFaceA.V1, GetRayDirection(m_ClosestFaceA.V1, m_ClosestFaceA.V2),
+							m_ClosestFaceB.V0, m_ClosestFaceB.V1, m_ClosestFaceB.V2) == true)
+						||
+						(IntersectRayTriangle(
+							intersected_point, m_ClosestFaceA.V2, GetRayDirection(m_ClosestFaceA.V2, m_ClosestFaceA.V1),
+							m_ClosestFaceB.V0, m_ClosestFaceB.V1, m_ClosestFaceB.V2) == true)
+						)
+					{
+						edge_a = EClosestEdgePair::V1V2;
+					}
+				}
+			}
+
+			if ((edge_a != EClosestEdgePair::None) && (edge_b != EClosestEdgePair::None))
+			{
+				are_in_contact = true;
+			}
+		}
+
 		if (are_in_contact == true)
 		{
 			// #5 Get signed closing speed
@@ -866,7 +1022,6 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			if (XMVector3Greater(signed_closing_speed, KVectorZero))
 			{
 				// They are colliding, not separating.
-
 				// #6 Get penetration....
 
 			}
@@ -878,6 +1033,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 PRIVATE auto JWSystemPhysics::IsPointAInB(const XMVECTOR& PointA, const VECTOR<SIndexTriangle>& BFaces, const XMMATRIX& BWorld,
 	const VECTOR<size_t>& BVertexToPosition, const VECTOR<XMVECTOR>& BPositions) noexcept->bool
 {
+	// return true if PointA is inside all faces of B
 	bool result{ false };
 	float dist{};
 
