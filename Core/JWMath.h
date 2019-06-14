@@ -288,13 +288,12 @@ namespace JWEngine
 		return false;
 	}
 
-	// @warning: NOT TESTED YET
 	static auto __vectorcall GetDistanceBetweenPointAndLine(
-		const XMVECTOR& LinePointA, const XMVECTOR& LinePointB, const XMVECTOR& Point) noexcept->float
+		const XMVECTOR& Point, const XMVECTOR& LinePointA, const XMVECTOR& LinePointB) noexcept->float
 	{
 		auto ab_dir = XMVector3Normalize(LinePointB - LinePointA);
 		auto ap = Point - LinePointA;
-		auto p_proj = XMVector3Dot(ap, ab_dir) * ab_dir;
+		auto p_proj = XMVector3Dot(ap, ab_dir) * ab_dir + LinePointA;
 		auto p_perp = Point - p_proj;
 
 		return XMVectorGetX(XMVector3Length(p_perp));
