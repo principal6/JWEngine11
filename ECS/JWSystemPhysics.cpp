@@ -674,6 +674,8 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 {
 	if (m_CoarseCollisionList.size() == 0) { return; }
 
+	m_IsThereAnyActualCollision = false;
+
 	for (const auto& iter : m_CoarseCollisionList)
 	{
 		const auto& a_physics = m_vComponents[iter.A];
@@ -741,6 +743,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 		}
 
 		// #4 See if the two objects intersect
+		ECollisionType collision_type{ ECollisionType::None };
 		bool are_in_contact{ false };
 		bool is_point_a_in_face_b{ false };
 		bool is_point_b_in_face_a{ false };
@@ -772,6 +775,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 		if ((is_point_b_in_face_a == true) || (is_point_a_in_face_b == true))
 		{
 			are_in_contact = true;
+			collision_type = ECollisionType::PointFace;
 		}
 
 		// #4-2 Find the closest face of each object to another
@@ -910,9 +914,17 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 				}
 			}
 
-			if ((edge_a != EClosestEdgePair::None) && (edge_b != EClosestEdgePair::None))
+			if (edge_a != EClosestEdgePair::None)
 			{
+				if (edge_b == EClosestEdgePair::None)
+				{
+					// To prevent robustness error,
+					// arbitrarily assign an edge.
+					edge_b = EClosestEdgePair::V0V1;
+				}
+
 				are_in_contact = true;
+				collision_type = ECollisionType::EdgeEdge;
 			}
 		}
 
@@ -1008,14 +1020,24 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 				}
 			}
 
-			if ((edge_a != EClosestEdgePair::None) && (edge_b != EClosestEdgePair::None))
+			if (edge_b != EClosestEdgePair::None)
 			{
+				if (edge_a == EClosestEdgePair::None)
+				{
+					// To prevent robustness error,
+					// arbitrarily assign an edge.
+					edge_a = EClosestEdgePair::V0V1;
+				}
+
 				are_in_contact = true;
+				collision_type = ECollisionType::EdgeEdge;
 			}
 		}
 
 		if (are_in_contact == true)
 		{
+			m_IsThereAnyActualCollision = true;
+
 			// #5 Get signed closing speed
 			auto relative_velocity_ba = b_physics.Velocity - a_physics.Velocity;
 			auto signed_closing_speed = XMVector3Dot(relative_velocity_ba, ba_dir);

@@ -15,6 +15,13 @@ namespace JWEngine
 	class JWEntity;
 	class JWECS;
 	
+	enum class ECollisionType
+	{
+		None,
+		PointFace,
+		EdgeEdge,
+	};
+	
 	enum class EClosestEdgePair
 	{
 		None,
@@ -174,6 +181,7 @@ namespace JWEngine
 		const auto& GetClosestPointB2() const noexcept { if (m_ClosestPointsB.size() > 2) { return m_ClosestPointsB[2]; } return KVectorZero; };
 		const auto& GetClosestFaceA() const noexcept { return m_ClosestFaceA; };
 		const auto& GetClosestFaceB() const noexcept { return m_ClosestFaceB; };
+		auto IsThereAnyActualCollision() const noexcept { return m_IsThereAnyActualCollision; };
 
 		void ApplyUniversalGravity() noexcept;
 		void ApplyUniversalAcceleration(const XMVECTOR& _Acceleration) noexcept;
@@ -233,6 +241,7 @@ namespace JWEngine
 		XMVECTOR					m_PickedTerrainDistance{};
 		XMVECTOR					m_PickedNonTerrainDistance{};
 
+		bool						m_IsThereAnyActualCollision{ false };
 		VECTOR<SCollisionPair>		m_CoarseCollisionList{};
 		VECTOR<XMVECTOR>			m_ClosestPointsA{};
 		VECTOR<SClosestPoint>		m_ClosestPointsAIndex{};

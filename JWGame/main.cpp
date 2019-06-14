@@ -600,13 +600,16 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	static WSTRING s_cull_count{};
 	static WSTRING s_cull_count2{};
 	static WSTRING s_dt{};
+	static WSTRING s_is_there_collision{};
 	s_fps = L"FPS: " + TO_WSTRING(myGame.GetFPS());
 	s_anim_id = L"Animation ID: " + TO_WSTRING(anim_id);
 	s_picked_entity = L"Picked Entity = " + StringToWstring(ecs.SystemPhysics().GetPickedEntityName());
 	s_cull_count = L"Frustum culled entities = " + TO_WSTRING(ecs.SystemRender().GetFrustumCulledEntityCount());
 	s_cull_count2 = L"Frustum culled terrain nodes = " + TO_WSTRING(ecs.SystemRender().GetFrustumCulledTerrainNodeCount());
 	s_dt = L"Delta time = " + TO_WSTRING(ecs.GetDeltaTime());
-	
+	s_is_there_collision = L"Fine collision detected? = ";
+	s_is_there_collision += ecs.SystemPhysics().IsThereAnyActualCollision() ? L"TRUE" : L"FALSE";
+
 	myGame.InstantText().BeginRendering();
 
 	myGame.InstantText().RenderText(s_fps, XMFLOAT2(10, 10), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
@@ -615,6 +618,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	myGame.InstantText().RenderText(s_cull_count, XMFLOAT2(10, 70), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_cull_count2, XMFLOAT2(10, 90), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_dt, XMFLOAT2(10, 110), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_is_there_collision, XMFLOAT2(10, 130), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 
 	myGame.InstantText().EndRendering();
 }
