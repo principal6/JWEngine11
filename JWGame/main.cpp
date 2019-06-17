@@ -304,7 +304,7 @@ int main()
 
 		auto transform = oil_drum->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(-17.0f, -5.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(-10.0f, 0.0f, 0.0f, 1.0f);
 		transform->SetPitchYawRoll(XMFLOAT3(0, 0, -0.6f));
 		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
 
@@ -601,6 +601,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	static WSTRING s_cull_count2{};
 	static WSTRING s_dt{};
 	static WSTRING s_is_there_collision{};
+	static WSTRING s_penetration_depth{};
 	s_fps = L"FPS: " + TO_WSTRING(myGame.GetFPS());
 	s_anim_id = L"Animation ID: " + TO_WSTRING(anim_id);
 	s_picked_entity = L"Picked Entity = " + StringToWstring(ecs.SystemPhysics().GetPickedEntityName());
@@ -609,6 +610,8 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	s_dt = L"Delta time = " + TO_WSTRING(ecs.GetDeltaTime());
 	s_is_there_collision = L"Fine collision detected? = ";
 	s_is_there_collision += ecs.SystemPhysics().IsThereAnyActualCollision() ? L"TRUE" : L"FALSE";
+	s_penetration_depth = L"Penetration depth = ";
+	s_penetration_depth += TO_WSTRING(ecs.SystemPhysics().GetPenetrationDepth());
 
 	myGame.InstantText().BeginRendering();
 
@@ -619,6 +622,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	myGame.InstantText().RenderText(s_cull_count2, XMFLOAT2(10, 90), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_dt, XMFLOAT2(10, 110), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_is_there_collision, XMFLOAT2(10, 130), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_penetration_depth, XMFLOAT2(10, 150), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 
 	myGame.InstantText().EndRendering();
 }

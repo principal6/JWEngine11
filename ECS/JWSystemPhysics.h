@@ -8,8 +8,8 @@ namespace JWEngine
 	static constexpr float		KNonPhysicalObjectInverseMass{ -1.0f };
 	static constexpr float		KGravityOnEarth{ 0.8f };
 	static constexpr float		KPhysicsWorldFloor{ -100.0f };
-	//static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
-	static constexpr XMVECTOR	KVectorGravityOnEarth{ KGravityOnEarth, 0, 0, 0 };
+	static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
+	//static constexpr XMVECTOR	KVectorGravityOnEarth{ KGravityOnEarth, 0, 0, 0 };
 	static const STRING			KNoName{ "" };
 
 	class JWEntity;
@@ -18,7 +18,8 @@ namespace JWEngine
 	enum class ECollisionType
 	{
 		None,
-		PointFace,
+		PointAFaceB,
+		PointBFaceA,
 		EdgeEdge,
 	};
 	
@@ -47,6 +48,44 @@ namespace JWEngine
 		XMVECTOR V0{};
 		XMVECTOR V1{};
 		XMVECTOR V2{};
+
+		XMVECTOR N{};
+	};
+
+	struct SClosestEdge
+	{
+		SClosestEdge() {};
+		SClosestEdge(const XMVECTOR& _V0, const XMVECTOR& _V1) : V0{ _V0 }, V1{ _V1 } {};
+
+		XMVECTOR V0{};
+		XMVECTOR V1{};
+
+		XMVECTOR M{};
+	};
+
+	struct SCollisionPair
+	{
+		SCollisionPair() {};
+		SCollisionPair(ComponentIndexType _A, ComponentIndexType _B) : A{ _A }, B{ _B } {};
+
+		ComponentIndexType A{};
+		ComponentIndexType B{};
+	};
+	
+	struct SCollisionData
+	{
+		SCollisionData() {};
+		SCollisionData(JWEntity* _PtrEntityA, JWEntity* _PtrEntityB, const XMVECTOR& _CollisionNormal,
+			float _PenetrationDepth, float _ClosingSpeed) :
+			PtrEntityA{ _PtrEntityA }, PtrEntityB{ _PtrEntityB }, CollisionNormal{ _CollisionNormal },
+			PenetrationDepth{ _PenetrationDepth }, ClosingSpeed{ _ClosingSpeed } {};
+
+		JWEntity*	PtrEntityA{};
+		JWEntity*	PtrEntityB{};
+		
+		XMVECTOR	CollisionNormal{};
+		float		PenetrationDepth{};
+		float		ClosingSpeed{};
 	};
 
 	enum EFLAGSystemPhysicsOption : uint8_t
@@ -139,15 +178,6 @@ namespace JWEngine
 		}
 	};
 
-	struct SCollisionPair
-	{
-		SCollisionPair() {};
-		SCollisionPair(ComponentIndexType _A, ComponentIndexType _B) : A{ _A }, B{ _B } {};
-
-		ComponentIndexType A{};
-		ComponentIndexType B{};
-	};
-
 	class JWSystemPhysics
 	{
 		friend class JWEntity;
@@ -182,6 +212,14 @@ namespace JWEngine
 		const auto& GetClosestFaceA() const noexcept { return m_ClosestFaceA; };
 		const auto& GetClosestFaceB() const noexcept { return m_ClosestFaceB; };
 		auto IsThereAnyActualCollision() const noexcept { return m_IsThereAnyActualCollision; };
+		const auto GetPenetrationDepth() const noexcept 
+		{
+			if (m_FineCollisionList.size() > 0) 
+			{
+				return m_FineCollisionList.front().PenetrationDepth;
+			}
+			return 0.0f;
+		};
 
 		void ApplyUniversalGravity() noexcept;
 		void ApplyUniversalAcceleration(const XMVECTOR& _Acceleration) noexcept;
@@ -243,12 +281,16 @@ namespace JWEngine
 
 		bool						m_IsThereAnyActualCollision{ false };
 		VECTOR<SCollisionPair>		m_CoarseCollisionList{};
+		VECTOR<SCollisionData>		m_FineCollisionList{};
+
+		// Varaibles below are for debugging purpose
 		VECTOR<XMVECTOR>			m_ClosestPointsA{};
 		VECTOR<SClosestPoint>		m_ClosestPointsAIndex{};
 		VECTOR<XMVECTOR>			m_ClosestPointsB{};
 		VECTOR<SClosestPoint>		m_ClosestPointsBIndex{};
 		SClosestFace				m_ClosestFaceA{};
 		SClosestFace				m_ClosestFaceB{};
+		
 
 		JWFlagSystemPhysicsOption	m_FlagSystemPhyscisOption{ JWFlagSystemPhysicsOption_ApplyForces };
 	};
