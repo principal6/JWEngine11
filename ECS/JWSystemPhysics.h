@@ -5,8 +5,10 @@
 namespace JWEngine
 {
 	// Gravity on Earth = 9.8m/s^2
+	static constexpr float		KDefaultRestitution{ 0.8f };
+	static constexpr float		KDefaultDamping{ 0.98f };
 	static constexpr float		KNonPhysicalObjectInverseMass{ -1.0f };
-	static constexpr float		KGravityOnEarth{ 0.8f };
+	static constexpr float		KGravityOnEarth{ 9.8f };
 	static constexpr float		KPhysicsWorldFloor{ -100.0f };
 	static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
 	//static constexpr XMVECTOR	KVectorGravityOnEarth{ KGravityOnEarth, 0, 0, 0 };
@@ -43,13 +45,18 @@ namespace JWEngine
 	struct SClosestFace
 	{
 		SClosestFace() {};
-		SClosestFace(const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2) : V0{ _V0 }, V1{ _V1 }, V2{ _V2 } {};
+		SClosestFace(float _Distance, const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2) :
+			Distance{ _Distance }, V0 { _V0 }, V1{ _V1 }, V2{ _V2 }  { N = GetTriangleNormal(_V0, _V1, _V2); };
+		SClosestFace(float _Distance, const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2, const XMVECTOR& _N) :
+			Distance{ _Distance }, V0{ _V0 }, V1{ _V1 }, V2{ _V2 }, N{ _N } {};
 
-		XMVECTOR V0{};
-		XMVECTOR V1{};
-		XMVECTOR V2{};
+		float		Distance{};
 
-		XMVECTOR N{};
+		XMVECTOR	V0{};
+		XMVECTOR	V1{};
+		XMVECTOR	V2{};
+
+		XMVECTOR	N{};
 	};
 
 	struct SClosestEdge
@@ -75,18 +82,83 @@ namespace JWEngine
 	struct SCollisionData
 	{
 		SCollisionData() {};
-		SCollisionData(JWEntity* _PtrEntityA, JWEntity* _PtrEntityB, const XMVECTOR& _CollisionNormal,
+		SCollisionData(JWEntity* _PtrEntityA, JWEntity* _PtrEntityB, const XMVECTOR& _DirectionBA, const XMVECTOR& _CollisionNormal,
 			float _PenetrationDepth, float _ClosingSpeed) :
-			PtrEntityA{ _PtrEntityA }, PtrEntityB{ _PtrEntityB }, CollisionNormal{ _CollisionNormal },
+			PtrEntityA{ _PtrEntityA }, PtrEntityB{ _PtrEntityB }, DirectionBA{ _DirectionBA }, CollisionNormal{ _CollisionNormal },
 			PenetrationDepth{ _PenetrationDepth }, ClosingSpeed{ _ClosingSpeed } {};
 
 		JWEntity*	PtrEntityA{};
 		JWEntity*	PtrEntityB{};
 		
+		XMVECTOR	DirectionBA{};
+
+		// @important:
+		// Collision normal is always in b-a direction.
 		XMVECTOR	CollisionNormal{};
+
 		float		PenetrationDepth{};
 		float		ClosingSpeed{};
 	};
+
+	enum class EPhysicsMaterial
+	{
+		UserDefined = 0,
+
+		Wood,	// Fs middle,	Fk = Fs/1.88	{ 0.5, 0.26 }
+		Iron,	// Fs v high,	Fk = Fs/6.66	{ 1.0, 0.15 }
+		Steel,	// Fs high,		Fk = Fs/1.29	{ 0.3, 0.23 }
+		Glass,	// Fs high,		Fk = Fs/2.35	{ 0.9, 0.38 }
+		Ice,	// Fs v low,	Fk = Fs/3.33	{ 0.1, 0.03 }
+
+		Ceramic,	// { 0.8, 0.31 } ??
+
+		//Leather,	// Fs high,		Fk = Fs/??
+		//Rubber,	// Fs v high,	Fk = Fs/1.4??
+	};
+
+	struct SMaterialFrictionData
+	{
+		SMaterialFrictionData() {};
+		SMaterialFrictionData(EPhysicsMaterial _Material, const char* _UserDefinedMaterialName, float _StaticFrictionConstant, float _KineticFrictionConstant) :
+			Material{ _Material }, StaticFrictionConstant{ _StaticFrictionConstant }, KineticFrictionConstant{ _KineticFrictionConstant }
+		{
+			if (_UserDefinedMaterialName != nullptr)
+			{
+				strcpy_s(UserDefinedMaterialName, _UserDefinedMaterialName);
+			}
+		};
+
+		EPhysicsMaterial	Material{};
+		char				UserDefinedMaterialName[16]{};
+
+		float	StaticFrictionConstant{};
+		float	KineticFrictionConstant{};
+
+		bool operator==(const char* _UserDefinedMaterialName)
+		{
+			if (strcmp(UserDefinedMaterialName, _UserDefinedMaterialName) == 0)
+			{
+				return true;
+			}
+			return false;
+		}
+
+		bool operator==(EPhysicsMaterial _Material)
+		{
+			if (Material == _Material)
+			{
+				return true;
+			}
+			return false;
+		}
+	};
+
+	static const SMaterialFrictionData KMaterialFrictionWood{ SMaterialFrictionData(EPhysicsMaterial::Wood, nullptr, 0.5f, 0.26f) };
+	static const SMaterialFrictionData KMaterialFrictionIron{ SMaterialFrictionData(EPhysicsMaterial::Iron, nullptr, 1.0f, 0.15f) };
+	static const SMaterialFrictionData KMaterialFrictionSteel{ SMaterialFrictionData(EPhysicsMaterial::Steel, nullptr, 0.3f, 0.23f) };
+	static const SMaterialFrictionData KMaterialFrictionGlass{ SMaterialFrictionData(EPhysicsMaterial::Glass, nullptr, 0.9f, 0.38f) };
+	static const SMaterialFrictionData KMaterialFrictionIce{ SMaterialFrictionData(EPhysicsMaterial::Ice, nullptr, 0.1f, 0.03f) };
+	static const SMaterialFrictionData KMaterialFrictionCeramic{ SMaterialFrictionData(EPhysicsMaterial::Ceramic, nullptr, 0.8f, 0.31f) };
 
 	enum EFLAGSystemPhysicsOption : uint8_t
 	{
@@ -130,8 +202,22 @@ namespace JWEngine
 		// [Unit]		m/s^2
 		XMVECTOR	Acceleration{};
 
+		// [Property]	coefficient of restitution
+		// [Range]		[0.0f, 1.0f]
+		float		Restitution{ KDefaultRestitution };
+
+		// [Property]	friction data
+		// @default friction data is KMaterialFrictionWood
+		SMaterialFrictionData FrictionData{ KMaterialFrictionWood };
+
+		// [Property]	damping
+		float		Damping{ KDefaultDamping };
+
 		// @important: AccumulatedForce must be zeroed every frame.
 		XMVECTOR	AccumulatedForce{};
+
+		// @important: AccumulatedImpulse must be zeroed every frame.
+		XMVECTOR	AccumulatedImpulse{};
 
 		// (NON_OWNING) Collision mesh
 		JWModel*	PtrCollisionMesh{};
@@ -146,29 +232,40 @@ namespace JWEngine
 			}
 		}
 
-		void SetMassByKilogram(float Kg)
+		void SetMassByKilogram(float Kg) noexcept
 		{
 			SetMassByGram(Kg * 1000.0f);
 		}
 		
-		void SetMassToInfinite()
+		void SetMassToInfinite() noexcept
 		{
 			InverseMass = 0;
 		}
 
-		void SetVelocity(const XMVECTOR& _Velocity)
+		void SetVelocity(const XMVECTOR& _Velocity) noexcept
 		{
 			Velocity = _Velocity;
 		}
 
-		void SetAcceleration(const XMVECTOR& _Acceleration)
+		void SetAcceleration(const XMVECTOR& _Acceleration) noexcept
 		{
 			Acceleration = _Acceleration;
 		}
 
-		void AddForce(const XMVECTOR& Force)
+		void AddForce(const XMVECTOR& Force) noexcept
 		{
 			AccumulatedForce += Force;
+		}
+
+		void AddImpulse(const XMVECTOR& Impulse) noexcept
+		{
+			AccumulatedImpulse += Impulse;
+		}
+
+		void ClearAccumulation() noexcept
+		{
+			AccumulatedForce = KVectorZero;
+			AccumulatedImpulse = KVectorZero;
 		}
 
 		void SetCollisionMesh(JWModel* PtrModel)
@@ -188,6 +285,10 @@ namespace JWEngine
 
 		void Create(JWECS& ECS, HWND hWnd, const SSize2& WindowSize) noexcept;
 		void Destroy() noexcept;
+
+		void AddMaterialFrictionData(const STRING& MaterialName, float StaticFrictionConstant, float KineticFrictionConstant);
+		auto GetMaterialFrictionDataByMaterialName(const STRING& MaterialName)->const SMaterialFrictionData&;
+		auto GetMaterialFrictionData(EPhysicsMaterial Material)->const SMaterialFrictionData&;
 
 		auto PickEntity() noexcept->bool;
 
@@ -253,6 +354,8 @@ namespace JWEngine
 		auto IsPointAInB(const XMVECTOR& PointA, const VECTOR<SIndexTriangle>& BFaces, const XMMATRIX& BWorld,
 			const VECTOR<size_t>& BVertexToPosition, const VECTOR<XMVECTOR>& BPositions) noexcept->bool;
 
+		void ProcessCollision() noexcept;
+
 	private:
 		VECTOR<SComponentPhysics>	m_vComponents;
 
@@ -290,7 +393,12 @@ namespace JWEngine
 		VECTOR<SClosestPoint>		m_ClosestPointsBIndex{};
 		SClosestFace				m_ClosestFaceA{};
 		SClosestFace				m_ClosestFaceB{};
-		
+		VECTOR<SClosestFace>		m_ClosestFacesA{};
+		VECTOR<SClosestFace>		m_ClosestFacesB{};
+
+		// Friction data
+		VECTOR<SMaterialFrictionData>	m_vMaterialFrictionData{ KMaterialFrictionWood, KMaterialFrictionIron, KMaterialFrictionSteel,
+			KMaterialFrictionGlass, KMaterialFrictionIce, KMaterialFrictionCeramic };
 
 		JWFlagSystemPhysicsOption	m_FlagSystemPhyscisOption{ JWFlagSystemPhysicsOption_ApplyForces };
 	};

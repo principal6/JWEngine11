@@ -96,6 +96,39 @@ PRIVATE auto JWSystemPhysics::GetComponentPtr(ComponentIndexType ComponentIndex)
 	return &m_vComponents[ComponentIndex];
 }
 
+void JWSystemPhysics::AddMaterialFrictionData(const STRING& MaterialName, float StaticFrictionConstant, float KineticFrictionConstant)
+{
+	assert(MaterialName.size() < 16);
+
+	m_vMaterialFrictionData.emplace_back(EPhysicsMaterial::UserDefined, MaterialName.c_str(), StaticFrictionConstant, KineticFrictionConstant);
+}
+
+auto JWSystemPhysics::GetMaterialFrictionDataByMaterialName(const STRING& MaterialName)->const SMaterialFrictionData&
+{
+	auto found = std::find(m_vMaterialFrictionData.begin(), m_vMaterialFrictionData.end(), MaterialName.c_str());
+	if (found == m_vMaterialFrictionData.end())
+	{
+		JW_ERROR_ABORT("Cannot find mathcing material name.");
+	}
+	else
+	{
+		return *found;
+	}
+}
+
+auto JWSystemPhysics::GetMaterialFrictionData(EPhysicsMaterial Material)->const SMaterialFrictionData&
+{
+	auto found = std::find(m_vMaterialFrictionData.begin(), m_vMaterialFrictionData.end(), Material);
+	if (found == m_vMaterialFrictionData.end())
+	{
+		JW_ERROR_ABORT("Cannot find mathcing material.");
+	}
+	else
+	{
+		return *found;
+	}
+}
+
 auto JWSystemPhysics::PickEntity() noexcept->bool
 {
 	m_pPickedEntity = nullptr;
@@ -496,6 +529,15 @@ void JWSystemPhysics::ZeroAllVelocities() noexcept
 
 void JWSystemPhysics::Execute() noexcept
 {
+	// Collision #1
+	DetectCoarseCollision();
+
+	// Collision #2
+	DetectFineCollision();
+
+	// Collision #3
+	ProcessCollision();
+
 	for (auto& iter : m_vComponents)
 	{
 		// Get pointer to the entity.
@@ -509,12 +551,39 @@ void JWSystemPhysics::Execute() noexcept
 				auto delta_time = m_pECS->GetDeltaTime();
 				assert(delta_time > 0);
 
-				// a = 1/m * f;
+				// FOR DEBUGGING ?????
+				delta_time = min(delta_time, 0.1f);
+
+				// a = 1/m * f
 				iter.Acceleration = iter.InverseMass * iter.AccumulatedForce;
 
 				// v' = v + at
 				iter.Velocity += iter.Acceleration * delta_time;
 
+				/// dv = 1/m * g
+				///iter.Velocity += iter.InverseMass * iter.AccumulatedImpulse;
+
+				// apply damping
+				iter.Velocity *= powf(iter.Damping, delta_time);
+
+				// killing micro-collisions ...?
+				auto velocity_x = XMVectorGetX(iter.Velocity);
+				auto velocity_y = XMVectorGetY(iter.Velocity);
+				auto velocity_z = XMVectorGetZ(iter.Velocity);
+				if (fabsf(velocity_x) <= 0.02f)
+				{
+					XMVectorSetX(iter.Velocity, 0.0f);
+				}
+				if (fabsf(velocity_y) <= 0.02f)
+				{
+					XMVectorSetY(iter.Velocity, 0.0f);
+				}
+				if (fabsf(velocity_z) <= 0.02f)
+				{
+					XMVectorSetZ(iter.Velocity, 0.0f);
+				}
+
+				// meet my world floor
 				if (XMVectorGetY(transform->Position) < KPhysicsWorldFloor)
 				{
 					iter.Velocity = KVectorZero;
@@ -523,8 +592,18 @@ void JWSystemPhysics::Execute() noexcept
 				// p' = p + vt
 				transform->Position += iter.Velocity * delta_time;
 
-				// Reset accumulated force
-				iter.AccumulatedForce = KVectorZero;
+				// DEBUGGING
+				/*
+				std::cout
+					<< "Position = { " 
+					<< TO_STRING(XMVectorGetX(transform->Position)) << " , "
+					<< TO_STRING(XMVectorGetY(transform->Position)) << " , "
+					<< TO_STRING(XMVectorGetZ(transform->Position)) << " }"
+					<< std::endl;
+				*/
+
+				// Clear accumulations
+				iter.ClearAccumulation();
 			}
 
 			/// Update bounding ellipsoid
@@ -540,11 +619,6 @@ void JWSystemPhysics::Execute() noexcept
 			UpdateSubBoundingSpheres(iter);
 		}
 	}
-
-	// Collision detection
-	DetectCoarseCollision();
-
-	DetectFineCollision();
 }
 
 /*
@@ -670,8 +744,14 @@ bool ClosestPointPred(const SClosestPoint& a, const SClosestPoint& b)
 	return a.Distance > b.Distance;
 }
 
+bool ClosestFacePred(const SClosestFace& a, const SClosestFace& b)
+{
+	return a.Distance > b.Distance;
+}
+
 PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 {
+	// Early out
 	if (m_CoarseCollisionList.size() == 0) { return; }
 
 	m_FineCollisionList.clear();
@@ -745,7 +825,8 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 
 		// #4 Find the closest faces of each object to another
 		// #4-1 Find the closest face of a
-		float dist_min{ D3D11_FLOAT32_MAX };
+		m_ClosestFacesA.clear();
+		m_ClosestFacesA.reserve(a_faces.size());
 		float dist{};
 		for (const auto& a_face : a_face_with_position[m_ClosestPointsAIndex.front().PositionIndex])
 		{
@@ -755,17 +836,30 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			auto n = GetTriangleNormal(a0, a1, a2);
 
 			ProjectPointOntoPlane(dist, b_center_world, a0, n);
-			if (fabsf(dist) < fabsf(dist_min))
-			{
-				dist_min = dist;
 
-				m_ClosestFaceA = SClosestFace(a0, a1, a2);
-				m_ClosestFaceA.N = GetTriangleNormal(a0, a1, a2);
+			m_ClosestFacesA.emplace_back(dist, a0, a1, a2, n);
+		}
+		std::sort(m_ClosestFacesA.begin(), m_ClosestFacesA.end(), ClosestFacePred);
+		m_ClosestFaceA = m_ClosestFacesA.back();
+		if (m_ClosestFacesA.front().Distance > 0.0f)
+		{
+			for (auto iter = m_ClosestFacesA.crbegin(); iter != m_ClosestFacesA.crend(); ++iter)
+			{
+				if ((*iter).Distance > 0.0f)
+				{
+					m_ClosestFaceA = *iter;
+					break;
+				}
 			}
+		}
+		else
+		{
+			m_ClosestFaceA = m_ClosestFacesA.back();
 		}
 
 		// #4-2 Find the closest face of b
-		dist_min = D3D11_FLOAT32_MAX;
+		m_ClosestFacesB.clear();
+		m_ClosestFacesB.reserve(b_faces.size());
 		dist = 0;
 		for (const auto& b_face : b_face_with_position[m_ClosestPointsBIndex.front().PositionIndex])
 		{
@@ -775,14 +869,27 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			auto n = GetTriangleNormal(b0, b1, b2);
 
 			ProjectPointOntoPlane(dist, a_center_world, b0, n);
-			if (fabsf(dist) < fabsf(dist_min))
-			{
-				dist_min = dist;
 
-				m_ClosestFaceB = SClosestFace(b0, b1, b2);
-				m_ClosestFaceB.N = GetTriangleNormal(b0, b1, b2);
+			m_ClosestFacesB.emplace_back(dist, b0, b1, b2, n);
+		}
+		std::sort(m_ClosestFacesB.begin(), m_ClosestFacesB.end(), ClosestFacePred);
+		m_ClosestFaceB = m_ClosestFacesB.back();
+		if (m_ClosestFacesB.front().Distance > 0.0f)
+		{
+			for (auto iter = m_ClosestFacesB.crbegin(); iter != m_ClosestFacesB.crend(); ++iter)
+			{
+				if ((*iter).Distance > 0.0f)
+				{
+					m_ClosestFaceB = *iter;
+					break;
+				}
 			}
 		}
+		else
+		{
+			m_ClosestFaceB = m_ClosestFacesB.back();
+		}
+
 
 		// #5 See if the two objects intersect
 		ECollisionType collision_type{ ECollisionType::None };
@@ -1070,48 +1177,56 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			// #6 Get signed closing speed
 			auto relative_velocity_ba = b_physics.Velocity - a_physics.Velocity;
 			auto signed_closing_speed = XMVectorGetX(XMVector3Dot(relative_velocity_ba, ba_dir));
-			if (signed_closing_speed > 0)
-			{
-				// They are colliding, not separating.
-				// #7 Get collision data (collision normal & penetration depth)
-				const auto& a_entity = m_pECS->GetEntityByIndex(a_physics.EntityIndex);
-				const auto& b_entity = m_pECS->GetEntityByIndex(b_physics.EntityIndex);
-				XMVECTOR collision_normal{};
-				float penetration_depth{};
+			
+			// #7 Get collision data (collision normal & penetration depth)
+			const auto& a_entity = m_pECS->GetEntityByIndex(a_physics.EntityIndex);
+			const auto& b_entity = m_pECS->GetEntityByIndex(b_physics.EntityIndex);
+			XMVECTOR collision_normal{};
+			float penetration_depth{};
 				
-				switch (collision_type)
+			switch (collision_type)
+			{
+			case JWEngine::ECollisionType::PointAFaceB:
+				ProjectPointOntoPlane(penetration_depth, m_ClosestPointsA.front(), m_ClosestFaceB.V0, m_ClosestFaceB.N);
+				if (penetration_depth < 0) { penetration_depth = -penetration_depth; };
+
+				// Collision normal : b to a
+				collision_normal = m_ClosestFaceB.N;
+
+				// DEBUGGING
+				//std::cout << "[Collision] Point A in Face B" << std::endl;
+
+				break;
+			case JWEngine::ECollisionType::PointBFaceA:
+				ProjectPointOntoPlane(penetration_depth, m_ClosestPointsB.front(), m_ClosestFaceA.V0, m_ClosestFaceA.N);
+				if (penetration_depth < 0) { penetration_depth = -penetration_depth; };
+
+				// Collision normal : b to a
+				collision_normal = -m_ClosestFaceA.N;
+
+				// DEBUGGING
+				//std::cout << "[Collision] Point B in Face A" << std::endl;
+
+				break;
+			case JWEngine::ECollisionType::EdgeEdge:
+				penetration_depth = XMVectorGetX(XMVector3Length(edge_a.M - edge_b.M));
+
+				collision_normal = XMVector3Normalize(
+					XMVector3Cross(GetRayDirection(edge_b.V0, edge_b.V1), GetRayDirection(edge_a.V0, edge_a.V1)));
+					
+				// Collision normal : b to a
+				if (XMVector3Less(XMVector3Dot(collision_normal, ba_dir), KVectorZero))
 				{
-				case JWEngine::ECollisionType::PointAFaceB:
-					ProjectPointOntoPlane(penetration_depth, m_ClosestPointsA.front(), m_ClosestFaceB.V0, m_ClosestFaceB.N);
-					if (penetration_depth < 0) { penetration_depth = -penetration_depth; };
-
-					collision_normal = m_ClosestFaceB.N;
-
-					break;
-				case JWEngine::ECollisionType::PointBFaceA:
-					ProjectPointOntoPlane(penetration_depth, m_ClosestPointsB.front(), m_ClosestFaceA.V0, m_ClosestFaceA.N);
-					if (penetration_depth < 0) { penetration_depth = -penetration_depth; };
-
-					collision_normal = m_ClosestFaceA.N;
-
-					break;
-				case JWEngine::ECollisionType::EdgeEdge:
-					penetration_depth = XMVectorGetX(XMVector3Length(edge_a.M - edge_b.M));
-
-					collision_normal = XMVector3Normalize(
-						XMVector3Cross(GetRayDirection(edge_b.V0, edge_b.V1), GetRayDirection(edge_a.V0, edge_a.V1)));
-					/*
-					if (XMVector3Less(XMVector3Dot(collision_normal, ba_dir), KVectorZero))
-					{
-						collision_normal = -collision_normal;
-					}
-					*/
-
-					break;
+					collision_normal = -collision_normal;
 				}
 				
-				m_FineCollisionList.emplace_back(a_entity, b_entity, collision_normal, penetration_depth, signed_closing_speed);
+				// DEBUGGING
+				//std::cout << "[Collision] Edge to Edge" << std::endl;
+
+				break;
 			}
+				
+			m_FineCollisionList.emplace_back(a_entity, b_entity, ba_dir, collision_normal, penetration_depth, signed_closing_speed);
 		}
 		
 	}
@@ -1144,4 +1259,72 @@ PRIVATE auto JWSystemPhysics::IsPointAInB(const XMVECTOR& PointA, const VECTOR<S
 	}
 
 	return result;
+}
+
+void JWSystemPhysics::ProcessCollision() noexcept
+{
+	// Early out
+	if (m_FineCollisionList.size() == 0) { return; }
+
+	for (const auto& iter : m_FineCollisionList)
+	{
+		auto a_physics{ iter.PtrEntityA->GetComponentPhysics() };
+		auto a_collision_speed = XMVector3Dot(a_physics->Velocity, -iter.CollisionNormal);
+		auto a_separating_speed = a_collision_speed * (1.0f + a_physics->Restitution);
+		auto a_delta_velocity = a_separating_speed * iter.CollisionNormal;
+		
+		auto b_physics{ iter.PtrEntityB->GetComponentPhysics() };
+		auto b_collision_speed = XMVector3Dot(b_physics->Velocity, iter.CollisionNormal);
+		auto b_separating_speed = b_collision_speed * (1.0f + b_physics->Restitution);
+		auto b_delta_velocity = b_separating_speed * -iter.CollisionNormal;
+
+		float a_mass{ 0.0f };
+		float b_mass{ 0.0f };
+
+		if (a_physics->InverseMass != 0)
+		{
+			a_mass = 1.0f / a_physics->InverseMass;
+		}
+
+		if (b_physics->InverseMass != 0)
+		{
+			b_mass = 1.0f / b_physics->InverseMass;
+		}
+
+		// Resolve penetration
+		auto a_transform{ iter.PtrEntityA->GetComponentTransform() };
+		auto a_penetration_resolution{ (a_mass / (a_mass + b_mass)) * iter.PenetrationDepth * iter.CollisionNormal };
+		a_transform->Position += a_penetration_resolution;
+
+		auto b_transform{ iter.PtrEntityB->GetComponentTransform() };
+		auto b_penetration_resolution{ (b_mass / (a_mass + b_mass)) * iter.PenetrationDepth * -iter.CollisionNormal };
+		b_transform->Position += b_penetration_resolution;
+
+
+		if (a_physics->InverseMass != 0)
+		{
+			a_physics->Velocity += a_delta_velocity; // -a_penetration_resolution;
+		}
+
+		if (b_physics->InverseMass != 0)
+		{
+			b_physics->Velocity += b_delta_velocity; // -b_penetration_resolution;
+
+			// DEBUGGING
+			/*
+			std::cout
+				<< "Velocity = { "
+				<< TO_STRING(XMVectorGetX(b_physics->Velocity)) << " , "
+				<< TO_STRING(XMVectorGetY(b_physics->Velocity)) << " , "
+				<< TO_STRING(XMVectorGetZ(b_physics->Velocity)) << " }"
+				<< std::endl;
+			*/
+		}
+
+		//auto static_friction{ a_physics->FrictionData.StaticFrictionConstant * b_physics->FrictionData.StaticFrictionConstant };
+		//auto kinetic_friction{ a_physics->FrictionData.KineticFrictionConstant * b_physics->FrictionData.KineticFrictionConstant };
+
+
+
+	}
 }

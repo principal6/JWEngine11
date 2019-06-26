@@ -90,8 +90,13 @@ int main()
 		//ecs.SystemRender().CreateSharedTerrainFromTRN("heightmap_gray_128.trn"); // Shared Terrain #0
 	}
 
+	// SystemRender setting
 	ecs.SystemRender().SetSystemRenderFlag(
 		JWFlagSystemRenderOption_UseLighting | JWFlagSystemRenderOption_DrawCameras | JWFlagSystemRenderOption_UseFrustumCulling);
+
+	// SystemPhysics setting
+	//ecs.SystemPhysics().AddMaterialFrictionData("my_material", 1.0f, 0.8f);
+	//ecs.SystemPhysics().GetMaterialFrictionDataByMaterialName("my_material");
 
 	{
 		auto debug_point = ecs.CreateEntity(EEntityType::Point3D);
@@ -270,7 +275,7 @@ int main()
 		auto box = ecs.CreateEntity("box");
 
 		auto transform = box->CreateComponentTransform();
-		transform->ScalingFactor = XMVectorSet(32, 10.0f, 32, 0.0f);
+		transform->ScalingFactor = XMVectorSet(32, 1.0f, 32, 0.0f);
 		transform->Position = XMVectorSet(0.0f, -10.0f, 0.0f, 1.0f);
 
 		auto physics = box->CreateComponentPhysics();
@@ -287,12 +292,15 @@ int main()
 
 		auto transform = jar->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(10.0f, 13.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(10.0f, 0.0f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
 
 		auto physics = jar->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(0.8f, 0.0f, 0.6f, 0.0f);
-		//physics->SetMassByKilogram(1.0f);
+		physics->SetMassByKilogram(1.0f);
+		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_jar"));
+		physics->FrictionData = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Ceramic);
+		physics->Restitution = 0.4f;
 
 		auto render = jar->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("jar"));
@@ -305,13 +313,14 @@ int main()
 		auto transform = oil_drum->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
 		transform->Position = XMVectorSet(-10.0f, 0.0f, 0.0f, 1.0f);
-		transform->SetPitchYawRoll(XMFLOAT3(0, 0, -0.6f));
+		//transform->SetPitchYawRoll(XMFLOAT3(0, 0, -0.6f));
 		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
 
 		auto physics = oil_drum->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(1.1f);
-		physics->SetMassByKilogram(20.0f);
+		//physics->SetMassByKilogram(20.0f);
 		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_oil_drum"));
+		physics->FrictionData = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Iron);
 
 		auto render = oil_drum->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("oil_drum"));
@@ -329,6 +338,8 @@ int main()
 		auto physics = recycling_bin->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(1.6f, 0.0f, 0.26f, 0.0f);
 		//physics->SetMassByKilogram(6.0f);
+		//physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_recycling_bin"));
+		//physics->FrictionData = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Iron);
 
 		auto render = recycling_bin->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("recycling_bin"));
@@ -482,8 +493,15 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 
 	if (Character == '7')
 	{
+		ecs.GetEntityByName("jar")->GetComponentPhysics()->Velocity += XMVectorSet(-1.0f, 0, 0, 0);
+	}
+
+	if (Character == '8')
+	{
 		ecs.SystemPhysics().ZeroAllVelocities();
-		ecs.GetEntityByName("jar")->GetComponentTransform()->Position = XMVectorSet(10.0f, 8.0f, 0.0f, 1.0f);
+
+		ecs.GetEntityByName("jar")->GetComponentTransform()->Position = XMVectorSet(0.0f, 8.0f, 0.0f, 1.0f);
+		ecs.GetEntityByName("oil_drum")->GetComponentTransform()->Position = XMVectorSet(-10.0f, 0.0f, 0.0f, 1.0f);
 	}
 }
 
@@ -602,6 +620,7 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	static WSTRING s_dt{};
 	static WSTRING s_is_there_collision{};
 	static WSTRING s_penetration_depth{};
+
 	s_fps = L"FPS: " + TO_WSTRING(myGame.GetFPS());
 	s_anim_id = L"Animation ID: " + TO_WSTRING(anim_id);
 	s_picked_entity = L"Picked Entity = " + StringToWstring(ecs.SystemPhysics().GetPickedEntityName());
@@ -620,9 +639,9 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	myGame.InstantText().RenderText(s_picked_entity, XMFLOAT2(10, 50), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_cull_count, XMFLOAT2(10, 70), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
 	myGame.InstantText().RenderText(s_cull_count2, XMFLOAT2(10, 90), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
-	myGame.InstantText().RenderText(s_dt, XMFLOAT2(10, 110), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
-	myGame.InstantText().RenderText(s_is_there_collision, XMFLOAT2(10, 130), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
-	myGame.InstantText().RenderText(s_penetration_depth, XMFLOAT2(10, 150), XMFLOAT4(0, 0.2f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_dt, XMFLOAT2(10, 110), XMFLOAT4(0, 0.7f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_is_there_collision, XMFLOAT2(10, 130), XMFLOAT4(0, 0.7f, 0.7f, 1.0f));
+	myGame.InstantText().RenderText(s_penetration_depth, XMFLOAT2(10, 150), XMFLOAT4(0, 0.7f, 0.7f, 1.0f));
 
 	myGame.InstantText().EndRendering();
 }
