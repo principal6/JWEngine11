@@ -1270,11 +1270,13 @@ void JWSystemPhysics::ProcessCollision() noexcept
 	{
 		auto a_physics{ iter.PtrEntityA->GetComponentPhysics() };
 		auto a_collision_speed = XMVector3Dot(a_physics->Velocity, -iter.CollisionNormal);
+		auto a_collision_velocity = a_collision_speed * -iter.CollisionNormal;
 		auto a_separating_speed = a_collision_speed * (1.0f + a_physics->Restitution);
 		auto a_delta_velocity = a_separating_speed * iter.CollisionNormal;
 		
 		auto b_physics{ iter.PtrEntityB->GetComponentPhysics() };
 		auto b_collision_speed = XMVector3Dot(b_physics->Velocity, iter.CollisionNormal);
+		auto b_collision_velocity = b_collision_speed * iter.CollisionNormal;
 		auto b_separating_speed = b_collision_speed * (1.0f + b_physics->Restitution);
 		auto b_delta_velocity = b_separating_speed * -iter.CollisionNormal;
 
@@ -1300,31 +1302,36 @@ void JWSystemPhysics::ProcessCollision() noexcept
 		auto b_penetration_resolution{ (b_mass / (a_mass + b_mass)) * iter.PenetrationDepth * -iter.CollisionNormal };
 		b_transform->Position += b_penetration_resolution;
 
+		auto a_sliding_velocity = a_physics->Velocity - a_collision_velocity;
+		auto b_sliding_velocity = b_physics->Velocity - b_collision_velocity;
+
+		//auto static_friction{ a_physics->MaterialFriction.StaticFrictionConstant * b_physics->MaterialFriction.StaticFrictionConstant };
+		auto kinetic_friction{ a_physics->MaterialFriction.KineticFrictionConstant * b_physics->MaterialFriction.KineticFrictionConstant };
+
+		auto a_friction_size = XMVectorGetX(XMVector3Length(a_collision_velocity * kinetic_friction));
+		auto a_friction_velocity = XMVector3Normalize(-a_sliding_velocity) * a_friction_size;
+
+		auto b_friction_size = XMVectorGetX(XMVector3Length(b_collision_velocity * kinetic_friction));
+		auto b_friction_velocity = XMVector3Normalize(-b_sliding_velocity) * b_friction_size;
 
 		if (a_physics->InverseMass != 0)
 		{
-			a_physics->Velocity += a_delta_velocity; // -a_penetration_resolution;
+			a_physics->Velocity += a_delta_velocity + a_friction_velocity;
 		}
 
 		if (b_physics->InverseMass != 0)
 		{
-			b_physics->Velocity += b_delta_velocity; // -b_penetration_resolution;
-
-			// DEBUGGING
-			/*
-			std::cout
-				<< "Velocity = { "
-				<< TO_STRING(XMVectorGetX(b_physics->Velocity)) << " , "
-				<< TO_STRING(XMVectorGetY(b_physics->Velocity)) << " , "
-				<< TO_STRING(XMVectorGetZ(b_physics->Velocity)) << " }"
-				<< std::endl;
-			*/
+			b_physics->Velocity += b_delta_velocity + b_friction_velocity;
 		}
 
-		//auto static_friction{ a_physics->FrictionData.StaticFrictionConstant * b_physics->FrictionData.StaticFrictionConstant };
-		//auto kinetic_friction{ a_physics->FrictionData.KineticFrictionConstant * b_physics->FrictionData.KineticFrictionConstant };
-
-
-
+		// DEBUGGING
+		/*
+		std::cout
+			<< "Velocity = { "
+			<< TO_STRING(XMVectorGetX(b_physics->Velocity)) << " , "
+			<< TO_STRING(XMVectorGetY(b_physics->Velocity)) << " , "
+			<< TO_STRING(XMVectorGetZ(b_physics->Velocity)) << " }"
+			<< std::endl;
+		*/
 	}
 }

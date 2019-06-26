@@ -299,7 +299,7 @@ int main()
 		physics->BoundingSphere = SBoundingSphereData(0.8f, 0.0f, 0.6f, 0.0f);
 		physics->SetMassByKilogram(1.0f);
 		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_jar"));
-		physics->FrictionData = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Ceramic);
+		physics->MaterialFriction = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Ceramic);
 		physics->Restitution = 0.4f;
 
 		auto render = jar->CreateComponentRender();
@@ -320,7 +320,7 @@ int main()
 		physics->BoundingSphere = SBoundingSphereData(1.1f);
 		//physics->SetMassByKilogram(20.0f);
 		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_oil_drum"));
-		physics->FrictionData = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Iron);
+		physics->MaterialFriction = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Iron);
 
 		auto render = oil_drum->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("oil_drum"));

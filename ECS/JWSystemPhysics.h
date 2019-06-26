@@ -206,9 +206,9 @@ namespace JWEngine
 		// [Range]		[0.0f, 1.0f]
 		float		Restitution{ KDefaultRestitution };
 
-		// [Property]	friction data
+		// [Property]	material friction data
 		// @default friction data is KMaterialFrictionWood
-		SMaterialFrictionData FrictionData{ KMaterialFrictionWood };
+		SMaterialFrictionData MaterialFriction{ KMaterialFrictionWood };
 
 		// [Property]	damping
 		float		Damping{ KDefaultDamping };
