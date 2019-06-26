@@ -45,6 +45,11 @@ namespace JWEngine
 			Right = XMVector3Normalize(XMVector3Cross(Up, Forward));
 		}
 
+		inline void SetPitchYawRoll(float Pitch, float Yaw, float Roll, bool IsCamera = false)
+		{
+			SetPitchYawRoll(XMFLOAT3(Pitch, Yaw, Roll), IsCamera);
+		}
+
 		inline void RotatePitchYawRoll(const XMFLOAT3& _PitchYawRoll, bool IsCamera = false)
 		{
 			PitchYawRoll.x += _PitchYawRoll.x;

@@ -36,6 +36,14 @@ namespace JWEngine
 
 		return (Point - PlaneNormal * dist);
 	}
+
+	static auto __vectorcall ProjectPointOntoPlane(
+		const XMVECTOR& Point, const XMVECTOR& PlanePoint, const XMVECTOR& PlaneNormal)->XMVECTOR
+	{
+		auto dist = XMVector3Dot(Point - PlanePoint, PlaneNormal);
+
+		return (Point - PlaneNormal * dist);
+	}
 	
 	static auto __vectorcall IsPointOnPlaneInsideTriangle(
 		const XMVECTOR& PointOnPlane, const XMVECTOR& TriA, const XMVECTOR& TriB, const XMVECTOR& TriC)->bool
@@ -46,15 +54,14 @@ namespace JWEngine
 
 		auto check_0 = XMVector3Cross(edge_bc, (PointOnPlane - TriB));
 		auto check_1 = XMVector3Cross(edge_bc, (TriA - TriB));
-		if (XMVector3Greater(XMVector3Dot(check_0, check_1), KVectorZero))
 		{
 			check_0 = XMVector3Cross(edge_ac, (PointOnPlane - TriA));
 			check_1 = XMVector3Cross(edge_ac, edge_ab);
-			if (XMVector3Greater(XMVector3Dot(check_0, check_1), KVectorZero))
+			if (XMVector3GreaterOrEqual(XMVector3Dot(check_0, check_1), KVectorZero))
 			{
 				check_0 = XMVector3Cross(edge_ab, (PointOnPlane - TriA));
 				check_1 = XMVector3Cross(edge_ab, edge_ac);
-				if (XMVector3Greater(XMVector3Dot(check_0, check_1), KVectorZero))
+				if (XMVector3GreaterOrEqual(XMVector3Dot(check_0, check_1), KVectorZero))
 				{
 					return true;
 				}

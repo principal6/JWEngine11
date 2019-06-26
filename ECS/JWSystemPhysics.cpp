@@ -741,12 +741,12 @@ PRIVATE void JWSystemPhysics::DetectCoarseCollision() noexcept
 
 bool ClosestPointPred(const SClosestPoint& a, const SClosestPoint& b)
 {
-	return a.Distance > b.Distance;
+	return a.Distance < b.Distance;
 }
 
 bool ClosestFacePred(const SClosestFace& a, const SClosestFace& b)
 {
-	return a.Distance > b.Distance;
+	return fabsf(a.Dist) < fabsf(b.Dist);
 }
 
 PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
@@ -788,118 +788,144 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 		auto ba_dir = XMVector3Normalize(a_center_world - b_center_world);
 		auto ab_dir = -ba_dir;
 
-		// #3 Get the closest points of each object to another
-		// #3-1 Get closest points of object a
-		m_ClosestPointsAIndex.clear();
-		m_ClosestPointsAIndex.reserve(a_positions.size());
-		for (size_t i = 0; i < a_positions.size(); ++i)
-		{
-			auto distance = XMVectorGetX(XMVector3Dot(a_positions[i], ab_dir));
-			m_ClosestPointsAIndex.emplace_back(i, distance);
-		}
-		std::sort(m_ClosestPointsAIndex.begin(), m_ClosestPointsAIndex.end(), ClosestPointPred);
 
-		m_ClosestPointsA.clear();
-		m_ClosestPointsA.reserve(m_ClosestPointsAIndex.size());
-		for (auto position_i : m_ClosestPointsAIndex)
+		// #3 Transform objects' faces into world space
+		// #3-1 Transform object a's faces into world space
+		m_TransformedFacesA.clear();
+		m_TransformedFacesA.reserve(a_faces.size());
+		for (const auto& a_face : a_faces)
 		{
-			m_ClosestPointsA.emplace_back(XMVector3TransformCoord(a_positions[position_i.PositionIndex], a_transform->WorldMatrix));
+			auto a0 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_face._0]], a_transform->WorldMatrix);
+			auto a1 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_face._1]], a_transform->WorldMatrix);
+			auto a2 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_face._2]], a_transform->WorldMatrix);
+			auto n = GetTriangleNormal(a0, a1, a2);
+			auto m = (a0 + a1 + a2) / 3.0f;
+
+			m_TransformedFacesA.emplace_back(a0, a1, a2, n, m);
 		}
 
-		// #3-2 Get closest points of object b
-		m_ClosestPointsBIndex.clear();
-		m_ClosestPointsBIndex.reserve(b_positions.size());
-		for (size_t i = 0; i < b_positions.size(); ++i)
+		// #3-2 Transform object b's faces into world space
+		m_TransformedFacesB.clear();
+		m_TransformedFacesB.reserve(b_faces.size());
+		for (const auto& b_face : b_faces)
 		{
-			auto distance = XMVectorGetX(XMVector3Dot(b_positions[i], ba_dir));
-			m_ClosestPointsBIndex.emplace_back(i, distance);
-		}
-		std::sort(m_ClosestPointsBIndex.begin(), m_ClosestPointsBIndex.end(), ClosestPointPred);
+			auto b0 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_face._0]], b_transform->WorldMatrix);
+			auto b1 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_face._1]], b_transform->WorldMatrix);
+			auto b2 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_face._2]], b_transform->WorldMatrix);
+			auto n = GetTriangleNormal(b0, b1, b2);
+			auto m = (b0 + b1 + b2) / 3.0f;
 
-		m_ClosestPointsB.clear();
-		m_ClosestPointsB.reserve(m_ClosestPointsBIndex.size());
-		for (auto position_i : m_ClosestPointsBIndex)
-		{
-			m_ClosestPointsB.emplace_back(XMVector3TransformCoord(b_positions[position_i.PositionIndex], b_transform->WorldMatrix));
+			m_TransformedFacesB.emplace_back(b0, b1, b2, n, m);
 		}
 
 		// #4 Find the closest faces of each object to another
-		// #4-1 Find the closest face of a
+		// #4-1 See if any plane of object a has projected center point of object b
 		m_ClosestFacesA.clear();
-		m_ClosestFacesA.reserve(a_faces.size());
+		m_ClosestFacesA.reserve(m_TransformedFacesA.size());
 		float dist{};
-		for (const auto& a_face : a_face_with_position[m_ClosestPointsAIndex.front().PositionIndex])
+		for (const auto& a_face : m_TransformedFacesA)
 		{
-			auto a0 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[a_face]._0]], a_transform->WorldMatrix);
-			auto a1 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[a_face]._1]], a_transform->WorldMatrix);
-			auto a2 = XMVector3TransformCoord(a_positions[a_v_to_pv[a_faces[a_face]._2]], a_transform->WorldMatrix);
-			auto n = GetTriangleNormal(a0, a1, a2);
-
-			ProjectPointOntoPlane(dist, b_center_world, a0, n);
-
-			m_ClosestFacesA.emplace_back(dist, a0, a1, a2, n);
-		}
-		std::sort(m_ClosestFacesA.begin(), m_ClosestFacesA.end(), ClosestFacePred);
-		m_ClosestFaceA = m_ClosestFacesA.back();
-		if (m_ClosestFacesA.front().Distance > 0.0f)
-		{
-			for (auto iter = m_ClosestFacesA.crbegin(); iter != m_ClosestFacesA.crend(); ++iter)
+			auto projected = ProjectPointOntoPlane(dist, b_center_world, a_face.V0, a_face.N);
+			if (IsPointOnPlaneInsideTriangle(projected, a_face.V0, a_face.V1, a_face.V2))
 			{
-				if ((*iter).Distance > 0.0f)
-				{
-					m_ClosestFaceA = *iter;
-					break;
-				}
+				m_ClosestFacesA.emplace_back(dist, a_face.V0, a_face.V1, a_face.V2, a_face.N, projected);
 			}
 		}
-		else
-		{
-			m_ClosestFaceA = m_ClosestFacesA.back();
-		}
 
-		// #4-2 Find the closest face of b
+		// #4-2 See if any plane of object b has projected center point of object a
 		m_ClosestFacesB.clear();
-		m_ClosestFacesB.reserve(b_faces.size());
-		dist = 0;
-		for (const auto& b_face : b_face_with_position[m_ClosestPointsBIndex.front().PositionIndex])
+		m_ClosestFacesB.reserve(m_TransformedFacesB.size());
+		for (const auto& b_face : m_TransformedFacesB)
 		{
-			auto b0 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[b_face]._0]], b_transform->WorldMatrix);
-			auto b1 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[b_face]._1]], b_transform->WorldMatrix);
-			auto b2 = XMVector3TransformCoord(b_positions[b_v_to_pv[b_faces[b_face]._2]], b_transform->WorldMatrix);
-			auto n = GetTriangleNormal(b0, b1, b2);
-
-			ProjectPointOntoPlane(dist, a_center_world, b0, n);
-
-			m_ClosestFacesB.emplace_back(dist, b0, b1, b2, n);
-		}
-		std::sort(m_ClosestFacesB.begin(), m_ClosestFacesB.end(), ClosestFacePred);
-		m_ClosestFaceB = m_ClosestFacesB.back();
-		if (m_ClosestFacesB.front().Distance > 0.0f)
-		{
-			for (auto iter = m_ClosestFacesB.crbegin(); iter != m_ClosestFacesB.crend(); ++iter)
+			auto projected = ProjectPointOntoPlane(dist, a_center_world, b_face.V0, b_face.N);
+			if (IsPointOnPlaneInsideTriangle(projected, b_face.V0, b_face.V1, b_face.V2))
 			{
-				if ((*iter).Distance > 0.0f)
-				{
-					m_ClosestFaceB = *iter;
-					break;
-				}
+				m_ClosestFacesB.emplace_back(dist, b_face.V0, b_face.V1, b_face.V2, b_face.N, projected);
 			}
+		}
+
+		if ((m_ClosestFacesA.size() == 0) && (m_ClosestFacesB.size() == 0))
+		{
+			// Early out (not intersecting)
+			continue;
+		}
+		
+		if (m_ClosestFacesA.size())
+		{
+			// object a is bigger than object b
+
+			std::sort(m_ClosestFacesA.begin(), m_ClosestFacesA.end(), ClosestFacePred);
+			m_ClosestFaceA = m_ClosestFacesA.front();
+
+			m_ClosestFacesB.clear();
+			for (const auto& b_face : m_TransformedFacesB)
+			{
+				auto sq_dist = XMVectorGetX(XMVector3LengthSq(m_ClosestFaceA.Projected - b_face.M));
+				
+				m_ClosestFacesB.emplace_back(sq_dist, b_face.V0, b_face.V1, b_face.V2, b_face.N, b_face.M);
+			}
+			std::sort(m_ClosestFacesB.begin(), m_ClosestFacesB.end(), ClosestFacePred);
+			m_ClosestFaceB = m_ClosestFacesB.front();
+
 		}
 		else
 		{
-			m_ClosestFaceB = m_ClosestFacesB.back();
+			// object b is bigger than object a
+
+			std::sort(m_ClosestFacesB.begin(), m_ClosestFacesB.end(), ClosestFacePred);
+			m_ClosestFaceB = m_ClosestFacesB.front();
+
+			m_ClosestFacesA.clear();
+			for (const auto& a_face : m_TransformedFacesA)
+			{
+				auto sq_dist = XMVectorGetX(XMVector3LengthSq(m_ClosestFaceB.Projected - a_face.M));
+
+				m_ClosestFacesA.emplace_back(sq_dist, a_face.V0, a_face.V1, a_face.V2, a_face.N, a_face.M);
+			}
+			std::sort(m_ClosestFacesA.begin(), m_ClosestFacesA.end(), ClosestFacePred);
+			m_ClosestFaceA = m_ClosestFacesA.front();
 		}
 
 
-		// #5 See if the two objects intersect
+		// #5 Get the closest points of each object to another
+		// #5-1 Get closest points of object a to object b's center
+		m_ClosestPointsA.clear();
+		m_ClosestPointsA.resize(3);
+		m_ClosestPointsA[0].Point = m_ClosestFaceA.V0;
+		m_ClosestPointsA[1].Point = m_ClosestFaceA.V1;
+		m_ClosestPointsA[2].Point = m_ClosestFaceA.V2;
+
+		for (auto& a_point : m_ClosestPointsA)
+		{
+			a_point.Distance = XMVectorGetX(XMVector3LengthSq(b_center_world - a_point.Point));
+		}
+		std::sort(m_ClosestPointsA.begin(), m_ClosestPointsA.end(), ClosestPointPred);
+		m_ClosestPointA = m_ClosestPointsA.front();
+
+		// #5-2 Get closest points of object b to object a's center
+		m_ClosestPointsB.clear();
+		m_ClosestPointsB.resize(3);
+		m_ClosestPointsB[0].Point = m_ClosestFaceB.V0;
+		m_ClosestPointsB[1].Point = m_ClosestFaceB.V1;
+		m_ClosestPointsB[2].Point = m_ClosestFaceB.V2;
+
+		for (auto& b_point : m_ClosestPointsB)
+		{
+			b_point.Distance = XMVectorGetX(XMVector3LengthSq(b_center_world - b_point.Point));
+		}
+		std::sort(m_ClosestPointsB.begin(), m_ClosestPointsB.end(), ClosestPointPred);
+		m_ClosestPointB = m_ClosestPointsB.front();
+
+
+		// #6 See if the two objects intersect
 		ECollisionType collision_type{ ECollisionType::None };
 
-		// #5-1 Point - Face
-		// #5-1-1 Point of a - Face of b
+		// #6-1 Point - Face
+		// #6-1-1 Point of a - Face of b
 		{
-			const auto& p_a = m_ClosestPointsA.front();
+			const auto& p_a = m_ClosestPointA.Point;
 			float dist_ab{};
-			ProjectPointOntoPlane(dist_ab, p_a, m_ClosestPointsB.front(), ba_dir);
+			ProjectPointOntoPlane(dist_ab, p_a, m_ClosestPointB.Point, ba_dir);
 			if (dist_ab < 0)
 			{
 				if (IsPointAInB(p_a, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
@@ -909,12 +935,12 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			}
 		}
 
-		// #5-1-2 Point of b - Face of a
+		// #6-1-2 Point of b - Face of a
 		if (collision_type == ECollisionType::None)
 		{
-			const auto& p_b = m_ClosestPointsB.front();
+			const auto& p_b = m_ClosestPointB.Point;
 			float dist_ba{};
-			ProjectPointOntoPlane(dist_ba, p_b, m_ClosestPointsA.front(), ab_dir);
+			ProjectPointOntoPlane(dist_ba, p_b, m_ClosestPointA.Point, ab_dir);
 			if (dist_ba < 0)
 			{
 				if (IsPointAInB(p_b, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
@@ -924,13 +950,13 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			}
 		}
 		
-		// #5-2 Edge - Edge
+		// #6-2 Edge - Edge
 		SClosestEdge edge_a{};
 		SClosestEdge edge_b{};
 		EClosestEdgePair edge_pair_a{ EClosestEdgePair::None };
 		EClosestEdgePair edge_pair_b{ EClosestEdgePair::None };
 
-		// #5-2-1 Edge of 'b' is intersecting the closest face of 'a'
+		// #6-2-1 Edge of 'b' is intersecting the closest face of 'a'
 		// Find the edge of 'a' that intersects 'b'
 		if (collision_type == ECollisionType::None)
 		{
@@ -1064,7 +1090,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			}
 		}
 
-		// #5-2-2 Edge of 'a' is intersecting the closest face of 'b'
+		// #6-2-2 Edge of 'a' is intersecting the closest face of 'b'
 		// Find the edge of 'b' that intersects 'a'
 		if (collision_type == ECollisionType::None)
 		{
@@ -1174,11 +1200,11 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 		{
 			m_IsThereAnyActualCollision = true;
 
-			// #6 Get signed closing speed
+			// #7 Get signed closing speed
 			auto relative_velocity_ba = b_physics.Velocity - a_physics.Velocity;
 			auto signed_closing_speed = XMVectorGetX(XMVector3Dot(relative_velocity_ba, ba_dir));
 			
-			// #7 Get collision data (collision normal & penetration depth)
+			// #8 Get collision data (collision normal & penetration depth)
 			const auto& a_entity = m_pECS->GetEntityByIndex(a_physics.EntityIndex);
 			const auto& b_entity = m_pECS->GetEntityByIndex(b_physics.EntityIndex);
 			XMVECTOR collision_normal{};
@@ -1187,7 +1213,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			switch (collision_type)
 			{
 			case JWEngine::ECollisionType::PointAFaceB:
-				ProjectPointOntoPlane(penetration_depth, m_ClosestPointsA.front(), m_ClosestFaceB.V0, m_ClosestFaceB.N);
+				ProjectPointOntoPlane(penetration_depth, m_ClosestPointA.Point, m_ClosestFaceB.V0, m_ClosestFaceB.N);
 				if (penetration_depth < 0) { penetration_depth = -penetration_depth; };
 
 				// Collision normal : b to a
@@ -1198,7 +1224,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 
 				break;
 			case JWEngine::ECollisionType::PointBFaceA:
-				ProjectPointOntoPlane(penetration_depth, m_ClosestPointsB.front(), m_ClosestFaceA.V0, m_ClosestFaceA.N);
+				ProjectPointOntoPlane(penetration_depth, m_ClosestPointB.Point, m_ClosestFaceA.V0, m_ClosestFaceA.N);
 				if (penetration_depth < 0) { penetration_depth = -penetration_depth; };
 
 				// Collision normal : b to a

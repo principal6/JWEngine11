@@ -9,6 +9,7 @@ namespace JWEngine
 	static constexpr float		KDefaultDamping{ 0.98f };
 	static constexpr float		KNonPhysicalObjectInverseMass{ -1.0f };
 	static constexpr float		KGravityOnEarth{ 9.8f };
+	//static constexpr float		KGravityOnEarth{ 0.8f };
 	static constexpr float		KPhysicsWorldFloor{ -100.0f };
 	static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
 	//static constexpr XMVECTOR	KVectorGravityOnEarth{ KGravityOnEarth, 0, 0, 0 };
@@ -36,27 +37,42 @@ namespace JWEngine
 	struct SClosestPoint
 	{
 		SClosestPoint() {};
-		SClosestPoint(size_t _PositionIndex, float _Distance) : PositionIndex{ _PositionIndex }, Distance{ _Distance } {};
-
-		size_t	PositionIndex{};
-		float	Distance{};
-	};
-	
-	struct SClosestFace
-	{
-		SClosestFace() {};
-		SClosestFace(float _Distance, const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2) :
-			Distance{ _Distance }, V0 { _V0 }, V1{ _V1 }, V2{ _V2 }  { N = GetTriangleNormal(_V0, _V1, _V2); };
-		SClosestFace(float _Distance, const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2, const XMVECTOR& _N) :
-			Distance{ _Distance }, V0{ _V0 }, V1{ _V1 }, V2{ _V2 }, N{ _N } {};
+		SClosestPoint(float _Distance, const XMVECTOR& _Point) :
+			Distance{ _Distance }, Point{ _Point } {};
 
 		float		Distance{};
+		XMVECTOR	Point{};
+	};
+
+	struct STransformedFace
+	{
+		STransformedFace() {};
+		STransformedFace(const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2, const XMVECTOR& _N, const XMVECTOR& _M) :
+			V0{ _V0 }, V1{ _V1 }, V2{ _V2 }, N{ _N }, M{ _M } {};
 
 		XMVECTOR	V0{};
 		XMVECTOR	V1{};
 		XMVECTOR	V2{};
 
 		XMVECTOR	N{};
+		XMVECTOR	M{};
+	};
+	
+	struct SClosestFace
+	{
+		SClosestFace() {};
+		SClosestFace(float _Dist, const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2, const XMVECTOR& _N, const XMVECTOR& _Projected) :
+			Dist{ _Dist }, V0{ _V0 }, V1{ _V1 }, V2{ _V2 }, N{ _N }, Projected{ _Projected } {};
+
+		float		Dist{};
+
+		XMVECTOR	V0{};
+		XMVECTOR	V1{};
+		XMVECTOR	V2{};
+
+		XMVECTOR	N{};
+
+		XMVECTOR	Projected{};
 	};
 
 	struct SClosestEdge
@@ -304,12 +320,12 @@ namespace JWEngine
 		const auto& GetPickedTriangleVertex(uint32_t PositionIndex) const noexcept { return m_PickedTriangle[min(PositionIndex, 2)]; };
 		const auto& GetPickedPoint() const noexcept { return m_PickedPoint; };
 
-		const auto& GetClosestPointA0() const noexcept { if (m_ClosestPointsA.size() > 0) { return m_ClosestPointsA[0]; } return KVectorZero; };
-		const auto& GetClosestPointA1() const noexcept { if (m_ClosestPointsA.size() > 1) { return m_ClosestPointsA[1]; } return KVectorZero; };
-		const auto& GetClosestPointA2() const noexcept { if (m_ClosestPointsA.size() > 2) { return m_ClosestPointsA[2]; } return KVectorZero; };
-		const auto& GetClosestPointB0() const noexcept { if (m_ClosestPointsB.size() > 0) { return m_ClosestPointsB[0]; } return KVectorZero; };
-		const auto& GetClosestPointB1() const noexcept { if (m_ClosestPointsB.size() > 1) { return m_ClosestPointsB[1]; } return KVectorZero; };
-		const auto& GetClosestPointB2() const noexcept { if (m_ClosestPointsB.size() > 2) { return m_ClosestPointsB[2]; } return KVectorZero; };
+		const auto& GetClosestPointA0() const noexcept { if (m_ClosestPointsA.size() > 0) { return m_ClosestPointsA[0].Point; } return KVectorZero; };
+		const auto& GetClosestPointA1() const noexcept { if (m_ClosestPointsA.size() > 1) { return m_ClosestPointsA[1].Point; } return KVectorZero; };
+		const auto& GetClosestPointA2() const noexcept { if (m_ClosestPointsA.size() > 2) { return m_ClosestPointsA[2].Point; } return KVectorZero; };
+		const auto& GetClosestPointB0() const noexcept { if (m_ClosestPointsB.size() > 0) { return m_ClosestPointsB[0].Point; } return KVectorZero; };
+		const auto& GetClosestPointB1() const noexcept { if (m_ClosestPointsB.size() > 1) { return m_ClosestPointsB[1].Point; } return KVectorZero; };
+		const auto& GetClosestPointB2() const noexcept { if (m_ClosestPointsB.size() > 2) { return m_ClosestPointsB[2].Point; } return KVectorZero; };
 		const auto& GetClosestFaceA() const noexcept { return m_ClosestFaceA; };
 		const auto& GetClosestFaceB() const noexcept { return m_ClosestFaceB; };
 		auto IsThereAnyActualCollision() const noexcept { return m_IsThereAnyActualCollision; };
@@ -386,15 +402,17 @@ namespace JWEngine
 		VECTOR<SCollisionPair>		m_CoarseCollisionList{};
 		VECTOR<SCollisionData>		m_FineCollisionList{};
 
-		// Varaibles below are for debugging purpose
-		VECTOR<XMVECTOR>			m_ClosestPointsA{};
-		VECTOR<SClosestPoint>		m_ClosestPointsAIndex{};
-		VECTOR<XMVECTOR>			m_ClosestPointsB{};
-		VECTOR<SClosestPoint>		m_ClosestPointsBIndex{};
-		SClosestFace				m_ClosestFaceA{};
-		SClosestFace				m_ClosestFaceB{};
+		// Closest points and faces for collision detection
+		VECTOR<SClosestPoint>		m_ClosestPointsA{};
+		VECTOR<SClosestPoint>		m_ClosestPointsB{};
+		SClosestPoint				m_ClosestPointA{};
+		SClosestPoint				m_ClosestPointB{};
 		VECTOR<SClosestFace>		m_ClosestFacesA{};
 		VECTOR<SClosestFace>		m_ClosestFacesB{};
+		SClosestFace				m_ClosestFaceA{};
+		SClosestFace				m_ClosestFaceB{};
+		VECTOR<STransformedFace>	m_TransformedFacesA{};
+		VECTOR<STransformedFace>	m_TransformedFacesB{};
 
 		// Friction data
 		VECTOR<SMaterialFrictionData>	m_vMaterialFrictionData{ KMaterialFrictionWood, KMaterialFrictionIron, KMaterialFrictionSteel,
