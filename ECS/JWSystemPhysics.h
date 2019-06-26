@@ -61,17 +61,19 @@ namespace JWEngine
 	struct SClosestFace
 	{
 		SClosestFace() {};
-		SClosestFace(float _Dist, const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2, const XMVECTOR& _N, const XMVECTOR& _Projected) :
-			Dist{ _Dist }, V0{ _V0 }, V1{ _V1 }, V2{ _V2 }, N{ _N }, Projected{ _Projected } {};
+		SClosestFace(float _Dist, float _Dist2,
+			const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2, 
+			const XMVECTOR& _N, const XMVECTOR& _Projected) :
+			Dist{ _Dist }, Dist2{ _Dist2 }, V0{ _V0 }, V1{ _V1 }, V2{ _V2 }, N{ _N }, Projected{ _Projected } {};
 
 		float		Dist{};
+		float		Dist2{};
 
 		XMVECTOR	V0{};
 		XMVECTOR	V1{};
 		XMVECTOR	V2{};
 
 		XMVECTOR	N{};
-
 		XMVECTOR	Projected{};
 	};
 
@@ -367,8 +369,7 @@ namespace JWEngine
 		void DetectCoarseCollision() noexcept;
 		void DetectFineCollision() noexcept;
 
-		auto IsPointAInB(const XMVECTOR& PointA, const VECTOR<SIndexTriangle>& BFaces, const XMMATRIX& BWorld,
-			const VECTOR<size_t>& BVertexToPosition, const VECTOR<XMVECTOR>& BPositions) noexcept->bool;
+		auto IsPointAInB(const XMVECTOR& PointA, const VECTOR<STransformedFace>& BTransformedFaces) noexcept->bool;
 
 		void ProcessCollision() noexcept;
 

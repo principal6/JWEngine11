@@ -166,7 +166,7 @@ int main()
 
 		auto transform = main_sprite->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(0.0f, 2.8f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(4.0f, 2.8f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.02f, 0.02f, 0.02f };
 		
 		auto physics = main_sprite->CreateComponentPhysics();
@@ -277,7 +277,7 @@ int main()
 		auto transform = box->CreateComponentTransform();
 		transform->ScalingFactor = XMVectorSet(32, 1.0f, 32, 0.0f);
 		transform->Position = XMVectorSet(0.0f, -10.0f, 0.0f, 1.0f);
-		transform->SetPitchYawRoll(0, 0, 0.2f);
+		//transform->SetPitchYawRoll(0, 0, 0.2f);
 
 		auto physics = box->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(30.0f);
@@ -293,8 +293,9 @@ int main()
 
 		auto transform = jar->CreateComponentTransform();
 		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(0, -6.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(0, 4.0f, 0.0f, 1.0f);
 		transform->ScalingFactor = { 0.05f, 0.05f, 0.05f };
+		transform->SetPitchYawRoll(0, 0, 0.2f);
 
 		auto physics = jar->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(0.8f, 0.0f, 0.6f, 0.0f);
@@ -501,7 +502,7 @@ JW_FUNCTION_ON_WINDOWS_CHAR_INPUT(OnWindowsCharKeyInput)
 	{
 		ecs.SystemPhysics().ZeroAllVelocities();
 
-		ecs.GetEntityByName("jar")->GetComponentTransform()->Position = XMVectorSet(0.0f, 8.0f, 0.0f, 1.0f);
+		ecs.GetEntityByName("jar")->GetComponentTransform()->Position = XMVectorSet(0.0f, 4.0f, 0.0f, 1.0f);
 		ecs.GetEntityByName("oil_drum")->GetComponentTransform()->Position = XMVectorSet(-10.0f, 0.0f, 0.0f, 1.0f);
 	}
 }

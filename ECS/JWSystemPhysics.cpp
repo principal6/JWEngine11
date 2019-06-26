@@ -828,7 +828,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			auto projected = ProjectPointOntoPlane(dist, b_center_world, a_face.V0, a_face.N);
 			if (IsPointOnPlaneInsideTriangle(projected, a_face.V0, a_face.V1, a_face.V2))
 			{
-				m_ClosestFacesA.emplace_back(dist, a_face.V0, a_face.V1, a_face.V2, a_face.N, projected);
+				m_ClosestFacesA.emplace_back(dist, 0.0f, a_face.V0, a_face.V1, a_face.V2, a_face.N, projected);
 			}
 		}
 
@@ -840,7 +840,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			auto projected = ProjectPointOntoPlane(dist, a_center_world, b_face.V0, b_face.N);
 			if (IsPointOnPlaneInsideTriangle(projected, b_face.V0, b_face.V1, b_face.V2))
 			{
-				m_ClosestFacesB.emplace_back(dist, b_face.V0, b_face.V1, b_face.V2, b_face.N, projected);
+				m_ClosestFacesB.emplace_back(dist, 0.0f, b_face.V0, b_face.V1, b_face.V2, b_face.N, projected);
 			}
 		}
 
@@ -860,9 +860,10 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			m_ClosestFacesB.clear();
 			for (const auto& b_face : m_TransformedFacesB)
 			{
-				auto sq_dist = XMVectorGetX(XMVector3LengthSq(m_ClosestFaceA.Projected - b_face.M));
+				auto m_dist = XMVectorGetX(XMVector3LengthSq(m_ClosestFaceA.Projected - b_face.M));
+				auto to_dist = XMVectorGetX(XMVector3LengthSq(a_center_world - b_face.M));
 				
-				m_ClosestFacesB.emplace_back(sq_dist, b_face.V0, b_face.V1, b_face.V2, b_face.N, b_face.M);
+				m_ClosestFacesB.emplace_back(m_dist, to_dist, b_face.V0, b_face.V1, b_face.V2, b_face.N, b_face.M);
 			}
 			std::sort(m_ClosestFacesB.begin(), m_ClosestFacesB.end(), ClosestFacePred);
 			m_ClosestFaceB = m_ClosestFacesB.front();
@@ -878,9 +879,10 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			m_ClosestFacesA.clear();
 			for (const auto& a_face : m_TransformedFacesA)
 			{
-				auto sq_dist = XMVectorGetX(XMVector3LengthSq(m_ClosestFaceB.Projected - a_face.M));
+				auto m_dist = XMVectorGetX(XMVector3LengthSq(m_ClosestFaceB.Projected - a_face.M));
+				auto to_dist = XMVectorGetX(XMVector3LengthSq(b_center_world - a_face.M));
 
-				m_ClosestFacesA.emplace_back(sq_dist, a_face.V0, a_face.V1, a_face.V2, a_face.N, a_face.M);
+				m_ClosestFacesA.emplace_back(m_dist, to_dist, a_face.V0, a_face.V1, a_face.V2, a_face.N, a_face.M);
 			}
 			std::sort(m_ClosestFacesA.begin(), m_ClosestFacesA.end(), ClosestFacePred);
 			m_ClosestFaceA = m_ClosestFacesA.front();
@@ -897,7 +899,8 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 
 		for (auto& a_point : m_ClosestPointsA)
 		{
-			a_point.Distance = XMVectorGetX(XMVector3LengthSq(b_center_world - a_point.Point));
+			auto proj = ProjectPointOntoPlane(a_point.Point, m_ClosestFaceB.V0, m_ClosestFaceB.N);
+			a_point.Distance = XMVectorGetX(XMVector3LengthSq(proj - a_point.Point));
 		}
 		std::sort(m_ClosestPointsA.begin(), m_ClosestPointsA.end(), ClosestPointPred);
 		m_ClosestPointA = m_ClosestPointsA.front();
@@ -911,7 +914,8 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 
 		for (auto& b_point : m_ClosestPointsB)
 		{
-			b_point.Distance = XMVectorGetX(XMVector3LengthSq(b_center_world - b_point.Point));
+			auto proj = ProjectPointOntoPlane(b_point.Point, m_ClosestFaceA.V0, m_ClosestFaceA.N);
+			b_point.Distance = XMVectorGetX(XMVector3LengthSq(proj - b_point.Point));
 		}
 		std::sort(m_ClosestPointsB.begin(), m_ClosestPointsB.end(), ClosestPointPred);
 		m_ClosestPointB = m_ClosestPointsB.front();
@@ -923,31 +927,39 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 		// #6-1 Point - Face
 		// #6-1-1 Point of a - Face of b
 		{
-			const auto& p_a = m_ClosestPointA.Point;
-			float dist_ab{};
-			ProjectPointOntoPlane(dist_ab, p_a, m_ClosestPointB.Point, ba_dir);
-			if (dist_ab < 0)
+			for (const auto& a_point : m_ClosestPointsA)
 			{
-				if (IsPointAInB(p_a, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+				if (IsPointAInB(a_point.Point, m_TransformedFacesB))
 				{
 					collision_type = ECollisionType::PointAFaceB;
 				}
 			}
+			/*
+			const auto& p_a = m_ClosestPointA.Point;
+			if (IsPointAInB_Improved(p_a, m_TransformedFacesB))
+			{
+				collision_type = ECollisionType::PointAFaceB;
+			}
+			*/
 		}
 
 		// #6-1-2 Point of b - Face of a
 		if (collision_type == ECollisionType::None)
 		{
-			const auto& p_b = m_ClosestPointB.Point;
-			float dist_ba{};
-			ProjectPointOntoPlane(dist_ba, p_b, m_ClosestPointA.Point, ab_dir);
-			if (dist_ba < 0)
+			for (const auto& b_point : m_ClosestPointsB)
 			{
-				if (IsPointAInB(p_b, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+				if (IsPointAInB(b_point.Point, m_TransformedFacesA))
 				{
 					collision_type = ECollisionType::PointBFaceA;
 				}
 			}
+			/*
+			const auto& p_b = m_ClosestPointB.Point;
+			if (IsPointAInB_Improved(p_b, m_TransformedFacesA))
+			{
+				collision_type = ECollisionType::PointBFaceA;
+			}
+			*/
 		}
 		
 		// #6-2 Edge - Edge
@@ -965,7 +977,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			// Edge a V0-V1
 			if (ProjectPointOntoSegment(b_center_world, m_ClosestFaceA.V0, m_ClosestFaceA.V1, closest_point_of_edge_a_to_b))
 			{
-				if (IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+				if (IsPointAInB(closest_point_of_edge_a_to_b, m_TransformedFacesB))
 				{
 					edge_pair_a = EClosestEdgePair::V0V1;
 				}
@@ -976,7 +988,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			{
 				if (ProjectPointOntoSegment(b_center_world, m_ClosestFaceA.V0, m_ClosestFaceA.V2, closest_point_of_edge_a_to_b))
 				{
-					if (IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					if (IsPointAInB(closest_point_of_edge_a_to_b, m_TransformedFacesB))
 					{
 						edge_pair_a = EClosestEdgePair::V0V2;
 					}
@@ -988,7 +1000,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			{
 				if (ProjectPointOntoSegment(b_center_world, m_ClosestFaceA.V1, m_ClosestFaceA.V2, closest_point_of_edge_a_to_b))
 				{
-					if (IsPointAInB(closest_point_of_edge_a_to_b, b_faces, b_transform->WorldMatrix, b_v_to_pv, b_positions))
+					if (IsPointAInB(closest_point_of_edge_a_to_b, m_TransformedFacesB))
 					{
 						edge_pair_a = EClosestEdgePair::V1V2;
 					}
@@ -1099,7 +1111,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			// Edge b V0-V1
 			if (ProjectPointOntoSegment(a_center_world, m_ClosestFaceB.V0, m_ClosestFaceB.V1, closest_point_of_edge_b_to_a))
 			{
-				if (IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+				if (IsPointAInB(closest_point_of_edge_b_to_a, m_TransformedFacesA))
 				{
 					edge_pair_b = EClosestEdgePair::V0V1;
 				}
@@ -1110,7 +1122,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			{
 				if (ProjectPointOntoSegment(a_center_world, m_ClosestFaceB.V0, m_ClosestFaceB.V2, closest_point_of_edge_b_to_a))
 				{
-					if (IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					if (IsPointAInB(closest_point_of_edge_b_to_a, m_TransformedFacesA))
 					{
 						edge_pair_b = EClosestEdgePair::V0V2;
 					}
@@ -1122,7 +1134,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			{
 				if (ProjectPointOntoSegment(a_center_world, m_ClosestFaceB.V1, m_ClosestFaceB.V2, closest_point_of_edge_b_to_a))
 				{
-					if (IsPointAInB(closest_point_of_edge_b_to_a, a_faces, a_transform->WorldMatrix, a_v_to_pv, a_positions))
+					if (IsPointAInB(closest_point_of_edge_b_to_a, m_TransformedFacesA))
 					{
 						edge_pair_b = EClosestEdgePair::V1V2;
 					}
@@ -1192,6 +1204,34 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 					edge_pair_a = EClosestEdgePair::V0V1;
 				}
 
+				switch (edge_pair_a)
+				{
+				case JWEngine::EClosestEdgePair::V0V1:
+					edge_a = SClosestEdge(m_ClosestFaceA.V0, m_ClosestFaceA.V1);
+					break;
+				case JWEngine::EClosestEdgePair::V0V2:
+					edge_a = SClosestEdge(m_ClosestFaceA.V0, m_ClosestFaceA.V2);
+					break;
+				case JWEngine::EClosestEdgePair::V1V2:
+					edge_a = SClosestEdge(m_ClosestFaceA.V1, m_ClosestFaceA.V2);
+					break;
+				}
+				edge_a.M = (edge_a.V0 + edge_a.V1) / 2.0f;
+
+				switch (edge_pair_b)
+				{
+				case JWEngine::EClosestEdgePair::V0V1:
+					edge_b = SClosestEdge(m_ClosestFaceB.V0, m_ClosestFaceB.V1);
+					break;
+				case JWEngine::EClosestEdgePair::V0V2:
+					edge_b = SClosestEdge(m_ClosestFaceB.V0, m_ClosestFaceB.V2);
+					break;
+				case JWEngine::EClosestEdgePair::V1V2:
+					edge_b = SClosestEdge(m_ClosestFaceB.V1, m_ClosestFaceB.V2);
+					break;
+				}
+				edge_b.M = (edge_b.V0 + edge_b.V1) / 2.0f;
+
 				collision_type = ECollisionType::EdgeEdge;
 			}
 		}
@@ -1209,7 +1249,7 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 			const auto& b_entity = m_pECS->GetEntityByIndex(b_physics.EntityIndex);
 			XMVECTOR collision_normal{};
 			float penetration_depth{};
-				
+
 			switch (collision_type)
 			{
 			case JWEngine::ECollisionType::PointAFaceB:
@@ -1239,48 +1279,46 @@ PRIVATE void JWSystemPhysics::DetectFineCollision() noexcept
 
 				collision_normal = XMVector3Normalize(
 					XMVector3Cross(GetRayDirection(edge_b.V0, edge_b.V1), GetRayDirection(edge_a.V0, edge_a.V1)));
-					
+
 				// Collision normal : b to a
 				if (XMVector3Less(XMVector3Dot(collision_normal, ba_dir), KVectorZero))
 				{
 					collision_normal = -collision_normal;
 				}
-				
+
 				// DEBUGGING
-				//std::cout << "[Collision] Edge to Edge" << std::endl;
+				std::cout << "[Collision] Edge to Edge" << std::endl;
 
 				break;
 			}
-				
+
+			assert(XMVectorGetX(XMVector3LengthSq(collision_normal)) > 0.0f);
+
 			m_FineCollisionList.emplace_back(a_entity, b_entity, ba_dir, collision_normal, penetration_depth, signed_closing_speed);
+			
 		}
 		
 	}
 }
 
-PRIVATE auto JWSystemPhysics::IsPointAInB(const XMVECTOR& PointA, const VECTOR<SIndexTriangle>& BFaces, const XMMATRIX& BWorld,
-	const VECTOR<size_t>& BVertexToPosition, const VECTOR<XMVECTOR>& BPositions) noexcept->bool
+PRIVATE auto JWSystemPhysics::IsPointAInB(const XMVECTOR& PointA, const VECTOR<STransformedFace>& BTransformedFaces) noexcept->bool
 {
 	// return true if PointA is inside all faces of B
 	bool result{ false };
 	float dist{};
 
-	for (auto b_face : BFaces)
+	for (auto b_face : BTransformedFaces)
 	{
-		auto b0 = XMVector3TransformCoord(BPositions[BVertexToPosition[b_face._0]], BWorld);
-		auto b1 = XMVector3TransformCoord(BPositions[BVertexToPosition[b_face._1]], BWorld);
-		auto b2 = XMVector3TransformCoord(BPositions[BVertexToPosition[b_face._2]], BWorld);
-		auto n = GetTriangleNormal(b0, b1, b2);
+		ProjectPointOntoPlane(dist, PointA, b_face.V0, b_face.N);
 
-		ProjectPointOntoPlane(dist, PointA, b0, n);
-
-		if (dist < 0)
+		if (dist <= 0.0f)
 		{
 			result = true;
 		}
 		else
 		{
-			return false;
+			result = false;
+			break;
 		}
 	}
 
@@ -1295,12 +1333,24 @@ void JWSystemPhysics::ProcessCollision() noexcept
 	for (const auto& iter : m_FineCollisionList)
 	{
 		auto a_physics{ iter.PtrEntityA->GetComponentPhysics() };
+		auto a_collision_dir = XMVector3Dot(XMVector3Normalize(a_physics->Velocity), -iter.CollisionNormal);
+		if (XMVector3Less(a_collision_dir, KVectorZero))
+		{
+			// Not colliding, but separating.
+			continue;
+		}
 		auto a_collision_speed = XMVector3Dot(a_physics->Velocity, -iter.CollisionNormal);
 		auto a_collision_velocity = a_collision_speed * -iter.CollisionNormal;
 		auto a_separating_speed = a_collision_speed * (1.0f + a_physics->Restitution);
 		auto a_delta_velocity = a_separating_speed * iter.CollisionNormal;
 		
 		auto b_physics{ iter.PtrEntityB->GetComponentPhysics() };
+		auto b_collision_dir = XMVector3Dot(XMVector3Normalize(b_physics->Velocity), iter.CollisionNormal);
+		if (XMVector3Less(b_collision_dir, KVectorZero))
+		{
+			// Not colliding, but separating.
+			continue;
+		}
 		auto b_collision_speed = XMVector3Dot(b_physics->Velocity, iter.CollisionNormal);
 		auto b_collision_velocity = b_collision_speed * iter.CollisionNormal;
 		auto b_separating_speed = b_collision_speed * (1.0f + b_physics->Restitution);
@@ -1347,17 +1397,26 @@ void JWSystemPhysics::ProcessCollision() noexcept
 
 		if (b_physics->InverseMass != 0)
 		{
-			b_physics->Velocity += b_delta_velocity + b_friction_velocity;
-		}
+			// DEBUGGING
+			/*
+			std::cout
+				<< "Velocity = { "
+				<< TO_STRING(XMVectorGetX(b_physics->Velocity)) << " , "
+				<< TO_STRING(XMVectorGetY(b_physics->Velocity)) << " , "
+				<< TO_STRING(XMVectorGetZ(b_physics->Velocity)) << " }"
+				<< std::endl;
 
-		// DEBUGGING
-		/*
-		std::cout
-			<< "Velocity = { "
-			<< TO_STRING(XMVectorGetX(b_physics->Velocity)) << " , "
-			<< TO_STRING(XMVectorGetY(b_physics->Velocity)) << " , "
-			<< TO_STRING(XMVectorGetZ(b_physics->Velocity)) << " }"
-			<< std::endl;
-		*/
+			std::cout
+				<< "Delta Velocity = { "
+				<< TO_STRING(XMVectorGetX(b_delta_velocity)) << " , "
+				<< TO_STRING(XMVectorGetY(b_delta_velocity)) << " , "
+				<< TO_STRING(XMVectorGetZ(b_delta_velocity)) << " }"
+				<< std::endl;
+			*/
+
+			b_physics->Velocity += b_delta_velocity + b_friction_velocity;
+
+			
+		}
 	}
 }
