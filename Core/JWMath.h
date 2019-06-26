@@ -54,6 +54,7 @@ namespace JWEngine
 
 		auto check_0 = XMVector3Cross(edge_bc, (PointOnPlane - TriB));
 		auto check_1 = XMVector3Cross(edge_bc, (TriA - TriB));
+		if (XMVector3GreaterOrEqual(XMVector3Dot(check_0, check_1), KVectorZero))
 		{
 			check_0 = XMVector3Cross(edge_ac, (PointOnPlane - TriA));
 			check_1 = XMVector3Cross(edge_ac, edge_ab);
