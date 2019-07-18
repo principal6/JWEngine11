@@ -6,10 +6,11 @@ namespace JWEngine
 {
 	// Gravity on Earth = 9.8m/s^2
 	static constexpr float		KDefaultRestitution{ 0.8f };
-	static constexpr float		KDefaultDamping{ 0.98f };
+	static constexpr float		KDefaultLinearDamping{ 0.98f };
+	static constexpr float		KDefaultAngularDamping{ 0.8f };
 	static constexpr float		KNonPhysicalObjectInverseMass{ -1.0f };
-	static constexpr float		KGravityOnEarth{ 9.8f };
-	//static constexpr float		KGravityOnEarth{ 0.8f };
+	//static constexpr float		KGravityOnEarth{ 9.8f };
+	static constexpr float		KGravityOnEarth{ 0.8f };
 	static constexpr float		KPhysicsWorldFloor{ -100.0f };
 	static constexpr XMVECTOR	KVectorGravityOnEarth{ 0, -KGravityOnEarth, 0, 0 };
 	//static constexpr XMVECTOR	KVectorGravityOnEarth{ KGravityOnEarth, 0, 0, 0 };
@@ -61,13 +62,13 @@ namespace JWEngine
 	struct SClosestFace
 	{
 		SClosestFace() {};
-		SClosestFace(float _Dist, float _Dist2,
+		SClosestFace(float _Dist, float _Dot,
 			const XMVECTOR& _V0, const XMVECTOR& _V1, const XMVECTOR& _V2, 
 			const XMVECTOR& _N, const XMVECTOR& _Projected) :
-			Dist{ _Dist }, Dist2{ _Dist2 }, V0{ _V0 }, V1{ _V1 }, V2{ _V2 }, N{ _N }, Projected{ _Projected } {};
+			Dist{ _Dist }, Dot{ _Dot }, V0{ _V0 }, V1{ _V1 }, V2{ _V2 }, N{ _N }, Projected{ _Projected } {};
 
 		float		Dist{};
-		float		Dist2{};
+		float		Dot{};
 
 		XMVECTOR	V0{};
 		XMVECTOR	V1{};
@@ -100,9 +101,11 @@ namespace JWEngine
 	struct SCollisionData
 	{
 		SCollisionData() {};
-		SCollisionData(JWEntity* _PtrEntityA, JWEntity* _PtrEntityB, const XMVECTOR& _DirectionBA, const XMVECTOR& _CollisionNormal,
-			float _PenetrationDepth, float _ClosingSpeed) :
-			PtrEntityA{ _PtrEntityA }, PtrEntityB{ _PtrEntityB }, DirectionBA{ _DirectionBA }, CollisionNormal{ _CollisionNormal },
+		SCollisionData(JWEntity* _PtrEntityA, JWEntity* _PtrEntityB, const XMVECTOR& _DirectionBA, 
+			const XMVECTOR& _CollisionNormal, const XMVECTOR& _CollisionPointA, const XMVECTOR& _CollisionPointB, 
+			float _PenetrationDepth, float _ClosingSpeed)
+			: PtrEntityA{ _PtrEntityA }, PtrEntityB{ _PtrEntityB }, DirectionBA{ _DirectionBA },
+			CollisionNormal{ _CollisionNormal }, CollisionPointA{ _CollisionPointA }, CollisionPointB{ _CollisionPointB },
 			PenetrationDepth{ _PenetrationDepth }, ClosingSpeed{ _ClosingSpeed } {};
 
 		JWEntity*	PtrEntityA{};
@@ -113,6 +116,10 @@ namespace JWEngine
 		// @important:
 		// Collision normal is always in b-a direction.
 		XMVECTOR	CollisionNormal{};
+
+		// These are for torque calculation
+		XMVECTOR	CollisionPointA{};
+		XMVECTOR	CollisionPointB{};
 
 		float		PenetrationDepth{};
 		float		ClosingSpeed{};
@@ -212,13 +219,30 @@ namespace JWEngine
 		// If mass is not set, it is assumed to be a NON-physical entity.
 		float		InverseMass{ KNonPhysicalObjectInverseMass };
 
-		// [Property]	velocity
+		// [Property]	inertia tensor
+		XMMATRIX	InertiaTensor{};
+
+		// [Property]	linear velocity
 		// [Unit]		m/s
 		XMVECTOR	Velocity{};
 
-		// [Property]	acceleration
+		// [Property]	linear acceleration
 		// [Unit]		m/s^2
-		XMVECTOR	Acceleration{};
+		XMVECTOR	LinearAcceleration{};
+
+		// [Property]	angular velocity
+		// [Unit]		rad/s
+		XMVECTOR	AngularVelocity{};
+
+		// [Property]	angular acceleration
+		// [Unit]		rad/s^2
+		XMVECTOR	AngularAcceleration{};
+
+		// [Property]	linear damping
+		float		LinearDamping{ KDefaultLinearDamping };
+
+		// [Property]	angular damping
+		float		AngularDamping{ KDefaultAngularDamping };
 
 		// [Property]	coefficient of restitution
 		// [Range]		[0.0f, 1.0f]
@@ -228,14 +252,8 @@ namespace JWEngine
 		// @default friction data is KMaterialFrictionWood
 		SMaterialFrictionData MaterialFriction{ KMaterialFrictionWood };
 
-		// [Property]	damping
-		float		Damping{ KDefaultDamping };
-
 		// @important: AccumulatedForce must be zeroed every frame.
 		XMVECTOR	AccumulatedForce{};
-
-		// @important: AccumulatedImpulse must be zeroed every frame.
-		XMVECTOR	AccumulatedImpulse{};
 
 		// (NON_OWNING) Collision mesh
 		JWModel*	PtrCollisionMesh{};
@@ -250,9 +268,9 @@ namespace JWEngine
 			}
 		}
 
-		void SetMassByKilogram(float Kg) noexcept
+		void SetMassByKilogram(float kg) noexcept
 		{
-			SetMassByGram(Kg * 1000.0f);
+			SetMassByGram(kg * 1000.0f);
 		}
 		
 		void SetMassToInfinite() noexcept
@@ -265,25 +283,14 @@ namespace JWEngine
 			Velocity = _Velocity;
 		}
 
-		void SetAcceleration(const XMVECTOR& _Acceleration) noexcept
-		{
-			Acceleration = _Acceleration;
-		}
-
 		void AddForce(const XMVECTOR& Force) noexcept
 		{
 			AccumulatedForce += Force;
 		}
 
-		void AddImpulse(const XMVECTOR& Impulse) noexcept
-		{
-			AccumulatedImpulse += Impulse;
-		}
-
 		void ClearAccumulation() noexcept
 		{
 			AccumulatedForce = KVectorZero;
-			AccumulatedImpulse = KVectorZero;
 		}
 
 		void SetCollisionMesh(JWModel* PtrModel)
@@ -330,6 +337,7 @@ namespace JWEngine
 		const auto& GetClosestPointB2() const noexcept { if (m_ClosestPointsB.size() > 2) { return m_ClosestPointsB[2].Point; } return KVectorZero; };
 		const auto& GetClosestFaceA() const noexcept { return m_ClosestFaceA; };
 		const auto& GetClosestFaceB() const noexcept { return m_ClosestFaceB; };
+		const auto& GetCollisionPoint() const noexcept { return m_CollisionPoint; };
 		auto IsThereAnyActualCollision() const noexcept { return m_IsThereAnyActualCollision; };
 		const auto GetPenetrationDepth() const noexcept 
 		{
@@ -414,6 +422,7 @@ namespace JWEngine
 		SClosestFace				m_ClosestFaceB{};
 		VECTOR<STransformedFace>	m_TransformedFacesA{};
 		VECTOR<STransformedFace>	m_TransformedFacesB{};
+		XMVECTOR					m_CollisionPoint{};
 
 		// Friction data
 		VECTOR<SMaterialFrictionData>	m_vMaterialFrictionData{ KMaterialFrictionWood, KMaterialFrictionIron, KMaterialFrictionSteel,

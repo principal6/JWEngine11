@@ -21,6 +21,7 @@ namespace JWEngine
 		XMVECTOR	Position{ KVectorZero };
 		XMVECTOR	ScalingFactor{ KVectorOne };
 
+		// x = Pitch, y = Yaw, z = Roll
 		// Rotation calculation order is always Roll -> Pitch -> Yaw
 		XMFLOAT3	PitchYawRoll{ 0, 0, 0 };
 		XMVECTOR	Up{ KDefUp };
@@ -50,6 +51,14 @@ namespace JWEngine
 			SetPitchYawRoll(XMFLOAT3(Pitch, Yaw, Roll), IsCamera);
 		}
 
+		inline void SetPitchYawRoll(const XMVECTOR& _PitchYawRoll, bool IsCamera = false)
+		{
+			XMFLOAT3 xmfloat3{};
+			XMStoreFloat3(&xmfloat3, _PitchYawRoll);
+
+			SetPitchYawRoll(xmfloat3, IsCamera);
+		}
+
 		inline void RotatePitchYawRoll(const XMFLOAT3& _PitchYawRoll, bool IsCamera = false)
 		{
 			PitchYawRoll.x += _PitchYawRoll.x;
@@ -65,6 +74,14 @@ namespace JWEngine
 			auto rotation_matrix = XMMatrixRotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
 			Forward = XMVector3TransformNormal(Up, rotation_matrix);
 			Right = XMVector3Normalize(XMVector3Cross(Up, Forward));
+		}
+
+		inline void RotatePitchYawRoll(const XMVECTOR& _PitchYawRoll, bool IsCamera = false)
+		{
+			XMFLOAT3 xmfloat3{};
+			XMStoreFloat3(&xmfloat3, _PitchYawRoll);
+
+			RotatePitchYawRoll(xmfloat3, IsCamera);
 		}
 	};
 

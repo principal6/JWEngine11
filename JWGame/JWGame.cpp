@@ -157,6 +157,7 @@ void JWGame::Run() noexcept
 	m_IsRunning = true;
 
 	MSG msg{};
+	long long delta_time{};
 
 	while (m_IsRunning)
 	{
@@ -175,8 +176,13 @@ void JWGame::Run() noexcept
 			m_FrameStartTime = m_Clock.now();
 
 			m_FrameDeltaTime = std::chrono::duration_cast<TIME_UNIT_mS>(m_FrameStartTime - m_FrameStartTimePrev);
+
+			delta_time = m_FrameDeltaTime.count();
+
+			// [DEBUGGING] SLOW MOTION SIMULATION
+			//delta_time = 500;
 			
-			m_ECS.UpdateDeltaTime(m_FrameDeltaTime.count());
+			m_ECS.UpdateDeltaTime(delta_time);
 
 			// Update input device state
 			m_InputDeviceState = m_Input.GetDeviceState();

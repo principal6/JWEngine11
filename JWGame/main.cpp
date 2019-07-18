@@ -35,6 +35,10 @@ int main()
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(1, 0, 0), XMFLOAT3(1, 1, 0)), "POINT_3D_A");
 		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::StaticModel,
 			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(0, 0, 1), XMFLOAT3(1, 0, 1)), "POINT_3D_B");
+		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::StaticModel,
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(0, 0, 1), XMFLOAT3(1, 1, 1)), "POINT_3D_C");
+		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::StaticModel,
+			ecs.SystemRender().PrimitiveMaker().MakeSphere(0.1f, 8, 3, XMFLOAT3(0, 0, 1), XMFLOAT3(0, 0, 0)), "POINT_3D_CM");
 		ecs.SystemRender().CreateDynamicSharedModelFromModelData(ecs.SystemRender().PrimitiveMaker().MakeHexahedron(), "VIEW_FRUSTUM");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_camera.mobj", "CAMERA");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_light.mobj", "LIGHT");
@@ -51,12 +55,14 @@ int main()
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "jar.mobj", "jar");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "oil_drum.mobj", "oil_drum");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "recycling_bin.mobj", "recycling_bin");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::StaticModel, "simple_box.mobj", "simple_box");
 
 		ecs.SystemRender().CreateSharedModelFromModelData(ESharedModelType::CollisionMesh,
 			ecs.SystemRender().PrimitiveMaker().MakeCube(1.0f), "CM_box");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::CollisionMesh, "jar_cm.mobj", "CM_jar");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::CollisionMesh, "oil_drum_cm.mobj", "CM_oil_drum");
 		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::CollisionMesh, "recycling_bin_cm.mobj", "CM_recycling_bin");
+		ecs.SystemRender().CreateSharedModelFromFile(ESharedModelType::CollisionMesh, "simple_box.mobj", "CM_simple_box");
 	}
 	{
 		// SharedImage2D
@@ -276,7 +282,7 @@ int main()
 
 		auto transform = box->CreateComponentTransform();
 		transform->ScalingFactor = XMVectorSet(32, 1.0f, 32, 0.0f);
-		transform->Position = XMVectorSet(0.0f, -10.0f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(0.0f, 0, 0.0f, 1.0f);
 		//transform->SetPitchYawRoll(0, 0, 0.2f);
 
 		auto physics = box->CreateComponentPhysics();
@@ -286,6 +292,50 @@ int main()
 
 		auto render = box->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("box"));
+	}
+
+	{
+		auto simple_box = ecs.CreateEntity("simple_box");
+
+		auto transform = simple_box->CreateComponentTransform();
+		//transform->Position = XMVectorSet(-14.0f, 2.5f, 0.0f, 1.0f);
+		//transform->Position = XMVectorSet(-16.0f, 2.7f, 0.0f, 1.0f);
+		transform->Position = XMVectorSet(-10.0f, 2.0f, 0.0f, 1.0f);
+		//transform->SetPitchYawRoll(0, 0, 0.3f);
+
+		auto physics = simple_box->CreateComponentPhysics();
+		physics->BoundingSphere = SBoundingSphereData(3.0f);
+		physics->SetMassByKilogram(100.0f);
+		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_simple_box"));
+		physics->MaterialFriction = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Wood);
+		physics->Restitution = 0.4f;
+		physics->InertiaTensor = GetIntertiaTensorOfBox(physics->InverseMass, 3.0f, 2.0f, 1.0f);
+
+		auto render = simple_box->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("simple_box"));
+		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
+	}
+
+	{
+		auto oil_drum = ecs.CreateEntity("oil_drum");
+
+		auto transform = oil_drum->CreateComponentTransform();
+		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
+		transform->Position = XMVectorSet(-10.0f, 0.0f, 0.0f, 1.0f);
+		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
+		transform->SetPitchYawRoll(0, 0, 0.3f);
+
+		auto physics = oil_drum->CreateComponentPhysics();
+		physics->BoundingSphere = SBoundingSphereData(1.1f);
+		//physics->SetMassByKilogram(20.0f);
+		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_oil_drum"));
+		physics->MaterialFriction = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Iron);
+		physics->Restitution = 0.4f;
+		physics->InertiaTensor = GetIntertiaTensorOfCylinder(physics->InverseMass, 0.4f, 1.1f);
+
+		auto render = oil_drum->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("oil_drum"));
+		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 
 	{
@@ -299,7 +349,7 @@ int main()
 
 		auto physics = jar->CreateComponentPhysics();
 		physics->BoundingSphere = SBoundingSphereData(0.8f, 0.0f, 0.6f, 0.0f);
-		physics->SetMassByKilogram(1.0f);
+		//physics->SetMassByKilogram(1.0f);
 		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_jar"));
 		physics->MaterialFriction = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Ceramic);
 		physics->Restitution = 0.4f;
@@ -309,26 +359,6 @@ int main()
 		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
 	}
 	
-	{
-		auto oil_drum = ecs.CreateEntity("oil_drum");
-
-		auto transform = oil_drum->CreateComponentTransform();
-		transform->WorldMatrixCalculationOrder = EWorldMatrixCalculationOrder::ScaleRotTrans;
-		transform->Position = XMVectorSet(-10.0f, 0.0f, 0.0f, 1.0f);
-		//transform->SetPitchYawRoll(XMFLOAT3(0, 0, -0.6f));
-		transform->ScalingFactor = { 0.1f, 0.1f, 0.1f };
-
-		auto physics = oil_drum->CreateComponentPhysics();
-		physics->BoundingSphere = SBoundingSphereData(1.1f);
-		//physics->SetMassByKilogram(20.0f);
-		physics->SetCollisionMesh(ecs.SystemRender().GetSharedModelByName("CM_oil_drum"));
-		physics->MaterialFriction = ecs.SystemPhysics().GetMaterialFrictionData(EPhysicsMaterial::Iron);
-
-		auto render = oil_drum->CreateComponentRender();
-		render->SetModel(ecs.SystemRender().GetSharedModelByName("oil_drum"));
-		render->SetRenderFlag(JWFlagComponentRenderOption_GetLit);
-	}
-
 	{
 		auto recycling_bin = ecs.CreateEntity("recycling_bin");
 
@@ -370,24 +400,31 @@ int main()
 	}
 
 	{
-		auto closest_b = ecs.CreateEntity("closest_b0");
-		auto transform = closest_b->CreateComponentTransform();
-		auto render = closest_b->CreateComponentRender();
+		auto entity = ecs.CreateEntity("closest_b0");
+		auto transform = entity->CreateComponentTransform();
+		auto render = entity->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_B"));
 	}
 
 	{
-		auto closest_b = ecs.CreateEntity("closest_b1");
-		auto transform = closest_b->CreateComponentTransform();
-		auto render = closest_b->CreateComponentRender();
+		auto entity = ecs.CreateEntity("closest_b1");
+		auto transform = entity->CreateComponentTransform();
+		auto render = entity->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_B"));
 	}
 
 	{
-		auto closest_b = ecs.CreateEntity("closest_b2");
-		auto transform = closest_b->CreateComponentTransform();
-		auto render = closest_b->CreateComponentRender();
+		auto entity = ecs.CreateEntity("closest_b2");
+		auto transform = entity->CreateComponentTransform();
+		auto render = entity->CreateComponentRender();
 		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_B"));
+	}
+
+	{
+		auto entity = ecs.CreateEntity("collision_point");
+		auto transform = entity->CreateComponentTransform();
+		auto render = entity->CreateComponentRender();
+		render->SetModel(ecs.SystemRender().GetSharedModelByName("POINT_3D_C"));
 	}
 
 	ecs.SystemCamera().SetCurrentCamera(0);
@@ -578,22 +615,15 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	// 3D Point for debugging
 	ecs.GetEntityByType(EEntityType::Point3D)->GetComponentTransform()->Position = ecs.SystemPhysics().GetPickedPoint();
 
-	//ecs.GetEntityByName("closest_a0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointA0();
-	//ecs.GetEntityByName("closest_a1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointA1();
-	//ecs.GetEntityByName("closest_a2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointA2();
-
 	ecs.GetEntityByName("closest_a0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceA().V0;
 	ecs.GetEntityByName("closest_a1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceA().V1;
 	ecs.GetEntityByName("closest_a2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceA().V2;
 	
-	//ecs.GetEntityByName("closest_b0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointB0();
-	//ecs.GetEntityByName("closest_b1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointB1();
-	//ecs.GetEntityByName("closest_b2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestPointB2();
-
 	ecs.GetEntityByName("closest_b0")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceB().V0;
 	ecs.GetEntityByName("closest_b1")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceB().V1;
 	ecs.GetEntityByName("closest_b2")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceB().V2;
 
+	ecs.GetEntityByName("collision_point")->GetComponentTransform()->Position = ecs.SystemPhysics().GetClosestFaceB().V2;
 
 	// ECS entity Skybox
 	ecs.GetEntityByType(EEntityType::Sky)->GetComponentTransform()->Position = ecs.SystemCamera().GetCurrentCameraPosition();
@@ -646,4 +676,6 @@ JW_FUNCTION_ON_RENDER(OnRender)
 	myGame.InstantText().RenderText(s_penetration_depth, XMFLOAT2(10, 150), XMFLOAT4(0, 0.7f, 0.7f, 1.0f));
 
 	myGame.InstantText().EndRendering();
+
+	//Sleep(10);
 }

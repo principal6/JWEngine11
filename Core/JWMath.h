@@ -372,4 +372,43 @@ namespace JWEngine
 			return true;
 		}
 	}
+
+	// Iy = 1/2 mr^2
+	// Ix = Iz = 1/12 m(3r^2 + h^2)
+	static auto __vectorcall GetIntertiaTensorOfCylinder(float inverse_mass, float radius, float height)->XMMATRIX
+	{
+		assert(inverse_mass != 0);
+
+		float	mass{ 1.0f / inverse_mass };
+		float	Ix{ (1.0f / 12.0f) * mass * (3 * radius * radius + height * height) }; // == Iy
+		float&	Iy{ Ix };
+		float	Iz{ 0.5f * mass * radius * radius };
+
+		return XMMatrixSet
+		(
+			Ix, 0, 0, 0,
+			0, Iy, 0, 0,
+			0, 0, Iz, 0,
+			0, 0, 0, 1
+		);
+	}
+
+	static auto __vectorcall GetIntertiaTensorOfBox(float inverse_mass, float x_size, float y_size, float z_size)->XMMATRIX
+	{
+		assert(inverse_mass != 0);
+
+		float mass{ 1.0f / inverse_mass };
+		float common{ (1.0f / 12.0f) * mass };
+		float Ix{ common * (y_size * y_size + z_size * z_size) };
+		float Iy{ common * (x_size * x_size + z_size * z_size) };
+		float Iz{ common * (x_size * x_size + y_size * y_size) };
+
+		return XMMatrixSet
+		(
+			Ix, 0, 0, 0,
+			0, Iy, 0, 0,
+			0, 0, Iz, 0,
+			0, 0, 0, 1
+		);
+	}
 };
