@@ -81,8 +81,8 @@
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>C:\Users\JesusKim\Documents\GitHub\JWEngine11\Lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Users\JesusKim\Documents\GitHub\JWEngine11;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\jesus\Documents\GitHub\JWEngine11\Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\jesus\Documents\GitHub\JWEngine11;$(IncludePath)</IncludePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

@@ -1,13 +1,13 @@
         date        |    time    |  thread  |        file       :line	| lev | comment  
-2019-07-17 23:47:07 | 8273878138 | thread:0 | JWGame.cpp        :41	| --- | class JWEngine::JWGame::Create() Start
-2019-07-17 23:47:07 | 8273884091 | thread:0 | JWGame.cpp        :53	| --- | Base directory: C:\Users\JesusKim\Documents\GitHub\JWEngine11\
-2019-07-17 23:47:07 | 8275351046 | thread:0 | JWGame.cpp        :62	| --- | Window created
-2019-07-17 23:47:07 | 8275406495 | thread:0 | JWDX.cpp          :243	| --- | class JWEngine::JWDX::CreateDeviceAndSwapChain() Start
-2019-07-17 23:47:07 | 8275959519 | thread:0 | JWDX.cpp          :275	| --- | class JWEngine::JWDX::CreateDeviceAndSwapChain() End
-2019-07-17 23:47:08 | 8280301594 | thread:0 | JWGame.cpp        :70	| --- | DX created
-2019-07-17 23:47:08 | 8281049660 | thread:0 | JWGame.cpp        :74	| --- | Input created
-2019-07-17 23:47:11 | 8311154132 | thread:0 | JWGame.cpp        :78	| --- | Instant text created
-2019-07-17 23:47:11 | 8312738854 | thread:0 | JWGame.cpp        :86	| --- | ECS created
-2019-07-17 23:47:11 | 8312741345 | thread:0 | JWGame.cpp        :91	| --- | class JWEngine::JWGame::Create() End
-2019-07-17 23:47:11 | 8319064785 | thread:0 | JWGame.cpp        :151	| --- | class JWEngine::JWGame::Run() Start
-2019-07-17 23:47:38 | 8589266613 | thread:0 | JWGame.cpp        :250	| --- | class JWEngine::JWGame::Run() End
+2019-07-18 18:00:42 | 4421330393 | thread:0 | JWGame.cpp        :41	| --- | class JWEngine::JWGame::Create() Start
+2019-07-18 18:00:42 | 4421335051 | thread:0 | JWGame.cpp        :53	| --- | Base directory: C:\Users\jesus\Documents\GitHub\JWEngine11\
+2019-07-18 18:00:42 | 4422957392 | thread:0 | JWGame.cpp        :62	| --- | Window created
+2019-07-18 18:00:42 | 4423008765 | thread:0 | JWDX.cpp          :243	| --- | class JWEngine::JWDX::CreateDeviceAndSwapChain() Start
+2019-07-18 18:00:42 | 4423651452 | thread:0 | JWDX.cpp          :275	| --- | class JWEngine::JWDX::CreateDeviceAndSwapChain() End
+2019-07-18 18:00:42 | 4427269616 | thread:0 | JWGame.cpp        :70	| --- | DX created
+2019-07-18 18:00:42 | 4428084291 | thread:0 | JWGame.cpp        :74	| --- | Input created
+2019-07-18 18:00:45 | 4458550057 | thread:0 | JWGame.cpp        :78	| --- | Instant text created
+2019-07-18 18:00:46 | 4460286258 | thread:0 | JWGame.cpp        :86	| --- | ECS created
+2019-07-18 18:00:46 | 4460288528 | thread:0 | JWGame.cpp        :91	| --- | class JWEngine::JWGame::Create() End
+2019-07-18 18:00:46 | 4468206067 | thread:0 | JWGame.cpp        :151	| --- | class JWEngine::JWGame::Run() Start
+2019-07-18 18:00:52 | 4520531755 | thread:0 | JWGame.cpp        :250	| --- | class JWEngine::JWGame::Run() End
